@@ -106,3 +106,34 @@ Senha e bcrypt com custo 12; cinco erros bloqueiam o usuario por 15 minutos; o
 segundo fator e TOTP e o QR Code sai com o nome do **escritorio**, nao da
 plataforma. A tela de login devolve sempre a mesma mensagem, para nao revelar
 se o e-mail existe, se a senha esta errada ou se a conta esta bloqueada.
+
+## Duas camadas de permissao
+
+| Camada | Pergunta | Onde |
+| --- | --- | --- |
+| Modulo contratado | o **escritorio** paga por esta area? | `src/lib/modulos.ts` |
+| Papel do usuario | esta **pessoa** pode fazer isto? | `src/lib/papeis.ts` |
+
+As duas precisam permitir. `exigirSessao(modulo?)` cobre a primeira;
+`exigirAdmin(modulo?)` cobre as duas. O menu segue a mesma regra: area que a
+pessoa nao pode abrir nao aparece.
+
+## Conta do usuario
+
+- **Troca de senha**: exige a senha atual. A sessao e JWT com validade de 12h,
+  entao uma sessao ja aberta continua valendo ate expirar — trocar a senha
+  impede logins novos, nao derruba os antigos. Revogacao imediata depende de
+  guardar sessao no banco; fica para quando houver necessidade real.
+- **Segundo fator**: `/api/conta/dois-fatores/preparar` gera o segredo e o QR
+  Code, mas **nao grava nada**. O segredo so vai para o banco quando o usuario
+  confirma com um codigo valido — assim ninguem fica travado com um segundo
+  fator que nao conseguiu cadastrar. Desligar exige senha **e** codigo.
+- O QR Code sai com o nome do escritorio como emissor, nunca "BirdJud".
+
+## Referencias entre registros
+
+Toda rota que recebe o id de outro registro (`clienteId` em um processo,
+`processoId` em um compromisso) confere antes de usar que ele existe **neste**
+escritorio. A extensao do Prisma ja filtra a leitura, entao um id de outro
+escritorio simplesmente nao aparece e a rota responde 400 — e nao cria um
+vinculo entre escritorios diferentes.

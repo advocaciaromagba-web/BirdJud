@@ -20,13 +20,13 @@ NextAuth · Tailwind · Vitest.
 travas de isolamento e a bateria de teste, rodadas contra um PostgreSQL 16 real:
 `typecheck` limpo, `build` de producao OK, bateria de isolamento 10/10.
 
-**Fase 1 em andamento** — autenticacao, subdominio e o primeiro recorte do
-nucleo, verificados com a aplicacao no ar (login real, criacao de cliente pela
-rota, cookie de um escritorio recusado no endereco de outro, escritorio suspenso
-sem entrar, bloqueio depois de 5 senhas erradas). 23 testes automatizados.
+**Fase 1 concluida** — autenticacao por escritorio, subdominio, conta do usuario
+(troca de senha e 2FA pela tela), cadastro de usuarios pelo administrador e as
+telas de clientes, processos e agenda. 27 testes automatizados, mais um roteiro
+de fumaca rodado com a aplicacao no ar.
 
-Falta na fase 1: cadastro e troca de senha pelo usuario, ativacao do 2FA pela
-tela, telas de processo e agenda, e o restante do nucleo.
+**Fase 2 em aberto** — `ModuloContratado` aplicado a menu/rotas/rotinas, limite
+de usuarios por faixa, `ConsumoMensal` e rotinas em fila por escritorio.
 
 ## Como rodar
 
@@ -89,11 +89,15 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/middleware.ts` | Poe o slug no cabecalho; nunca confia no que vem de fora |
 | `src/lib/auth.ts` | NextAuth: senha, 2FA, bloqueio; escritorio vem do host |
 | `src/lib/sessao.ts` | `exigirSessao()`: sessao + escritorio do endereco + modulo |
-| `src/lib/modulos.ts` | Ponto unico de modulo contratado |
+| `src/lib/modulos.ts` | Ponto unico de modulo contratado (escritorio) |
+| `src/lib/papeis.ts` | Papel do usuario dentro do escritorio |
+| `src/lib/respostas.ts` | Erro de dominio -> HTTP, em um lugar so |
+| `src/componentes/FormularioCriar.tsx` | Formulario de criacao das quatro telas |
 | `src/lib/integracao.ts` | Credenciais por escritorio |
 | `src/lib/segredo.ts` | AES-256-GCM das credenciais |
 | `testes/isolamento.test.ts` | Bateria de isolamento (10 casos) |
 | `testes/autenticacao.test.ts` | Senha, 2FA, subdominio e sessao (13 casos) |
+| `testes/conta.test.ts` | Troca de senha, 2FA e usuarios por escritorio (4 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
@@ -108,3 +112,6 @@ pulada — em CI, o banco de teste e obrigatorio.
    rota de escritorio.
 7. Nenhuma decisao de acesso a partir do corpo da requisicao: escritorio e
    status saem do endereco, resolvidos no servidor.
+8. Rota que recebe id de outro registro (ex.: `clienteId`) confere que ele e
+   deste escritorio antes de usar.
+9. Nenhuma rota devolve `senhaHash` nem `doisFatores`.

@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { escritorioDoEndereco, exigirSessao } from "@/lib/sessao";
+import { comEscritorio } from "@/lib/prisma";
+import { contextoDaPagina } from "@/lib/pagina";
+import { escritorioDoEndereco } from "@/lib/sessao";
 import { modulosAtivos } from "@/lib/modulos";
 import { MARCA_NEUTRA } from "@/lib/escritorio";
+import { Navegacao } from "@/componentes/Navegacao";
 
 export default async function Painel() {
   const marca = await escritorioDoEndereco();
@@ -19,30 +21,45 @@ export default async function Painel() {
     );
   }
 
-  let contexto;
-  try {
-    contexto = await exigirSessao();
-  } catch {
-    redirect("/login");
-  }
+  const contexto = await contextoDaPagina();
 
-  const modulos = await modulosAtivos(contexto.escritorioId);
+  const [modulos, numeros] = await Promise.all([
+    modulosAtivos(contexto.escritorioId),
+    comEscritorio(contexto.escritorioId, async (db) => ({
+      clientes: await db.cliente.count(),
+      processos: await db.processo.count(),
+      proximos: await db.compromisso.count({ where: { inicio: { gte: new Date() } } }),
+    })),
+  ]);
+
+  const cartoes = [
+    { href: "/clientes", rotulo: "Clientes", valor: numeros.clientes },
+    { href: "/processos", rotulo: "Processos", valor: numeros.processos },
+    { href: "/agenda", rotulo: "Proximos compromissos", valor: numeros.proximos },
+  ];
 
   return (
-    <main className="mx-auto max-w-3xl p-10">
-      <p className="text-sm uppercase tracking-wide text-marca">{marca.nome}</p>
-      <h1 className="mt-2 text-3xl font-bold">Painel</h1>
-      <p className="mt-2 text-neutral-600">
-        {contexto.papel === "ADMIN" ? "Administrador" : "Usuario"} · {modulos.length} modulo(s)
-        contratado(s)
-      </p>
-      <ul className="mt-6 grid gap-2">
-        <li>
-          <Link href="/clientes" className="font-semibold text-marca underline">
-            Clientes
-          </Link>
-        </li>
-      </ul>
-    </main>
+    <>
+      <Navegacao nomeEscritorio={marca.nome} papel={contexto.papel} />
+      <main className="mx-auto max-w-3xl p-8">
+        <h1 className="text-2xl font-bold">Painel</h1>
+        <p className="mt-1 text-sm text-neutral-500">
+          {modulos.length} modulo(s) contratado(s)
+        </p>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {cartoes.map((cartao) => (
+            <Link
+              key={cartao.href}
+              href={cartao.href}
+              className="rounded border border-neutral-200 p-4 hover:border-marca"
+            >
+              <p className="text-3xl font-bold tabular-nums">{cartao.valor}</p>
+              <p className="text-sm text-neutral-600">{cartao.rotulo}</p>
+            </Link>
+          ))}
+        </div>
+      </main>
+    </>
   );
 }

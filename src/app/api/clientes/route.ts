@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
-import { exigirSessao, SemSessao } from "@/lib/sessao";
-import { ModuloNaoContratado } from "@/lib/modulos";
+import { exigirSessao } from "@/lib/sessao";
+import { tratarErro } from "@/lib/respostas";
 
 const novoCliente = z.object({
   nome: z.string().min(2).max(200),
@@ -10,17 +10,6 @@ const novoCliente = z.object({
   email: z.string().email().optional(),
   telefone: z.string().max(20).optional(),
 });
-
-function tratar(erro: unknown) {
-  if (erro instanceof SemSessao) {
-    return NextResponse.json({ erro: erro.message }, { status: erro.status });
-  }
-  if (erro instanceof ModuloNaoContratado) {
-    return NextResponse.json({ erro: erro.message }, { status: erro.status });
-  }
-  console.error(erro);
-  return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
-}
 
 export async function GET() {
   try {
@@ -30,7 +19,7 @@ export async function GET() {
     );
     return NextResponse.json({ clientes });
   } catch (erro) {
-    return tratar(erro);
+    return tratarErro(erro);
   }
 }
 
@@ -47,6 +36,6 @@ export async function POST(req: Request) {
     );
     return NextResponse.json({ cliente }, { status: 201 });
   } catch (erro) {
-    return tratar(erro);
+    return tratarErro(erro);
   }
 }

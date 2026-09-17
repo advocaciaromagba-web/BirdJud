@@ -9,6 +9,7 @@ import { opcoesAuth } from "./auth";
 import { STATUS_QUE_ENTRAM } from "./auth-comum";
 import { escritorioPorSlug, type Marca } from "./escritorio";
 import { exigirModulo, type Modulo } from "./modulos";
+import { SemPermissao } from "./papeis";
 import { CABECALHO_SLUG } from "./subdominio";
 
 export class SemSessao extends Error {
@@ -77,4 +78,11 @@ export function motivoParaRecusar(
   if (!sessao) return "Sessao ausente ou invalida para este endereco.";
   if (sessao.escritorioId !== escritorioDoEndereco.id) return "Sessao de outro escritorio.";
   return null;
+}
+
+/** Exige sessao e papel de administrador do escritorio. */
+export async function exigirAdmin(modulo?: Modulo): Promise<ContextoRota> {
+  const contexto = await exigirSessao(modulo);
+  if (contexto.papel !== "ADMIN") throw new SemPermissao();
+  return contexto;
 }
