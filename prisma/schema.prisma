@@ -1,0 +1,198 @@
+// BirdJud — schema multi-tenant desde a primeira migracao.
+//
+// Regra: toda entidade de negocio nasce com escritorioId + indice.
+// Nenhuma tabela global de negocio, nenhum dado herdado de outro sistema.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Plataforma
+// ---------------------------------------------------------------------------
+
+model Escritorio {
+  id     String @id @default(cuid())
+  slug   String @unique // subdominio: <slug>.birdjud.com.br
+  nome   String
+  cnpj   String?
+  status String @default("TESTE") // TESTE | ATIVO | INADIMPLENTE | SUSPENSO | ENCERRADO
+  faixa  String @default("ATE_3") // ATE_3 | ATE_10 | ATE_25 | ATE_50
+
+  // marca e dados que, em sistemas de escritorio unico, ficam fixos no codigo
+  logoUrl             String?
+  corPrimaria         String?
+  corSecundaria       String?
+  telefoneAtendimento String?
+  cidade              String?
+  enderecos           Json?
+  expediente          Json?
+
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  usuarios     Usuario[]
+  clientes     Cliente[]
+  processos    Processo[]
+  compromissos Compromisso[]
+  modulos      ModuloContratado[]
+  integracoes  Integracao[]
+  consumos     ConsumoMensal[]
+}
+
+model ModuloContratado {
+  escritorioId String
+  modulo       String // NUCLEO | PUBLICACOES_DJEN | PUBLICACOES_AASP | WHATSAPP | EMAIL | NFSE | COBRANCAS | FINANCEIRO | ASSINATURA | IA | NUVEM
+  ativo        Boolean  @default(true)
+  franquia     Int? // ex.: mensagens/mes incluidas na faixa
+  desde        DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@id([escritorioId, modulo])
+  @@index([escritorioId])
+}
+
+model Integracao {
+  id           String    @id @default(cuid())
+  escritorioId String
+  tipo         String // WHATSAPP_META | ASAAS | AASP | AUTENTIQUE | SMTP | MICROSOFT | GOOGLE | NFSE_CERT
+  dados        Bytes // JSON criptografado (AES-256-GCM) — ver src/lib/segredo.ts
+  status       String    @default("PENDENTE") // PENDENTE | OK | ERRO
+  erro         String?
+  verificadoEm DateTime?
+  criadoEm     DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, tipo])
+  @@index([escritorioId])
+}
+
+model ConsumoMensal {
+  escritorioId String
+  competencia  String // "2026-10"
+  metrica      String // WHATSAPP_MSG | IA_TOKENS | NFSE_EMITIDA | OAB_MONITORADA | ARMAZENAMENTO_MB
+  quantidade   Float  @default(0)
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@id([escritorioId, competencia, metrica])
+  @@index([escritorioId])
+}
+
+// ---------------------------------------------------------------------------
+// Nucleo — entidades de negocio (todas com escritorioId)
+// ---------------------------------------------------------------------------
+
+model Usuario {
+  id           String    @id @default(cuid())
+  escritorioId String
+  nome         String
+  email        String
+  senhaHash    String
+  papel        String    @default("USUARIO") // ADMIN | ADVOGADO | USUARIO
+  oab          String?
+  advogado     Boolean   @default(false) // conta na faixa de advogados
+  ativo        Boolean   @default(true)
+  doisFatores  String?
+  ultimoAcesso DateTime?
+  criadoEm     DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, email])
+  @@index([escritorioId])
+}
+
+model Cliente {
+  id           String   @id @default(cuid())
+  escritorioId String
+  nome         String
+  documento    String? // CPF/CNPJ
+  email        String?
+  telefone     String?
+  endereco     Json?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  processos  Processo[]
+
+  @@index([escritorioId])
+  @@index([escritorioId, documento])
+}
+
+model Processo {
+  id           String    @id @default(cuid())
+  escritorioId String
+  clienteId    String?
+  numero       String // numero unico do CNJ
+  tribunal     String?
+  vara         String?
+  area         String?
+  situacao     String    @default("ATIVO")
+  distribuicao DateTime?
+  criadoEm     DateTime  @default(now())
+
+  escritorio   Escritorio    @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente      Cliente?      @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  compromissos Compromisso[]
+
+  @@unique([escritorioId, numero])
+  @@index([escritorioId])
+}
+
+model Compromisso {
+  id           String   @id @default(cuid())
+  escritorioId String
+  processoId   String?
+  titulo       String
+  tipo         String   @default("COMPROMISSO") // COMPROMISSO | AUDIENCIA | PRAZO | TAREFA
+  inicio       DateTime
+  fim          DateTime?
+  local        String?
+  observacoes  String?
+  concluido    Boolean  @default(false)
+  criadoEm     DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId])
+  @@index([escritorioId, inicio])
+}
+
+// ---------------------------------------------------------------------------
+// Operador da plataforma — fora de qualquer escritorio.
+// Todo acesso a um escritorio passa por AcessoSuporte (auditoria).
+// ---------------------------------------------------------------------------
+
+model OperadorPlataforma {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
+
+  acessos AcessoSuporte[]
+}
+
+model AcessoSuporte {
+  id           String    @id @default(cuid())
+  operadorId   String
+  escritorioId String
+  motivo       String
+  iniciadoEm   DateTime  @default(now())
+  encerradoEm  DateTime?
+
+  operador OperadorPlataforma @relation(fields: [operadorId], references: [id])
+
+  @@index([escritorioId])
+}

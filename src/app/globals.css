@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* marca neutra; sobrescrita em tempo de execucao pela marca do escritorio */
+  --marca-primaria: #0e6b66;
+  --marca-secundaria: #16202a;
+  color-scheme: light dark;
+}
