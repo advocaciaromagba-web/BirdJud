@@ -20,9 +20,13 @@ NextAuth · Tailwind · Vitest.
 travas de isolamento e a bateria de teste, rodadas contra um PostgreSQL 16 real:
 `typecheck` limpo, `build` de producao OK, bateria de isolamento 10/10.
 
-**Fase 1 em aberto** — autenticacao (NextAuth com escritorioId na sessao, 2FA),
-middleware de subdominio, telas do nucleo e cobertura da bateria em cada rota
-nova.
+**Fase 1 em andamento** — autenticacao, subdominio e o primeiro recorte do
+nucleo, verificados com a aplicacao no ar (login real, criacao de cliente pela
+rota, cookie de um escritorio recusado no endereco de outro, escritorio suspenso
+sem entrar, bloqueio depois de 5 senhas erradas). 23 testes automatizados.
+
+Falta na fase 1: cadastro e troca de senha pelo usuario, ativacao do 2FA pela
+tela, telas de processo e agenda, e o restante do nucleo.
 
 ## Como rodar
 
@@ -33,6 +37,15 @@ npm run migrar              # prisma migrate deploy como dono do banco
 npm run rls:aplicar         # aplica prisma/rls.sql (idempotente)
 npm run dev
 ```
+
+Criar um escritorio e o primeiro administrador:
+
+```bash
+node scripts/criar-escritorio.mjs alfa "Escritorio Alfa" admin@alfa.adv.br sua-senha-longa
+```
+
+Em desenvolvimento, aponte os subdominios no `/etc/hosts`
+(`127.0.0.1 alfa.birdjud.test`) e rode com `DOMINIO_PLATAFORMA=birdjud.test`.
 
 Gerar a chave de criptografia das credenciais:
 
@@ -72,10 +85,15 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/contexto.ts` | Escritorio da requisicao (AsyncLocalStorage) |
 | `src/lib/prisma.ts` | Trava 1: extensao do Prisma + `comEscritorio()` |
 | `src/lib/escritorio.ts` | Subdominio, marca e configuracao do escritorio |
+| `src/lib/subdominio.ts` | `<slug>.birdjud.com.br` -> slug (edge e servidor) |
+| `src/middleware.ts` | Poe o slug no cabecalho; nunca confia no que vem de fora |
+| `src/lib/auth.ts` | NextAuth: senha, 2FA, bloqueio; escritorio vem do host |
+| `src/lib/sessao.ts` | `exigirSessao()`: sessao + escritorio do endereco + modulo |
 | `src/lib/modulos.ts` | Ponto unico de modulo contratado |
 | `src/lib/integracao.ts` | Credenciais por escritorio |
 | `src/lib/segredo.ts` | AES-256-GCM das credenciais |
 | `testes/isolamento.test.ts` | Bateria de isolamento (10 casos) |
+| `testes/autenticacao.test.ts` | Senha, 2FA, subdominio e sessao (13 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
@@ -88,3 +106,5 @@ pulada — em CI, o banco de teste e obrigatorio.
 5. Nenhum arquivo, dado ou dependencia vindo de outro sistema.
 6. `prismaPlataforma()` atravessa o RLS — so no plano de controle, nunca em
    rota de escritorio.
+7. Nenhuma decisao de acesso a partir do corpo da requisicao: escritorio e
+   status saem do endereco, resolvidos no servidor.

@@ -6,6 +6,7 @@
 // de escritorio: le a view "EscritorioPublico" (prisma/rls.sql), que expoe so
 // as colunas de marca e nenhuma de negocio.
 import { prismaSemEscritorio } from "./prisma";
+export { slugDoHost } from "./subdominio";
 
 export type Marca = {
   id: string | null;
@@ -43,16 +44,6 @@ function paraMarca(linha: LinhaPublica | undefined): Marca | null {
     corPrimaria: linha.corPrimaria ?? MARCA_NEUTRA.corPrimaria,
     corSecundaria: linha.corSecundaria ?? MARCA_NEUTRA.corSecundaria,
   };
-}
-
-/** Resolve o slug a partir do host: <slug>.birdjud.com.br */
-export function slugDoHost(host: string | null): string | null {
-  if (!host) return null;
-  const dominio = (process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br").toLowerCase();
-  const semPorta = host.split(":")[0]?.toLowerCase() ?? "";
-  if (!semPorta.endsWith(`.${dominio}`)) return null;
-  const slug = semPorta.slice(0, -(dominio.length + 1));
-  return slug && slug !== "www" ? slug : null;
 }
 
 export async function escritorioPorSlug(slug: string): Promise<Marca | null> {

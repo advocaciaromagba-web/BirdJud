@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { escritorioPorSlug, MARCA_NEUTRA, slugDoHost } from "@/lib/escritorio";
+import { MARCA_NEUTRA } from "@/lib/escritorio";
+import { escritorioDoEndereco } from "@/lib/sessao";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,8 +10,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // A marca vem do subdominio, nunca de constante no codigo.
-  const slug = slugDoHost(headers().get("host"));
-  const marca = (slug ? await escritorioPorSlug(slug) : null) ?? MARCA_NEUTRA;
+  const marca = (await escritorioDoEndereco()) ?? MARCA_NEUTRA;
 
   return (
     <html lang="pt-BR">

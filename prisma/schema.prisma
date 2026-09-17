@@ -100,8 +100,12 @@ model Usuario {
   oab          String?
   advogado     Boolean   @default(false) // conta na faixa de advogados
   ativo        Boolean   @default(true)
-  doisFatores  String?
+  doisFatores  String? // segredo TOTP, so quando ativado
   ultimoAcesso DateTime?
+
+  // bloqueio por tentativas
+  tentativasFalhas Int       @default(0)
+  bloqueadoAte     DateTime?
   criadoEm     DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)

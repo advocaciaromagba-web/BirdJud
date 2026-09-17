@@ -77,3 +77,32 @@ cifradas em AES-256-GCM (`src/lib/segredo.ts`) e guardadas em `Integracao`.
 dados do outro — 10 casos, incluindo dois que driblam a trava 1 de proposito
 para provar que o RLS sozinho ja barra. Roda no CI a cada push e antes de todo
 deploy. Nenhuma rota entra no sistema sem estar coberta por ela.
+
+## Autenticacao e sessao (fase 1)
+
+O endereco decide o escritorio, sempre no servidor:
+
+1. `src/middleware.ts` (runtime edge, sem Prisma) le o `Host`, extrai o slug e
+   o poe no cabecalho `x-escritorio-slug`. O cabecalho e **apagado antes** de
+   ser reescrito: nada vindo de fora e aproveitado.
+2. `src/lib/sessao.ts` traduz o slug em escritorio pela view `EscritorioPublico`.
+3. `authorize()` em `src/lib/auth.ts` faz a mesma resolucao pelo `Host` da
+   requisicao. Nada do corpo do POST participa: se o escritorio viesse de la,
+   bastaria forjar o id de outro escritorio ou um status diferente do real.
+
+`exigirSessao()` recusa quando:
+
+- o endereco nao corresponde a escritorio nenhum;
+- o escritorio esta `SUSPENSO` ou `ENCERRADO` (`INADIMPLENTE` ainda entra —
+  cobranca nao e bloqueio imediato);
+- nao ha sessao;
+- **a sessao e de outro escritorio** — cookie de A no subdominio de B nao vale.
+
+Essa ultima e a que sustenta o modelo. Ha duas camadas: o cookie do NextAuth e
+host-only, entao o navegador nem envia para outro subdominio; e, se for enviado
+a mao, a guarda recusa.
+
+Senha e bcrypt com custo 12; cinco erros bloqueiam o usuario por 15 minutos; o
+segundo fator e TOTP e o QR Code sai com o nome do **escritorio**, nao da
+plataforma. A tela de login devolve sempre a mesma mensagem, para nao revelar
+se o e-mail existe, se a senha esta errada ou se a conta esta bloqueada.
