@@ -226,3 +226,71 @@ com o aplicativo registrado em cada provedor) estao no registro, mas dizem na
 tela que nao ha verificacao automatica. A nuvem nem formulario de credencial
 oferece: sem o OAuth, a conexao nao chegaria a existir, e um formulario ali
 seria teatro.
+
+## Venda e operacao (fase 4)
+
+### Ciclo comercial
+
+Cadastro (`/cadastro`, so no endereco da plataforma) cria escritorio em `TESTE`
+com assinatura e periodo de teste correndo. Dai em diante quem conduz e a fila:
+`REGUA_DE_COBRANCA` roda por escritorio e faz duas coisas — gera a fatura do mes
+quando o teste acabou, e ajusta o status pelo atraso da fatura em aberto mais
+antiga.
+
+```
+TESTE --(teste acabou)--> ATIVO --(5 dias)--> INADIMPLENTE --(15 dias)--> SUSPENSO
+  ^                                                                          |
+  +---------------------------- pagamento ----------------------------------+
+```
+
+`SUSPENSO` bloqueia o login (`STATUS_QUE_ENTRAM`), `INADIMPLENTE` nao — cobranca
+nao e bloqueio imediato. `ENCERRADO` e decisao humana: a regua nao mexe nele, nem
+para reativar. O espalhamento da regua alcanca tambem os suspensos, porque e o
+pagamento deles que os devolve ao ar.
+
+Duas regras que so apareceram ao rodar o ciclo de ponta a ponta:
+
+- **Fatura nunca nasce vencida.** Um escritorio cujo teste acaba depois do dia de
+  vencimento receberia a primeira fatura ja em atraso e seria marcado inadimplente
+  no mesmo instante. `vencimentoComPrazo()` garante `PRAZO_MINIMO_DIAS` entre a
+  emissao e o vencimento.
+- **Fim do teste vira cliente pagante**, mesmo com a primeira fatura ainda a
+  vencer. Sem isso o escritorio ficaria em `TESTE` para sempre, porque sem atraso
+  a regua nao tinha motivo para mexer no status.
+
+### Precos
+
+`src/lib/precos.ts` tem a tabela, e ela e **provisoria** — o plano de projeto e
+explicito em que so pode ser fechada depois de levantar custos reais e conferir
+concorrentes. Trocar a tabela nao mexe em contrato assinado: o valor combinado
+com cada escritorio fica gravado em `Assinatura.valorCentavos`.
+
+A fatura guarda a memoria de calculo em `detalhe` (faixa, modulos, excedentes),
+para a conversa com o cliente nao depender de recalcular meses depois.
+
+### Pagamento
+
+Hoje a baixa e manual, pelo operador. Quando a cobranca automatica entrar, o
+webhook do meio de pagamento chamara a mesma `registrarPagamento()` — o caminho
+de baixa e um so, e e ele que reavalia o status do escritorio.
+
+### Operador da plataforma
+
+Login separado (`/plataforma/login`), provedor proprio, e a sessao carrega
+`escritorioId` vazio. Isso e o que fecha os dois sentidos: a guarda do escritorio
+compara o escritorio da sessao com o do endereco (vazio nunca casa), e a guarda
+do operador exige endereco de plataforma e papel `OPERADOR`.
+
+**Todo acesso do operador a um escritorio vira linha em `AcessoSuporte`** —
+abrir a ficha no painel, mudar faixa, contratar modulo, dar baixa em fatura. E o
+acesso que atravessa o isolamento, entao e o que mais precisa de rastro.
+
+Nao existe "entrar como o escritorio" (impersonacao): o painel e leitura mais
+acoes administrativas. Se um dia for necessario, ja ha onde registrar.
+
+### Exportacao
+
+`/api/exportacao` devolve tudo do escritorio em JSON — saida de cliente e pedido
+de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencial
+cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
+escritorio, e um arquivo desses circula por e-mail.

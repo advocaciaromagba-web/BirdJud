@@ -84,6 +84,16 @@ export default async function PaginaUsuarios() {
           textoBotao="Cadastrar"
         />
 
+        <p className="mt-6 text-sm">
+          <a href="/api/exportacao" className="text-marca underline">
+            Baixar todos os dados do escritorio (JSON)
+          </a>
+          <span className="block text-xs text-neutral-500">
+            Inclui clientes, processos, agenda, financeiro e faturas. Nao inclui
+            senhas nem credenciais de integracao.
+          </span>
+        </p>
+
         <ul className="mt-6 divide-y divide-neutral-200">
           {usuarios.map((usuario) => (
             <li key={usuario.id} className="py-3">

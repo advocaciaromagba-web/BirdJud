@@ -40,6 +40,8 @@ model Escritorio {
   clientes     Cliente[]
   processos    Processo[]
   compromissos Compromisso[]
+  assinatura   Assinatura?
+  faturas      Fatura[]
   lancamentos  Lancamento[]
   trabalhos    Trabalho[]
   modulos      ModuloContratado[]
@@ -178,6 +180,43 @@ model Compromisso {
 // Operador da plataforma — fora de qualquer escritorio.
 // Todo acesso a um escritorio passa por AcessoSuporte (auditoria).
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Venda: assinatura do proprio SaaS e faturas do escritorio
+// ---------------------------------------------------------------------------
+
+model Assinatura {
+  escritorioId   String    @id
+  // Preco fechado com este escritorio, em centavos. Fica gravado: mudanca de
+  // tabela nao altera contrato ja assinado.
+  valorCentavos  Int
+  diaVencimento  Int       @default(10)
+  fimDoTeste     DateTime
+  canceladaEm    DateTime?
+  criadaEm       DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+}
+
+model Fatura {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  competencia   String // "2026-10"
+  valorCentavos Int
+  // Memoria de calculo: faixa, modulos e excedentes que geraram o valor.
+  detalhe       Json?
+  vencimento    DateTime
+  status        String    @default("ABERTA") // ABERTA | PAGA | CANCELADA
+  pagoEm        DateTime?
+  idExterno     String? // id no meio de pagamento
+  criadaEm      DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, competencia])
+  @@index([escritorioId, status])
+  @@index([status, vencimento])
+}
 
 model OperadorPlataforma {
   id        String   @id @default(cuid())

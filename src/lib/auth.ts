@@ -9,7 +9,13 @@ import { escritorioPorSlug } from "./escritorio";
 import { slugDoHost } from "./subdominio";
 import { conferirSenha } from "./senhas";
 import { conferirCodigo } from "./dois-fatores";
-import { PROVEDOR, STATUS_QUE_ENTRAM } from "./auth-comum";
+import {
+  PAPEL_OPERADOR,
+  PROVEDOR,
+  PROVEDOR_OPERADOR,
+  STATUS_QUE_ENTRAM,
+} from "./auth-comum";
+import { prismaPlataforma } from "./prisma";
 
 /** Minutos de bloqueio depois de errar a senha vezes demais. */
 const TENTATIVAS_ATE_BLOQUEIO = 5;
@@ -86,6 +92,42 @@ export const opcoesAuth: NextAuthOptions = {
             papel: usuario.papel,
           };
         });
+      },
+    }),
+    CredentialsProvider({
+      id: PROVEDOR_OPERADOR,
+      name: "Operador da plataforma",
+      credentials: {
+        email: { label: "E-mail", type: "email" },
+        senha: { label: "Senha", type: "password" },
+      },
+      /**
+       * Login do operador da plataforma (nos), separado do login dos
+       * escritorios. So vale no endereco da plataforma: dentro do subdominio
+       * de um escritorio, nem tenta.
+       */
+      async authorize(credenciais, req) {
+        if (slugDoHost(req?.headers?.host ?? null)) return null;
+
+        const email = credenciais?.email?.trim().toLowerCase();
+        const senha = credenciais?.senha;
+        if (!email || !senha) return null;
+
+        const operador = await prismaPlataforma().operadorPlataforma.findUnique({
+          where: { email },
+        });
+        if (!operador?.ativo) return null;
+        if (!(await conferirSenha(senha, operador.senhaHash))) return null;
+
+        return {
+          id: operador.id,
+          name: operador.nome,
+          email: operador.email,
+          // Operador nao pertence a escritorio nenhum — e o que a guarda
+          // de rota do escritorio confere para nunca deixa-lo entrar em um.
+          escritorioId: "",
+          papel: PAPEL_OPERADOR,
+        };
       },
     }),
   ],

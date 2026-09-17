@@ -23,6 +23,8 @@ DECLARE
     'Processo',
     'Compromisso',
     'Lancamento',
+    'Assinatura',
+    'Fatura',
     'AcessoSuporte'
   ];
 BEGIN

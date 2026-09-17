@@ -81,9 +81,14 @@ A fila precisa de um processo separado do site. No mesmo projeto Railway:
 3. as mesmas variaveis do servico web (ele usa `DATABASE_URL_PLATAFORMA`);
 4. sem dominio publico: o trabalhador nao atende HTTP.
 
-Para agendar as rotinas, um cron do Railway chamando
-`npm run espalhar APURAR_CONSUMO` — por exemplo, todo dia de madrugada. O
-espalhamento cria um trabalho por escritorio ativo; o trabalhador consome.
+Para agendar as rotinas, crons do Railway chamando:
+
+- `npm run espalhar APURAR_CONSUMO` — todo dia de madrugada, mede o consumo;
+- `npm run espalhar REGUA_DE_COBRANCA` — todo dia, gera fatura do mes, marca
+  atraso e suspende quem passou do prazo.
+
+O espalhamento cria um trabalho por escritorio; o trabalhador consome. Sem esse
+cron a regua nao roda, e ninguem e faturado nem suspenso.
 
 Mais de um trabalhador pode rodar ao mesmo tempo: a reclamacao usa
 `FOR UPDATE SKIP LOCKED` e a regra de um trabalho por escritorio vale entre

@@ -4,28 +4,9 @@
 // franquia). O que passa da franquia e excedente e vira linha na fatura —
 // a fatura em si e da fase 4; aqui so se mede.
 import { comEscritorio } from "./prisma";
-import type { Modulo } from "./modulos";
 
-export const METRICAS = [
-  "WHATSAPP_MSG",
-  "EMAIL_ENVIADO",
-  "IA_TOKENS",
-  "NFSE_EMITIDA",
-  "OAB_MONITORADA",
-  "ARMAZENAMENTO_MB",
-  "REGISTROS",
-  "USUARIOS_ATIVOS",
-] as const;
-export type Metrica = (typeof METRICAS)[number];
-
-/** Qual modulo paga por cada metrica. Metrica do nucleo nao tem modulo. */
-export const MODULO_DA_METRICA: Partial<Record<Metrica, Modulo>> = {
-  WHATSAPP_MSG: "WHATSAPP",
-  EMAIL_ENVIADO: "EMAIL",
-  IA_TOKENS: "IA",
-  NFSE_EMITIDA: "NFSE",
-  OAB_MONITORADA: "PUBLICACOES_DJEN",
-};
+export { METRICAS, MODULO_DA_METRICA, type Metrica } from "./catalogo";
+import { MODULO_DA_METRICA, type Metrica } from "./catalogo";
 
 export function competenciaDe(data = new Date()): string {
   return `${data.getUTCFullYear()}-${String(data.getUTCMonth() + 1).padStart(2, "0")}`;

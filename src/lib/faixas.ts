@@ -4,19 +4,8 @@
 // (franquias maiores por modulo) e assunto do consumo — ver consumo.ts.
 import { comEscritorio } from "./prisma";
 
-export const FAIXAS = ["ATE_3", "ATE_10", "ATE_25", "ATE_50"] as const;
-export type Faixa = (typeof FAIXAS)[number];
-
-export const LIMITES: Record<Faixa, { advogados: number; apoio: number; rotulo: string }> = {
-  ATE_3: { advogados: 3, apoio: 3, rotulo: "Essencial" },
-  ATE_10: { advogados: 10, apoio: 10, rotulo: "Escritorio" },
-  ATE_25: { advogados: 25, apoio: 25, rotulo: "Profissional" },
-  ATE_50: { advogados: 50, apoio: 50, rotulo: "Completo" },
-};
-
-export function ehFaixa(valor: string): valor is Faixa {
-  return (FAIXAS as readonly string[]).includes(valor);
-}
+export { FAIXAS, LIMITES, ehFaixa, type Faixa } from "./catalogo";
+import { LIMITES, ehFaixa, type Faixa } from "./catalogo";
 
 export class FaixaEsgotada extends Error {
   readonly status = 409;

@@ -17,7 +17,8 @@
     "migrar": "node scripts/migrar.mjs",
     "start:producao": "npm run migrar && npm run rls:aplicar && next start",
     "trabalhador": "tsx scripts/trabalhador.ts",
-    "espalhar": "tsx scripts/espalhar-trabalho.ts"
+    "espalhar": "tsx scripts/espalhar-trabalho.ts",
+    "criar-operador": "tsx scripts/criar-operador.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

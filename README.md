@@ -39,6 +39,18 @@ registrado em cada provedor), verificacao automatica da AASP e o Embedded
 Signup da Meta com submissao dos modelos de mensagem — todos dependem das
 respostas externas da secao 11 do plano.
 
+**Fase 4 concluida** — cadastro de escritorio com periodo de teste, assinatura,
+faturas, regua de atraso e suspensao automaticas pela fila, painel do operador
+da plataforma com auditoria de acesso, e exportacao completa dos dados.
+89 testes automatizados.
+
+Falta na fase 4: cobranca automatica pelo meio de pagamento (o caminho de baixa
+ja existe; falta o webhook do provedor chamar `registrarPagamento`) e os precos
+de verdade — os da tabela sao provisorios, como o plano exige.
+
+**Fase 5 em aberto** — contrato SaaS, LGPD, backup e restauracao por escritorio,
+SLA e piloto.
+
 ## Como rodar
 
 ```bash
@@ -55,7 +67,13 @@ Criar um escritorio e o primeiro administrador:
 node scripts/criar-escritorio.mjs alfa "Escritorio Alfa" admin@alfa.adv.br sua-senha-longa
 ```
 
-Contratar um modulo para ele (acao da plataforma, nao do escritorio):
+Criar um operador da plataforma (acesso ao painel `/plataforma`):
+
+```bash
+npm run criar-operador -- "Seu Nome" voce@birdjud.com.br senha-longa
+```
+
+Contratar um modulo para um escritorio (tambem da pelo painel do operador):
 
 ```bash
 node scripts/contratar-modulo.mjs alfa FINANCEIRO
@@ -66,7 +84,8 @@ A fila precisa de um processo proprio, ao lado do `next start`:
 
 ```bash
 npm run trabalhador          # consome a fila
-npm run espalhar APURAR_CONSUMO   # agenda um trabalho por escritorio
+npm run espalhar APURAR_CONSUMO     # mede o consumo do mes
+npm run espalhar REGUA_DE_COBRANCA  # gera fatura, marca atraso, suspende
 ```
 
 Em desenvolvimento, aponte os subdominios no `/etc/hosts`
@@ -116,7 +135,12 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/sessao.ts` | `exigirSessao()`: sessao + escritorio do endereco + modulo |
 | `src/lib/modulos.ts` | Ponto unico de modulo contratado (escritorio) |
 | `src/lib/papeis.ts` | Papel do usuario dentro do escritorio |
+| `src/lib/catalogo.ts` | Modulos, faixas e metricas — so constantes, sem servidor |
 | `src/lib/faixas.ts` | Limite de pessoas por faixa contratada |
+| `src/lib/precos.ts` | Tabela de precos (PROVISORIA) e regua de atraso |
+| `src/lib/cobranca.ts` | Teste, fatura, atraso, suspensao e pagamento |
+| `src/lib/plataforma.ts` | Guarda do operador e auditoria de acesso |
+| `src/lib/exportacao.ts` | Exportacao completa dos dados do escritorio |
 | `src/lib/conectores/` | Um conector por integracao: campos, resumo e teste |
 | `src/lib/integracao.ts` | Credenciais cifradas por escritorio |
 | `src/lib/consumo.ts` | Medicao mensal, franquia e excedente |
@@ -132,6 +156,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/conta.test.ts` | Troca de senha, 2FA e usuarios por escritorio (4 casos) |
 | `testes/fase2.test.ts` | Modulo, faixa, consumo e fila (19 casos) |
 | `testes/conectores.test.ts` | Conectores contra SMTP/HTTP locais (24 casos) |
+| `testes/fase4.test.ts` | Regua, fatura, pagamento e exportacao (19 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
@@ -157,3 +182,9 @@ pulada — em CI, o banco de teste e obrigatorio.
     cadastrou: so status, resumo mascarado e ultimo erro.
 13. Conector sem verificacao automatica diz isso na tela. Botao de testar que
     sempre responde "ok" e pior do que nao ter botao.
+14. Constante usada por componente de cliente mora em `catalogo.ts` ou
+    `auth-comum.ts`. Importar de um modulo que toca o Prisma arrasta o banco
+    para o bundle do navegador e quebra o build.
+15. Operador da plataforma e escritorio sao mundos separados: a sessao de um
+    nao vale no outro, e todo acesso do operador a um escritorio fica em
+    `AcessoSuporte`.

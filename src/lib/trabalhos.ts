@@ -7,6 +7,7 @@ import { comEscritorio, prismaPlataforma } from "./prisma";
 import { competenciaDe, definirConsumo } from "./consumo";
 import { moduloAtivo, type Modulo } from "./modulos";
 import { enfileirar } from "./fila";
+import { aplicarRegua } from "./cobranca";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -30,13 +31,24 @@ async function apurarConsumo({ escritorioId, dados }: Contexto): Promise<void> {
   await definirConsumo(escritorioId, "USUARIOS_ATIVOS", numeros.usuarios, competencia);
 }
 
+/**
+ * Passa a regua de cobranca: gera a fatura do mes quando o teste acabou e
+ * ajusta o status do escritorio conforme o atraso.
+ */
+async function ruaDeCobranca({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("REGUA_DE_COBRANCA exige escritorio.");
+  await aplicarRegua(escritorioId);
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   APURAR_CONSUMO: apurarConsumo,
+  REGUA_DE_COBRANCA: ruaDeCobranca,
 };
 
 /** Modulo exigido por tipo de trabalho. Sem modulo, so o nucleo. */
 const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   APURAR_CONSUMO: undefined,
+  REGUA_DE_COBRANCA: undefined,
 };
 
 /**
@@ -47,8 +59,15 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
  * vira "uma rotina por escritorio".
  */
 export async function espalhar(tipo: string, dados: Record<string, unknown> = {}): Promise<number> {
+  // A regua precisa alcancar tambem quem ja esta suspenso: e o pagamento
+  // dele que devolve o escritorio ao ar. Encerrado fica de fora sempre.
+  const alcance =
+    tipo === "REGUA_DE_COBRANCA"
+      ? ["TESTE", "ATIVO", "INADIMPLENTE", "SUSPENSO"]
+      : ["TESTE", "ATIVO", "INADIMPLENTE"];
+
   const escritorios = await prismaPlataforma().escritorio.findMany({
-    where: { status: { in: ["TESTE", "ATIVO", "INADIMPLENTE"] } },
+    where: { status: { in: alcance } },
     select: { id: true },
   });
 

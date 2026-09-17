@@ -4,28 +4,8 @@
 // do menu, faz a rota responder 403 e a rotina nem roda para o escritorio.
 import { comEscritorio } from "./prisma";
 
-export const MODULOS = [
-  "NUCLEO",
-  "PUBLICACOES_DJEN",
-  "PUBLICACOES_AASP",
-  "WHATSAPP",
-  "EMAIL",
-  "NFSE",
-  "COBRANCAS",
-  "FINANCEIRO",
-  "ASSINATURA",
-  "IA",
-  "NUVEM",
-] as const;
-
-export type Modulo = (typeof MODULOS)[number];
-
-/** Modulos que so funcionam se outro estiver contratado junto. */
-export const DEPENDENCIAS: Partial<Record<Modulo, Modulo[][]>> = {
-  // lembretes e resumo diario exigem WhatsApp OU E-mail
-  WHATSAPP: [],
-  NFSE: [],
-};
+export { MODULOS, type Modulo } from "./catalogo";
+import type { Modulo } from "./catalogo";
 
 export async function moduloAtivo(escritorioId: string, modulo: Modulo): Promise<boolean> {
   if (modulo === "NUCLEO") return true;
