@@ -182,3 +182,47 @@ daquele trabalho.
 O trabalhador (`npm run trabalhador`) conecta com o papel do plano de controle,
 mas todo executor roda dentro de `comEscritorio()`: mesmo la, o codigo de negocio
 ve so o escritorio da vez.
+
+## Integracoes conectadas pelo escritorio (fase 3)
+
+Cada integracao e um **conector** (`src/lib/conectores/`) que declara os campos
+que pede, como resumir o que foi guardado sem vazar segredo, e como testar a
+conexao de verdade. A tela e as rotas so conhecem o registro — nao ha `if` por
+provedor espalhado pelo codigo.
+
+O caminho de uma conexao:
+
+1. o administrador do escritorio preenche o formulario do conector;
+2. a rota confere o modulo contratado e os campos obrigatorios;
+3. **testa antes de guardar** e grava credencial e veredito juntos;
+4. a credencial e cifrada em AES-256-GCM e nunca volta para a tela — nem para
+   quem a cadastrou. A tela mostra status, ultimo erro e quando foi verificada.
+
+A credencial fica guardada mesmo quando o teste falha, de proposito: o
+escritorio corrige o que faltou e testa de novo sem redigitar tudo. Quem vai
+*usar* a integracao, porem, nao pega credencial marcada com ERRO —
+`obterIntegracao()` a trata como ausente, a menos que se peca `mesmoComErro`
+(o que so a tela de integracoes faz, para poder testar de novo).
+
+### O que cada conector testa
+
+| Conector | Teste real |
+| --- | --- |
+| E-mail (SMTP) | abre a conexao e autentica (`verify()`) |
+| Asaas | `GET /myAccount` com `access_token` |
+| Autentique | `{ me { id email } }` por GraphQL com Bearer |
+| WhatsApp (Meta) | consulta o numero e le nome e nota de qualidade |
+| Certificado e-CNPJ | abre o PKCS#12 com a senha, le o titular e a validade |
+
+GraphQL responde 200 mesmo recusando o token, entao o conector do Autentique
+olha o corpo, nao so o codigo. Todas as chamadas tem tempo limite: integracao de
+terceiro que trava nao pode segurar a requisicao do escritorio nem um trabalho
+da fila.
+
+### Conectores que ainda nao testam sozinhos
+
+AASP (sem API de verificacao publica) e OneDrive/Google Drive (dependem de OAuth
+com o aplicativo registrado em cada provedor) estao no registro, mas dizem na
+tela que nao ha verificacao automatica. A nuvem nem formulario de credencial
+oferece: sem o OAuth, a conexao nao chegaria a existir, e um formulario ali
+seria teatro.

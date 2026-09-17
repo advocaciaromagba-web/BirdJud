@@ -30,8 +30,14 @@ de usuarios por faixa; medicao de consumo com franquia e excedente; e fila de
 trabalho no proprio PostgreSQL, com um trabalho em execucao por escritorio.
 46 testes automatizados.
 
-**Fase 3 em aberto** — integracoes conectadas pelo proprio escritorio
-(e-mail, nuvem, Autentique, Asaas, e-CNPJ, AASP, WhatsApp).
+**Fase 3 em andamento** — o escritorio conecta e testa as proprias integracoes
+pela tela, sem acesso ao servidor: e-mail (SMTP), Asaas, Autentique, WhatsApp
+(Cloud API) e certificado e-CNPJ. 70 testes automatizados.
+
+Falta na fase 3: OneDrive e Google Drive por OAuth (dependem do aplicativo
+registrado em cada provedor), verificacao automatica da AASP e o Embedded
+Signup da Meta com submissao dos modelos de mensagem — todos dependem das
+respostas externas da secao 11 do plano.
 
 ## Como rodar
 
@@ -111,6 +117,8 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/modulos.ts` | Ponto unico de modulo contratado (escritorio) |
 | `src/lib/papeis.ts` | Papel do usuario dentro do escritorio |
 | `src/lib/faixas.ts` | Limite de pessoas por faixa contratada |
+| `src/lib/conectores/` | Um conector por integracao: campos, resumo e teste |
+| `src/lib/integracao.ts` | Credenciais cifradas por escritorio |
 | `src/lib/consumo.ts` | Medicao mensal, franquia e excedente |
 | `src/lib/fila.ts` | Fila no PostgreSQL, um trabalho por escritorio |
 | `src/lib/trabalhos.ts` | O que cada trabalho faz e o espalhamento |
@@ -123,6 +131,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/autenticacao.test.ts` | Senha, 2FA, subdominio e sessao (13 casos) |
 | `testes/conta.test.ts` | Troca de senha, 2FA e usuarios por escritorio (4 casos) |
 | `testes/fase2.test.ts` | Modulo, faixa, consumo e fila (19 casos) |
+| `testes/conectores.test.ts` | Conectores contra SMTP/HTTP locais (24 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
@@ -144,3 +153,7 @@ pulada — em CI, o banco de teste e obrigatorio.
     so uma.
 11. Modulo e faixa sao contratados pela plataforma. O escritorio nao se
     concede um modulo nem muda a propria faixa.
+12. Credencial de integracao nunca volta para a tela, nem para quem a
+    cadastrou: so status, resumo mascarado e ultimo erro.
+13. Conector sem verificacao automatica diz isso na tela. Botao de testar que
+    sempre responde "ok" e pior do que nao ter botao.
