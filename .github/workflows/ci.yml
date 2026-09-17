@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+        ports: ["5432:5432"]
+
+    env:
+      PGPASSWORD: postgres
+      DATABASE_URL: postgresql://birdjud_app:app@localhost:5432/birdjud
+      DATABASE_URL_MIGRACAO: postgresql://birdjud_owner:owner@localhost:5432/birdjud
+      DATABASE_URL_PLATAFORMA: postgresql://birdjud_plataforma:plataforma@localhost:5432/birdjud
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Tres papeis: a bateria de isolamento so vale se a aplicacao nao for
+      # dona das tabelas nem superusuario.
+      - name: Preparar papeis do banco
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE birdjud_owner LOGIN PASSWORD 'owner' NOSUPERUSER NOBYPASSRLS;
+          CREATE ROLE birdjud_app LOGIN PASSWORD 'app' NOSUPERUSER NOBYPASSRLS;
+          CREATE ROLE birdjud_plataforma LOGIN PASSWORD 'plataforma' NOSUPERUSER BYPASSRLS;
+          GRANT birdjud_plataforma TO birdjud_owner;
+          CREATE DATABASE birdjud OWNER birdjud_owner;
+          SQL
+
+      - run: npx prisma generate
+      - run: npm run migrar
+      - run: npm run rls:aplicar
+      - run: npm run typecheck
+
+      # Obrigatoria antes de todo deploy.
+      - run: npm run teste:isolamento
+
+      - run: npm run build

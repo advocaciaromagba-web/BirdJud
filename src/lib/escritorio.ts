@@ -5,7 +5,7 @@
 // ha escritorio no contexto. Por isso ela nao usa o cliente Prisma com a trava
 // de escritorio: le a view "EscritorioPublico" (prisma/rls.sql), que expoe so
 // as colunas de marca e nenhuma de negocio.
-import { prismaPlataforma } from "./prisma";
+import { prismaSemEscritorio } from "./prisma";
 
 export type Marca = {
   id: string | null;
@@ -56,7 +56,7 @@ export function slugDoHost(host: string | null): string | null {
 }
 
 export async function escritorioPorSlug(slug: string): Promise<Marca | null> {
-  const linhas = await prismaPlataforma.$queryRaw<LinhaPublica[]>`
+  const linhas = await prismaSemEscritorio.$queryRaw<LinhaPublica[]>`
     SELECT "id", "slug", "nome", "status", "logoUrl", "corPrimaria", "corSecundaria",
            "telefoneAtendimento", "cidade"
     FROM "EscritorioPublico" WHERE "slug" = ${slug} LIMIT 1
@@ -67,7 +67,7 @@ export async function escritorioPorSlug(slug: string): Promise<Marca | null> {
 /** Marca para a casca da aplicacao. Sem escritorio, devolve a marca neutra. */
 export async function marcaDoEscritorio(escritorioId: string | null): Promise<Marca> {
   if (!escritorioId) return MARCA_NEUTRA;
-  const linhas = await prismaPlataforma.$queryRaw<LinhaPublica[]>`
+  const linhas = await prismaSemEscritorio.$queryRaw<LinhaPublica[]>`
     SELECT "id", "slug", "nome", "status", "logoUrl", "corPrimaria", "corSecundaria",
            "telefoneAtendimento", "cidade"
     FROM "EscritorioPublico" WHERE "id" = ${escritorioId} LIMIT 1

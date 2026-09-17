@@ -33,9 +33,31 @@ Detalhes que derrubam o RLS se esquecidos:
   pool de conexoes — e o que `comEscritorio()` garante;
 - migracoes rodam com outro usuario (`DATABASE_URL_MIGRACAO`).
 
-A view `EscritorioPublico` existe porque a tela de login precisa resolver
-`<slug>.birdjud.com.br` antes de haver sessao. Ela expoe **so** colunas de marca
-e nenhuma coluna de negocio — nao acrescentar colunas a ela.
+## Os tres papeis de banco
+
+| Papel | Para que serve | RLS |
+| --- | --- | --- |
+| `birdjud_owner` | migracoes e `prisma/rls.sql` | sujeito (`FORCE`) |
+| `birdjud_app` | a aplicacao (`prisma`, `prismaSemEscritorio`) | sujeito |
+| `birdjud_plataforma` | `prismaPlataforma()`: cadastro de escritorio, painel do operador, rotinas | **atravessa** (`BYPASSRLS`) |
+
+O plano de controle precisa de um papel que atravesse o RLS porque cadastrar um
+escritorio acontece quando ainda nao ha escritorio no contexto. Ele e o unico
+caminho privilegiado do sistema: nunca deve ser chamado a partir de uma rota de
+escritorio, e todo acesso de suporte a dados de um escritorio passa por
+`AcessoSuporte`.
+
+## A view EscritorioPublico
+
+A tela de login precisa resolver `<slug>.birdjud.com.br` antes de haver sessao.
+A view expoe **so** colunas de marca e nenhuma de negocio.
+
+Detalhe que custou um teste vermelho: a view precisa **pertencer a
+`birdjud_plataforma`**. Uma view roda com os privilegios do dono
+(`security_invoker = false`, o padrao) e `birdjud_owner` tambem esta sob
+`FORCE ROW LEVEL SECURITY` — se a view fosse dele, devolveria zero linhas e a
+tela de login ficaria sem marca. Como ela atravessa o RLS, nao acrescentar
+nenhuma coluna de negocio a ela.
 
 ## Modulos
 
@@ -52,5 +74,6 @@ cifradas em AES-256-GCM (`src/lib/segredo.ts`) e guardadas em `Integracao`.
 ## Bateria de isolamento
 
 `testes/isolamento.test.ts` cria dois escritorios e tenta ler, alterar e apagar
-dados do outro. Roda antes de todo deploy. Nenhuma rota entra no sistema sem
-estar coberta por ela.
+dados do outro — 10 casos, incluindo dois que driblam a trava 1 de proposito
+para provar que o RLS sozinho ja barra. Roda no CI a cada push e antes de todo
+deploy. Nenhuma rota entra no sistema sem estar coberta por ela.

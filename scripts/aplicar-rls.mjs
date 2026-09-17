@@ -1,7 +1,10 @@
-// Aplica prisma/rls.sql usando o usuario dono do banco (DATABASE_URL_MIGRACAO).
-// Uso: npm run rls:aplicar
+// Aplica prisma/rls.sql com o usuario dono do banco (DATABASE_URL_MIGRACAO).
+//
+// Usa o driver pg em vez de chamar psql: a imagem do Railway nao traz o
+// cliente de linha de comando do PostgreSQL. E idempotente — pode rodar a
+// cada deploy, depois das migracoes.
 import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import pg from "pg";
 
 const url = process.env.DATABASE_URL_MIGRACAO;
 if (!url) {
@@ -10,8 +13,15 @@ if (!url) {
 }
 
 const sql = readFileSync(new URL("../prisma/rls.sql", import.meta.url), "utf8");
-execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-f", "-"], {
-  input: sql,
-  stdio: ["pipe", "inherit", "inherit"],
-});
-console.log("RLS aplicado.");
+const cliente = new pg.Client({ connectionString: url });
+
+try {
+  await cliente.connect();
+  await cliente.query(sql);
+  console.log("RLS aplicado.");
+} catch (erro) {
+  console.error("Falha ao aplicar o RLS:", erro.message);
+  process.exitCode = 1;
+} finally {
+  await cliente.end();
+}

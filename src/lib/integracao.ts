@@ -1,7 +1,7 @@
 // Credenciais por escritorio — substitui o process.env.X dos sistemas de
 // escritorio unico. Toda integracao (WhatsApp, Asaas, AASP, Autentique, SMTP,
 // OneDrive, Google, e-CNPJ) e lida por aqui.
-import { comEscritorio } from "./prisma";
+import { comEscritorio, semEscritorio } from "./prisma";
 import { cifrar, decifrar } from "./segredo";
 
 export type TipoIntegracao =
@@ -42,7 +42,7 @@ export async function salvarIntegracao(
   return comEscritorio(escritorioId, (db) =>
     db.integracao.upsert({
       where: { escritorioId_tipo: { escritorioId, tipo } },
-      create: { tipo, dados: pacote, status },
+      create: semEscritorio({ tipo, dados: pacote, status }),
       update: { dados: pacote, status, erro: null },
     })
   );

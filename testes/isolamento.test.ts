@@ -6,7 +6,14 @@
 // Precisa de um banco de testes com o schema aplicado E com prisma/rls.sql
 // rodado (npm run rls:aplicar). Sem DATABASE_URL, os testes sao pulados.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comEscritorio, prisma, prismaPlataforma } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prisma,
+  prismaPlataforma,
+  prismaSemEscritorio,
+  semEscritorio,
+} from "../src/lib/prisma";
+import { escritorioPorSlug } from "../src/lib/escritorio";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -17,29 +24,29 @@ let clienteDeBeta = "";
 
 d("isolamento entre escritorios", () => {
   beforeAll(async () => {
-    const a = await prismaPlataforma.escritorio.create({
+    const a = await prismaPlataforma().escritorio.create({
       data: { slug: `alfa-${Date.now()}`, nome: "Escritorio Alfa" },
     });
-    const b = await prismaPlataforma.escritorio.create({
+    const b = await prismaPlataforma().escritorio.create({
       data: { slug: `beta-${Date.now()}`, nome: "Escritorio Beta" },
     });
     alfa = a.id;
     beta = b.id;
 
     await comEscritorio(alfa, (db) =>
-      db.cliente.create({ data: { nome: "Cliente de Alfa" } })
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Alfa" }) })
     );
     const c = await comEscritorio(beta, (db) =>
-      db.cliente.create({ data: { nome: "Cliente de Beta" } })
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Beta" }) })
     );
     clienteDeBeta = c.id;
   });
 
   afterAll(async () => {
     for (const id of [alfa, beta]) {
-      if (id) await prismaPlataforma.escritorio.delete({ where: { id } }).catch(() => {});
+      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
     }
-    await prismaPlataforma.$disconnect();
+    await prismaPlataforma().$disconnect();
   });
 
   it("consulta fora de comEscritorio() nao roda", async () => {
@@ -84,6 +91,31 @@ d("isolamento entre escritorios", () => {
       db.cliente.create({ data: { nome: "Forjado", escritorioId: beta } as never })
     );
     expect(criado.escritorioId).toBe(alfa);
+  });
+
+  it("trava 2 sozinha: sem app.escritorio_id o banco nao devolve nada", async () => {
+    // Driblando a trava de codigo de proposito: conexao da aplicacao, sem a
+    // extensao e fora de comEscritorio(). So o RLS esta protegendo aqui.
+    const linhas = await prismaSemEscritorio.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "Cliente"
+    `;
+    expect(linhas).toHaveLength(0);
+  });
+
+  it("trava 2 sozinha: insercao sem app.escritorio_id e recusada", async () => {
+    await expect(
+      prismaSemEscritorio.$executeRaw`
+        INSERT INTO "Cliente" ("id", "escritorioId", "nome", "atualizadoEm")
+        VALUES ('forjado', ${beta}, 'Forjado', now())
+      `
+    ).rejects.toThrow();
+  });
+
+  it("marca do subdominio e legivel antes do login, sem vazar negocio", async () => {
+    const slug = (await prismaPlataforma().escritorio.findUnique({ where: { id: alfa } }))!.slug;
+    const marca = await escritorioPorSlug(slug);
+    expect(marca?.nome).toBe("Escritorio Alfa");
+    expect(marca).not.toHaveProperty("cnpj");
   });
 
   it("RLS barra a consulta crua quando app.escritorio_id e de outro escritorio", async () => {

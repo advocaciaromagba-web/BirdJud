@@ -92,8 +92,47 @@ export async function comEscritorio<T>(
 }
 
 /**
- * Acesso sem escritorio, so para a plataforma (cadastro de escritorio, painel
- * do operador, rotinas que percorrem escritorios). Nao passa pela trava de
- * codigo — use o minimo possivel e nunca a partir de uma rota de escritorio.
+ * Marca um payload de create/upsert como "o escritorio vem da extensao".
+ *
+ * Em tempo de execucao a extensao acima injeta escritorioId; os tipos gerados
+ * pelo Prisma, porem, continuam exigindo o campo. Este helper reconcilia os
+ * dois sem afrouxar a checagem dos demais campos: nome errado, campo faltando
+ * ou tipo trocado continuam dando erro de compilacao.
+ *
+ *   db.cliente.create({ data: semEscritorio({ nome: "Fulano" }) })
  */
-export const prismaPlataforma = base;
+export function semEscritorio<T extends Record<string, unknown>>(
+  dados: T
+): T & { escritorioId: string } {
+  return dados as T & { escritorioId: string };
+}
+
+/**
+ * Mesma conexao da aplicacao (DATABASE_URL), sem a trava 1.
+ *
+ * O RLS continua valendo, entao isto NAO e um atalho para ver dados de outro
+ * escritorio: serve para o que legitimamente nao tem escritorio no contexto,
+ * como ler a view EscritorioPublico para resolver o subdominio antes do login.
+ */
+export const prismaSemEscritorio = base;
+
+/**
+ * Plano de controle: cadastro de escritorio, painel do operador da plataforma
+ * e rotinas que percorrem escritorios.
+ *
+ * Conecta com birdjud_plataforma, o unico papel com BYPASSRLS — as duas travas
+ * ficam de fora. Nunca chamar a partir de uma rota de escritorio; todo acesso
+ * de suporte a dados de um escritorio deve passar por AcessoSuporte.
+ */
+let clientePlataforma: PrismaClient | undefined;
+
+export function prismaPlataforma(): PrismaClient {
+  const url = process.env.DATABASE_URL_PLATAFORMA;
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL_PLATAFORMA nao definida. O plano de controle precisa do papel birdjud_plataforma (BYPASSRLS)."
+    );
+  }
+  clientePlataforma ??= new PrismaClient({ datasources: { db: { url } } });
+  return clientePlataforma;
+}
