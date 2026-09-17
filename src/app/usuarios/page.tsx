@@ -1,7 +1,9 @@
-import { redirect } from "next/navigation";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirAdmin } from "@/lib/sessao";
+import { exigirAdmin, SemSessao } from "@/lib/sessao";
 import { SemPermissao } from "@/lib/papeis";
+import { redirect } from "next/navigation";
+import { modulosAtivos } from "@/lib/modulos";
+import { usoDaFaixa } from "@/lib/faixas";
 import { Navegacao } from "@/componentes/Navegacao";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 
@@ -16,6 +18,7 @@ export default async function PaginaUsuarios() {
   try {
     contexto = await exigirAdmin();
   } catch (erro) {
+    if (erro instanceof SemSessao) redirect("/login");
     if (erro instanceof SemPermissao) {
       return (
         <main className="mx-auto max-w-2xl p-10">
@@ -26,9 +29,11 @@ export default async function PaginaUsuarios() {
         </main>
       );
     }
-    redirect("/login");
+    throw erro;
   }
 
+  const modulos = await modulosAtivos(contexto.escritorioId);
+  const uso = await usoDaFaixa(contexto.escritorioId);
   const usuarios = await comEscritorio(contexto.escritorioId, (db) =>
     db.usuario.findMany({
       orderBy: { nome: "asc" },
@@ -46,12 +51,21 @@ export default async function PaginaUsuarios() {
 
   return (
     <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} />
+      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
       <main className="mx-auto max-w-3xl p-8">
         <h1 className="text-2xl font-bold">Usuarios</h1>
         <p className="mt-1 text-sm text-neutral-500">
           A senha definida aqui e provisoria: o usuario a troca em Minha conta.
         </p>
+
+        {/* A faixa limita pessoas; quem esta inativo nao ocupa lugar. */}
+        <div className="mt-4 rounded border border-neutral-200 p-4 text-sm">
+          <p className="font-semibold">Faixa {uso.rotulo}</p>
+          <p className="mt-1 text-neutral-600">
+            Advogados: {uso.advogados.usados} de {uso.advogados.limite} · Apoio:{" "}
+            {uso.apoio.usados} de {uso.apoio.limite}
+          </p>
+        </div>
 
         <FormularioCriar
           rota="/api/usuarios"

@@ -1,19 +1,39 @@
 import Link from "next/link";
+import type { Modulo } from "@/lib/modulos";
 import { Sair } from "./Sair";
 
-const AREAS = [
+type Area = { href: string; rotulo: string; modulo?: Modulo; soAdmin?: boolean };
+
+const AREAS: Area[] = [
   { href: "/", rotulo: "Painel" },
   { href: "/clientes", rotulo: "Clientes" },
   { href: "/processos", rotulo: "Processos" },
   { href: "/agenda", rotulo: "Agenda" },
+  { href: "/financeiro", rotulo: "Financeiro", modulo: "FINANCEIRO" },
+  { href: "/usuarios", rotulo: "Usuarios", soAdmin: true },
   { href: "/conta", rotulo: "Minha conta" },
 ];
 
-/** Areas so de administrador. */
-const AREAS_ADMIN = [{ href: "/usuarios", rotulo: "Usuarios" }];
-
-export function Navegacao({ nomeEscritorio, papel }: { nomeEscritorio: string; papel: string }) {
-  const areas = papel === "ADMIN" ? [...AREAS, ...AREAS_ADMIN] : AREAS;
+/**
+ * Menu com as duas camadas: area de modulo nao contratado nao aparece para
+ * escritorio nenhum, e area de admin nao aparece para quem nao e admin.
+ * Some do menu e, na rota, responde 403 — as duas coisas, nunca so uma.
+ */
+export function Navegacao({
+  nomeEscritorio,
+  papel,
+  modulos,
+}: {
+  nomeEscritorio: string;
+  papel: string;
+  modulos: Modulo[];
+}) {
+  const contratados = new Set(modulos);
+  const areas = AREAS.filter(
+    (area) =>
+      (!area.modulo || contratados.has(area.modulo)) &&
+      (!area.soAdmin || papel === "ADMIN")
+  );
 
   return (
     <header className="border-b border-neutral-200">

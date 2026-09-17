@@ -72,6 +72,23 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 Se a migracao ou o RLS falharem, o processo morre e o Railway nao promove a
 versao — de proposito: **nunca** subir a aplicacao com o RLS desatualizado.
 
+## 4b. O trabalhador da fila
+
+A fila precisa de um processo separado do site. No mesmo projeto Railway:
+
+1. **New** > **GitHub Repo** > o mesmo repositorio;
+2. em **Settings** > **Deploy** > Start Command: `npm run trabalhador`;
+3. as mesmas variaveis do servico web (ele usa `DATABASE_URL_PLATAFORMA`);
+4. sem dominio publico: o trabalhador nao atende HTTP.
+
+Para agendar as rotinas, um cron do Railway chamando
+`npm run espalhar APURAR_CONSUMO` — por exemplo, todo dia de madrugada. O
+espalhamento cria um trabalho por escritorio ativo; o trabalhador consome.
+
+Mais de um trabalhador pode rodar ao mesmo tempo: a reclamacao usa
+`FOR UPDATE SKIP LOCKED` e a regra de um trabalho por escritorio vale entre
+todos eles.
+
 ## 5. Dominio e subdominios
 
 Cada escritorio atende em `<slug>.birdjud.com.br`, entao o servico precisa de um

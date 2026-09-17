@@ -1,11 +1,13 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
+import { modulosAtivos } from "@/lib/modulos";
 import { Navegacao } from "@/componentes/Navegacao";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 
 export default async function PaginaProcessos() {
   const contexto = await contextoDaPagina();
 
+  const modulos = await modulosAtivos(contexto.escritorioId);
   const { processos, clientes } = await comEscritorio(contexto.escritorioId, async (db) => ({
     processos: await db.processo.findMany({
       orderBy: { criadoEm: "desc" },
@@ -17,7 +19,7 @@ export default async function PaginaProcessos() {
 
   return (
     <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} />
+      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
       <main className="mx-auto max-w-3xl p-8">
         <h1 className="text-2xl font-bold">Processos</h1>
 

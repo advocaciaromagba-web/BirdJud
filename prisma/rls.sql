@@ -22,6 +22,7 @@ DECLARE
     'Cliente',
     'Processo',
     'Compromisso',
+    'Lancamento',
     'AcessoSuporte'
   ];
 BEGIN
@@ -37,6 +38,17 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- Trabalho tem escritorioId NULO nos trabalhos da plataforma. A politica
+-- compara com o escritorio da sessao, entao a aplicacao ve so os seus e nunca
+-- os da plataforma (NULL = ... nao e verdadeiro). O trabalhador roda com
+-- birdjud_plataforma e enxerga todos.
+ALTER TABLE "Trabalho" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Trabalho" FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "isolamento_Trabalho" ON "Trabalho";
+CREATE POLICY "isolamento_Trabalho" ON "Trabalho"
+  USING ("escritorioId" = current_setting('app.escritorio_id', true))
+  WITH CHECK ("escritorioId" = current_setting('app.escritorio_id', true));
 
 -- Escritorio: a propria linha do escritorio tambem so e visivel para ele.
 ALTER TABLE "Escritorio" ENABLE ROW LEVEL SECURITY;

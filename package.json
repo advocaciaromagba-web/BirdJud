@@ -15,7 +15,9 @@
     "teste": "vitest run",
     "teste:isolamento": "vitest run testes/isolamento.test.ts",
     "migrar": "node scripts/migrar.mjs",
-    "start:producao": "npm run migrar && npm run rls:aplicar && next start"
+    "start:producao": "npm run migrar && npm run rls:aplicar && next start",
+    "trabalhador": "tsx scripts/trabalhador.ts",
+    "espalhar": "tsx scripts/espalhar-trabalho.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -27,6 +29,7 @@
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "tsx": "^4.23.13",
     "zod": "^3.23.8"
   },
   "devDependencies": {

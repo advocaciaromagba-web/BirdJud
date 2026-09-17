@@ -4,6 +4,7 @@ import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirAdmin, exigirSessao } from "@/lib/sessao";
 import { gerarHash } from "@/lib/senhas";
 import { PAPEIS } from "@/lib/papeis";
+import { exigirVagaNaFaixa, FaixaEsgotada } from "@/lib/faixas";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
 
 const novoUsuario = z.object({
@@ -52,6 +53,10 @@ export async function POST(req: Request) {
     }
 
     const { senha, email, papel, ...resto } = corpo.data;
+    // Quem conta para a faixa de advogados do escritorio.
+    const advogado = papel === "ADVOGADO" || papel === "ADMIN";
+    await exigirVagaNaFaixa(escritorioId, advogado);
+
     const senhaHash = await gerarHash(senha);
     const usuario = await comEscritorio(escritorioId, (db) =>
       db.usuario.create({
@@ -59,8 +64,7 @@ export async function POST(req: Request) {
           ...resto,
           email: email.toLowerCase(),
           papel,
-          // Quem conta para a faixa de advogados do escritorio.
-          advogado: papel === "ADVOGADO" || papel === "ADMIN",
+          advogado,
           senhaHash,
         }),
         select: { id: true, nome: true, email: true, papel: true },
@@ -68,6 +72,9 @@ export async function POST(req: Request) {
     );
     return NextResponse.json({ usuario }, { status: 201 });
   } catch (erro) {
+    if (erro instanceof FaixaEsgotada) {
+      return NextResponse.json({ erro: erro.message }, { status: erro.status });
+    }
     if (ehDuplicado(erro)) {
       return NextResponse.json(
         { erro: "Ja existe um usuario com este e-mail neste escritorio." },

@@ -3,6 +3,7 @@ import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { escritorioDoEndereco } from "@/lib/sessao";
 import { modulosAtivos } from "@/lib/modulos";
+import { competenciaDe, consumoDoMes } from "@/lib/consumo";
 import { MARCA_NEUTRA } from "@/lib/escritorio";
 import { Navegacao } from "@/componentes/Navegacao";
 
@@ -23,8 +24,9 @@ export default async function Painel() {
 
   const contexto = await contextoDaPagina();
 
-  const [modulos, numeros] = await Promise.all([
+  const [modulos, consumo, numeros] = await Promise.all([
     modulosAtivos(contexto.escritorioId),
+    consumoDoMes(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, async (db) => ({
       clientes: await db.cliente.count(),
       processos: await db.processo.count(),
@@ -40,7 +42,7 @@ export default async function Painel() {
 
   return (
     <>
-      <Navegacao nomeEscritorio={marca.nome} papel={contexto.papel} />
+      <Navegacao nomeEscritorio={marca.nome} papel={contexto.papel} modulos={modulos} />
       <main className="mx-auto max-w-3xl p-8">
         <h1 className="text-2xl font-bold">Painel</h1>
         <p className="mt-1 text-sm text-neutral-500">
@@ -59,6 +61,27 @@ export default async function Painel() {
             </Link>
           ))}
         </div>
+        {consumo.length > 0 ? (
+          <section className="mt-8">
+            <h2 className="font-semibold">Consumo de {competenciaDe()}</h2>
+            <ul className="mt-2 divide-y divide-neutral-200 text-sm">
+              {consumo.map((linha) => (
+                <li key={linha.metrica} className="flex justify-between gap-4 py-2">
+                  <span className="text-neutral-600">{linha.metrica}</span>
+                  <span className="tabular-nums">
+                    {linha.quantidade}
+                    {linha.franquia !== null ? ` de ${linha.franquia}` : ""}
+                    {linha.excedente > 0 ? (
+                      <span className="ml-2 text-amber-700">
+                        +{linha.excedente} excedente
+                      </span>
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </main>
     </>
   );

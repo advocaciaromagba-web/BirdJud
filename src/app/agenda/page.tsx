@@ -1,5 +1,6 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
+import { modulosAtivos } from "@/lib/modulos";
 import { Navegacao } from "@/componentes/Navegacao";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 
@@ -13,6 +14,7 @@ const TIPOS = [
 export default async function PaginaAgenda() {
   const contexto = await contextoDaPagina();
 
+  const modulos = await modulosAtivos(contexto.escritorioId);
   const { compromissos, processos } = await comEscritorio(contexto.escritorioId, async (db) => ({
     compromissos: await db.compromisso.findMany({
       where: { inicio: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
@@ -27,7 +29,7 @@ export default async function PaginaAgenda() {
 
   return (
     <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} />
+      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
       <main className="mx-auto max-w-3xl p-8">
         <h1 className="text-2xl font-bold">Agenda</h1>
         <p className="mt-1 text-sm text-neutral-500">Compromissos de hoje em diante.</p>

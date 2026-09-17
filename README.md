@@ -25,8 +25,13 @@ travas de isolamento e a bateria de teste, rodadas contra um PostgreSQL 16 real:
 telas de clientes, processos e agenda. 27 testes automatizados, mais um roteiro
 de fumaca rodado com a aplicacao no ar.
 
-**Fase 2 em aberto** — `ModuloContratado` aplicado a menu/rotas/rotinas, limite
-de usuarios por faixa, `ConsumoMensal` e rotinas em fila por escritorio.
+**Fase 2 concluida** — modulo contratado valendo em menu, rota e rotina; limite
+de usuarios por faixa; medicao de consumo com franquia e excedente; e fila de
+trabalho no proprio PostgreSQL, com um trabalho em execucao por escritorio.
+46 testes automatizados.
+
+**Fase 3 em aberto** — integracoes conectadas pelo proprio escritorio
+(e-mail, nuvem, Autentique, Asaas, e-CNPJ, AASP, WhatsApp).
 
 ## Como rodar
 
@@ -42,6 +47,20 @@ Criar um escritorio e o primeiro administrador:
 
 ```bash
 node scripts/criar-escritorio.mjs alfa "Escritorio Alfa" admin@alfa.adv.br sua-senha-longa
+```
+
+Contratar um modulo para ele (acao da plataforma, nao do escritorio):
+
+```bash
+node scripts/contratar-modulo.mjs alfa FINANCEIRO
+node scripts/contratar-modulo.mjs alfa WHATSAPP 500   # 500 mensagens de franquia
+```
+
+A fila precisa de um processo proprio, ao lado do `next start`:
+
+```bash
+npm run trabalhador          # consome a fila
+npm run espalhar APURAR_CONSUMO   # agenda um trabalho por escritorio
 ```
 
 Em desenvolvimento, aponte os subdominios no `/etc/hosts`
@@ -91,6 +110,11 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/sessao.ts` | `exigirSessao()`: sessao + escritorio do endereco + modulo |
 | `src/lib/modulos.ts` | Ponto unico de modulo contratado (escritorio) |
 | `src/lib/papeis.ts` | Papel do usuario dentro do escritorio |
+| `src/lib/faixas.ts` | Limite de pessoas por faixa contratada |
+| `src/lib/consumo.ts` | Medicao mensal, franquia e excedente |
+| `src/lib/fila.ts` | Fila no PostgreSQL, um trabalho por escritorio |
+| `src/lib/trabalhos.ts` | O que cada trabalho faz e o espalhamento |
+| `scripts/trabalhador.ts` | Processo que consome a fila |
 | `src/lib/respostas.ts` | Erro de dominio -> HTTP, em um lugar so |
 | `src/componentes/FormularioCriar.tsx` | Formulario de criacao das quatro telas |
 | `src/lib/integracao.ts` | Credenciais por escritorio |
@@ -98,6 +122,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/isolamento.test.ts` | Bateria de isolamento (10 casos) |
 | `testes/autenticacao.test.ts` | Senha, 2FA, subdominio e sessao (13 casos) |
 | `testes/conta.test.ts` | Troca de senha, 2FA e usuarios por escritorio (4 casos) |
+| `testes/fase2.test.ts` | Modulo, faixa, consumo e fila (19 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
@@ -115,3 +140,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 8. Rota que recebe id de outro registro (ex.: `clienteId`) confere que ele e
    deste escritorio antes de usar.
 9. Nenhuma rota devolve `senhaHash` nem `doisFatores`.
+10. Area de modulo some do menu **e** responde 403 na rota — as duas, nunca
+    so uma.
+11. Modulo e faixa sao contratados pela plataforma. O escritorio nao se
+    concede um modulo nem muda a propria faixa.

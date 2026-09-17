@@ -40,6 +40,8 @@ model Escritorio {
   clientes     Cliente[]
   processos    Processo[]
   compromissos Compromisso[]
+  lancamentos  Lancamento[]
+  trabalhos    Trabalho[]
   modulos      ModuloContratado[]
   integracoes  Integracao[]
   consumos     ConsumoMensal[]
@@ -199,4 +201,48 @@ model AcessoSuporte {
   operador OperadorPlataforma @relation(fields: [operadorId], references: [id])
 
   @@index([escritorioId])
+}
+
+// ---------------------------------------------------------------------------
+// Modulo FINANCEIRO — existe para o gate de modulo ter o que proteger
+// ---------------------------------------------------------------------------
+
+model Lancamento {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  descricao     String
+  valorCentavos Int // em centavos: dinheiro nunca em ponto flutuante
+  tipo          String // RECEITA | DESPESA
+  competencia   String // "2026-09"
+  pagoEm        DateTime?
+  criadoEm      DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId])
+  @@index([escritorioId, competencia])
+}
+
+// ---------------------------------------------------------------------------
+// Fila de trabalho — uma linha por trabalho, um trabalho por escritorio
+// ---------------------------------------------------------------------------
+
+model Trabalho {
+  id            String    @id @default(cuid())
+  escritorioId  String? // null = trabalho da propria plataforma
+  tipo          String // APURAR_CONSUMO | ...
+  dados         Json?
+  estado        String    @default("PENDENTE") // PENDENTE | EXECUTANDO | CONCLUIDO | FALHOU
+  tentativas    Int       @default(0)
+  maxTentativas Int       @default(3)
+  agendadoPara  DateTime  @default(now())
+  iniciadoEm    DateTime?
+  concluidoEm   DateTime?
+  erro          String?
+  criadoEm      DateTime  @default(now())
+
+  escritorio Escritorio? @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([estado, agendadoPara])
+  @@index([escritorioId, estado])
 }

@@ -1,11 +1,13 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
+import { modulosAtivos } from "@/lib/modulos";
 import { Navegacao } from "@/componentes/Navegacao";
 import { PainelConta } from "@/componentes/PainelConta";
 
 export default async function PaginaConta() {
   const contexto = await contextoDaPagina();
 
+  const modulos = await modulosAtivos(contexto.escritorioId);
   const usuario = await comEscritorio(contexto.escritorioId, (db) =>
     db.usuario.findFirst({
       where: { id: contexto.usuarioId },
@@ -15,7 +17,7 @@ export default async function PaginaConta() {
 
   return (
     <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} />
+      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
       <main className="mx-auto max-w-2xl p-8">
         <h1 className="text-2xl font-bold">Minha conta</h1>
         <p className="mt-1 text-sm text-neutral-500">

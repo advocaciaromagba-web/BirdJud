@@ -54,4 +54,6 @@ jobs:
       # Obrigatoria antes de todo deploy.
       - run: npm run teste:isolamento
 
+      - run: npm run teste
+
       - run: npm run build
