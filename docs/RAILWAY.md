@@ -96,7 +96,10 @@ Para agendar as rotinas, crons do Railway chamando:
 - `npm run espalhar PURGAR_ENCERRADOS` — semanal, apaga os dados de quem
   encerrou ha mais tempo que o prazo de retencao;
 - `npm run espalhar CAPTURAR_PUBLICACOES` — de madrugada, busca no DJEN as
-  publicacoes das OABs monitoradas.
+  publicacoes das OABs monitoradas;
+- `npm run espalhar AVISAR` — logo depois da captura, manda o resumo das
+  publicacoes e os lembretes de compromisso. A ordem importa: avisar antes de
+  capturar manda o resumo de ontem.
 
 > **A API do DJEN bloqueia acesso de fora do Brasil.** O servico do trabalhador
 > precisa rodar em regiao brasileira, ou toda captura falha com 403. E o "rele

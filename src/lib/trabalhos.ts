@@ -10,6 +10,7 @@ import { enfileirar } from "./fila";
 import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
+import { enviarAvisosPendentes, gerarAvisos } from "./avisos";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -69,7 +70,32 @@ async function capturar({ escritorioId }: Contexto): Promise<void> {
   }
 }
 
+/**
+ * Gera os avisos do escritorio e envia os pendentes.
+ *
+ * Gerar e enviar no mesmo trabalho porque o que interessa e o aviso CHEGAR;
+ * se o envio falhar, a geracao ja aconteceu e a proxima rodada tenta de novo
+ * sem duplicar.
+ */
+async function avisar({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("AVISAR exige escritorio.");
+
+  await gerarAvisos(escritorioId);
+  const envio = await enviarAvisosPendentes(escritorioId);
+
+  if (envio.semRemetente) {
+    // Nao e erro do trabalho: e configuracao que falta no escritorio. Repetir
+    // a tentativa nao ajuda, e marcar como falha encheria a fila de ruido.
+    console.log(`AVISAR ${escritorioId}: e-mail nao conectado, avisos aguardando.`);
+    return;
+  }
+  if (envio.falhas > 0) {
+    throw new Error(`${envio.falhas} aviso(s) nao enviado(s).`);
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
+  AVISAR: avisar,
   CAPTURAR_PUBLICACOES: capturar,
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
@@ -83,6 +109,7 @@ export const TRABALHOS_DA_PLATAFORMA = new Set(["PURGAR_ENCERRADOS"]);
 const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   // Escritorio que nao contratou publicacoes nao gera trabalho de captura.
   CAPTURAR_PUBLICACOES: "PUBLICACOES_DJEN",
+  AVISAR: "EMAIL",
   APURAR_CONSUMO: undefined,
   REGUA_DE_COBRANCA: undefined,
 };

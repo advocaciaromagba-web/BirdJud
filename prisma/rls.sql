@@ -23,6 +23,7 @@ DECLARE
     'Processo',
     'Compromisso',
     'Lancamento',
+    'Aviso',
     'OabMonitorada',
     'Publicacao',
     'Assinatura',

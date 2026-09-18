@@ -362,3 +362,49 @@ ALTER TABLE "Tabela" FORCE ROW LEVEL SECURITY;
 
 O Prisma roda cada migracao em uma transacao, entao uma falha no meio desfaz
 tambem a suspensao. Migracao que so mexe em estrutura nao precisa disso.
+
+## Modulo de e-mail: avisos
+
+O que faz a publicacao capturada de madrugada chegar ao advogado no mesmo dia.
+Dois avisos hoje: **resumo das publicacoes nao lidas** e **lembrete de
+compromisso** com 24h de antecedencia.
+
+### Gerar e enviar sao etapas separadas
+
+`gerarAvisos()` decide quem recebe o que e grava cada aviso como PENDENTE.
+`enviarAvisosPendentes()` pega os pendentes e entrega. Separadas:
+
+- a rotina pode rodar de novo sem duplicar — quem garante e a chave de
+  idempotencia `(escritorioId, chave)`, com `resumo:<dia>:<usuario>` e
+  `lembrete:<compromisso>:<usuario>`;
+- uma falha de SMTP nao faz o sistema **esquecer** que devia avisar. O aviso
+  continua la, e sai na proxima rodada.
+
+### Tres decisoes que mudam o comportamento
+
+**Sem publicacao nao lida, nao ha resumo.** Um e-mail vazio todo dia treina a
+equipe a ignorar o remetente — justamente o que nao se pode perder no dia em
+que houver uma intimacao urgente.
+
+**A urgencia vai no assunto** (`[URGENTE] 3 publicacoes novas`). E o assunto que
+decide se a pessoa abre agora ou depois do almoco.
+
+**E-mail nao conectado nao e falha.** Quando o escritorio ainda nao conectou o
+SMTP, o envio devolve `semRemetente` e os avisos ficam pendentes, **sem gastar
+tentativa**. Marcar como falha ali perderia o aviso de quem so configurou o
+e-mail depois.
+
+Falha de verdade (servidor recusou, caixa inexistente) conta tentativa e para em
+FALHOU no limite — mas a linha fica, para o escritorio poder ver que aquele
+aviso nunca chegou.
+
+### O remetente e do escritorio
+
+A mensagem sai do dominio que o escritorio conectou em Integracoes; o cliente
+recebe do advogado, nao da plataforma. A plataforma **nao tem remetente proprio
+para emprestar** — e escolha, nao limitacao: e-mail de escritorio de advocacia
+saindo de um dominio de terceiro e o caminho mais curto para a caixa de spam e
+para a desconfianca do cliente.
+
+O envio abre **uma** conexao SMTP por lote, nao uma por mensagem: abrir uma por
+mensagem e o jeito mais rapido de um provedor tratar o escritorio como abuso.

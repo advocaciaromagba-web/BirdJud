@@ -47,6 +47,7 @@ model Escritorio {
   compromissos Compromisso[]
   oabs         OabMonitorada[]
   publicacoes  Publicacao[]
+  avisos       Aviso[]
   assinatura   Assinatura?
   faturas      Fatura[]
   lancamentos  Lancamento[]
@@ -121,6 +122,12 @@ model Usuario {
   // Sessao emitida antes disto nao vale mais. Trocar a senha empurra a marca
   // para agora, e as sessoes ja abertas caem na proxima requisicao.
   sessoesValidasApos DateTime?
+
+  // O que esta pessoa quer receber por aviso.
+  recebeResumo    Boolean @default(true)
+  recebeLembretes Boolean @default(true)
+
+  avisos Aviso[]
   criadoEm     DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -381,4 +388,36 @@ model Publicacao {
   @@unique([escritorioId, idExterno])
   @@index([escritorioId, lida, arquivada])
   @@index([escritorioId, dataDisponibilizacao])
+}
+
+// ---------------------------------------------------------------------------
+// Avisos (modulo EMAIL hoje; WhatsApp usa a mesma fila depois)
+// ---------------------------------------------------------------------------
+
+model Aviso {
+  id           String  @id @default(cuid())
+  escritorioId String
+  usuarioId    String?
+
+  canal   String // EMAIL | WHATSAPP
+  tipo    String // RESUMO_PUBLICACOES | LEMBRETE_COMPROMISSO
+  // Chave de idempotencia: e ela que impede o mesmo aviso de sair duas vezes
+  // quando a rotina roda de novo, ou quando duas instancias rodam juntas.
+  chave   String
+  destino String
+
+  assunto String
+  corpo   String
+
+  estado     String    @default("PENDENTE") // PENDENTE | ENVIADO | FALHOU
+  tentativas Int       @default(0)
+  erro       String?
+  enviadoEm  DateTime?
+  criadoEm   DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  usuario    Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, chave])
+  @@index([escritorioId, estado])
 }

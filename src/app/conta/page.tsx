@@ -11,7 +11,14 @@ export default async function PaginaConta() {
   const usuario = await comEscritorio(contexto.escritorioId, (db) =>
     db.usuario.findFirst({
       where: { id: contexto.usuarioId },
-      select: { nome: true, email: true, papel: true, doisFatores: true },
+      select: {
+        nome: true,
+        email: true,
+        papel: true,
+        doisFatores: true,
+        recebeResumo: true,
+        recebeLembretes: true,
+      },
     })
   );
 
@@ -24,7 +31,12 @@ export default async function PaginaConta() {
           {usuario?.nome} · {usuario?.email} · {usuario?.papel}
         </p>
         {/* O segredo do 2FA nunca vai para a tela; so se ele esta ligado. */}
-        <PainelConta doisFatoresAtivo={Boolean(usuario?.doisFatores)} />
+        <PainelConta
+          doisFatoresAtivo={Boolean(usuario?.doisFatores)}
+          recebeResumo={usuario?.recebeResumo ?? true}
+          recebeLembretes={usuario?.recebeLembretes ?? true}
+          temModuloEmail={modulos.includes("EMAIL")}
+        />
       </main>
     </>
   );

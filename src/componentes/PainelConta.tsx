@@ -19,12 +19,84 @@ function Aviso({ texto, erro }: { texto: string | null; erro: boolean }) {
   return <p className={`text-sm ${erro ? "text-red-700" : "text-green-700"}`}>{texto}</p>;
 }
 
-export function PainelConta({ doisFatoresAtivo }: { doisFatoresAtivo: boolean }) {
+export function PainelConta({
+  doisFatoresAtivo,
+  recebeResumo,
+  recebeLembretes,
+  temModuloEmail,
+}: {
+  doisFatoresAtivo: boolean;
+  recebeResumo: boolean;
+  recebeLembretes: boolean;
+  temModuloEmail: boolean;
+}) {
   return (
     <div className="mt-8 grid gap-8">
+      {temModuloEmail ? (
+        <Avisos recebeResumo={recebeResumo} recebeLembretes={recebeLembretes} />
+      ) : null}
       <TrocarSenha />
       <DoisFatores ativo={doisFatoresAtivo} />
     </div>
+  );
+}
+
+function Avisos({
+  recebeResumo,
+  recebeLembretes,
+}: {
+  recebeResumo: boolean;
+  recebeLembretes: boolean;
+}) {
+  const router = useRouter();
+  const [resumo, setResumo] = useState(recebeResumo);
+  const [lembretes, setLembretes] = useState(recebeLembretes);
+  const [recado, setRecado] = useState<{ texto: string; erro: boolean } | null>(null);
+
+  async function guardar(novos: { recebeResumo: boolean; recebeLembretes: boolean }) {
+    setResumo(novos.recebeResumo);
+    setLembretes(novos.recebeLembretes);
+    const { ok } = await enviar("/api/conta/avisos", novos as unknown as Record<string, string>);
+    setRecado(
+      ok
+        ? { texto: "Preferencias guardadas.", erro: false }
+        : { texto: "Nao foi possivel guardar.", erro: true }
+    );
+    router.refresh();
+  }
+
+  return (
+    <section className="rounded border border-neutral-200 p-4">
+      <h2 className="font-semibold">Avisos por e-mail</h2>
+      <p className="mt-1 text-sm text-neutral-600">
+        Enviados pelo e-mail do proprio escritorio, uma vez por dia.
+      </p>
+      <div className="mt-3 grid gap-2 text-sm">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={resumo}
+            onChange={(e) =>
+              guardar({ recebeResumo: e.target.checked, recebeLembretes: lembretes })
+            }
+            className="accent-[var(--marca-primaria)]"
+          />
+          Resumo das publicacoes nao lidas
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={lembretes}
+            onChange={(e) =>
+              guardar({ recebeResumo: resumo, recebeLembretes: e.target.checked })
+            }
+            className="accent-[var(--marca-primaria)]"
+          />
+          Lembrete de compromisso, 24h antes
+        </label>
+      </div>
+      <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
+    </section>
   );
 }
 

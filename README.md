@@ -50,6 +50,10 @@ Falta na fase 4: cobranca automatica pelo meio de pagamento (o caminho de baixa
 ja existe; falta o webhook do provedor chamar `registrarPagamento`) e os precos
 de verdade — os da tabela sao provisorios, como o plano exige.
 
+**Modulo de e-mail (avisos)** — resumo diario das publicacoes nao lidas e
+lembrete de compromisso 24h antes, enviados pelo SMTP do proprio escritorio.
+Cada pessoa escolhe o que recebe em Minha conta.
+
 **Modulo de publicacoes (DJEN)** — captura por OAB monitorada, deduplicacao,
 triagem de prazo e urgencia, vinculo automatico com o processo cadastrado e
 tela de leitura. A API do CNJ bloqueia acesso de fora do Brasil, entao o
@@ -109,6 +113,7 @@ npm run espalhar APURAR_CONSUMO     # mede o consumo do mes
 npm run espalhar REGUA_DE_COBRANCA  # gera fatura, marca atraso, suspende
 npm run espalhar PURGAR_ENCERRADOS  # apaga quem encerrou ha mais que o prazo
 npm run espalhar CAPTURAR_PUBLICACOES  # busca no DJEN as OABs monitoradas
+npm run espalhar AVISAR             # resumo de publicacoes e lembretes por e-mail
 ```
 
 Conferir o mapeamento de campos do DJEN (rodar **do Brasil**):
@@ -171,6 +176,9 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/sessao.ts` | `exigirSessao()`: sessao + escritorio do endereco + modulo |
 | `src/lib/modulos.ts` | Ponto unico de modulo contratado (escritorio) |
 | `src/lib/papeis.ts` | Papel do usuario dentro do escritorio |
+| `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
+| `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
+| `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
 | `src/lib/djen.ts` | Cliente do DJEN e mapeamento dos campos da API |
 | `src/lib/leitura-publicacao.ts` | Prazo, urgencia e grafia do numero do processo |
 | `src/lib/publicacoes.ts` | Captura por OAB, deduplicacao e vinculo |
@@ -206,6 +214,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/fase4.test.ts` | Regua, fatura, pagamento e exportacao (19 casos) |
 | `testes/fase5.test.ts` | Backup/restauracao, aceite, purga e limite (24 casos) |
 | `testes/publicacoes.test.ts` | Triagem, cliente do DJEN e captura (28 casos) |
+| `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
