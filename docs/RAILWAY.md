@@ -99,7 +99,9 @@ Para agendar as rotinas, crons do Railway chamando:
   publicacoes das OABs monitoradas;
 - `npm run espalhar AVISAR` — logo depois da captura, manda o resumo das
   publicacoes e os lembretes de compromisso. A ordem importa: avisar antes de
-  capturar manda o resumo de ontem.
+  capturar manda o resumo de ontem;
+- `npm run espalhar SINCRONIZAR_COBRANCAS` — uma ou duas vezes por dia,
+  confere no Asaas o que foi pago e da baixa.
 
 > **A API do DJEN bloqueia acesso de fora do Brasil.** Quem resolve isso e o
 > rele da Vercel, fixado na regiao gru1 (Sao Paulo): configure `DJEN_RELE_URL` e

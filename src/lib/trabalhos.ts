@@ -10,6 +10,7 @@ import { enfileirar } from "./fila";
 import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
+import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
 import { enviarAvisosPendentes, gerarAvisos } from "./avisos";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
@@ -94,8 +95,35 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
   }
 }
 
+/**
+ * Confere no Asaas o que mudou nas cobrancas em aberto do escritorio.
+ *
+ * Escritorio sem conta conectada nao e falha do trabalho: e configuracao que
+ * falta, e repetir a tentativa nao ajudaria — vira aviso no log.
+ */
+async function sincronizarCobrancasDoEscritorio({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("SINCRONIZAR_COBRANCAS exige escritorio.");
+
+  let resultado;
+  try {
+    resultado = await sincronizarCobrancas(escritorioId);
+  } catch (erro) {
+    if (erro instanceof SemContaDeCobranca) {
+      console.log(`SINCRONIZAR_COBRANCAS ${escritorioId}: conta Asaas nao conectada.`);
+      return;
+    }
+    throw erro;
+  }
+
+  if (resultado.falhas.length > 0) {
+    const motivos = resultado.falhas.map((f) => `${f.cobranca}: ${f.motivo}`).join(" | ");
+    throw new Error(`Falha em ${resultado.falhas.length} cobranca(s) — ${motivos}`);
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
+  SINCRONIZAR_COBRANCAS: sincronizarCobrancasDoEscritorio,
   CAPTURAR_PUBLICACOES: capturar,
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
@@ -110,6 +138,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   // Escritorio que nao contratou publicacoes nao gera trabalho de captura.
   CAPTURAR_PUBLICACOES: "PUBLICACOES_DJEN",
   AVISAR: "EMAIL",
+  SINCRONIZAR_COBRANCAS: "COBRANCAS",
   APURAR_CONSUMO: undefined,
   REGUA_DE_COBRANCA: undefined,
 };

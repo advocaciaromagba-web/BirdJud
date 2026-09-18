@@ -55,6 +55,11 @@ rascunho de manifestacao. As instrucoes proibem inventar fundamentacao e tratam
 prazo como indicacao a conferir; a tela rotula tudo como rascunho. Consumo
 medido por escritorio em milhares de tokens.
 
+**Modulo de cobrancas (Asaas)** — o escritorio cobra o cliente dele pela conta
+Asaas dele: boleto, Pix ou cartao, com link de pagamento, conferencia do que foi
+pago e baixa automatica em receita no financeiro. O dinheiro nao passa pela
+plataforma em momento nenhum.
+
 **Modulo de e-mail (avisos)** — resumo diario das publicacoes nao lidas e
 lembrete de compromisso 24h antes, enviados pelo SMTP do proprio escritorio.
 Cada pessoa escolhe o que recebe em Minha conta.
@@ -120,6 +125,7 @@ npm run espalhar REGUA_DE_COBRANCA  # gera fatura, marca atraso, suspende
 npm run espalhar PURGAR_ENCERRADOS  # apaga quem encerrou ha mais que o prazo
 npm run espalhar CAPTURAR_PUBLICACOES  # busca no DJEN as OABs monitoradas
 npm run espalhar AVISAR             # resumo de publicacoes e lembretes por e-mail
+npm run espalhar SINCRONIZAR_COBRANCAS  # confere no Asaas o que foi pago
 ```
 
 Conferir o mapeamento de campos do DJEN (pelo rele, de qualquer lugar; sem as
@@ -190,6 +196,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
 | `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
 | `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
+| `src/lib/cobrancas.ts` | Cobranca do cliente pelo Asaas do escritorio, e a baixa |
 | `src/lib/djen.ts` | Cliente do DJEN, escolha do rele e mapeamento dos campos |
 | `rele/api/djen.ts` | Rele do DJEN na Vercel, regiao gru1 (implantado sozinho) |
 | `src/lib/leitura-publicacao.ts` | Prazo, urgencia e grafia do numero do processo |
@@ -197,7 +204,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/catalogo.ts` | Modulos, faixas e metricas — so constantes, sem servidor |
 | `src/lib/faixas.ts` | Limite de pessoas por faixa contratada |
 | `src/lib/precos.ts` | Tabela de precos (PROVISORIA) e regua de atraso |
-| `src/lib/cobranca.ts` | Teste, fatura, atraso, suspensao e pagamento |
+| `src/lib/cobranca.ts` | Plataforma cobrando do escritorio: teste, fatura, atraso, suspensao |
 | `src/lib/plataforma.ts` | Guarda do operador e auditoria de acesso |
 | `src/lib/exportacao.ts` | Exportacao completa dos dados do escritorio |
 | `src/lib/backup.ts` | Backup e restauracao por escritorio |
@@ -228,6 +235,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/publicacoes.test.ts` | Triagem, cliente do DJEN e captura (28 casos) |
 | `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
 | `testes/ia.test.ts` | Instrucoes, medicao, recusa e travas (17 casos) |
+| `testes/cobrancas.test.ts` | Emissao, baixa unica, cancelamento e isolamento (19 casos) |
 | `testes/rele.test.ts` | Token, parametro estranho e repasse do rele (15 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |

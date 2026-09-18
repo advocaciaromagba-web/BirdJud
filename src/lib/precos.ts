@@ -35,6 +35,9 @@ export const PRECO_DO_EXCEDENTE: Partial<Record<Metrica, number>> = {
   WHATSAPP_MSG: 12,
   EMAIL_ENVIADO: 2,
   NFSE_EMITIDA: 90,
+  // Por cobranca EMITIDA. O que o Asaas cobra por boleto/Pix pago e outra
+  // conta, direto entre o escritorio e o Asaas: nao passa pela plataforma.
+  COBRANCA_EMITIDA: 40,
   OAB_MONITORADA: 490,
   // Por MILHAR de tokens. O custo do modelo hoje fica na casa de 3 centavos
   // por milhar; este numero, como toda esta tabela, e provisorio.

@@ -52,6 +52,7 @@ export const METRICAS = [
   // um centavo por token seria centenas de vezes o custo do modelo.
   "IA_MIL_TOKENS",
   "NFSE_EMITIDA",
+  "COBRANCA_EMITIDA",
   "OAB_MONITORADA",
   "ARMAZENAMENTO_MB",
   "REGISTROS",
@@ -66,5 +67,6 @@ export const MODULO_DA_METRICA: Partial<Record<Metrica, Modulo>> = {
   EMAIL_ENVIADO: "EMAIL",
   IA_MIL_TOKENS: "IA",
   NFSE_EMITIDA: "NFSE",
+  COBRANCA_EMITIDA: "COBRANCAS",
   OAB_MONITORADA: "PUBLICACOES_DJEN",
 };

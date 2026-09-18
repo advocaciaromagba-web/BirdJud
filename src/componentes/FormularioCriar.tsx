@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export type Campo = {
   nome: string;
   rotulo: string;
-  tipo?: "text" | "email" | "password" | "datetime-local" | "select";
+  tipo?: "text" | "email" | "password" | "date" | "datetime-local" | "select";
   obrigatorio?: boolean;
   opcoes?: { valor: string; rotulo: string }[];
 };

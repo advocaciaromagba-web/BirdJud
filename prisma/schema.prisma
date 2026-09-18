@@ -52,6 +52,7 @@ model Escritorio {
   assinatura   Assinatura?
   faturas      Fatura[]
   lancamentos  Lancamento[]
+  cobrancas    Cobranca[]
   trabalhos    Trabalho[]
   modulos      ModuloContratado[]
   integracoes  Integracao[]
@@ -145,11 +146,16 @@ model Cliente {
   email        String?
   telefone     String?
   endereco     Json?
+  // Id do mesmo cliente na conta Asaas DO ESCRITORIO. Guardado para nao criar
+  // um cadastro novo a cada cobranca. Nao e dado nosso: some junto com o
+  // cliente e nao vale entre escritorios.
+  idNoAsaas    String?
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processos  Processo[]
+  cobrancas  Cobranca[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -171,6 +177,7 @@ model Processo {
   cliente      Cliente?      @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   compromissos Compromisso[]
   publicacoes  Publicacao[]
+  cobrancas    Cobranca[]
 
   @@unique([escritorioId, numero])
   @@index([escritorioId])
@@ -280,6 +287,44 @@ model Lancamento {
 
   @@index([escritorioId])
   @@index([escritorioId, competencia])
+}
+
+// ---------------------------------------------------------------------------
+// Cobrancas do escritorio para o cliente dele (modulo COBRANCAS)
+//
+// Nada a ver com Fatura, que e a plataforma cobrando do escritorio. Aqui o
+// escritorio cobra o cliente dele, pela conta Asaas dele.
+// ---------------------------------------------------------------------------
+
+model Cobranca {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  clienteId     String
+  processoId    String?
+  descricao     String
+  valorCentavos Int // em centavos: dinheiro nunca em ponto flutuante
+  vencimento    DateTime
+  forma         String // BOLETO | PIX | CARTAO | QUALQUER
+  status        String    @default("ABERTA") // ABERTA | PAGA | VENCIDA | CANCELADA | ESTORNADA
+  // Id da cobranca na conta Asaas do escritorio. E a chave da sincronizacao.
+  idNoAsaas     String
+  linkPagamento String?
+  linkBoleto    String?
+  pagoEm        DateTime?
+  valorPagoCentavos Int?
+  // Lancamento de receita gerado na baixa. Guardado para a baixa nao repetir.
+  lancamentoId  String?
+  sincronizadoEm DateTime?
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+
+  @@unique([escritorioId, idNoAsaas])
+  @@index([escritorioId, status])
+  @@index([escritorioId, vencimento])
 }
 
 // ---------------------------------------------------------------------------

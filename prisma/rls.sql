@@ -24,6 +24,7 @@ DECLARE
     'Compromisso',
     'Lancamento',
     'AnaliseIA',
+    'Cobranca',
     'Aviso',
     'OabMonitorada',
     'Publicacao',

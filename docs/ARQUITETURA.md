@@ -297,6 +297,45 @@ de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencia
 cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
 escritorio, e um arquivo desses circula por e-mail.
 
+## Modulo de cobrancas (Asaas)
+
+O escritorio cobra o **cliente dele**, pela conta Asaas **dele**. Nao confundir
+com `src/lib/cobranca.ts` (singular), que e a plataforma cobrando do escritorio:
+sao dois assuntos com nome parecido e nenhuma ligacao. Aqui o dinheiro nao passa
+pela plataforma em momento nenhum — a chave de API e do escritorio, a conta que
+recebe e do escritorio, e o que guardamos e o espelho do que o Asaas respondeu.
+
+### Tres decisoes que moldaram o modulo
+
+**Primeiro o Asaas, depois o nosso banco.** Se gravassemos a cobranca antes de
+emitir, uma falha de rede deixaria cobranca nossa sem par do outro lado — e o
+escritorio cobraria duas vezes ao repetir. Falhando na emissao, nao sobra nada.
+
+**Conferencia puxada, nao webhook.** Um webhook por escritorio significaria um
+endereco e um segredo por conta Asaas, cada um configurado por gente diferente,
+para receber dinheiro de terceiro. A fila pergunta: `SINCRONIZAR_COBRANCAS`
+percorre as cobrancas em aberto e confere uma a uma. Cobranca que falha nao
+derruba as outras — o motivo volta na lista do trabalho.
+
+**Status que nao conhecemos nao vira status nosso.** O mapa em `statusNosso`
+cobre os estados documentados do Asaas; qualquer outro deixa a cobranca como
+esta. Um estado novo cair em ABERTA por descuido seria pior que ficar parado e
+aparecer na conferencia.
+
+### Baixa no financeiro
+
+Cobranca paga gera um lancamento de RECEITA, uma vez so: o id do lancamento fica
+gravado na cobranca, e a sincronizacao seguinte nao repete. A baixa so acontece
+com o modulo FINANCEIRO contratado — sem ele o escritorio nao tem livro-caixa, e
+criar linha que ele nao pode ver seria dado orfao. A cobranca fica marcada como
+paga de qualquer jeito.
+
+### O que fica de fora
+
+Estorno, negociacao e cancelamento de recebimento continuam no painel do Asaas.
+Cobranca ja paga nao se cancela por aqui, e a mensagem diz onde e. Nao vale
+reimplementar meia gestao financeira por cima da API de outro.
+
 ## Modulo de publicacoes (DJEN)
 
 Publicacoes vem **so do DJEN**, a API Comunica do CNJ. O escritorio cadastra as
