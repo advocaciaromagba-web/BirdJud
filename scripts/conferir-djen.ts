@@ -2,13 +2,14 @@
 //
 //   npm run conferir-djen -- <numeroOab> <UF>
 //
-// PRECISA RODAR DO BRASIL: a API do CNJ bloqueia por pais (CloudFront). De
-// fora, a resposta e 403 — o proprio script avisa quando e esse o caso.
+// Com DJEN_RELE_URL e DJEN_RELE_TOKEN no ambiente, a consulta sai pelo rele da
+// Vercel e o script roda de qualquer lugar. Sem eles, vai direto ao CNJ e so
+// funciona de dentro do Brasil (de fora a resposta e 403, e o script avisa).
 //
 // Ele imprime, lado a lado, o item cru e o que o nosso conversor extraiu.
 // Campo que sair vazio e mapeamento errado, e o lugar de corrigir e
 // src/lib/djen.ts — so ele conhece os nomes de campo da API.
-import { baseDjen, comoData, converter } from "../src/lib/djen";
+import { comoData, converter, destinoDaConsulta, releDjen } from "../src/lib/djen";
 import { triar } from "../src/lib/leitura-publicacao";
 
 const DIA = 24 * 60 * 60 * 1000;
@@ -31,14 +32,22 @@ async function main(): Promise<void> {
     itensPorPagina: "3",
   });
 
-  const url = `${baseDjen()}/comunicacao?${parametros}`;
-  console.log(`Consultando ${url}\n`);
+  const destino = destinoDaConsulta(parametros);
+  const peloRele = releDjen() !== null;
+  console.log(`Consultando ${destino.url}`);
+  console.log(peloRele ? "Saindo pelo rele da Vercel.\n" : "Indo direto ao CNJ.\n");
 
-  const resposta = await fetch(url, { headers: { Accept: "application/json" } });
+  const resposta = await fetch(destino.url, { headers: destino.cabecalhos });
 
+  if (resposta.status === 401 && peloRele) {
+    console.error("401: o rele recusou o token. Confira DJEN_RELE_TOKEN.");
+    process.exit(1);
+  }
   if (resposta.status === 403) {
     console.error(
-      "403: a API bloqueia acesso de fora do Brasil. Rode este script de uma maquina brasileira."
+      peloRele
+        ? "403 mesmo pelo rele: confira se o projeto na Vercel esta fixado na regiao gru1."
+        : "403: a API bloqueia acesso de fora do Brasil. Configure DJEN_RELE_URL ou rode do Brasil."
     );
     process.exit(1);
   }

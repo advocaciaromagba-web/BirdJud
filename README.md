@@ -61,9 +61,10 @@ Cada pessoa escolhe o que recebe em Minha conta.
 
 **Modulo de publicacoes (DJEN)** — captura por OAB monitorada, deduplicacao,
 triagem de prazo e urgencia, vinculo automatico com o processo cadastrado e
-tela de leitura. A API do CNJ bloqueia acesso de fora do Brasil, entao o
-trabalhador precisa rodar em infraestrutura brasileira; o mapeamento de campos
-espera conferencia com `npm run conferir-djen`, rodado do Brasil.
+tela de leitura. A API do CNJ bloqueia acesso de fora do Brasil; quem resolve
+isso e o rele da Vercel na regiao gru1 (`rele/`, ver
+[docs/RELE-DJEN.md](docs/RELE-DJEN.md)), entao a aplicacao roda em qualquer
+regiao. O mapeamento de campos espera conferencia com `npm run conferir-djen`.
 
 **Fase 5 entregue na parte de codigo** — minutas de contrato, termos, acordo de
 LGPD, SLA e politica de privacidade; aceite registrado no cadastro com versao,
@@ -121,9 +122,12 @@ npm run espalhar CAPTURAR_PUBLICACOES  # busca no DJEN as OABs monitoradas
 npm run espalhar AVISAR             # resumo de publicacoes e lembretes por e-mail
 ```
 
-Conferir o mapeamento de campos do DJEN (rodar **do Brasil**):
+Conferir o mapeamento de campos do DJEN (pelo rele, de qualquer lugar; sem as
+duas variaveis, vai direto ao CNJ e so funciona do Brasil):
 
 ```bash
+DJEN_RELE_URL="https://<projeto>.vercel.app/api/djen" \
+DJEN_RELE_TOKEN="<token>" \
 npm run conferir-djen -- 123456 SP
 ```
 
@@ -154,7 +158,7 @@ O RLS so vale se a aplicacao nao for dona das tabelas nem superusuario. Rode
 | `birdjud_app` | a aplicacao | `DATABASE_URL` | sujeito |
 | `birdjud_plataforma` | cadastro de escritorio, painel do operador, rotinas | `DATABASE_URL_PLATAFORMA` | **atravessa** (`BYPASSRLS`) |
 
-Deploy no Railway: `docs/RAILWAY.md`.
+Deploy no Railway: `docs/RAILWAY.md`. Rele do DJEN na Vercel: `docs/RELE-DJEN.md`.
 
 ## Testes
 
@@ -186,7 +190,8 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
 | `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
 | `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
-| `src/lib/djen.ts` | Cliente do DJEN e mapeamento dos campos da API |
+| `src/lib/djen.ts` | Cliente do DJEN, escolha do rele e mapeamento dos campos |
+| `rele/api/djen.ts` | Rele do DJEN na Vercel, regiao gru1 (implantado sozinho) |
 | `src/lib/leitura-publicacao.ts` | Prazo, urgencia e grafia do numero do processo |
 | `src/lib/publicacoes.ts` | Captura por OAB, deduplicacao e vinculo |
 | `src/lib/catalogo.ts` | Modulos, faixas e metricas — so constantes, sem servidor |
@@ -223,6 +228,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/publicacoes.test.ts` | Triagem, cliente do DJEN e captura (28 casos) |
 | `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
 | `testes/ia.test.ts` | Instrucoes, medicao, recusa e travas (17 casos) |
+| `testes/rele.test.ts` | Token, parametro estranho e repasse do rele (15 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 

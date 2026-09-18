@@ -101,9 +101,11 @@ Para agendar as rotinas, crons do Railway chamando:
   publicacoes e os lembretes de compromisso. A ordem importa: avisar antes de
   capturar manda o resumo de ontem.
 
-> **A API do DJEN bloqueia acesso de fora do Brasil.** O servico do trabalhador
-> precisa rodar em regiao brasileira, ou toda captura falha com 403. E o "rele
-> no Brasil" do plano — confirmado na pratica, nao suposto.
+> **A API do DJEN bloqueia acesso de fora do Brasil.** Quem resolve isso e o
+> rele da Vercel, fixado na regiao gru1 (Sao Paulo): configure `DJEN_RELE_URL` e
+> `DJEN_RELE_TOKEN` no ambiente e o trabalhador pode rodar em qualquer regiao.
+> Sem o rele, a captura so funciona de regiao brasileira, ou falha com 403.
+> Passo a passo em [RELE-DJEN.md](RELE-DJEN.md).
 
 O espalhamento cria um trabalho por escritorio; o trabalhador consome. Sem esse
 cron a regua nao roda, e ninguem e faturado nem suspenso.

@@ -305,15 +305,25 @@ OABs que quer monitorar; a fila roda uma captura por escritorio.
 ### Duas coisas descobertas ao construir
 
 **A API bloqueia por pais.** De fora do Brasil a resposta e 403 (CloudFront).
-Isso confirma na pratica o "rele no Brasil" que o plano previa: o trabalhador da
-fila precisa rodar em infraestrutura brasileira, e o cliente traduz o 403 nessa
-mensagem em vez de um erro generico.
+Isso confirma na pratica o "rele no Brasil" que o plano previa — e o rele existe:
+uma funcao unica na Vercel (`rele/api/djen.ts`), fixada na regiao gru1 (Sao
+Paulo). A aplicacao chama o rele, o rele chama o CNJ. Nao e proxy aberto: o
+destino esta dentro da funcao, so a consulta de comunicacoes passa, cada
+parametro e conferido contra um formato, e sem o token da plataforma nao passa
+nada. Sem `RELE_TOKEN` configurado ele responde 503 em vez de repassar — falha
+fechada. Detalhes e publicacao em [RELE-DJEN.md](RELE-DJEN.md).
 
-**O mapeamento de campos nao pode ser conferido daqui.** Ele foi escrito a
-partir da documentacao e esta todo em `src/lib/djen.ts` — o resto do modulo so
-conhece o tipo `Comunicacao`. `npm run conferir-djen -- <oab> <uf>`, rodado do
-Brasil, busca uma pagina real e mostra o que caiu em cada campo, marcando o que
-veio vazio. **Enquanto isso nao for feito, trate o mapeamento como suspeito.**
+Com `DJEN_RELE_URL` e `DJEN_RELE_TOKEN` no ambiente, a consulta sai pelo rele e
+o trabalhador da fila roda onde for mais barato. Sem elas, vai direto ao CNJ e
+so funciona de dentro do Brasil. O cliente traduz as duas recusas em mensagem
+que diz onde arrumar: 401 e token divergente, 403 pelo rele e regiao errada.
+
+**O mapeamento de campos ainda espera conferencia.** Ele foi escrito a partir da
+documentacao e esta todo em `src/lib/djen.ts` — o resto do modulo so conhece o
+tipo `Comunicacao`. `npm run conferir-djen -- <oab> <uf>` busca uma pagina real e
+mostra o que caiu em cada campo, marcando o que veio vazio; ele sai pelo rele,
+entao da para conferir de qualquer lugar assim que o rele estiver no ar.
+**Enquanto isso nao for feito, trate o mapeamento como suspeito.**
 
 ### Deduplicacao e vinculo
 

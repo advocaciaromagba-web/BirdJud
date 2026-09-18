@@ -1,0 +1,7 @@
+{
+  "name": "birdjud-rele",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rele do DJEN em solo brasileiro (Vercel, regiao gru1). Sem dependencias de proposito.",
+  "license": "UNLICENSED"
+}

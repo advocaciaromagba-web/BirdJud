@@ -1,17 +1,18 @@
 // Cliente do DJEN (Diario de Justica Eletronico Nacional, API Comunica do CNJ).
 //
-// DOIS PONTOS QUE PRECISAM DE CONFERENCIA ANTES DO PILOTO:
+// A API bloqueia por pais (CloudFront): de fora do Brasil a resposta e 403.
+// Quem resolve isso e o rele da Vercel (pasta rele/, fixado na regiao gru1).
+// Com DJEN_RELE_URL configurado, toda consulta sai por ele e a aplicacao pode
+// rodar onde quiser; sem ele, a consulta vai direto e so funciona do Brasil.
 //
-// 1. A API bloqueia por pais (CloudFront). De fora do Brasil a resposta e 403,
-//    entao o trabalhador da fila precisa rodar em infraestrutura brasileira —
-//    e o que o plano ja previa como "rele no Brasil", agora confirmado.
-// 2. O mapeamento de campos abaixo foi escrito a partir da documentacao, sem
-//    poder bater contra uma resposta real daqui. Rode `npm run conferir-djen`
-//    a partir do Brasil: ele busca uma pagina de verdade e mostra o que caiu em
-//    cada campo. Enquanto isso nao for feito, trate o mapeamento como suspeito.
+// AINDA PRECISA DE CONFERENCIA ANTES DO PILOTO: o mapeamento de campos abaixo
+// foi escrito a partir da documentacao, sem bater contra uma resposta real.
+// Rode `npm run conferir-djen -- <oab> <uf>` — ele sai pelo rele, entao da para
+// conferir de qualquer lugar assim que o rele estiver no ar. Campo que sair
+// vazio e mapeamento errado, e o lugar de corrigir e este arquivo.
 //
 // Todo o resto do modulo depende so do tipo `Comunicacao`, entao um ajuste de
-// mapeamento fica contido neste arquivo.
+// mapeamento fica contido aqui.
 import { buscarComLimite, descreverFalha } from "./conectores/tipos";
 
 export type Comunicacao = {
@@ -36,6 +37,31 @@ export type ConsultaDjen = {
 
 export function baseDjen(): string {
   return process.env.DJEN_BASE_URL ?? "https://comunicaapi.pje.jus.br/api/v1";
+}
+
+/** Endereco do rele brasileiro, ou null quando a consulta vai direto. */
+export function releDjen(): string | null {
+  const endereco = process.env.DJEN_RELE_URL?.trim();
+  return endereco ? endereco.replace(/\/+$/, "") : null;
+}
+
+/**
+ * Para onde a consulta vai e com que cabecalhos.
+ *
+ * O rele recebe os mesmos parametros que o DJEN receberia — ele confere um por
+ * um do outro lado —, mais o token da plataforma. Sem rele, vai direto.
+ */
+export function destinoDaConsulta(parametros: URLSearchParams): {
+  url: string;
+  cabecalhos: Record<string, string>;
+} {
+  const cabecalhos: Record<string, string> = { Accept: "application/json" };
+  const rele = releDjen();
+  if (!rele) return { url: `${baseDjen()}/comunicacao?${parametros}`, cabecalhos };
+
+  const token = process.env.DJEN_RELE_TOKEN?.trim();
+  if (token) cabecalhos.Authorization = `Bearer ${token}`;
+  return { url: `${rele}?${parametros}`, cabecalhos };
 }
 
 /** aaaa-mm-dd, que e o formato que a API espera. */
@@ -102,18 +128,27 @@ export async function buscarPagina(consulta: ConsultaDjen): Promise<{
     itensPorPagina: String(consulta.itensPorPagina ?? 100),
   });
 
+  const destino = destinoDaConsulta(parametros);
+
   let resposta: Response;
   try {
-    resposta = await buscarComLimite(`${baseDjen()}/comunicacao?${parametros}`, {
-      headers: { Accept: "application/json" },
-    });
+    resposta = await buscarComLimite(destino.url, { headers: destino.cabecalhos });
   } catch (erro) {
     throw new FalhaNoDjen(descreverFalha(erro));
   }
 
+  const peloRele = releDjen() !== null;
+
+  if (resposta.status === 401 && peloRele) {
+    throw new FalhaNoDjen(
+      "O rele do DJEN recusou o token (401). Confira se DJEN_RELE_TOKEN e o mesmo RELE_TOKEN configurado na Vercel."
+    );
+  }
   if (resposta.status === 403) {
     throw new FalhaNoDjen(
-      "O DJEN recusou a consulta (403). A API bloqueia acesso de fora do Brasil: confira de onde o trabalhador esta rodando."
+      peloRele
+        ? "O DJEN recusou a consulta (403) mesmo pelo rele. Confira se o projeto do rele na Vercel esta fixado na regiao gru1 (Sao Paulo)."
+        : "O DJEN recusou a consulta (403). A API bloqueia acesso de fora do Brasil: configure DJEN_RELE_URL para sair pelo rele."
     );
   }
   if (!resposta.ok) throw new FalhaNoDjen(`O DJEN respondeu ${resposta.status}.`);
