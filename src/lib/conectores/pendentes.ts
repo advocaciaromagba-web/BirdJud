@@ -3,27 +3,7 @@
 // Estao aqui para a tela dizer a verdade: o escritorio consegue guardar a
 // credencial, mas o sistema ainda nao confere sozinho se ela funciona. E
 // melhor do que um botao de testar que sempre diz "ok".
-import { mascarar, type Conector } from "./tipos";
-
-/** AASP: o clipping nao publica uma API de verificacao aberta. */
-export const conectorAasp: Conector = {
-  tipo: "AASP",
-  rotulo: "AASP (publicacoes)",
-  descricao: "Clipping da AASP com a assinatura do proprio escritorio.",
-  modulo: "PUBLICACOES_AASP",
-  campos: [
-    { nome: "usuario", rotulo: "Usuario AASP", tipo: "text", obrigatorio: true },
-    { nome: "chave", rotulo: "Chave de acesso", tipo: "password", obrigatorio: true },
-  ],
-  resumo: (dados) => `${dados.usuario ?? "—"} · chave ${mascarar(dados.chave)}`,
-  async testar() {
-    return {
-      ok: false,
-      detalhe:
-        "Guardado, mas ainda sem verificacao automatica: falta confirmar com a AASP o uso da API por software de terceiros.",
-    };
-  },
-};
+import { type Conector } from "./tipos";
 
 /**
  * OneDrive e Google Drive dependem de OAuth: o escritorio autoriza pelo

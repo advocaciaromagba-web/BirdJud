@@ -1,5 +1,5 @@
 // Credenciais por escritorio — substitui o process.env.X dos sistemas de
-// escritorio unico. Toda integracao (WhatsApp, Asaas, AASP, Autentique, SMTP,
+// escritorio unico. Toda integracao (WhatsApp, Asaas, Autentique, SMTP,
 // OneDrive, Google, e-CNPJ) e lida por aqui.
 import { comEscritorio, semEscritorio } from "./prisma";
 import { cifrar, decifrar } from "./segredo";
@@ -7,7 +7,6 @@ import { cifrar, decifrar } from "./segredo";
 export type TipoIntegracao =
   | "WHATSAPP_META"
   | "ASAAS"
-  | "AASP"
   | "AUTENTIQUE"
   | "SMTP"
   | "MICROSOFT"

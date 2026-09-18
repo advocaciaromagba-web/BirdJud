@@ -20,7 +20,6 @@ export const PRECO_DA_FAIXA: Record<Faixa, number> = {
 /** Acrescimo mensal por modulo contratado, em centavos. */
 export const PRECO_DO_MODULO: Partial<Record<Modulo, number>> = {
   PUBLICACOES_DJEN: 9_900,
-  PUBLICACOES_AASP: 4_900,
   WHATSAPP: 7_900,
   EMAIL: 2_900,
   NFSE: 4_900,

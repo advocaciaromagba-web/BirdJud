@@ -221,11 +221,13 @@ da fila.
 
 ### Conectores que ainda nao testam sozinhos
 
-AASP (sem API de verificacao publica) e OneDrive/Google Drive (dependem de OAuth
-com o aplicativo registrado em cada provedor) estao no registro, mas dizem na
-tela que nao ha verificacao automatica. A nuvem nem formulario de credencial
-oferece: sem o OAuth, a conexao nao chegaria a existir, e um formulario ali
-seria teatro.
+OneDrive e Google Drive dependem de OAuth com o aplicativo registrado em cada
+provedor. Estao no registro, mas nao oferecem formulario de credencial: sem o
+OAuth a conexao nao chegaria a existir, e um formulario ali seria teatro.
+
+**Publicacoes sao so pelo DJEN.** A AASP foi descartada como fonte, entao nao ha
+modulo `PUBLICACOES_AASP` nem conector para ela — em vez de um modulo que existe
+no menu e nunca funciona.
 
 ## Venda e operacao (fase 4)
 

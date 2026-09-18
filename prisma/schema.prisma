@@ -56,7 +56,7 @@ model Escritorio {
 
 model ModuloContratado {
   escritorioId String
-  modulo       String // NUCLEO | PUBLICACOES_DJEN | PUBLICACOES_AASP | WHATSAPP | EMAIL | NFSE | COBRANCAS | FINANCEIRO | ASSINATURA | IA | NUVEM
+  modulo       String // NUCLEO | PUBLICACOES_DJEN | WHATSAPP | EMAIL | NFSE | COBRANCAS | FINANCEIRO | ASSINATURA | IA | NUVEM
   ativo        Boolean  @default(true)
   franquia     Int? // ex.: mensagens/mes incluidas na faixa
   desde        DateTime @default(now())
@@ -70,7 +70,7 @@ model ModuloContratado {
 model Integracao {
   id           String    @id @default(cuid())
   escritorioId String
-  tipo         String // WHATSAPP_META | ASAAS | AASP | AUTENTIQUE | SMTP | MICROSOFT | GOOGLE | NFSE_CERT
+  tipo         String // WHATSAPP_META | ASAAS | AUTENTIQUE | SMTP | MICROSOFT | GOOGLE | NFSE_CERT
   dados        Bytes // JSON criptografado (AES-256-GCM) — ver src/lib/segredo.ts
   status       String    @default("PENDENTE") // PENDENTE | OK | ERRO
   erro         String?

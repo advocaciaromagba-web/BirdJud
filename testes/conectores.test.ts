@@ -20,7 +20,7 @@ import {
   conectorCertificado,
   lerCertificado,
 } from "../src/lib/conectores/certificado";
-import { conectorAasp, conectorMicrosoft } from "../src/lib/conectores/pendentes";
+import { conectorMicrosoft } from "../src/lib/conectores/pendentes";
 import { CONECTORES, ehTipoDeIntegracao, mascarar } from "../src/lib/conectores";
 import { montarCSP } from "../src/lib/csp";
 
@@ -311,12 +311,6 @@ describe("conector de certificado", () => {
 // ---------------------------------------------------------------------------
 
 describe("conectores pendentes", () => {
-  it("AASP guarda, mas nao finge que testou", async () => {
-    const resultado = await conectorAasp.testar({ usuario: "a", chave: "b" });
-    expect(resultado.ok).toBe(false);
-    expect(resultado.detalhe).toContain("sem verificacao automatica");
-  });
-
   it("nuvem por OAuth nao pede credencial em formulario", async () => {
     expect(conectorMicrosoft.campos).toHaveLength(0);
     const resultado = await conectorMicrosoft.testar({});

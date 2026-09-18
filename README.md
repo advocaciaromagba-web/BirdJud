@@ -35,9 +35,11 @@ pela tela, sem acesso ao servidor: e-mail (SMTP), Asaas, Autentique, WhatsApp
 (Cloud API) e certificado e-CNPJ. 70 testes automatizados.
 
 Falta na fase 3: OneDrive e Google Drive por OAuth (dependem do aplicativo
-registrado em cada provedor), verificacao automatica da AASP e o Embedded
-Signup da Meta com submissao dos modelos de mensagem — todos dependem das
-respostas externas da secao 11 do plano.
+registrado em cada provedor) e o Embedded Signup da Meta com submissao dos
+modelos de mensagem — ambos dependem de respostas externas.
+
+Publicacoes sao **so pelo DJEN**: a AASP foi descartada como fonte e nao ha
+modulo nem conector para ela.
 
 **Fase 4 concluida** — cadastro de escritorio com periodo de teste, assinatura,
 faturas, regua de atraso e suspensao automaticas pela fila, painel do operador

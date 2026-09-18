@@ -11,7 +11,6 @@
 export const MODULOS = [
   "NUCLEO",
   "PUBLICACOES_DJEN",
-  "PUBLICACOES_AASP",
   "WHATSAPP",
   "EMAIL",
   "NFSE",

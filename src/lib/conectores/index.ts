@@ -6,7 +6,7 @@ import { conectorAsaas } from "./asaas";
 import { conectorAutentique } from "./autentique";
 import { conectorWhatsapp } from "./whatsapp";
 import { conectorCertificado } from "./certificado";
-import { conectorAasp, conectorGoogle, conectorMicrosoft } from "./pendentes";
+import { conectorGoogle, conectorMicrosoft } from "./pendentes";
 
 export const CONECTORES: Record<TipoIntegracao, Conector> = {
   SMTP: conectorEmail,
@@ -14,7 +14,6 @@ export const CONECTORES: Record<TipoIntegracao, Conector> = {
   AUTENTIQUE: conectorAutentique,
   WHATSAPP_META: conectorWhatsapp,
   NFSE_CERT: conectorCertificado,
-  AASP: conectorAasp,
   MICROSOFT: conectorMicrosoft,
   GOOGLE: conectorGoogle,
 };
