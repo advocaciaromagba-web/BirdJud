@@ -22,6 +22,7 @@ import {
 } from "../src/lib/conectores/certificado";
 import { conectorAasp, conectorMicrosoft } from "../src/lib/conectores/pendentes";
 import { CONECTORES, ehTipoDeIntegracao, mascarar } from "../src/lib/conectores";
+import { montarCSP } from "../src/lib/csp";
 
 // ---------------------------------------------------------------------------
 // SMTP de verdade, so que local
@@ -341,5 +342,38 @@ describe("registro de conectores", () => {
     expect(mascarar("chave-super-secreta-a1b2")).toBe("•••a1b2");
     expect(mascarar("abc")).toBe("•••");
     expect(mascarar(undefined)).toBe("—");
+  });
+});
+
+describe("politica de seguranca de conteudo", () => {
+  it("em producao, script-src usa nonce e nao aceita inline", () => {
+    const csp = montarCSP("abc123", true);
+    expect(csp).toContain("'nonce-abc123'");
+    expect(csp).toContain("'strict-dynamic'");
+    // O que interessa: nada de inline nem eval em script.
+    const scriptSrc = csp.split("; ").find((d) => d.startsWith("script-src"));
+    expect(scriptSrc).not.toContain("unsafe-inline");
+    expect(scriptSrc).not.toContain("unsafe-eval");
+  });
+
+  it("em desenvolvimento libera eval, que o Next usa no refresh", () => {
+    const scriptSrc = montarCSP("abc123", false)
+      .split("; ")
+      .find((d) => d.startsWith("script-src"));
+    expect(scriptSrc).toContain("unsafe-eval");
+  });
+
+  it("so forca HTTPS quando a requisicao ja veio por HTTPS", () => {
+    // Emitido em ambiente HTTP, upgrade-insecure-requests faz o navegador
+    // buscar os proprios scripts da pagina em HTTPS — e nada carrega.
+    expect(montarCSP("n", true, true)).toContain("upgrade-insecure-requests");
+    expect(montarCSP("n", true, false)).not.toContain("upgrade-insecure-requests");
+  });
+
+  it("fecha frame, objeto e base", () => {
+    const csp = montarCSP("n", true);
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("base-uri 'self'");
   });
 });

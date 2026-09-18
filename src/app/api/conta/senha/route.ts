@@ -29,7 +29,11 @@ export async function POST(req: Request) {
       }
       await db.usuario.update({
         where: { id: usuario.id },
-        data: { senhaHash: await gerarHash(corpo.data.novaSenha) },
+        data: {
+          senhaHash: await gerarHash(corpo.data.novaSenha),
+          // Derruba as sessoes abertas, inclusive a de quem trocou a senha.
+          sessoesValidasApos: new Date(),
+        },
       });
       return "ok" as const;
     });
@@ -37,7 +41,9 @@ export async function POST(req: Request) {
     if (resultado !== "ok") {
       return NextResponse.json({ erro: "Senha atual incorreta." }, { status: 400 });
     }
-    return NextResponse.json({ ok: true });
+    // O proprio autor da troca precisa entrar de novo: e o preco de a
+    // revogacao valer para todas as sessoes, inclusive a de quem roubou uma.
+    return NextResponse.json({ ok: true, reentrar: true });
   } catch (erro) {
     return tratarErro(erro);
   }

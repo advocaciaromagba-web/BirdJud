@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     // Cadastro e a unica rota publica que escreve no banco: sem limite, um
     // script cria escritorios em serie.
     const ip = ipDaRequisicao(req) ?? "sem-ip";
-    const limite = registrarTentativa(`cadastro:${ip}`, 5, 60 * 60);
+    const limite = await registrarTentativa(`cadastro:${ip}`, 5, 60 * 60);
     if (!limite.permitido) {
       return NextResponse.json(
         { erro: "Muitas tentativas. Tente novamente mais tarde." },

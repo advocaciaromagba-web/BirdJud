@@ -136,6 +136,9 @@ export const opcoesAuth: NextAuthOptions = {
       if (user) {
         token.escritorioId = user.escritorioId;
         token.papel = user.papel;
+        // Momento da emissao: e o que permite invalidar sessoes antigas quando
+        // a senha muda ou o usuario e desativado.
+        token.emitidaEm = Date.now();
       }
       return token;
     },
@@ -143,6 +146,7 @@ export const opcoesAuth: NextAuthOptions = {
       session.escritorioId = token.escritorioId as string;
       session.papel = token.papel as string;
       session.usuarioId = token.sub as string;
+      session.emitidaEm = (token.emitidaEm as number | undefined) ?? 0;
       return session;
     },
   },

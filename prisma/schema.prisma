@@ -115,6 +115,10 @@ model Usuario {
   // bloqueio por tentativas
   tentativasFalhas Int       @default(0)
   bloqueadoAte     DateTime?
+
+  // Sessao emitida antes disto nao vale mais. Trocar a senha empurra a marca
+  // para agora, e as sessoes ja abertas caem na proxima requisicao.
+  sessoesValidasApos DateTime?
   criadoEm     DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -311,4 +315,14 @@ model AceiteDeTermos {
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
 
   @@index([escritorioId, documento])
+}
+
+// ---------------------------------------------------------------------------
+// Limite de taxa — tabela da plataforma, compartilhada entre instancias
+// ---------------------------------------------------------------------------
+
+model LimiteDeTaxa {
+  chave      String   @id
+  tentativas Int      @default(1)
+  ate        DateTime
 }

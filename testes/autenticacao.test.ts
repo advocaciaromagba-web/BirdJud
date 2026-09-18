@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { conferirSenha, gerarHash } from "../src/lib/senhas";
 import { conferirCodigo, gerarSegredo, urlDeCadastro } from "../src/lib/dois-fatores";
-import { motivoParaRecusar } from "../src/lib/sessao";
+import { motivoParaRecusar, sessaoRevogada } from "../src/lib/sessao";
 import { slugDoHost } from "../src/lib/subdominio";
 import { generateSync } from "otplib";
 
@@ -72,6 +72,27 @@ describe("sessao amarrada ao endereco", () => {
     expect(motivoParaRecusar(alfa, null)).toBe(
       "Sessao ausente ou invalida para este endereco."
     );
+  });
+});
+
+describe("revogacao de sessao", () => {
+  const emissao = new Date("2026-09-18T12:00:00Z").getTime();
+
+  it("sem revogacao, a sessao vale", () => {
+    expect(sessaoRevogada(emissao, null)).toBe(false);
+  });
+
+  it("sessao emitida ANTES da revogacao cai", () => {
+    expect(sessaoRevogada(emissao, new Date("2026-09-18T12:00:01Z"))).toBe(true);
+  });
+
+  it("sessao emitida DEPOIS da revogacao continua valendo", () => {
+    expect(sessaoRevogada(emissao, new Date("2026-09-18T11:59:59Z"))).toBe(false);
+  });
+
+  it("sessao sem marca de emissao e tratada como antiga", () => {
+    // Sessao de antes desta versao do sistema: emitidaEm vem 0.
+    expect(sessaoRevogada(0, new Date("2020-01-01T00:00:00Z"))).toBe(true);
   });
 });
 

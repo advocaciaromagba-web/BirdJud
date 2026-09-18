@@ -217,3 +217,33 @@ d("ciclo comercial", () => {
     expect(Object.keys(dados.integracoes[0] ?? {})).not.toContain("dados");
   });
 });
+
+d("webhook de pagamento", () => {
+  // A rota e testada pela funcao que ela chama e pelas regras de borda; a
+  // conferencia HTTP de ponta a ponta esta no roteiro de fumaca.
+  it("o caminho de baixa do webhook e o mesmo do painel", async () => {
+    const e = await prismaPlataforma().escritorio.create({
+      data: { slug: `f4w-${Date.now()}`, nome: "Webhook F4", status: "SUSPENSO" },
+    });
+    try {
+      const fatura = await prismaPlataforma().fatura.create({
+        data: {
+          escritorioId: e.id,
+          competencia: "2026-09",
+          valorCentavos: 29900,
+          vencimento: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      const resultado = await registrarPagamento(fatura.id, "pay_do_asaas");
+      expect(resultado.statusNovo).toBe("ATIVO");
+
+      const paga = await prismaPlataforma().fatura.findUniqueOrThrow({
+        where: { id: fatura.id },
+      });
+      expect(paga.idExterno).toBe("pay_do_asaas");
+    } finally {
+      await prismaPlataforma().escritorio.delete({ where: { id: e.id } }).catch(() => {});
+    }
+  });
+});

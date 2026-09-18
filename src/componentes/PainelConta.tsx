@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 async function enviar(rota: string, corpo: Record<string, string>) {
   const resposta = await fetch(rota, {
@@ -51,7 +52,13 @@ function TrocarSenha() {
 
     if (ok) {
       form.reset();
-      setRecado({ texto: "Senha trocada.", erro: false });
+      setRecado({
+        texto: "Senha trocada. Todas as sessoes foram encerradas — entrando de novo...",
+        erro: false,
+      });
+      // A troca derruba tambem esta sessao: sem isso, a tela ficaria dando 401
+      // em cada clique seguinte.
+      setTimeout(() => signOut({ callbackUrl: "/login" }), 2_000);
     } else {
       setRecado({ texto: json.erro ?? "Nao foi possivel trocar a senha.", erro: true });
     }

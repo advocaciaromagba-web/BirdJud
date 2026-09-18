@@ -13,7 +13,11 @@ import {
 } from "../src/lib/encerramento";
 import { salvarIntegracao, obterIntegracao } from "../src/lib/integracao";
 import { gerarHash } from "../src/lib/senhas";
-import { registrarTentativa, zerarLimites } from "../src/lib/limite";
+import {
+  limparLimitesVencidos,
+  registrarTentativa,
+  zerarLimites,
+} from "../src/lib/limite";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -46,30 +50,49 @@ describe("ip da requisicao", () => {
   });
 });
 
-describe("limite de tentativas", () => {
-  it("libera ate o maximo e bloqueia depois, dentro da janela", () => {
-    zerarLimites();
+d("limite de tentativas", () => {
+  it("libera ate o maximo e bloqueia depois, dentro da janela", async () => {
+    await zerarLimites();
     for (let i = 0; i < 3; i += 1) {
-      expect(registrarTentativa("ip:1", 3, 60).permitido).toBe(true);
+      expect((await registrarTentativa("ip:1", 3, 60)).permitido).toBe(true);
     }
-    const bloqueado = registrarTentativa("ip:1", 3, 60);
+    const bloqueado = await registrarTentativa("ip:1", 3, 60);
     expect(bloqueado.permitido).toBe(false);
     expect(bloqueado.esperarSegundos).toBeGreaterThan(0);
   });
 
-  it("chaves diferentes nao se atrapalham", () => {
-    zerarLimites();
-    expect(registrarTentativa("ip:a", 1, 60).permitido).toBe(true);
-    expect(registrarTentativa("ip:a", 1, 60).permitido).toBe(false);
-    expect(registrarTentativa("ip:b", 1, 60).permitido).toBe(true);
+  it("chaves diferentes nao se atrapalham", async () => {
+    await zerarLimites();
+    expect((await registrarTentativa("ip:a", 1, 60)).permitido).toBe(true);
+    expect((await registrarTentativa("ip:a", 1, 60)).permitido).toBe(false);
+    expect((await registrarTentativa("ip:b", 1, 60)).permitido).toBe(true);
   });
 
-  it("passada a janela, volta a liberar", () => {
-    zerarLimites();
-    const agora = Date.now();
-    expect(registrarTentativa("ip:c", 1, 60, agora).permitido).toBe(true);
-    expect(registrarTentativa("ip:c", 1, 60, agora + 1_000).permitido).toBe(false);
-    expect(registrarTentativa("ip:c", 1, 60, agora + 61_000).permitido).toBe(true);
+  it("janela vencida recomeca a contagem", async () => {
+    await zerarLimites();
+    // Janela de 1 segundo: espera de verdade, sem relogio falso.
+    expect((await registrarTentativa("ip:c", 1, 1)).permitido).toBe(true);
+    expect((await registrarTentativa("ip:c", 1, 1)).permitido).toBe(false);
+    await new Promise((r) => setTimeout(r, 1_200));
+    expect((await registrarTentativa("ip:c", 1, 1)).permitido).toBe(true);
+  });
+
+  it("a contagem e compartilhada entre chamadas simultaneas", async () => {
+    await zerarLimites();
+    // Dez requisicoes ao mesmo tempo, limite 4: exatamente 4 passam.
+    const resultados = await Promise.all(
+      Array.from({ length: 10 }, () => registrarTentativa("ip:d", 4, 60))
+    );
+    expect(resultados.filter((r) => r.permitido)).toHaveLength(4);
+  });
+
+  it("limpar remove so as janelas vencidas", async () => {
+    await zerarLimites();
+    await registrarTentativa("ip:vencida", 5, 1);
+    await registrarTentativa("ip:viva", 5, 600);
+    await new Promise((r) => setTimeout(r, 1_200));
+
+    expect(await limparLimitesVencidos()).toBe(1);
   });
 });
 

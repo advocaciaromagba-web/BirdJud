@@ -10,5 +10,7 @@ declare module "next-auth" {
     escritorioId: string;
     usuarioId: string;
     papel: string;
+    /** Momento em que a sessao foi emitida (ms). */
+    emitidaEm: number;
   }
 }

@@ -54,6 +54,11 @@ IP e data; backup e restauracao por escritorio, com a restauracao testada na
 bateria automatica; encerramento com prazo de retencao e purga; cabecalhos de
 seguranca e limite de taxa no cadastro. 110 testes automatizados.
 
+**Dividas tecnicas fechadas** — revogacao de sessao ao trocar a senha, CSP com
+nonce por requisicao (sem `unsafe-inline` em script), limite de taxa no banco
+(valido entre instancias) e webhook de pagamento para a baixa automatica das
+faturas. 121 testes automatizados.
+
 Falta na fase 5, e nao e trabalho de codigo: **revisao das minutas por
 advogado**, definicao de razao social, foro, prazos e valores, backup automatico
 agendado na infraestrutura, e o **piloto com 2 ou 3 escritorios** —
@@ -160,7 +165,9 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/backup.ts` | Backup e restauracao por escritorio |
 | `src/lib/encerramento.ts` | Encerramento, prazo de retencao e purga |
 | `src/lib/aceite.ts` | Registro de aceite dos documentos |
-| `src/lib/limite.ts` | Limite de tentativas por IP |
+| `src/lib/limite.ts` | Limite de tentativas por IP, contado no banco |
+| `src/lib/csp.ts` | Politica de seguranca de conteudo com nonce |
+| `src/app/api/webhooks/asaas/` | Baixa automatica da fatura da plataforma |
 | `docs/juridico/` | Minutas de contrato, termos, LGPD, SLA e privacidade |
 | `docs/SEGURANCA.md` | O que o sistema faz de seguranca, e o que ainda nao faz |
 | `src/lib/conectores/` | Um conector por integracao: campos, resumo e teste |

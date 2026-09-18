@@ -38,9 +38,14 @@ Sessao em JWT, validade de 12 horas, cookie host-only — o navegador nao o envi
 para outro subdominio. Alem disso, a guarda de rota recusa sessao de um
 escritorio no endereco de outro.
 
-**Limitacao conhecida:** trocar a senha impede logins novos, mas nao derruba
-sessoes ja abertas ate expirarem. Revogacao imediata exige guardar sessao no
-banco e ainda nao foi feita.
+**Revogacao:** cada sessao carrega o momento em que foi emitida, e cada usuario
+tem uma marca `sessoesValidasApos`. Trocar a senha empurra a marca para agora, e
+toda sessao emitida antes dela cai na requisicao seguinte — inclusive a de quem
+trocou, que por isso e deslogado pela propria tela. Usuario desativado tambem
+perde as sessoes abertas.
+
+Isso custa uma consulta por requisicao protegida. E o preco de nao depender da
+expiracao de 12 horas quando uma senha vaza.
 
 ## Acesso de suporte
 
@@ -78,14 +83,20 @@ Todas as respostas levam CSP, `X-Content-Type-Options`, `X-Frame-Options: DENY`,
 `Referrer-Policy`, `Permissions-Policy` e HSTS (`next.config.js`). O cabecalho
 `X-Powered-By` foi desligado.
 
-A CSP ainda usa `'unsafe-inline'` em `script-src`, porque o Next injeta scripts
-inline proprios; o certo e `strict-dynamic` com nonce por requisicao, gerado no
-middleware. Fica anotado como divida.
+A CSP usa **nonce por requisicao** com `strict-dynamic`: `script-src` nao aceita
+`'unsafe-inline'` nem `'unsafe-eval'` em producao. O nonce e gerado no middleware
+e o Next o aplica em todos os scripts que emite. `'unsafe-inline'` continua em
+`style-src`, de que o Tailwind precisa — risco bem menor do que em script.
+
+`upgrade-insecure-requests` so e emitido quando a requisicao ja veio por HTTPS
+(pelo `x-forwarded-proto`). Emitido em ambiente HTTP, ele faz o navegador buscar
+os proprios scripts da pagina em HTTPS e nada carrega — foi o que aconteceu no
+primeiro teste em navegador.
 
 O cadastro publico — unica rota publica que escreve no banco — aceita 5
-tentativas por IP por hora. **A contagem vive na memoria do processo:** com mais
-de uma instancia, o limite real e N vezes esse. Protecao de verdade contra
-ataque distribuido e no provedor, antes da aplicacao.
+tentativas por IP por hora, contadas **no banco**, em uma unica instrucao SQL:
+o limite vale para todas as instancias da aplicacao ao mesmo tempo. Ataque
+distribuido continua sendo problema do provedor, antes da aplicacao.
 
 ## Suboperadores
 
@@ -102,4 +113,5 @@ e-mail, nuvem) sao contratados por ele, com conta dele.
 | Data | O que foi feito | Resultado |
 | --- | --- | --- |
 | 2026-09-18 | Revisao antes do piloto: guarda de todas as rotas e paginas, uso do papel que atravessa o RLS, campos sensiveis em respostas, travessia de caminho nas paginas juridicas, cabecalhos e limite de taxa | 3 achados, todos corrigidos: purga nao apagava os trabalhos da fila (e o comentario dizia que apagava faturas, que ficam de proposito); faltavam cabecalhos de seguranca; cadastro publico sem limite de taxa |
+| 2026-09-18 | Dividas fechadas: revogacao de sessao, CSP com nonce, limite de taxa no banco e webhook de pagamento. Verificacao em navegador de verdade sob a CSP nova | 1 achado: `upgrade-insecure-requests` quebrava a aplicacao servida por HTTP; passou a depender do protocolo da requisicao |
 | — | teste de restauracao de backup | roda na bateria automatica (`testes/fase5.test.ts`), restaurando ao lado do original e conferindo registro a registro |

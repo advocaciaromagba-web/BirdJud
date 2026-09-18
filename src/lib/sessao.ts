@@ -4,6 +4,7 @@
 // nao vale no subdominio do escritorio B. Sem ela, bastaria trocar o endereco
 // no navegador levando o cookie junto.
 import { headers } from "next/headers";
+import { comEscritorio } from "./prisma";
 import { getServerSession } from "next-auth";
 import { opcoesAuth } from "./auth";
 import { STATUS_QUE_ENTRAM } from "./auth-comum";
@@ -53,6 +54,19 @@ export async function exigirSessao(modulo?: Modulo): Promise<ContextoRota> {
     throw new SemSessao("Sessao de outro escritorio.");
   }
 
+  // O usuario ainda existe, esta ativo, e a sessao foi emitida depois da
+  // ultima revogacao? Um "sim" de 12 horas atras nao basta.
+  const usuario = await comEscritorio(marca.id, (db) =>
+    db.usuario.findFirst({
+      where: { id: sessao.usuarioId },
+      select: { ativo: true, sessoesValidasApos: true },
+    })
+  );
+  if (!usuario?.ativo) throw new SemSessao("Usuario inativo ou removido.");
+  if (sessaoRevogada(sessao.emitidaEm, usuario.sessoesValidasApos)) {
+    throw new SemSessao("Sessao encerrada. Entre novamente.");
+  }
+
   if (modulo) await exigirModulo(marca.id, modulo);
 
   return {
@@ -61,6 +75,20 @@ export async function exigirSessao(modulo?: Modulo): Promise<ContextoRota> {
     papel: sessao.papel,
     marca,
   };
+}
+
+/**
+ * A sessao foi emitida antes da ultima revogacao?
+ *
+ * Funcao pura: a comparacao e o coracao da revogacao, e precisa ser testavel
+ * sem banco nem servidor.
+ */
+export function sessaoRevogada(
+  emitidaEm: number,
+  sessoesValidasApos: Date | null
+): boolean {
+  if (!sessoesValidasApos) return false;
+  return emitidaEm < sessoesValidasApos.getTime();
 }
 
 /**

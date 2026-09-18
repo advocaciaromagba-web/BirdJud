@@ -49,7 +49,14 @@ NEXTAUTH_URL=https://app.birdjud.com.br
 NEXTAUTH_SECRET=...
 SEGREDO_CHAVE=...
 DOMINIO_PLATAFORMA=birdjud.com.br
+ASAAS_WEBHOOK_TOKEN=...
 ```
+
+`ASAAS_WEBHOOK_TOKEN` e o token do webhook de pagamento **da plataforma** (a
+baixa automatica das faturas dos escritorios). Cadastre o mesmo valor no Asaas,
+em Integracoes > Webhooks, apontando para
+`https://app.birdjud.com.br/api/webhooks/asaas`. Sem ele, a rota responde 503 e
+a baixa continua manual, pelo painel do operador.
 
 Gerar os dois segredos:
 
