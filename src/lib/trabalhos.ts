@@ -9,6 +9,7 @@ import { moduloAtivo, type Modulo } from "./modulos";
 import { enfileirar } from "./fila";
 import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
+import { capturarPublicacoes } from "./publicacoes";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -52,7 +53,24 @@ async function purgar(): Promise<void> {
   }
 }
 
+/**
+ * Captura as publicacoes do DJEN das OABs monitoradas pelo escritorio.
+ *
+ * Falha de uma OAB nao interrompe as outras (ver publicacoes.ts); o que chega
+ * aqui como erro e falha do trabalho inteiro, e a fila cuida da retentativa.
+ */
+async function capturar({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("CAPTURAR_PUBLICACOES exige escritorio.");
+  const resultado = await capturarPublicacoes(escritorioId);
+
+  if (resultado.falhas.length > 0) {
+    const nomes = resultado.falhas.map((f) => `${f.oab}: ${f.motivo}`).join(" | ");
+    throw new Error(`Falha em ${resultado.falhas.length} OAB(s) — ${nomes}`);
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
+  CAPTURAR_PUBLICACOES: capturar,
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
   PURGAR_ENCERRADOS: purgar,
@@ -63,6 +81,8 @@ export const TRABALHOS_DA_PLATAFORMA = new Set(["PURGAR_ENCERRADOS"]);
 
 /** Modulo exigido por tipo de trabalho. Sem modulo, so o nucleo. */
 const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
+  // Escritorio que nao contratou publicacoes nao gera trabalho de captura.
+  CAPTURAR_PUBLICACOES: "PUBLICACOES_DJEN",
   APURAR_CONSUMO: undefined,
   REGUA_DE_COBRANCA: undefined,
 };

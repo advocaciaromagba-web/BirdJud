@@ -3,6 +3,7 @@ import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
+import { numeroParaGravar } from "@/lib/leitura-publicacao";
 
 const novoProcesso = z.object({
   numero: z.string().min(5).max(30),
@@ -44,7 +45,13 @@ export async function POST(req: Request) {
         const cliente = await db.cliente.findFirst({ where: { id: corpo.data.clienteId } });
         if (!cliente) return null;
       }
-      return db.processo.create({ data: semEscritorio(corpo.data) });
+      return db.processo.create({
+        data: semEscritorio({
+          ...corpo.data,
+          // Grafia canonica: e o que casa com a publicacao vinda do DJEN.
+          numero: numeroParaGravar(corpo.data.numero),
+        }),
+      });
     });
 
     if (!processo) {

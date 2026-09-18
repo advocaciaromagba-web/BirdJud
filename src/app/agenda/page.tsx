@@ -3,6 +3,7 @@ import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
 import { Navegacao } from "@/componentes/Navegacao";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
+import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 
 const TIPOS = [
   { valor: "COMPROMISSO", rotulo: "Compromisso" },
@@ -44,7 +45,7 @@ export default async function PaginaAgenda() {
               nome: "processoId",
               rotulo: "Processo",
               tipo: "select",
-              opcoes: processos.map((p) => ({ valor: p.id, rotulo: p.numero })),
+              opcoes: processos.map((p) => ({ valor: p.id, rotulo: formatarNumeroProcesso(p.numero) })),
             },
             { nome: "local", rotulo: "Local" },
           ]}
@@ -60,7 +61,7 @@ export default async function PaginaAgenda() {
                 <p className="font-semibold">{compromisso.titulo}</p>
                 <p className="text-sm text-neutral-500">
                   {formato.format(compromisso.inicio)} · {compromisso.tipo}
-                  {compromisso.processo ? ` · ${compromisso.processo.numero}` : ""}
+                  {compromisso.processo ? ` · ${formatarNumeroProcesso(compromisso.processo.numero)}` : ""}
                   {compromisso.local ? ` · ${compromisso.local}` : ""}
                 </p>
               </li>

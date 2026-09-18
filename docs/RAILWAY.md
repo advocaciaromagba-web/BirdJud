@@ -94,7 +94,13 @@ Para agendar as rotinas, crons do Railway chamando:
 - `npm run espalhar REGUA_DE_COBRANCA` — todo dia, gera fatura do mes, marca
   atraso e suspende quem passou do prazo;
 - `npm run espalhar PURGAR_ENCERRADOS` — semanal, apaga os dados de quem
-  encerrou ha mais tempo que o prazo de retencao.
+  encerrou ha mais tempo que o prazo de retencao;
+- `npm run espalhar CAPTURAR_PUBLICACOES` — de madrugada, busca no DJEN as
+  publicacoes das OABs monitoradas.
+
+> **A API do DJEN bloqueia acesso de fora do Brasil.** O servico do trabalhador
+> precisa rodar em regiao brasileira, ou toda captura falha com 403. E o "rele
+> no Brasil" do plano — confirmado na pratica, nao suposto.
 
 O espalhamento cria um trabalho por escritorio; o trabalhador consome. Sem esse
 cron a regua nao roda, e ninguem e faturado nem suspenso.

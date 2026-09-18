@@ -296,3 +296,69 @@ acoes administrativas. Se um dia for necessario, ja ha onde registrar.
 de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencial
 cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
 escritorio, e um arquivo desses circula por e-mail.
+
+## Modulo de publicacoes (DJEN)
+
+Publicacoes vem **so do DJEN**, a API Comunica do CNJ. O escritorio cadastra as
+OABs que quer monitorar; a fila roda uma captura por escritorio.
+
+### Duas coisas descobertas ao construir
+
+**A API bloqueia por pais.** De fora do Brasil a resposta e 403 (CloudFront).
+Isso confirma na pratica o "rele no Brasil" que o plano previa: o trabalhador da
+fila precisa rodar em infraestrutura brasileira, e o cliente traduz o 403 nessa
+mensagem em vez de um erro generico.
+
+**O mapeamento de campos nao pode ser conferido daqui.** Ele foi escrito a
+partir da documentacao e esta todo em `src/lib/djen.ts` — o resto do modulo so
+conhece o tipo `Comunicacao`. `npm run conferir-djen -- <oab> <uf>`, rodado do
+Brasil, busca uma pagina real e mostra o que caiu em cada campo, marcando o que
+veio vazio. **Enquanto isso nao for feito, trate o mapeamento como suspeito.**
+
+### Deduplicacao e vinculo
+
+A chave `(escritorioId, idExterno)` e o que impede a mesma comunicacao de entrar
+duas vezes — e ela chega duas vezes mesmo, quando duas OABs do escritorio
+aparecem no mesmo ato. Por isso a captura tambem pode sobrepor periodo sem medo:
+repetir e barato, perder publicacao de borda nao e.
+
+A publicacao e vinculada ao processo quando o numero ja existe no escritorio.
+Para isso o numero tem **uma grafia canonica**: so digitos, quando e CNJ
+(`numeroParaGravar`). Antes disso, processo cadastrado com mascara nunca casava
+com o numero vindo do diario, e o vinculo automatico — que e o valor do modulo —
+simplesmente nao acontecia. Numero que nao e CNJ fica como foi digitado.
+
+### Triagem
+
+`leitura-publicacao.ts` le prazo e urgencia do texto, com funcoes puras. Havendo
+mais de um prazo, fica com o menor: e o que vence primeiro. Urgencia vem de ato
+que nao espera (audiencia, liminar, penhora...) ou de prazo curto.
+
+Isto e **triagem, nao conclusao juridica**: o prazo aparece na tela como
+sugestao, para o advogado conferir. O sistema nunca decide sozinho que algo nao
+precisa de atencao.
+
+### Falha de uma OAB
+
+Falha em uma OAB nao interrompe as outras, e aparece nomeada no erro do
+trabalho. A OAB que falhou **nao tem a marca de ultima captura avancada** — se
+avancasse, a proxima consulta comecaria depois de um periodo que ninguem chegou
+a ler, e essas publicacoes se perderiam em silencio.
+
+## Migracao que mexe em dados
+
+As migracoes rodam como `birdjud_owner`, que tambem esta sob `FORCE ROW LEVEL
+SECURITY`. Sem `app.escritorio_id` definido, a politica nao devolve linha
+nenhuma: **um `UPDATE` de dados afeta zero registros, sem erro nenhum**. Foi
+exatamente o que aconteceu na primeira versao da migracao `7_numero_canonico`.
+
+Migracao que mexe em dados precisa suspender o FORCE e repor no fim:
+
+```sql
+ALTER TABLE "Tabela" NO FORCE ROW LEVEL SECURITY;
+UPDATE "Tabela" SET ...;
+ALTER TABLE "Tabela" FORCE ROW LEVEL SECURITY;
+```
+
+O Prisma roda cada migracao em uma transacao, entao uma falha no meio desfaz
+tambem a suspensao. Migracao que so mexe em estrutura nao precisa disso.

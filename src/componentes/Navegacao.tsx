@@ -9,6 +9,7 @@ const AREAS: Area[] = [
   { href: "/clientes", rotulo: "Clientes" },
   { href: "/processos", rotulo: "Processos" },
   { href: "/agenda", rotulo: "Agenda" },
+  { href: "/publicacoes", rotulo: "Publicacoes", modulo: "PUBLICACOES_DJEN" },
   { href: "/financeiro", rotulo: "Financeiro", modulo: "FINANCEIRO" },
   { href: "/usuarios", rotulo: "Usuarios", soAdmin: true },
   { href: "/integracoes", rotulo: "Integracoes", soAdmin: true },

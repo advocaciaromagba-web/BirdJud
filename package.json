@@ -20,7 +20,8 @@
     "espalhar": "tsx scripts/espalhar-trabalho.ts",
     "criar-operador": "tsx scripts/criar-operador.ts",
     "backup": "tsx scripts/backup-escritorio.ts",
-    "restaurar": "tsx scripts/restaurar-escritorio.ts"
+    "restaurar": "tsx scripts/restaurar-escritorio.ts",
+    "conferir-djen": "tsx scripts/conferir-djen.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

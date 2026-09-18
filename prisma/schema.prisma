@@ -45,6 +45,8 @@ model Escritorio {
   clientes     Cliente[]
   processos    Processo[]
   compromissos Compromisso[]
+  oabs         OabMonitorada[]
+  publicacoes  Publicacao[]
   assinatura   Assinatura?
   faturas      Fatura[]
   lancamentos  Lancamento[]
@@ -160,6 +162,7 @@ model Processo {
   escritorio   Escritorio    @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente      Cliente?      @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   compromissos Compromisso[]
+  publicacoes  Publicacao[]
 
   @@unique([escritorioId, numero])
   @@index([escritorioId])
@@ -325,4 +328,57 @@ model LimiteDeTaxa {
   chave      String   @id
   tentativas Int      @default(1)
   ate        DateTime
+}
+
+// ---------------------------------------------------------------------------
+// Modulo PUBLICACOES_DJEN
+// ---------------------------------------------------------------------------
+
+model OabMonitorada {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  numero        String // so digitos
+  uf            String // sigla, 2 letras
+  nomeAdvogado  String?
+  ativo         Boolean   @default(true)
+  ultimaCaptura DateTime?
+  criadoEm      DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, numero, uf])
+  @@index([escritorioId, ativo])
+}
+
+model Publicacao {
+  id           String  @id @default(cuid())
+  escritorioId String
+  // Id da comunicacao no DJEN. E o que impede a mesma publicacao de entrar
+  // duas vezes quando duas OABs do escritorio aparecem no mesmo ato.
+  idExterno    String
+  processoId   String? // vinculado quando o numero ja existe no escritorio
+
+  numeroProcesso  String?
+  tribunal        String?
+  orgao           String?
+  tipoComunicacao String?
+  texto           String
+  link            String?
+  oab             String? // qual OAB monitorada trouxe
+
+  dataDisponibilizacao DateTime
+  // Classificacao automatica a partir do texto, sempre conferivel pelo humano.
+  urgente   Boolean @default(false)
+  prazoDias Int?
+
+  lida      Boolean  @default(false)
+  arquivada Boolean  @default(false)
+  criadoEm  DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+
+  @@unique([escritorioId, idExterno])
+  @@index([escritorioId, lida, arquivada])
+  @@index([escritorioId, dataDisponibilizacao])
 }
