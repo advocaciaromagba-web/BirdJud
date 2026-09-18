@@ -148,6 +148,10 @@ let clienteBeta = "";
 
 d("cobrancas por escritorio", () => {
   beforeAll(async () => {
+    // A chave de integracao e guardada cifrada, entao o teste precisa de uma
+    // chave — no CI nao ha .env.
+    process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 5).toString("base64");
+
     const a = await prismaPlataforma().escritorio.create({
       data: { slug: `cob-a-${marca}`, nome: "Alfa Cobrancas" },
     });
