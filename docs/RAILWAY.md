@@ -85,7 +85,9 @@ Para agendar as rotinas, crons do Railway chamando:
 
 - `npm run espalhar APURAR_CONSUMO` — todo dia de madrugada, mede o consumo;
 - `npm run espalhar REGUA_DE_COBRANCA` — todo dia, gera fatura do mes, marca
-  atraso e suspende quem passou do prazo.
+  atraso e suspende quem passou do prazo;
+- `npm run espalhar PURGAR_ENCERRADOS` — semanal, apaga os dados de quem
+  encerrou ha mais tempo que o prazo de retencao.
 
 O espalhamento cria um trabalho por escritorio; o trabalhador consome. Sem esse
 cron a regua nao roda, e ninguem e faturado nem suspenso.
@@ -114,6 +116,19 @@ acontece.** Em Settings > Deploy, deixe o deploy condicionado ao CI verde.
 
 ## 7. Backup
 
-O backup do Railway e do banco inteiro, com todos os escritorios juntos. Para a
-fase 5 (contrato e LGPD) sera preciso tambem exportacao **por escritorio** e um
-teste real de restauracao — ainda nao existe.
+O backup do Railway e do banco inteiro, com todos os escritorios juntos. Ele
+resolve a perda do banco, mas nao o caso mais comum: um escritorio que precisa
+voltar ao estado de ontem sem afetar os outros.
+
+Para isso ha o backup **por escritorio**:
+
+```bash
+npm run backup -- <slug> backup.json
+npm run restaurar -- backup.json <slug-novo>   # nasce SUSPENSO
+```
+
+O procedimento e testado na bateria automatica, restaurando ao lado do original
+e conferindo registro a registro (`testes/fase5.test.ts`).
+
+**O que ainda falta na infraestrutura:** agendar esse backup e guardar o arquivo
+fora do Railway. O arquivo carrega credenciais cifradas — trate-o como o banco.

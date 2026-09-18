@@ -48,8 +48,16 @@ Falta na fase 4: cobranca automatica pelo meio de pagamento (o caminho de baixa
 ja existe; falta o webhook do provedor chamar `registrarPagamento`) e os precos
 de verdade — os da tabela sao provisorios, como o plano exige.
 
-**Fase 5 em aberto** — contrato SaaS, LGPD, backup e restauracao por escritorio,
-SLA e piloto.
+**Fase 5 entregue na parte de codigo** — minutas de contrato, termos, acordo de
+LGPD, SLA e politica de privacidade; aceite registrado no cadastro com versao,
+IP e data; backup e restauracao por escritorio, com a restauracao testada na
+bateria automatica; encerramento com prazo de retencao e purga; cabecalhos de
+seguranca e limite de taxa no cadastro. 110 testes automatizados.
+
+Falta na fase 5, e nao e trabalho de codigo: **revisao das minutas por
+advogado**, definicao de razao social, foro, prazos e valores, backup automatico
+agendado na infraestrutura, e o **piloto com 2 ou 3 escritorios** —
+roteiro em `docs/SUPORTE.md`.
 
 ## Como rodar
 
@@ -86,6 +94,14 @@ A fila precisa de um processo proprio, ao lado do `next start`:
 npm run trabalhador          # consome a fila
 npm run espalhar APURAR_CONSUMO     # mede o consumo do mes
 npm run espalhar REGUA_DE_COBRANCA  # gera fatura, marca atraso, suspende
+npm run espalhar PURGAR_ENCERRADOS  # apaga quem encerrou ha mais que o prazo
+```
+
+Backup e restauracao de um escritorio:
+
+```bash
+npm run backup -- alfa backup-alfa.json
+npm run restaurar -- backup-alfa.json alfa-restaurado   # nasce SUSPENSO
 ```
 
 Em desenvolvimento, aponte os subdominios no `/etc/hosts`
@@ -141,6 +157,12 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/cobranca.ts` | Teste, fatura, atraso, suspensao e pagamento |
 | `src/lib/plataforma.ts` | Guarda do operador e auditoria de acesso |
 | `src/lib/exportacao.ts` | Exportacao completa dos dados do escritorio |
+| `src/lib/backup.ts` | Backup e restauracao por escritorio |
+| `src/lib/encerramento.ts` | Encerramento, prazo de retencao e purga |
+| `src/lib/aceite.ts` | Registro de aceite dos documentos |
+| `src/lib/limite.ts` | Limite de tentativas por IP |
+| `docs/juridico/` | Minutas de contrato, termos, LGPD, SLA e privacidade |
+| `docs/SEGURANCA.md` | O que o sistema faz de seguranca, e o que ainda nao faz |
 | `src/lib/conectores/` | Um conector por integracao: campos, resumo e teste |
 | `src/lib/integracao.ts` | Credenciais cifradas por escritorio |
 | `src/lib/consumo.ts` | Medicao mensal, franquia e excedente |
@@ -157,6 +179,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/fase2.test.ts` | Modulo, faixa, consumo e fila (19 casos) |
 | `testes/conectores.test.ts` | Conectores contra SMTP/HTTP locais (24 casos) |
 | `testes/fase4.test.ts` | Regua, fatura, pagamento e exportacao (19 casos) |
+| `testes/fase5.test.ts` | Backup/restauracao, aceite, purga e limite (22 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
@@ -188,3 +211,8 @@ pulada — em CI, o banco de teste e obrigatorio.
 15. Operador da plataforma e escritorio sao mundos separados: a sessao de um
     nao vale no outro, e todo acesso do operador a um escritorio fica em
     `AcessoSuporte`.
+16. Mudou o texto de um documento juridico, suba `VERSAO_DOS_DOCUMENTOS`. Sem
+    isso, o aceite ja gravado passa a apontar para um texto que ninguem leu.
+17. Backup leva credencial cifrada e serve para restaurar; exportacao nao leva
+    segredo nenhum e serve para o cliente levar os dados embora. Nao confundir
+    os dois.

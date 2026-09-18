@@ -5,6 +5,9 @@ import { criarAssinatura } from "@/lib/cobranca";
 import { DIAS_DE_TESTE, PRECO_DA_FAIXA } from "@/lib/precos";
 import { gerarHash } from "@/lib/senhas";
 import { slugDoHost } from "@/lib/subdominio";
+import { ipDaRequisicao, registrarAceite } from "@/lib/aceite";
+import { registrarTentativa } from "@/lib/limite";
+import { VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
 
 const RESERVADOS = new Set(["www", "app", "api", "admin", "painel", "plataforma", "suporte"]);
@@ -19,6 +22,11 @@ const cadastro = z.object({
   nome: z.string().min(2).max(120),
   email: z.string().email(),
   senha: z.string().min(10, "A senha precisa ter ao menos 10 caracteres."),
+  // O aceite e do contrato, dos termos e do acordo de LGPD, na versao vigente.
+  aceite: z.literal(true, {
+    errorMap: () => ({ message: "E preciso aceitar os documentos para continuar." }),
+  }),
+  versaoAceita: z.string(),
 });
 
 /**
@@ -36,11 +44,31 @@ export async function POST(req: Request) {
       );
     }
 
+    // Cadastro e a unica rota publica que escreve no banco: sem limite, um
+    // script cria escritorios em serie.
+    const ip = ipDaRequisicao(req) ?? "sem-ip";
+    const limite = registrarTentativa(`cadastro:${ip}`, 5, 60 * 60);
+    if (!limite.permitido) {
+      return NextResponse.json(
+        { erro: "Muitas tentativas. Tente novamente mais tarde." },
+        { status: 429, headers: { "Retry-After": String(limite.esperarSegundos) } }
+      );
+    }
+
     const corpo = cadastro.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json(
         { erro: corpo.error.issues[0]?.message ?? "Dados invalidos." },
         { status: 400 }
+      );
+    }
+
+    // Versao antiga na tela significa que o texto mudou enquanto ela estava
+    // aberta: o aceite valeria para um documento que a pessoa nao leu.
+    if (corpo.data.versaoAceita !== VERSAO_DOS_DOCUMENTOS) {
+      return NextResponse.json(
+        { erro: "Os documentos foram atualizados. Recarregue a pagina e leia a versao nova." },
+        { status: 409 }
       );
     }
 
@@ -64,6 +92,13 @@ export async function POST(req: Request) {
         }),
       })
     );
+
+    await registrarAceite(escritorio.id, {
+      nome: corpo.data.nome,
+      email: corpo.data.email,
+      ip,
+      navegador: req.headers.get("user-agent"),
+    });
 
     await criarAssinatura(escritorio.id, PRECO_DA_FAIXA.ATE_3, DIAS_DE_TESTE);
 

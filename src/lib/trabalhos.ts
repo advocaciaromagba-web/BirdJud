@@ -8,6 +8,7 @@ import { competenciaDe, definirConsumo } from "./consumo";
 import { moduloAtivo, type Modulo } from "./modulos";
 import { enfileirar } from "./fila";
 import { aplicarRegua } from "./cobranca";
+import { purgarEncerrados } from "./encerramento";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -40,10 +41,25 @@ async function ruaDeCobranca({ escritorioId }: Contexto): Promise<void> {
   await aplicarRegua(escritorioId);
 }
 
+/**
+ * Apaga os dados de escritorios encerrados ha mais tempo que o prazo de
+ * retencao. Trabalho da plataforma: nao e por escritorio, varre todos.
+ */
+async function purgar(): Promise<void> {
+  const resultado = await purgarEncerrados();
+  if (resultado.apagados > 0) {
+    console.log(`Purga: ${resultado.apagados} escritorio(s): ${resultado.escritorios.join(", ")}`);
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
+  PURGAR_ENCERRADOS: purgar,
 };
+
+/** Trabalhos que rodam uma vez para a plataforma toda, nao por escritorio. */
+export const TRABALHOS_DA_PLATAFORMA = new Set(["PURGAR_ENCERRADOS"]);
 
 /** Modulo exigido por tipo de trabalho. Sem modulo, so o nucleo. */
 const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
@@ -59,6 +75,12 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
  * vira "uma rotina por escritorio".
  */
 export async function espalhar(tipo: string, dados: Record<string, unknown> = {}): Promise<number> {
+  // Trabalho da plataforma entra uma vez so, sem escritorio.
+  if (TRABALHOS_DA_PLATAFORMA.has(tipo)) {
+    await enfileirar(tipo, null, dados);
+    return 1;
+  }
+
   // A regua precisa alcancar tambem quem ja esta suspenso: e o pagamento
   // dele que devolve o escritorio ao ar. Encerrado fica de fora sempre.
   const alcance =

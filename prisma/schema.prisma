@@ -33,9 +33,14 @@ model Escritorio {
   enderecos           Json?
   expediente          Json?
 
-  criadoEm     DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+  // Encerramento: o prazo de retencao conta a partir daqui, e a purga da LGPD
+  // so apaga depois dele.
+  encerradoEm  DateTime?
+  purgadoEm    DateTime?
 
+  aceites      AceiteDeTermos[]
   usuarios     Usuario[]
   clientes     Cliente[]
   processos    Processo[]
@@ -284,4 +289,26 @@ model Trabalho {
 
   @@index([estado, agendadoPara])
   @@index([escritorioId, estado])
+}
+
+// ---------------------------------------------------------------------------
+// Aceite dos documentos juridicos
+// ---------------------------------------------------------------------------
+
+model AceiteDeTermos {
+  id           String   @id @default(cuid())
+  escritorioId String
+  // Quem aceitou. Fica solto de proposito: o aceite sobrevive a exclusao do
+  // usuario, porque e prova de contrato.
+  usuarioEmail String
+  usuarioNome  String
+  documento    String // TERMOS | CONTRATO | LGPD
+  versao       String // "2026-09-18"
+  ip           String?
+  navegador    String?
+  aceitoEm     DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, documento])
 }

@@ -2,7 +2,7 @@
 // Chamado por um agendador externo (cron do Railway, por exemplo).
 //
 //   npm run espalhar APURAR_CONSUMO
-import { espalhar } from "../src/lib/trabalhos";
+import { espalhar, TRABALHOS_DA_PLATAFORMA } from "../src/lib/trabalhos";
 
 async function main(): Promise<void> {
   const tipo = process.argv[2];
@@ -12,7 +12,8 @@ async function main(): Promise<void> {
   }
 
   const agendados = await espalhar(tipo);
-  console.log(`${tipo}: ${agendados} escritorio(s) agendado(s).`);
+  const alvo = TRABALHOS_DA_PLATAFORMA.has(tipo) ? "trabalho da plataforma" : "escritorio(s)";
+  console.log(`${tipo}: ${agendados} ${alvo} agendado(s).`);
 }
 
 main().then(

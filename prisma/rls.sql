@@ -25,6 +25,7 @@ DECLARE
     'Lancamento',
     'Assinatura',
     'Fatura',
+    'AceiteDeTermos',
     'AcessoSuporte'
   ];
 BEGIN

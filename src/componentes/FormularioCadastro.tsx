@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DOCUMENTOS, VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 
 export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: number }) {
   const [erro, setErro] = useState<string | null>(null);
@@ -22,6 +23,8 @@ export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: n
         nome: String(dados.get("nome") ?? ""),
         email: String(dados.get("email") ?? ""),
         senha: String(dados.get("senha") ?? ""),
+        aceite: dados.get("aceite") === "on",
+        versaoAceita: VERSAO_DOS_DOCUMENTOS,
       }),
     });
     const json = await resposta.json().catch(() => ({}));
@@ -87,6 +90,31 @@ export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: n
           className="rounded border border-neutral-300 px-3 py-2"
         />
       </label>
+      <label className="mt-2 grid grid-cols-[auto_1fr] items-start gap-2 text-sm">
+        <input name="aceite" type="checkbox" required className="mt-1 accent-[var(--marca-primaria)]" />
+        <span>
+          Li e aceito{" "}
+          {DOCUMENTOS.map((documento, indice) => (
+            <span key={documento.chave}>
+              {indice > 0 ? (indice === DOCUMENTOS.length - 1 ? " e " : ", ") : ""}
+              <a
+                href={`/juridico/${documento.caminho}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-marca underline"
+              >
+                {documento.rotulo}
+              </a>
+            </span>
+          ))}
+          .
+          <span className="block text-xs text-neutral-500">
+            Versao {VERSAO_DOS_DOCUMENTOS}. O aceite fica registrado com data e
+            hora.
+          </span>
+        </span>
+      </label>
+
       {erro ? <p className="text-sm text-red-700">{erro}</p> : null}
       <button
         type="submit"
