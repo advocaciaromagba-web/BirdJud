@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export type PublicacaoNaTela = {
+  temIA: boolean;
+  analise: string | null;
   id: string;
   numeroProcesso: string | null;
   numeroFormatado: string | null;
@@ -42,6 +44,26 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
   const router = useRouter();
   const [aberta, setAberta] = useState(false);
   const [ocupado, setOcupado] = useState(false);
+  const [analise, setAnalise] = useState<string | null>(publicacao.analise);
+  const [erroIA, setErroIA] = useState<string | null>(null);
+
+  async function analisar() {
+    setOcupado(true);
+    setErroIA(null);
+    const resposta = await fetch("/api/ia", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo: "ANALISE_PUBLICACAO", publicacaoId: publicacao.id }),
+    });
+    const json = await resposta.json().catch(() => ({}));
+    setOcupado(false);
+    if (resposta.ok) {
+      setAnalise(json.analise.texto);
+      router.refresh();
+      return;
+    }
+    setErroIA(json.erro ?? "Nao foi possivel analisar.");
+  }
 
   async function marcar(campos: { lida?: boolean; arquivada?: boolean }) {
     setOcupado(true);
@@ -96,7 +118,27 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
         {publicacao.texto}
       </p>
 
+      {analise ? (
+        <div className="mt-3 rounded border border-neutral-200 bg-neutral-50 p-3 text-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            Leitura da IA · rascunho, confira nos autos
+          </p>
+          <p className="mt-2 whitespace-pre-line">{analise}</p>
+        </div>
+      ) : null}
+      {erroIA ? <p className="mt-2 text-sm text-red-700">{erroIA}</p> : null}
+
       <div className="mt-3 flex flex-wrap gap-2 text-sm">
+        {publicacao.temIA && !analise ? (
+          <button
+            type="button"
+            disabled={ocupado}
+            onClick={analisar}
+            className="rounded border border-marca px-3 py-1 font-semibold text-marca disabled:opacity-60"
+          >
+            {ocupado ? "Lendo..." : "Ler com IA"}
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => setAberta((v) => !v)}

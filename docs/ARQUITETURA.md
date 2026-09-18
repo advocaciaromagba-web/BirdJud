@@ -408,3 +408,57 @@ para a desconfianca do cliente.
 
 O envio abre **uma** conexao SMTP por lote, nao uma por mensagem: abrir uma por
 mensagem e o jeito mais rapido de um provedor tratar o escritorio como abuso.
+
+## Modulo de IA
+
+Duas funcoes sobre a publicacao ja capturada: **leitura** (resumo, prazo
+indicado, providencia) e **rascunho de manifestacao** a partir de uma instrucao
+do advogado.
+
+### A regra que atravessa tudo: a IA rascunha, nao conclui
+
+As instrucoes estao em `src/lib/prompts-ia.ts`, separadas do codigo de API para
+poderem ser lidas e revistas por quem entende de direito. Elas proibem
+explicitamente:
+
+- inventar numero de lei, artigo, sumula ou precedente — faltando certeza, o
+  argumento vai sem citacao, ou com aviso de que a fundamentacao precisa ser
+  conferida;
+- inventar fato, valor, data ou nome que nao esteja no material — o que falta
+  vira `[CONFERIR: ...]` no texto;
+- afirmar prazo — prazo e sempre indicacao, com "(conferir nos autos)".
+
+Na tela, a leitura aparece sob o rotulo "rascunho, confira nos autos". Num
+sistema de advocacia, saida de modelo apresentada como peca pronta e risco para
+o cliente e para a inscricao do advogado.
+
+### Fallback de recusa ligado
+
+`fallbacks: "default"` na chamada. Texto de processo criminal, de familia ou de
+violencia domestica toca assunto que o classificador de seguranca pode recusar;
+sem o fallback, o advogado veria o sistema simplesmente falhar num caso
+legitimo. Com ele, a API refaz a chamada em outro modelo.
+
+Por isso `AnaliseIA.modelo` guarda **o modelo que respondeu**, nao o que foi
+pedido: com fallback os dois podem diferir, e uma peca precisa poder ser
+auditada. Recusa que chega ao fim da cadeia vira erro proprio (422), nao texto
+vazio.
+
+### Medicao e unidade de cobranca
+
+A chave e da plataforma, entao o consumo e medido por escritorio em
+`IA_MIL_TOKENS` — **milhares** de tokens, nao tokens.
+
+A unidade importa: preco de excedente e inteiro em centavos, e um centavo por
+token daria umas 370 vezes o custo do modelo. Foi o erro que a tabela
+provisoria tinha antes deste modulo existir.
+
+Tokens lidos de cache contam na medicao. Custam menos, mas nao sao de graca —
+e o sistema fica marcado para cache justamente porque a instrucao nao muda
+entre chamadas.
+
+### Travas antes da chamada paga
+
+Entrada acima de `LIMITE_DE_CARACTERES` e recusada **antes** de virar chamada;
+o teto de saida por chamada protege contra peca truncada no meio. A cota de
+verdade e a franquia do modulo, medida em `ConsumoMensal`.

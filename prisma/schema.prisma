@@ -47,6 +47,7 @@ model Escritorio {
   compromissos Compromisso[]
   oabs         OabMonitorada[]
   publicacoes  Publicacao[]
+  analises     AnaliseIA[]
   avisos       Aviso[]
   assinatura   Assinatura?
   faturas      Fatura[]
@@ -382,8 +383,9 @@ model Publicacao {
   arquivada Boolean  @default(false)
   criadoEm  DateTime @default(now())
 
-  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
-  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  escritorio Escritorio  @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  processo   Processo?   @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  analises   AnaliseIA[]
 
   @@unique([escritorioId, idExterno])
   @@index([escritorioId, lida, arquivada])
@@ -420,4 +422,31 @@ model Aviso {
 
   @@unique([escritorioId, chave])
   @@index([escritorioId, estado])
+}
+
+// ---------------------------------------------------------------------------
+// Modulo IA
+// ---------------------------------------------------------------------------
+
+model AnaliseIA {
+  id           String  @id @default(cuid())
+  escritorioId String
+  usuarioId    String?
+  publicacaoId String?
+
+  tipo   String // ANALISE_PUBLICACAO | MINUTA_MANIFESTACAO
+  // O modelo que REALMENTE respondeu: com fallback de recusa, pode nao ser o
+  // que foi pedido. Sem isso, a auditoria de uma peca fica sem origem.
+  modelo String
+
+  resultado     String
+  tokensEntrada Int
+  tokensSaida   Int
+  criadoEm      DateTime @default(now())
+
+  escritorio Escritorio  @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  publicacao Publicacao? @relation(fields: [publicacaoId], references: [id], onDelete: SetNull)
+
+  @@index([escritorioId, criadoEm])
+  @@index([publicacaoId])
 }

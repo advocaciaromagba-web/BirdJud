@@ -23,6 +23,7 @@ DECLARE
     'Processo',
     'Compromisso',
     'Lancamento',
+    'AnaliseIA',
     'Aviso',
     'OabMonitorada',
     'Publicacao',

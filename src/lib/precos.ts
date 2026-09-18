@@ -36,7 +36,9 @@ export const PRECO_DO_EXCEDENTE: Partial<Record<Metrica, number>> = {
   EMAIL_ENVIADO: 2,
   NFSE_EMITIDA: 90,
   OAB_MONITORADA: 490,
-  IA_TOKENS: 1,
+  // Por MILHAR de tokens. O custo do modelo hoje fica na casa de 3 centavos
+  // por milhar; este numero, como toda esta tabela, e provisorio.
+  IA_MIL_TOKENS: 9,
 };
 
 export const DIAS_DE_TESTE = 14;

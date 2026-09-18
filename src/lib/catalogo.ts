@@ -48,7 +48,9 @@ export function ehFaixa(valor: string): valor is Faixa {
 export const METRICAS = [
   "WHATSAPP_MSG",
   "EMAIL_ENVIADO",
-  "IA_TOKENS",
+  // Em MILHARES de tokens, nao em tokens. Preco sai em centavos inteiros, e
+  // um centavo por token seria centenas de vezes o custo do modelo.
+  "IA_MIL_TOKENS",
   "NFSE_EMITIDA",
   "OAB_MONITORADA",
   "ARMAZENAMENTO_MB",
@@ -62,7 +64,7 @@ export type Metrica = (typeof METRICAS)[number];
 export const MODULO_DA_METRICA: Partial<Record<Metrica, Modulo>> = {
   WHATSAPP_MSG: "WHATSAPP",
   EMAIL_ENVIADO: "EMAIL",
-  IA_TOKENS: "IA",
+  IA_MIL_TOKENS: "IA",
   NFSE_EMITIDA: "NFSE",
   OAB_MONITORADA: "PUBLICACOES_DJEN",
 };

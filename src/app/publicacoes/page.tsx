@@ -36,6 +36,13 @@ export default async function PaginaPublicacoes() {
         where: { arquivada: false },
         orderBy: [{ urgente: "desc" }, { dataDisponibilizacao: "desc" }],
         take: 200,
+        include: {
+          analises: {
+            where: { tipo: "ANALISE_PUBLICACAO" },
+            orderBy: { criadoEm: "desc" },
+            take: 1,
+          },
+        },
       }),
       oabs: await db.oabMonitorada.findMany({ orderBy: { criadoEm: "asc" } }),
       naoLidas: await db.publicacao.count({ where: { arquivada: false, lida: false } }),
@@ -59,6 +66,8 @@ export default async function PaginaPublicacoes() {
     urgente: p.urgente,
     prazoDias: p.prazoDias,
     lida: p.lida,
+    temIA: modulos.includes("IA"),
+    analise: p.analises[0]?.resultado ?? null,
   }));
 
   return (

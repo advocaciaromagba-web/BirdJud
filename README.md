@@ -50,6 +50,11 @@ Falta na fase 4: cobranca automatica pelo meio de pagamento (o caminho de baixa
 ja existe; falta o webhook do provedor chamar `registrarPagamento`) e os precos
 de verdade — os da tabela sao provisorios, como o plano exige.
 
+**Modulo de IA** — leitura da publicacao (resumo, prazo indicado, providencia) e
+rascunho de manifestacao. As instrucoes proibem inventar fundamentacao e tratam
+prazo como indicacao a conferir; a tela rotula tudo como rascunho. Consumo
+medido por escritorio em milhares de tokens.
+
 **Modulo de e-mail (avisos)** — resumo diario das publicacoes nao lidas e
 lembrete de compromisso 24h antes, enviados pelo SMTP do proprio escritorio.
 Cada pessoa escolhe o que recebe em Minha conta.
@@ -176,6 +181,8 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/sessao.ts` | `exigirSessao()`: sessao + escritorio do endereco + modulo |
 | `src/lib/modulos.ts` | Ponto unico de modulo contratado (escritorio) |
 | `src/lib/papeis.ts` | Papel do usuario dentro do escritorio |
+| `src/lib/ia.ts` | Chamada ao modelo, medicao e recusa |
+| `src/lib/prompts-ia.ts` | Instrucoes da IA, para revisao juridica |
 | `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
 | `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
 | `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
@@ -215,6 +222,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/fase5.test.ts` | Backup/restauracao, aceite, purga e limite (24 casos) |
 | `testes/publicacoes.test.ts` | Triagem, cliente do DJEN e captura (28 casos) |
 | `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
+| `testes/ia.test.ts` | Instrucoes, medicao, recusa e travas (17 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
 | `.github/workflows/ci.yml` | Roda a bateria contra Postgres real a cada push |
 
@@ -254,3 +262,5 @@ pulada — em CI, o banco de teste e obrigatorio.
 18. Migracao que mexe em DADOS precisa suspender o `FORCE ROW LEVEL SECURITY`
     da tabela e repor no fim. Sem isso o `UPDATE` afeta zero linhas em silencio,
     porque o proprio usuario de migracao esta sob a politica.
+19. Saida de IA e rascunho, e a tela diz isso. As instrucoes proibem inventar
+    fundamentacao; prazo detectado e sempre "conferir nos autos".
