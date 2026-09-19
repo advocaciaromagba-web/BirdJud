@@ -108,6 +108,58 @@ distribuido continua sendo problema do provedor, antes da aplicacao.
 Servicos conectados pelo proprio escritorio (WhatsApp, Asaas, Autentique,
 e-mail, nuvem) sao contratados por ele, com conta dele.
 
+## O que a revisao de 19/09 procurou, e o que ela achou
+
+Quatro achados, todos corrigidos, e cada um com um teste que **falha sem a
+correcao** — foi assim que foram conferidos.
+
+**Falha de segundo fator nao contava tentativa.** Quem ja tivesse a senha
+(vazamento de outro site, reuso, anotacao) podia testar o codigo de seis
+digitos a vontade: o bloqueio por tentativas so contava senha errada. O segundo
+fator virava enfeite. Agora conta igual, e cinco erros bloqueiam a conta.
+
+**O login do operador da plataforma nao tinha teto nenhum.** E a conta que
+enxerga todos os escritorios, e nao tem a coluna de bloqueio que o usuario de
+escritorio tem. Eram tentativas infinitas contra a senha mais importante do
+sistema. Agora ha teto por conta e por origem.
+
+**O login nao tinha limite por origem.** O bloqueio por conta protege uma
+senha; nao protege contra quem testa a mesma senha em cem contas diferentes,
+que e o ataque que vive de vazamento de outro site. Sao dois ataques, e agora
+sao duas defesas.
+
+**A rota de IA nao tinha teto de chamadas.** Cada chamada gasta dinheiro de
+verdade na chave da plataforma. Um laco na tela, ou uma conta invadida, viraria
+conta alta antes de alguem perceber. Agora ha teto por escritorio e por pessoa,
+folgado para uso humano.
+
+### O que foi conferido e estava certo
+
+- **Cabecalho de escritorio forjado nao atravessa**: o middleware apaga o que
+  vem de fora antes de escrever o seu. Conferido com a aplicacao rodando,
+  mandando o cabecalho de outro escritorio junto com sessao valida.
+- Nenhuma rota aceita `escritorioId` vindo do corpo da requisicao.
+- Todas as rotas tem guarda; as tres sem sessao sao o cadastro publico (com
+  limite de taxa e sem criar escritorio de dentro de outro), o webhook de
+  pagamento (token comparado em tempo constante, e recusa se nao estiver
+  configurado) e o proprio NextAuth.
+- Rota de admin recusa quem nao e admin (conferido com um usuario comum).
+- A lista de usuarios nao devolve hash de senha nem segredo de 2FA.
+- Mensagem de erro para o cliente e ou do nosso dominio, ou generica: o
+  detalhe interno vai para o log, nao para a tela.
+- Download de arquivo sai sempre como anexo, com `nosniff`.
+- Acesso de suporte fica registrado e nao existe "entrar como o escritorio";
+  o painel do operador nao mostra dado de cliente nem de processo.
+
+### Risco conhecido, nao eliminado
+
+O texto da publicacao que vai para a IA vem de fora (DJEN). Um texto
+malicioso pode tentar instruir o modelo. O que existe contra isso: as regras da
+casa proibem inventar fundamentacao, o resultado e sempre apresentado como
+rascunho, e nada do que a IA responde vira acao automatica no sistema. Isso
+reduz o estrago, nao elimina a tentativa — e o motivo de a leitura da IA nunca
+substituir a conferencia nos autos.
+
 ## Registro de revisoes de seguranca
 
 | Data | O que foi feito | Resultado |
@@ -115,3 +167,4 @@ e-mail, nuvem) sao contratados por ele, com conta dele.
 | 2026-09-18 | Revisao antes do piloto: guarda de todas as rotas e paginas, uso do papel que atravessa o RLS, campos sensiveis em respostas, travessia de caminho nas paginas juridicas, cabecalhos e limite de taxa | 3 achados, todos corrigidos: purga nao apagava os trabalhos da fila (e o comentario dizia que apagava faturas, que ficam de proposito); faltavam cabecalhos de seguranca; cadastro publico sem limite de taxa |
 | 2026-09-18 | Dividas fechadas: revogacao de sessao, CSP com nonce, limite de taxa no banco e webhook de pagamento. Verificacao em navegador de verdade sob a CSP nova | 1 achado: `upgrade-insecure-requests` quebrava a aplicacao servida por HTTP; passou a depender do protocolo da requisicao |
 | — | teste de restauracao de backup | roda na bateria automatica (`testes/fase5.test.ts`), restaurando ao lado do original e conferindo registro a registro |
+| 2026-09-19 | Revisao adversarial do sistema inteiro, depois dos sete modulos: forca bruta no login, segundo fator, conta do operador, isolamento por cabecalho forjado, papeis, vazamento em mensagem de erro, limites de custo, acesso de suporte | 4 achados, todos corrigidos e com teste que falha sem a correcao (`testes/seguranca.test.ts`): falha de segundo fator nao contava tentativa; login do operador sem teto nenhum; login sem limite por origem; rota de IA sem teto de chamadas |

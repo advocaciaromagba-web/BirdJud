@@ -258,6 +258,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/publicacoes.test.ts` | Triagem, cliente do DJEN e captura (28 casos) |
 | `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
 | `testes/ia.test.ts` | Instrucoes, medicao, recusa e travas (17 casos) |
+| `testes/seguranca.test.ts` | Forca bruta, segundo fator e conta do operador (6 casos) |
 | `testes/migracoes.test.ts` | Ordem das migracoes: alfabetica = numerica (3 casos) |
 | `testes/nfse.test.ts` | Assinatura, numeracao, recusa e cancelamento (23 casos) |
 | `testes/whatsapp.test.ts` | Telefone, modelos, idempotencia e erros da Meta (15 casos) |
