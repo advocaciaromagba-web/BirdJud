@@ -600,3 +600,21 @@ entre chamadas.
 Entrada acima de `LIMITE_DE_CARACTERES` e recusada **antes** de virar chamada;
 o teto de saida por chamada protege contra peca truncada no meio. A cota de
 verdade e a franquia do modulo, medida em `ConsumoMensal`.
+
+## Nome de migracao tem dois digitos, sempre
+
+As migracoes rodam em ordem **alfabetica** do nome da pasta, nao na ordem em que
+foram escritas. Com `8_avisos` e `12_whatsapp`, um banco vazio tentava alterar a
+tabela `Aviso` antes de cria-la: `12` vem antes de `8` no alfabeto.
+
+Isso passou despercebido por um commit porque o banco de desenvolvimento aplicou
+cada migracao no dia em que ela nasceu — so um banco **vazio** revela a ordem
+real, e e o que o CI faz a cada push. As pastas foram renomeadas para
+`00_init` ... `12_whatsapp`, e `testes/migracoes.test.ts` passou a conferir que
+a ordem alfabetica e a numerica sao a mesma.
+
+A renomeacao so foi possivel porque nao ha banco em producao ainda: o Prisma
+guarda o nome da pasta em `_prisma_migrations`, entao renomear depois de
+implantar faria ele tentar aplicar tudo de novo. Depois do primeiro deploy, o
+caminho seria outro — criar a migracao nova com numero maior e conviver com os
+nomes antigos.
