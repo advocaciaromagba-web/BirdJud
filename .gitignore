@@ -8,3 +8,6 @@ build/
 *.tsbuildinfo
 .DS_Store
 coverage/
+
+# Arquivos do modulo NUVEM em desenvolvimento (em producao e um volume).
+dados/

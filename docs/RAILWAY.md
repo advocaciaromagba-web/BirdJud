@@ -103,6 +103,12 @@ Para agendar as rotinas, crons do Railway chamando:
 - `npm run espalhar SINCRONIZAR_COBRANCAS` — uma ou duas vezes por dia,
   confere no Asaas o que foi pago e da baixa.
 
+> **O modulo de nuvem precisa de um VOLUME.** Disco de container e efemero: sem
+> volume montado no caminho de `RAIZ_ARQUIVOS`, os arquivos do escritorio somem
+> no proximo deploy. No Railway: servico da aplicacao > Settings > Volumes,
+> montar em `/dados/arquivos` e apontar `RAIZ_ARQUIVOS` para la. O trabalhador
+> nao precisa do volume; so a aplicacao web.
+
 > **A API do DJEN bloqueia acesso de fora do Brasil.** Quem resolve isso e o
 > rele da Vercel, fixado na regiao gru1 (Sao Paulo): configure `DJEN_RELE_URL` e
 > `DJEN_RELE_TOKEN` no ambiente e o trabalhador pode rodar em qualquer regiao.

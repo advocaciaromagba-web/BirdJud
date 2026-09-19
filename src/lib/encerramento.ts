@@ -5,6 +5,7 @@
 // exportar o que e dele — e a promessa do contrato e da LGPD.
 import { prismaPlataforma } from "./prisma";
 import { PRAZO_DE_RETENCAO_DIAS } from "./juridico";
+import { apagarTudoDoEscritorio } from "./armazenamento";
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -42,7 +43,9 @@ export type ResultadoDaPurga = {
  * Apaga os dados dos escritorios encerrados ha mais tempo que o prazo.
  *
  * **Vai embora:** usuarios, clientes, processos, agenda, lancamentos,
- * integracoes (com as credenciais), consumo, modulos e os trabalhos da fila.
+ * publicacoes, avisos, analises de IA, OABs monitoradas, cobrancas, arquivos
+ * (a linha e o byte no disco), integracoes (com as credenciais), consumo,
+ * modulos e os trabalhos da fila.
  *
  * **Fica, de proposito:** faturas, assinatura e aceites de termos. Sao registro
  * fiscal e prova de contrato, que a plataforma precisa guardar por obrigacao
@@ -70,6 +73,15 @@ export async function purgarEncerrados(agora = new Date()): Promise<ResultadoDaP
       prismaPlataforma().processo.deleteMany({ where: { escritorioId: escritorio.id } }),
       prismaPlataforma().compromisso.deleteMany({ where: { escritorioId: escritorio.id } }),
       prismaPlataforma().lancamento.deleteMany({ where: { escritorioId: escritorio.id } }),
+      // Modulos que vieram depois da fase 5. Sem estas linhas, publicacao e
+      // analise de IA sobreviviam a purga — dado de cliente que a LGPD e o
+      // nosso proprio contrato mandam apagar.
+      prismaPlataforma().arquivo.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().cobranca.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().analiseIA.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().aviso.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().publicacao.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().oabMonitorada.deleteMany({ where: { escritorioId: escritorio.id } }),
       prismaPlataforma().integracao.deleteMany({ where: { escritorioId: escritorio.id } }),
       prismaPlataforma().consumoMensal.deleteMany({ where: { escritorioId: escritorio.id } }),
       prismaPlataforma().moduloContratado.deleteMany({ where: { escritorioId: escritorio.id } }),
@@ -80,6 +92,10 @@ export async function purgarEncerrados(agora = new Date()): Promise<ResultadoDaP
         data: { purgadoEm: agora },
       }),
     ]);
+
+    // Depois do commit: disco nao participa de transacao, e apagar byte de
+    // escritorio que ja nao tem linha nenhuma e sempre seguro.
+    await apagarTudoDoEscritorio(escritorio.id);
   }
 
   return { apagados: candidatos.length, escritorios: candidatos.map((e) => e.slug) };

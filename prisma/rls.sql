@@ -25,6 +25,7 @@ DECLARE
     'Lancamento',
     'AnaliseIA',
     'Cobranca',
+    'Arquivo',
     'Aviso',
     'OabMonitorada',
     'Publicacao',

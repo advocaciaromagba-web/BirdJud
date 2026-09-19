@@ -297,6 +297,58 @@ de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencia
 cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
 escritorio, e um arquivo desses circula por e-mail.
 
+## Modulo de nuvem (arquivos)
+
+Os documentos do escritorio, guardados por escritorio: subir, achar, amarrar ao
+processo ou ao cliente, baixar e apagar. Versionamento, pastas e edicao
+colaborativa ficam **de fora** — e o Drive de cada um que faz isso, e meia
+implementacao disso seria pior que nenhuma.
+
+### Onde o byte fica
+
+Disco, em um volume do Railway (`RAIZ_ARQUIVOS`). Objeto em nuvem de terceiro
+significaria mais uma credencial da plataforma para guardar e mais um servico
+para o escritorio depender. Quando o volume apertar, trocar para S3 e trocar
+`src/lib/armazenamento.ts`: o resto do modulo so conhece quatro funcoes.
+
+**Sem volume montado, os arquivos somem no proximo deploy** — disco de container
+e efemero. Isso esta no passo a passo do Railway.
+
+### Tres travas, e por que cada uma
+
+**O caminho no disco nunca vem do usuario.** Ele e montado a partir de
+`escritorioId` + `id` do arquivo, os dois gerados por nos, e cada pedaco e
+conferido contra `[A-Za-z0-9_-]`. E o que impede `../../etc/passwd` de virar
+caminho valido. O nome que a pessoa mandou fica so na linha do banco.
+
+**Lista fechada de tipos, com a extensao batendo com o tipo declarado.** Tipo
+novo perigoso aparece toda semana; tipo novo util, uma vez por ano. Exigir que
+tipo e extensao contem a mesma historia derruba o caso simples de renomear
+`x.exe` para `x.pdf`.
+
+**Download sempre como anexo, com `nosniff`.** Um `.html` ou `.svg` servido
+inline no nosso dominio rodaria script com a sessao do escritorio. Anexo tira
+essa porta do caminho, mesmo que um tipo perigoso passe pela lista um dia.
+
+### Espaco
+
+A franquia em MB vem do modulo contratado (padrao de 1 GB quando nao ha franquia
+declarada). O escritorio pode passar dela — o excedente e cobrado —, mas o envio
+para em um teto de tres vezes a franquia. Barrar no primeiro megabyte a mais
+faria o escritorio perder documento em dia de audiencia; nao ter teto faria
+engano virar conta impagavel e disco cheio.
+
+O consumo e **retrato, nao acumulo**: `ARMAZENAMENTO_MB` guarda o espaco de
+agora, refeito a cada envio e a cada exclusao — diferente de mensagem enviada ou
+token de IA, que so somam.
+
+### Purga
+
+A purga do escritorio encerrado apaga a linha e o byte. Ao escrever isto
+apareceu um buraco anterior: publicacoes, avisos, analises de IA e OABs
+monitoradas nao estavam na lista da purga e sobreviviam a ela — dado de cliente
+que a LGPD e o nosso proprio contrato mandam apagar. Corrigido junto.
+
 ## Modulo de cobrancas (Asaas)
 
 O escritorio cobra o **cliente dele**, pela conta Asaas **dele**. Nao confundir

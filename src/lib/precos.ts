@@ -38,6 +38,8 @@ export const PRECO_DO_EXCEDENTE: Partial<Record<Metrica, number>> = {
   // Por cobranca EMITIDA. O que o Asaas cobra por boleto/Pix pago e outra
   // conta, direto entre o escritorio e o Asaas: nao passa pela plataforma.
   COBRANCA_EMITIDA: 40,
+  // Por MB guardado alem da franquia, no retrato do mes.
+  ARMAZENAMENTO_MB: 1,
   OAB_MONITORADA: 490,
   // Por MILHAR de tokens. O custo do modelo hoje fica na casa de 3 centavos
   // por milhar; este numero, como toda esta tabela, e provisorio.

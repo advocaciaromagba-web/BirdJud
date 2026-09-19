@@ -55,6 +55,11 @@ rascunho de manifestacao. As instrucoes proibem inventar fundamentacao e tratam
 prazo como indicacao a conferir; a tela rotula tudo como rascunho. Consumo
 medido por escritorio em milhares de tokens.
 
+**Modulo de nuvem (arquivos)** — os documentos do escritorio, com vinculo a
+processo ou cliente, cota por MB e exclusao que leva o byte junto. Lista fechada
+de tipos, caminho no disco montado so com identificador nosso e download sempre
+como anexo.
+
 **Modulo de cobrancas (Asaas)** — o escritorio cobra o cliente dele pela conta
 Asaas dele: boleto, Pix ou cartao, com link de pagamento, conferencia do que foi
 pago e baixa automatica em receita no financeiro. O dinheiro nao passa pela
@@ -196,6 +201,8 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
 | `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
 | `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
+| `src/lib/arquivos.ts` | Regras do arquivo: tipo, tamanho, cota e exclusao |
+| `src/lib/armazenamento.ts` | Onde o byte fica; caminho nunca vem do usuario |
 | `src/lib/cobrancas.ts` | Cobranca do cliente pelo Asaas do escritorio, e a baixa |
 | `src/lib/djen.ts` | Cliente do DJEN, escolha do rele e mapeamento dos campos |
 | `rele/api/djen.ts` | Rele do DJEN na Vercel, regiao gru1 (implantado sozinho) |
@@ -235,6 +242,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/publicacoes.test.ts` | Triagem, cliente do DJEN e captura (28 casos) |
 | `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
 | `testes/ia.test.ts` | Instrucoes, medicao, recusa e travas (17 casos) |
+| `testes/arquivos.test.ts` | Tipo, caminho, cota, isolamento e purga (15 casos) |
 | `testes/cobrancas.test.ts` | Emissao, baixa unica, cancelamento e isolamento (19 casos) |
 | `testes/rele.test.ts` | Token, parametro estranho e repasse do rele (15 casos) |
 | `scripts/preparar-banco.sql` | Cria os tres papeis; roda uma vez |
