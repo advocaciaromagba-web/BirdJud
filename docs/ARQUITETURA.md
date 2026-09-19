@@ -297,6 +297,55 @@ de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencia
 cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
 escritorio, e um arquivo desses circula por e-mail.
 
+## Modulo de NFS-e
+
+O escritorio emite com o certificado e-CNPJ dele e o cadastro fiscal dele. A
+plataforma nao tem certificado proprio — assinar nota de terceiro com
+certificado da plataforma seria falsidade, nao conveniencia.
+
+### O que esta provado e o que nao esta
+
+Esta e a divisao que organiza o modulo inteiro:
+
+| Arquivo | O que faz | Estado |
+|---|---|---|
+| `nfse/assinatura.ts` | assina o XML | **provado** em teste, com certificado gerado na hora |
+| `nfse/index.ts` | numero, status, recusa, cancelamento | **provado** em teste |
+| `nfse/layout.ts` | monta o XML do padrao nacional | escrito da documentacao, **a conferir** |
+| `nfse/nacional.ts` | manda para o ambiente nacional | escrito da documentacao, **a conferir** |
+
+`npm run conferir-nfse -- <slug>` emite em homologacao com o certificado do
+escritorio e imprime o que foi e o que voltou. Cada campo reclamado ali e um
+ponto a corrigir no layout. Ate isso rodar limpo, o modulo esta em homologacao
+— e a tela diz isso.
+
+A assinatura nao foi escrita a mao de proposito: canonicalizacao XML feita em
+casa gera assinatura que parece certa e e recusada no balcao. Quem faz e a
+xml-crypto; o nosso codigo abre o PKCS#12 e diz a ela o que assinar. O teste
+prova os dois lados — assinatura valida confere, e documento adulterado depois
+de assinado deixa de conferir.
+
+### Numeracao
+
+O numero e reservado no nosso banco **antes** do envio, dentro da transacao que
+incrementa o contador: duas emissoes simultaneas nao levam o mesmo numero. Se a
+prefeitura recusar, a nota fica RECUSADA com aquele numero e o motivo. Numero
+gasto e o que o contador espera ver; numero repetido, nao.
+
+### Cancelamento
+
+Cancela na prefeitura primeiro, marca aqui depois. A ordem inversa deixaria o
+escritorio achando que cancelou uma nota que continua valendo — e pagando ISS
+sobre servico que nao houve. Prazo e regra sao municipais e mudam: quem diz
+"nao" e o ambiente nacional, e a resposta dele chega inteira ate a tela.
+
+### Padroes municipais
+
+NFS-e nao e um padrao so: existe o nacional e dezenas de municipais (ABRASF em
+varias versoes, e prefeituras com sistema proprio). Se a prefeitura do
+escritorio nao estiver no nacional, o caminho e outro emissor — `layout.ts` e
+`nacional.ts` sao os unicos arquivos que conhecem formato.
+
 ## Modulo de WhatsApp (Cloud API da Meta)
 
 Os mesmos avisos do modulo de e-mail, tambem pelo WhatsApp do escritorio. A

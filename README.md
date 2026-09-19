@@ -55,6 +55,11 @@ rascunho de manifestacao. As instrucoes proibem inventar fundamentacao e tratam
 prazo como indicacao a conferir; a tela rotula tudo como rascunho. Consumo
 medido por escritorio em milhares de tokens.
 
+**Modulo de NFS-e** — emissao com o certificado e-CNPJ do escritorio, numeracao
+sem buraco, recusa da prefeitura na tela e cancelamento so depois que ela
+aceita. O layout do XML espera conferencia em homologacao
+(`npm run conferir-nfse`); ver [docs/NFSE.md](docs/NFSE.md).
+
 **Modulo de WhatsApp (Cloud API)** — os mesmos avisos, tambem pelo numero do
 escritorio, por modelo aprovado na Meta (o unico caminho que a Meta entrega
 fora da janela de 24h). Os textos para aprovar estao em
@@ -174,7 +179,7 @@ O RLS so vale se a aplicacao nao for dona das tabelas nem superusuario. Rode
 | `birdjud_app` | a aplicacao | `DATABASE_URL` | sujeito |
 | `birdjud_plataforma` | cadastro de escritorio, painel do operador, rotinas | `DATABASE_URL_PLATAFORMA` | **atravessa** (`BYPASSRLS`) |
 
-WhatsApp (modelos e conexao): `docs/WHATSAPP.md`. Deploy no Railway: `docs/RAILWAY.md`. Rele do DJEN na Vercel: `docs/RELE-DJEN.md`.
+NFS-e (cadastro e homologacao): `docs/NFSE.md`. WhatsApp (modelos e conexao): `docs/WHATSAPP.md`. Deploy no Railway: `docs/RAILWAY.md`. Rele do DJEN na Vercel: `docs/RELE-DJEN.md`.
 
 ## Testes
 
@@ -206,6 +211,10 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
 | `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
 | `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
+| `src/lib/nfse/assinatura.ts` | Assinatura do XML com o certificado A1 |
+| `src/lib/nfse/layout.ts` | XML do padrao nacional (a conferir em homologacao) |
+| `src/lib/nfse/nacional.ts` | Transporte ate o ambiente nacional (a conferir) |
+| `src/lib/nfse/index.ts` | Numero, status, recusa e cancelamento |
 | `src/lib/whatsapp.ts` | Cloud API da Meta: so modelo aprovado, e leitura dos erros |
 | `src/lib/modelos-whatsapp.ts` | Os modelos submetidos a Meta e seus parametros |
 | `src/lib/arquivos.ts` | Regras do arquivo: tipo, tamanho, cota e exclusao |
@@ -250,6 +259,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
 | `testes/ia.test.ts` | Instrucoes, medicao, recusa e travas (17 casos) |
 | `testes/migracoes.test.ts` | Ordem das migracoes: alfabetica = numerica (3 casos) |
+| `testes/nfse.test.ts` | Assinatura, numeracao, recusa e cancelamento (23 casos) |
 | `testes/whatsapp.test.ts` | Telefone, modelos, idempotencia e erros da Meta (15 casos) |
 | `testes/arquivos.test.ts` | Tipo, caminho, cota, isolamento e purga (15 casos) |
 | `testes/cobrancas.test.ts` | Emissao, baixa unica, cancelamento e isolamento (19 casos) |

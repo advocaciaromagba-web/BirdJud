@@ -54,6 +54,8 @@ model Escritorio {
   lancamentos  Lancamento[]
   cobrancas    Cobranca[]
   arquivos     Arquivo[]
+  notas        NotaFiscal[]
+  fiscal       Fiscal?
   trabalhos    Trabalho[]
   modulos      ModuloContratado[]
   integracoes  Integracao[]
@@ -164,6 +166,7 @@ model Cliente {
   processos  Processo[]
   cobrancas  Cobranca[]
   arquivos   Arquivo[]
+  notas      NotaFiscal[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -296,6 +299,61 @@ model Lancamento {
 
   @@index([escritorioId])
   @@index([escritorioId, competencia])
+}
+
+// ---------------------------------------------------------------------------
+// Cadastro fiscal e notas (modulo NFSE)
+//
+// O cadastro fiscal nao e credencial — e o que sai impresso na nota. Por isso
+// mora aqui, e nao em Integracao (que guarda segredo cifrado). O certificado
+// continua em Integracao.
+// ---------------------------------------------------------------------------
+
+model Fiscal {
+  id                  String   @id @default(cuid())
+  escritorioId        String   @unique
+  razaoSocial         String
+  cnpj                String
+  inscricaoMunicipal  String
+  codigoMunicipio     String // IBGE, 7 digitos
+  regime              String // SIMPLES | MEI | NORMAL
+  codigoTributacao    String // item da lista de servicos, do contador
+  aliquotaMilesimos   Int // 2% = 2000
+  serie               String   @default("1")
+  proximoNumero       Int      @default(1)
+  ambiente            String   @default("HOMOLOGACAO") // HOMOLOGACAO | PRODUCAO
+  atualizadoEm        DateTime @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+}
+
+model NotaFiscal {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  clienteId     String?
+  cobrancaId    String?
+  serie         String
+  numero        Int
+  descricao     String
+  valorCentavos Int
+  // RASCUNHO -> EMITIDA | RECUSADA; EMITIDA -> CANCELADA
+  status        String    @default("RASCUNHO")
+  chaveAcesso   String?
+  numeroNaPrefeitura String?
+  linkPdf       String?
+  xmlEnviado    String? // o DPS assinado, como foi mandado
+  xmlRetorno    String? // a NFS-e como voltou
+  erro          String?
+  emitidaEm     DateTime?
+  canceladaEm   DateTime?
+  criadoEm      DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  @@unique([escritorioId, serie, numero])
+  @@index([escritorioId, status])
+  @@index([escritorioId, criadoEm])
 }
 
 // ---------------------------------------------------------------------------

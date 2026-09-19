@@ -26,6 +26,8 @@ DECLARE
     'AnaliseIA',
     'Cobranca',
     'Arquivo',
+    'NotaFiscal',
+    'Fiscal',
     'Aviso',
     'OabMonitorada',
     'Publicacao',
