@@ -18,6 +18,8 @@ export default async function PaginaConta() {
         doisFatores: true,
         recebeResumo: true,
         recebeLembretes: true,
+        recebeWhatsapp: true,
+        telefone: true,
       },
     })
   );
@@ -35,7 +37,10 @@ export default async function PaginaConta() {
           doisFatoresAtivo={Boolean(usuario?.doisFatores)}
           recebeResumo={usuario?.recebeResumo ?? true}
           recebeLembretes={usuario?.recebeLembretes ?? true}
+          recebeWhatsapp={usuario?.recebeWhatsapp ?? false}
+          telefone={usuario?.telefone ?? ""}
           temModuloEmail={modulos.includes("EMAIL")}
+          temModuloWhatsapp={modulos.includes("WHATSAPP")}
         />
       </main>
     </>

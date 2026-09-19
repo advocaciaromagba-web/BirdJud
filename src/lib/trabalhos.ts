@@ -11,7 +11,7 @@ import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
-import { enviarAvisosPendentes, gerarAvisos } from "./avisos";
+import { enviarAvisosNoWhatsapp, enviarAvisosPendentes, gerarAvisos } from "./avisos";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -82,16 +82,24 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("AVISAR exige escritorio.");
 
   await gerarAvisos(escritorioId);
-  const envio = await enviarAvisosPendentes(escritorioId);
 
+  const envio = await enviarAvisosPendentes(escritorioId);
   if (envio.semRemetente) {
     // Nao e erro do trabalho: e configuracao que falta no escritorio. Repetir
     // a tentativa nao ajuda, e marcar como falha encheria a fila de ruido.
     console.log(`AVISAR ${escritorioId}: e-mail nao conectado, avisos aguardando.`);
-    return;
   }
-  if (envio.falhas > 0) {
-    throw new Error(`${envio.falhas} aviso(s) nao enviado(s).`);
+
+  // O WhatsApp so tem pendente se o modulo estiver contratado — a geracao
+  // cuida disso. Falta de numero conectado tambem nao e falha do trabalho.
+  const zap = await enviarAvisosNoWhatsapp(escritorioId);
+  if (zap.semNumero) {
+    console.log(`AVISAR ${escritorioId}: WhatsApp nao conectado, avisos aguardando.`);
+  }
+
+  const falhas = envio.falhas + zap.falhas;
+  if (falhas > 0) {
+    throw new Error(`${falhas} aviso(s) nao enviado(s).`);
   }
 }
 

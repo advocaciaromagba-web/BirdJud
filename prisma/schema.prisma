@@ -126,9 +126,14 @@ model Usuario {
   // para agora, e as sessoes ja abertas caem na proxima requisicao.
   sessoesValidasApos DateTime?
 
-  // O que esta pessoa quer receber por aviso.
+  // Telefone em E.164 para o WhatsApp do escritorio. Guardado como digitado
+  // e normalizado na hora do envio.
+  telefone        String?
+
+  // O que esta pessoa quer receber por aviso, e por onde.
   recebeResumo    Boolean @default(true)
   recebeLembretes Boolean @default(true)
+  recebeWhatsapp  Boolean @default(false)
 
   avisos Aviso[]
   arquivos Arquivo[]
@@ -489,6 +494,12 @@ model Aviso {
 
   assunto String
   corpo   String
+
+  // So no canal WHATSAPP: o modelo aprovado na Meta e os parametros dele, na
+  // ordem. Ficam gravados porque e o que foi realmente mandado — o corpo
+  // acima e a versao legivel, para o escritorio ler depois.
+  modelo     String?
+  parametros Json?
 
   estado     String    @default("PENDENTE") // PENDENTE | ENVIADO | FALHOU
   tentativas Int       @default(0)

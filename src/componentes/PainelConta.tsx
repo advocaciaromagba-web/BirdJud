@@ -23,17 +23,30 @@ export function PainelConta({
   doisFatoresAtivo,
   recebeResumo,
   recebeLembretes,
+  recebeWhatsapp,
+  telefone,
   temModuloEmail,
+  temModuloWhatsapp,
 }: {
   doisFatoresAtivo: boolean;
   recebeResumo: boolean;
   recebeLembretes: boolean;
+  recebeWhatsapp: boolean;
+  telefone: string;
   temModuloEmail: boolean;
+  temModuloWhatsapp: boolean;
 }) {
   return (
     <div className="mt-8 grid gap-8">
-      {temModuloEmail ? (
-        <Avisos recebeResumo={recebeResumo} recebeLembretes={recebeLembretes} />
+      {temModuloEmail || temModuloWhatsapp ? (
+        <Avisos
+          recebeResumo={recebeResumo}
+          recebeLembretes={recebeLembretes}
+          recebeWhatsapp={recebeWhatsapp}
+          telefone={telefone}
+          temModuloEmail={temModuloEmail}
+          temModuloWhatsapp={temModuloWhatsapp}
+        />
       ) : null}
       <TrocarSenha />
       <DoisFatores ativo={doisFatoresAtivo} />
@@ -44,41 +57,67 @@ export function PainelConta({
 function Avisos({
   recebeResumo,
   recebeLembretes,
+  recebeWhatsapp,
+  telefone,
+  temModuloEmail,
+  temModuloWhatsapp,
 }: {
   recebeResumo: boolean;
   recebeLembretes: boolean;
+  recebeWhatsapp: boolean;
+  telefone: string;
+  temModuloEmail: boolean;
+  temModuloWhatsapp: boolean;
 }) {
   const router = useRouter();
   const [resumo, setResumo] = useState(recebeResumo);
   const [lembretes, setLembretes] = useState(recebeLembretes);
+  const [zap, setZap] = useState(recebeWhatsapp);
+  const [fone, setFone] = useState(telefone);
   const [recado, setRecado] = useState<{ texto: string; erro: boolean } | null>(null);
 
-  async function guardar(novos: { recebeResumo: boolean; recebeLembretes: boolean }) {
+  async function guardar(novos: {
+    recebeResumo: boolean;
+    recebeLembretes: boolean;
+    recebeWhatsapp: boolean;
+    telefone: string;
+  }) {
     setResumo(novos.recebeResumo);
     setLembretes(novos.recebeLembretes);
-    const { ok } = await enviar("/api/conta/avisos", novos as unknown as Record<string, string>);
+    setZap(novos.recebeWhatsapp);
+    setFone(novos.telefone);
+    const { ok, json } = await enviar(
+      "/api/conta/avisos",
+      novos as unknown as Record<string, string>
+    );
     setRecado(
       ok
         ? { texto: "Preferencias guardadas.", erro: false }
-        : { texto: "Nao foi possivel guardar.", erro: true }
+        : { texto: json.erro ?? "Nao foi possivel guardar.", erro: true }
     );
     router.refresh();
   }
 
+  const atual = () => ({
+    recebeResumo: resumo,
+    recebeLembretes: lembretes,
+    recebeWhatsapp: zap,
+    telefone: fone,
+  });
+
   return (
     <section className="rounded border border-neutral-200 p-4">
-      <h2 className="font-semibold">Avisos por e-mail</h2>
+      <h2 className="font-semibold">Avisos</h2>
       <p className="mt-1 text-sm text-neutral-600">
-        Enviados pelo e-mail do proprio escritorio, uma vez por dia.
+        Enviados pelo e-mail{temModuloWhatsapp ? " e pelo WhatsApp" : ""} do proprio
+        escritorio, uma vez por dia.
       </p>
       <div className="mt-3 grid gap-2 text-sm">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
             checked={resumo}
-            onChange={(e) =>
-              guardar({ recebeResumo: e.target.checked, recebeLembretes: lembretes })
-            }
+            onChange={(e) => guardar({ ...atual(), recebeResumo: e.target.checked })}
             className="accent-[var(--marca-primaria)]"
           />
           Resumo das publicacoes nao lidas
@@ -87,13 +126,35 @@ function Avisos({
           <input
             type="checkbox"
             checked={lembretes}
-            onChange={(e) =>
-              guardar({ recebeResumo: resumo, recebeLembretes: e.target.checked })
-            }
+            onChange={(e) => guardar({ ...atual(), recebeLembretes: e.target.checked })}
             className="accent-[var(--marca-primaria)]"
           />
           Lembrete de compromisso, 24h antes
         </label>
+
+        {temModuloWhatsapp ? (
+          <>
+            <label className="mt-2 grid gap-1">
+              Telefone para o WhatsApp
+              <input
+                value={fone}
+                onChange={(e) => setFone(e.target.value)}
+                onBlur={() => guardar(atual())}
+                placeholder="(71) 99999-8888"
+                className="max-w-xs rounded border border-neutral-300 px-3 py-2"
+              />
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={zap}
+                onChange={(e) => guardar({ ...atual(), recebeWhatsapp: e.target.checked })}
+                className="accent-[var(--marca-primaria)]"
+              />
+              Receber tambem no WhatsApp
+            </label>
+          </>
+        ) : null}
       </div>
       <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
     </section>

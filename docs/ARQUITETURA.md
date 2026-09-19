@@ -297,6 +297,43 @@ de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencia
 cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
 escritorio, e um arquivo desses circula por e-mail.
 
+## Modulo de WhatsApp (Cloud API da Meta)
+
+Os mesmos avisos do modulo de e-mail, tambem pelo WhatsApp do escritorio. A
+fila e a mesma: `Aviso` ja nascia com a coluna `canal`, entao o WhatsApp entrou
+como um segundo caminho, nao como um segundo sistema.
+
+### So modelo aprovado, e por que isso nao e limitacao nossa
+
+Fora da janela de 24 horas aberta por uma mensagem do destinatario, a Meta so
+entrega **modelo aprovado por ela**. Aviso nosso e sempre proativo. Por isso
+`src/lib/whatsapp.ts` nao tem funcao de mandar texto livre: ela passaria nos
+testes, entregaria as vezes em producao, e o escritorio descobriria o limite no
+dia do prazo. Os textos submetidos a Meta ficam em `src/lib/modelos-whatsapp.ts`
+e em [WHATSAPP.md](WHATSAPP.md), prontos para copiar.
+
+A ordem dos parametros e um contrato com a Meta: um teste confere que cada
+`{{n}}` do texto aprovado tem significado declarado no codigo.
+
+### Decisoes do envio
+
+**Chave de idempotencia por canal** (`resumo:...` e `zap:resumo:...`): o mesmo
+aviso sai uma vez por caminho, e ligar o WhatsApp hoje nao reenvia o e-mail de
+ontem.
+
+**Erro definitivo para na primeira tentativa.** A Meta diz, no codigo do erro,
+quando repetir nao adianta — modelo inexistente, numero sem WhatsApp, token
+revogado. Insistir tres vezes atrasa os avisos que dariam certo e gasta a nota
+de qualidade do numero. Limite de taxa e erro 5xx continuam sendo retentados.
+
+**Telefone ilegivel nao vira aviso.** `paraE164BR` devolve null quando nao da
+para ter certeza, e a tela recusa na hora de guardar. Aviso apontando para
+numero adivinhado e pior que aviso que nao existe.
+
+**Numero nao conectado nao e falha do trabalho** — e configuracao que falta. Os
+avisos ficam pendentes e saem quando o escritorio conectar, como ja acontece
+com o e-mail.
+
 ## Modulo de nuvem (arquivos)
 
 Os documentos do escritorio, guardados por escritorio: subir, achar, amarrar ao
