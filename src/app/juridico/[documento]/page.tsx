@@ -17,15 +17,16 @@ export function generateStaticParams() {
 export default async function PaginaDocumento({
   params,
 }: {
-  params: { documento: string };
+  params: Promise<{ documento: string }>;
 }) {
-  const rotulo = PUBLICOS.get(params.documento);
+  const { documento } = await params;
+  const rotulo = PUBLICOS.get(documento);
   if (!rotulo) notFound();
 
   let texto: string;
   try {
     texto = await readFile(
-      join(process.cwd(), "docs", "juridico", `${params.documento}.md`),
+      join(process.cwd(), "docs", "juridico", `${documento}.md`),
       "utf8"
     );
   } catch {

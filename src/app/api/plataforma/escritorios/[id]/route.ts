@@ -20,7 +20,7 @@ function tratar(erro: unknown) {
   return NextResponse.json({ erro: "Erro interno." }, { status: 500 });
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const operador = await exigirOperador();
     const corpo = acao.safeParse(await req.json());
@@ -29,7 +29,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
 
     const escritorio = await prismaPlataforma().escritorio.findUnique({
-      where: { id: params.id },
+      where: { id: (await params).id },
       select: { id: true, nome: true },
     });
     if (!escritorio) {

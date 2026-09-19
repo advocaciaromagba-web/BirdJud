@@ -8,7 +8,7 @@ import { diasDeAtraso } from "@/lib/cobranca";
 import { emReais } from "@/lib/dinheiro";
 import { AcaoDaFatura, AcoesDoEscritorio } from "@/componentes/AcoesDoEscritorio";
 
-export default async function EscritorioNoPainel({ params }: { params: { id: string } }) {
+export default async function EscritorioNoPainel({ params }: { params: Promise<{ id: string }> }) {
   let operador;
   try {
     operador = await exigirOperador();
@@ -18,7 +18,7 @@ export default async function EscritorioNoPainel({ params }: { params: { id: str
   }
 
   const escritorio = await prismaPlataforma().escritorio.findUnique({
-    where: { id: params.id },
+    where: { id: (await params).id },
     include: {
       assinatura: true,
       faturas: { orderBy: { vencimento: "desc" }, take: 24 },

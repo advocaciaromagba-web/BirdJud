@@ -30,7 +30,7 @@ export type ContextoRota = {
 
 /** Escritorio do endereco atual, sem exigir sessao (tela de login). */
 export async function escritorioDoEndereco(): Promise<Marca | null> {
-  const slug = headers().get(CABECALHO_SLUG);
+  const slug = (await headers()).get(CABECALHO_SLUG);
   if (!slug) return null;
   return escritorioPorSlug(slug);
 }

@@ -3,7 +3,7 @@ import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import { apagarArquivo, ArquivoNaoEncontrado, lerArquivo } from "@/lib/arquivos";
 
-type Parametros = { params: { id: string } };
+type Parametros = { params: Promise<{ id: string }> };
 
 /**
  * Download.
@@ -15,7 +15,7 @@ type Parametros = { params: { id: string } };
 export async function GET(_req: Request, { params }: Parametros) {
   try {
     const { escritorioId } = await exigirSessao("NUVEM");
-    const arquivo = await lerArquivo(escritorioId, params.id);
+    const arquivo = await lerArquivo(escritorioId, (await params).id);
 
     return new NextResponse(new Uint8Array(arquivo.conteudo), {
       headers: {
@@ -36,7 +36,7 @@ export async function GET(_req: Request, { params }: Parametros) {
 export async function DELETE(_req: Request, { params }: Parametros) {
   try {
     const { escritorioId } = await exigirSessao("NUVEM");
-    await apagarArquivo(escritorioId, params.id);
+    await apagarArquivo(escritorioId, (await params).id);
     return NextResponse.json({ ok: true });
   } catch (erro) {
     if (erro instanceof ArquivoNaoEncontrado) {

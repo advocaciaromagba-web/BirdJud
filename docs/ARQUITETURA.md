@@ -667,3 +667,34 @@ guarda o nome da pasta em `_prisma_migrations`, entao renomear depois de
 implantar faria ele tentar aplicar tudo de novo. Depois do primeiro deploy, o
 caminho seria outro — criar a migracao nova com numero maior e conviver com os
 nomes antigos.
+
+## Dependencias: por que Next 15, e nao 16
+
+O `npm audit` acusava 12 vulnerabilidades, sendo duas criticas — a mais seria
+delas, execucao remota de codigo nao autenticada na API de otimizacao de
+imagem do Next 14. Nao era teorico: e a plataforma inteira exposta.
+
+A correcao "automatica" apontava para o Next 16, que arrasta React 19 junto e,
+com ele, o next-auth — que na versao 4 nao acompanha. Trocar a autenticacao
+inteira por causa de uma atualizacao de seguranca e trocar um risco conhecido
+por um desconhecido, no meio do caminho para o piloto.
+
+O Next **15.5.25** fecha todos os avisos listados (todos terminam em
+`<15.5.24`) e ainda aceita React 18, entao o next-auth 4 continua de pe. Foi
+esse o caminho. O que mudou no codigo:
+
+- `headers()` virou assincrono: duas chamadas viraram `await headers()`;
+- `params` de rota e pagina dinamica virou `Promise`: seis arquivos;
+- `nodemailer` subiu para 10 (injecao de comando SMTP). O next-auth pede a
+  versao 7 so para o provedor de e-mail dele, que este sistema nao usa — o
+  login e por credenciais —, entao ha um `override` no package.json dizendo
+  isso por escrito;
+- `postcss` subiu para 8.5.28, inclusive dentro do Next, por `override`;
+- `vitest` subiu para 5 (leitura arbitraria de arquivo pelo mocker), o que
+  pediu `@types/node` 22 — a mesma versao de Node que o CI ja usava.
+
+Resultado: `found 0 vulnerabilities`, 271 testes passando, e a aplicacao
+conferida pagina a pagina rodando de verdade.
+
+O Next 16 fica para quando o next-auth 5 entrar junto, com calma, e nao com a
+pressa de uma falha critica em aberto.

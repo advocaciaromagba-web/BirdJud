@@ -25,7 +25,7 @@ export type ContextoOperador = {
 };
 
 export async function exigirOperador(): Promise<ContextoOperador> {
-  if (headers().get(CABECALHO_SLUG)) {
+  if ((await headers()).get(CABECALHO_SLUG)) {
     throw new SemOperador("O painel da plataforma nao abre dentro de um escritorio.");
   }
 

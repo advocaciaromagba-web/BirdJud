@@ -8,17 +8,18 @@ import { tratarErro } from "@/lib/respostas";
  * Testa a integracao ja guardada, sem pedir a credencial de novo — e o que
  * permite ao escritorio conferir sozinho, depois, se ainda esta funcionando.
  */
-export async function POST(_req: Request, { params }: { params: { tipo: string } }) {
+export async function POST(_req: Request, { params }: { params: Promise<{ tipo: string }> }) {
   try {
     const { escritorioId } = await exigirAdmin();
-    if (!ehTipoDeIntegracao(params.tipo)) {
+    const { tipo } = await params;
+    if (!ehTipoDeIntegracao(tipo)) {
       return NextResponse.json({ erro: "Integracao desconhecida." }, { status: 400 });
     }
 
-    const conector = CONECTORES[params.tipo];
+    const conector = CONECTORES[tipo];
     let dados: Record<string, string>;
     try {
-      dados = await obterIntegracao<Record<string, string>>(escritorioId, params.tipo, {
+      dados = await obterIntegracao<Record<string, string>>(escritorioId, tipo, {
         mesmoComErro: true,
       });
     } catch (erro) {
