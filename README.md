@@ -84,8 +84,7 @@ triagem de prazo e urgencia, vinculo automatico com o processo cadastrado e
 tela de leitura. A API do CNJ bloqueia acesso de fora do Brasil; quem resolve
 isso e o rele da Vercel na regiao gru1 (`rele/`, ver
 [docs/RELE-DJEN.md](docs/RELE-DJEN.md)), entao a aplicacao roda em qualquer
-regiao. O mapeamento de campos espera conferencia com `npm run conferir-celular   # o sistema em tela de celular, com navegador de verdade
-npm run conferir-djen`.
+regiao. O mapeamento de campos espera conferencia com `npm run conferir-djen`.
 
 **Fase 5 entregue na parte de codigo** — minutas de contrato, termos, acordo de
 LGPD, SLA e politica de privacidade; aceite registrado no cadastro com versao,
@@ -151,6 +150,12 @@ duas variaveis, vai direto ao CNJ e so funciona do Brasil):
 DJEN_RELE_URL="https://<projeto>.vercel.app/api/djen" \
 DJEN_RELE_TOKEN="<token>" \
 npm run conferir-djen -- 123456 SP
+```
+
+Conferir o sistema em tela de celular (com a aplicacao rodando):
+
+```bash
+npm run conferir-celular
 ```
 
 Backup e restauracao de um escritorio:
