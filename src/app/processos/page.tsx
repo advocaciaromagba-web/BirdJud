@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
@@ -46,12 +47,14 @@ export default async function PaginaProcessos() {
           <ul className="mt-6 divide-y divide-neutral-200">
             {processos.map((processo) => (
               <li key={processo.id} className="py-3">
-                <p className="font-semibold">{formatarNumeroProcesso(processo.numero)}</p>
-                <p className="text-sm text-neutral-500">
-                  {[processo.cliente?.nome, processo.tribunal, processo.vara, processo.area]
-                    .filter(Boolean)
-                    .join(" · ") || "sem outros dados"}
-                </p>
+                <Link href={`/processos/${processo.id}`} className="block hover:text-marca">
+                  <p className="font-semibold">{formatarNumeroProcesso(processo.numero)}</p>
+                  <p className="text-sm text-neutral-500">
+                    {[processo.cliente?.nome, processo.tribunal, processo.vara, processo.area]
+                      .filter(Boolean)
+                      .join(" · ") || "sem outros dados"}
+                  </p>
+                </Link>
               </li>
             ))}
           </ul>

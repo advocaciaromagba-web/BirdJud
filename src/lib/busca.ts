@@ -112,7 +112,8 @@ export async function buscar(escritorioId: string, termoBruto: string): Promise<
       detalhe: [processo.cliente?.nome, processo.vara, processo.area]
         .filter(Boolean)
         .join(" · ") || null,
-      destino: "/processos",
+      // Processo tem ficha propria: a busca leva direto a ela.
+      destino: `/processos/${processo.id}`,
     });
   }
   for (const publicacao of dados.publicacoes) {

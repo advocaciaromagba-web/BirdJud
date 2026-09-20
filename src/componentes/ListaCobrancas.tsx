@@ -61,7 +61,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
               return `${r.conferidas ?? 0} conferida(s), ${r.pagas ?? 0} baixada(s).`;
             })
           }
-          className="rounded border border-neutral-300 px-3 py-1.5 text-sm hover:border-marca disabled:opacity-50"
+          className="rounded border border-neutral-300 px-3 py-2 text-sm hover:border-marca disabled:opacity-50"
         >
           {ocupado ? "Conferindo…" : "Conferir no Asaas"}
         </button>
@@ -103,7 +103,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
                     onClick={() =>
                       chamar({ acao: "CANCELAR", id: cobranca.id }, () => "Cobranca cancelada.")
                     }
-                    className="ml-3 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
+                    className="-my-1 ml-3 py-2 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
                   >
                     Cancelar
                   </button>

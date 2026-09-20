@@ -84,7 +84,8 @@ triagem de prazo e urgencia, vinculo automatico com o processo cadastrado e
 tela de leitura. A API do CNJ bloqueia acesso de fora do Brasil; quem resolve
 isso e o rele da Vercel na regiao gru1 (`rele/`, ver
 [docs/RELE-DJEN.md](docs/RELE-DJEN.md)), entao a aplicacao roda em qualquer
-regiao. O mapeamento de campos espera conferencia com `npm run conferir-djen`.
+regiao. O mapeamento de campos espera conferencia com `npm run conferir-celular   # o sistema em tela de celular, com navegador de verdade
+npm run conferir-djen`.
 
 **Fase 5 entregue na parte de codigo** — minutas de contrato, termos, acordo de
 LGPD, SLA e politica de privacidade; aceite registrado no cadastro com versao,
@@ -211,6 +212,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
 | `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
 | `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
+| `src/lib/processo.ts` | A ficha do caso: publicacoes, agenda, documentos, cobrancas |
 | `src/lib/painel.ts` | O que precisa de atencao hoje, por modulo contratado |
 | `src/lib/busca.ts` | Busca unica: cliente, processo, publicacao e arquivo |
 | `src/lib/datas.ts` | Todo formato de data, no fuso de Brasilia |

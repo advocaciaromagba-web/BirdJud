@@ -110,7 +110,7 @@ export default async function Painel() {
                 </li>
               ))}
             </ul>
-            <Link href="/agenda" className="mt-2 inline-block text-sm text-marca hover:underline">
+            <Link href="/agenda" className="mt-2 inline-block py-2 text-sm text-marca hover:underline">
               Ver a agenda
             </Link>
           </section>
@@ -150,7 +150,7 @@ export default async function Painel() {
             </ul>
             <Link
               href="/publicacoes"
-              className="mt-2 inline-block text-sm text-marca hover:underline"
+              className="mt-2 inline-block py-2 text-sm text-marca hover:underline"
             >
               Ler as publicacoes
             </Link>

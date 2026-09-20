@@ -297,6 +297,36 @@ de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencia
 cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
 escritorio, e um arquivo desses circula por e-mail.
 
+## Ficha do processo, e o sistema no celular
+
+### A tela por caso
+
+O trabalho de advogado e por caso, e a tela precisa ser por caso tambem.
+`/processos/<id>` junta publicacoes, agenda, documentos e cobrancas daquele
+processo — sem isso, quem atende um cliente ao telefone abre quatro telas e
+junta de cabeca. A busca leva direto para ela.
+
+### O que so apareceu com navegador de verdade
+
+`npm run conferir-celular` abre o sistema em tela de celular e de tablet, com
+Chromium, e mede duas coisas em cada pagina: rolagem lateral e alvo de toque
+pequeno demais. Foi assim que se descobriu:
+
+**A chave de acesso da nota alargava a pagina inteira.** Sao 44 caracteres sem
+espaco; no celular, isso forcava a pagina a 459px numa janela de 390, e o
+navegador respondia afastando o zoom — letra miuda em todo o sistema por causa
+de uma linha. Agora palavra sem espaco quebra (`overflow-wrap` no corpo, e
+`break-all` na chave).
+
+**Links de 20px de altura.** O dedo acerta cerca de 9mm; no corredor do forum,
+com pressa, nao acerta. As acoes de lista e o menu ganharam area vertical sem
+mudar o desenho.
+
+**Doze areas empilhadas comiam meia tela antes do conteudo.** No celular o menu
+virou recolhido — com `<details>`, nao com JavaScript: funciona mesmo se o
+script nao carregar. Em tela larga continua aberto, agora em duas linhas em vez
+de tres (a barra usa mais largura que o texto, que segue em linha de leitura).
+
 ## Painel do dia e busca unica
 
 O painel antigo contava quantos clientes e quantos processos o escritorio

@@ -22,7 +22,8 @@
     "backup": "tsx scripts/backup-escritorio.ts",
     "restaurar": "tsx scripts/restaurar-escritorio.ts",
     "conferir-djen": "tsx scripts/conferir-djen.ts",
-    "conferir-nfse": "tsx scripts/conferir-nfse.ts"
+    "conferir-nfse": "tsx scripts/conferir-nfse.ts",
+    "conferir-celular": "node scripts/conferir-celular.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

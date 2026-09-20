@@ -134,7 +134,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
             type="button"
             disabled={ocupado}
             onClick={analisar}
-            className="rounded border border-marca px-3 py-1 font-semibold text-marca disabled:opacity-60"
+            className="rounded border border-marca px-3 py-2 font-semibold text-marca disabled:opacity-60"
           >
             {ocupado ? "Lendo..." : "Ler com IA"}
           </button>
@@ -142,7 +142,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
         <button
           type="button"
           onClick={() => setAberta((v) => !v)}
-          className="rounded border border-neutral-300 px-3 py-1 font-semibold"
+          className="rounded border border-neutral-300 px-3 py-2 font-semibold"
         >
           {aberta ? "Recolher" : "Ler tudo"}
         </button>
@@ -151,7 +151,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
             type="button"
             disabled={ocupado}
             onClick={() => marcar({ lida: true })}
-            className="rounded bg-marca px-3 py-1 font-semibold text-white disabled:opacity-60"
+            className="rounded bg-marca px-3 py-2 font-semibold text-white disabled:opacity-60"
           >
             Marcar como lida
           </button>
@@ -160,7 +160,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
           type="button"
           disabled={ocupado}
           onClick={() => marcar({ arquivada: true })}
-          className="rounded border border-neutral-300 px-3 py-1 text-neutral-700 disabled:opacity-60"
+          className="rounded border border-neutral-300 px-3 py-2 text-neutral-700 disabled:opacity-60"
         >
           Arquivar
         </button>

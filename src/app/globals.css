@@ -8,3 +8,15 @@
   --marca-secundaria: #16202a;
   color-scheme: light dark;
 }
+
+/*
+ * Palavra sem espaco nao empurra a tela.
+ *
+ * Chave de acesso de nota tem 44 caracteres seguidos; e-mail e link tambem
+ * nao tem onde quebrar. No celular isso alargava a pagina inteira e o
+ * navegador respondia afastando o zoom — letra miuda em todo o sistema por
+ * causa de uma linha.
+ */
+body {
+  overflow-wrap: break-word;
+}

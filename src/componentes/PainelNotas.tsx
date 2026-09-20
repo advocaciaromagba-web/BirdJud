@@ -193,9 +193,11 @@ export function PainelNotas({
               <span className="ml-auto">{nota.valor}</span>
               <span className="w-full text-sm text-neutral-500">
                 {nota.data}
-                {nota.chaveAcesso ? ` · chave ${nota.chaveAcesso}` : ""}
+                {nota.chaveAcesso ? (
+                  <span className="break-all"> · chave {nota.chaveAcesso}</span>
+                ) : null}
                 {nota.linkPdf ? (
-                  <a href={nota.linkPdf} target="_blank" rel="noreferrer" className="ml-2 text-marca hover:underline">
+                  <a href={nota.linkPdf} target="_blank" rel="noreferrer" className="-my-1 ml-2 py-2 text-marca hover:underline">
                     PDF
                   </a>
                 ) : null}
@@ -207,7 +209,7 @@ export function PainelNotas({
                       confirm("Cancelar esta nota na prefeitura?") &&
                       chamar("/api/nfse", "PATCH", { acao: "CANCELAR", id: nota.id }, () => {})
                     }
-                    className="ml-3 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
+                    className="-my-1 ml-3 py-2 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
                   >
                     Cancelar
                   </button>

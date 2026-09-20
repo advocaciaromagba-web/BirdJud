@@ -43,17 +43,42 @@ export function Navegacao({
       (!area.soAdmin || papel === "ADMIN")
   );
 
+  const links = areas.map((area) => (
+    <Link
+      key={area.href}
+      href={area.href}
+      className="-my-1 py-2 text-neutral-600 hover:text-marca"
+    >
+      {area.rotulo}
+    </Link>
+  ));
+
   return (
     <header className="border-b border-neutral-200">
-      <nav className="mx-auto flex max-w-3xl flex-wrap items-center gap-4 p-4 text-sm">
-        <span className="font-semibold text-marca">{nomeEscritorio}</span>
-        {areas.map((area) => (
-          <Link key={area.href} href={area.href} className="text-neutral-600 hover:text-marca">
-            {area.rotulo}
-          </Link>
-        ))}
-        <CampoDeBusca termoInicial={termoDeBusca} />
-        <Sair />
+      <nav className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 p-4 text-sm">
+        <span className="shrink-0 font-semibold text-marca">{nomeEscritorio}</span>
+
+        {/* Em tela larga o menu fica aberto, como sempre esteve. */}
+        <div className="hidden min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2 sm:flex">
+          {links}
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-3">
+          <CampoDeBusca termoInicial={termoDeBusca} />
+          <Sair />
+        </div>
+
+        {/*
+          No celular, doze links empilhados comiam meia tela antes do
+          conteudo. Recolhido, o sistema abre no que interessa. E <details>,
+          nao menu de JavaScript: funciona mesmo se o script nao carregar.
+        */}
+        <details className="w-full sm:hidden">
+          <summary className="cursor-pointer py-2 font-semibold text-neutral-600">
+            Menu
+          </summary>
+          <div className="mt-1 grid grid-cols-2 gap-x-4">{links}</div>
+        </details>
       </nav>
     </header>
   );

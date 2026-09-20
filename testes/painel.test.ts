@@ -8,6 +8,7 @@ import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prism
 import { salvarIntegracao } from "../src/lib/integracao";
 import { montarPainel, pendenciasVisiveis } from "../src/lib/painel";
 import { buscar, MINIMO_DE_LETRAS, termoUtil } from "../src/lib/busca";
+import { fichaDoProcesso } from "../src/lib/processo";
 import { numeroParaGravar } from "../src/lib/leitura-publicacao";
 import { dataBR, diaEmBrasilia, ehMesmoDiaEmBrasilia, horaBR } from "../src/lib/datas";
 
@@ -205,6 +206,46 @@ d("painel e busca por escritorio", () => {
     const achados = await buscar(beta, "pericia");
     expect(achados).toHaveLength(0);
   });
+
+    it("junta publicacao, agenda, documento e cobranca do mesmo caso", async () => {
+      const processo = await comEscritorio(alfa, (db) =>
+        db.processo.findFirstOrThrow({
+          where: { numero: numeroParaGravar("0001234-56.2026.8.26.0100") },
+        })
+      );
+      // Amarra ao processo o que o escritorio do teste ja tem: a publicacao, o
+      // arquivo e a cobranca. E o caso completo que a tela precisa mostrar.
+      await comEscritorio(alfa, async (db) => {
+        await db.publicacao.updateMany({ where: {}, data: { processoId: processo.id } });
+        await db.arquivo.updateMany({ where: {}, data: { processoId: processo.id } });
+        await db.cobranca.updateMany({ where: {}, data: { processoId: processo.id } });
+      });
+
+      const ficha = await fichaDoProcesso(alfa, processo.id);
+      expect(ficha).not.toBeNull();
+      expect(ficha!.processo.cliente?.nome).toBe("Souza e Filhos Ltda");
+      expect(ficha!.publicacoes.length).toBeGreaterThan(0);
+      expect(ficha!.compromissos.length).toBeGreaterThan(0);
+      expect(ficha!.arquivos.length).toBeGreaterThan(0);
+      expect(ficha!.cobrancas.length).toBeGreaterThan(0);
+    });
+
+    it("processo de outro escritorio nao abre, nem com o id na mao", async () => {
+      const processo = await comEscritorio(alfa, (db) => db.processo.findFirstOrThrow());
+      expect(await fichaDoProcesso(beta, processo.id)).toBeNull();
+    });
+
+    it("sem o modulo, o bloco daquele modulo nem vem vazio", async () => {
+      const doBeta = await comEscritorio(beta, (db) =>
+        db.processo.create({
+          data: semEscritorio({ numero: numeroParaGravar("0009999-11.2026.8.05.0001") }),
+        })
+      );
+      const ficha = await fichaDoProcesso(beta, doBeta.id);
+      expect(ficha!.publicacoes).toHaveLength(0);
+      expect(ficha!.arquivos).toHaveLength(0);
+      expect(ficha!.cobrancas).toHaveLength(0);
+    });
 });
 
 describe("fuso de Brasilia", () => {
