@@ -217,3 +217,17 @@ d("forca bruta no login do operador", () => {
     expect(sessao).toBeNull();
   });
 });
+
+d("endereco de saude", () => {
+  it("responde sem sessao e nao conta nada alem do necessario", async () => {
+    const { GET } = await import("../src/app/api/saude/route");
+    const resposta = await GET();
+    const corpo = (await resposta.json()) as Record<string, unknown>;
+
+    expect(resposta.status).toBe(200);
+    // So "ok": nem versao, nem host, nem contagem. E endereco publico.
+    expect(Object.keys(corpo)).toEqual(["ok"]);
+    expect(corpo.ok).toBe(true);
+    expect(resposta.headers.get("cache-control")).toBe("no-store");
+  });
+});

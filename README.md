@@ -152,6 +152,12 @@ DJEN_RELE_TOKEN="<token>" \
 npm run conferir-djen -- 123456 SP
 ```
 
+Conferir o ambiente antes do primeiro escritorio entrar:
+
+```bash
+npm run conferir-producao
+```
+
 Conferir o sistema em tela de celular (com a aplicacao rodando):
 
 ```bash

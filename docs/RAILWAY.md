@@ -103,6 +103,31 @@ Para agendar as rotinas, crons do Railway chamando:
 - `npm run espalhar SINCRONIZAR_COBRANCAS` — uma ou duas vezes por dia,
   confere no Asaas o que foi pago e da baixa.
 
+## Antes de deixar o primeiro escritorio entrar
+
+```bash
+npm run conferir-producao
+```
+
+Ele confere, no ambiente de verdade: as variaveis obrigatorias, o tamanho da
+chave de cifra, se os **tres papeis do banco sao mesmo tres**, se o usuario da
+aplicacao nao e superusuario nem tem BYPASSRLS, se o RLS esta ligado **e
+forcado** em todas as tabelas de escritorio, se as migracoes terminaram, e se o
+volume dos arquivos aceita escrita. Termina com a prova que importa: **sem
+contexto de escritorio, nenhuma linha e visivel**.
+
+Cada item ali e um jeito conhecido de o deploy parecer certo e estar errado —
+o sistema sobe, a tela abre, e o problema so aparece como dado de um escritorio
+na tela de outro. Erro trava o comando com codigo 1; aviso passa, mas diz o que
+deixa de funcionar.
+
+## Healthcheck
+
+Aponte o healthcheck do servico para **`/api/saude`**. Ele consulta o banco
+antes de responder: aplicacao que responde com o banco fora do ar da deploy
+verde e tela de erro para o escritorio. Responde `200 {"ok":true}` ou `503`, e
+nada alem disso — e endereco publico.
+
 > **O modulo de nuvem precisa de um VOLUME.** Disco de container e efemero: sem
 > volume montado no caminho de `RAIZ_ARQUIVOS`, os arquivos do escritorio somem
 > no proximo deploy. No Railway: servico da aplicacao > Settings > Volumes,
