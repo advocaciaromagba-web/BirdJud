@@ -297,6 +297,34 @@ de titular pela LGPD. **Nao** inclui `senhaHash`, segredo de 2FA nem a credencia
 cifrada das integracoes: segredo de autenticacao e de terceiro nao e dado do
 escritorio, e um arquivo desses circula por e-mail.
 
+## Painel do dia e busca unica
+
+O painel antigo contava quantos clientes e quantos processos o escritorio
+tinha. Isso e placa de parede: o numero nao muda o que a pessoa faz ao abrir o
+sistema de manha. O painel agora responde quatro perguntas — o que esta
+marcado nas proximas 48 horas, o que chegou e ninguem leu, o que venceu e nao
+foi pago, e o que esta faltando configurar.
+
+Cada bloco respeita o modulo contratado: quem nao tem publicacoes nao ve bloco
+de publicacao, nem vazio. E a pendencia que so admin resolve nao aparece para
+quem nao pode resolver — ruido para quem nao pode agir e so ruido.
+
+A **busca e uma so** (`/busca`): cliente, processo, publicacao e arquivo no
+mesmo campo. Um escritorio nao pensa em tabelas; ele lembra "aquele caso do
+Souza" ou tem o numero do processo em um papel. Numero casa com ou sem
+mascara, porque e assim que ele circula.
+
+### Fuso horario: um erro que apareceu na tela
+
+Ao conferir o painel rodando, a audiencia das 22h aparecia como "amanha, 01:15":
+o servidor roda em UTC e o escritorio nao. O mesmo valia para a agenda e para
+as datas das outras telas — os textos de aviso ja fixavam o fuso, as telas nao.
+
+Agora todo formato de data sai de `src/lib/datas.ts`, com o fuso de Brasilia
+fixo. Nao e o fuso do navegador de proposito: a tela e o e-mail precisam dizer
+a mesma hora, e o e-mail e montado no servidor. Ha teste para a virada do dia
+(as 3h UTC).
+
 ## Modulo de NFS-e
 
 O escritorio emite com o certificado e-CNPJ dele e o cadastro fiscal dele. A

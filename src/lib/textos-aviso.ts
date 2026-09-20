@@ -2,6 +2,7 @@
 // sem tocar em SMTP — e porque e aqui que mora o tom com que o escritorio fala
 // com a propria equipe.
 import { formatarNumeroProcesso } from "./leitura-publicacao";
+import { dataHoraBR as dataHora } from "./datas";
 
 export type PublicacaoNoResumo = {
   numeroProcesso: string | null;
@@ -19,11 +20,6 @@ export type CompromissoNoLembrete = {
   numeroProcesso: string | null;
 };
 
-const dataHora = new Intl.DateTimeFormat("pt-BR", {
-  dateStyle: "short",
-  timeStyle: "short",
-  timeZone: "America/Sao_Paulo",
-});
 
 function recortar(texto: string, limite = 220): string {
   const limpo = texto.replace(/\s+/g, " ").trim();

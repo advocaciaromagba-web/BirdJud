@@ -1,5 +1,6 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
+import { dataBR } from "@/lib/datas";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { espacoDoEscritorio, TAMANHO_MAXIMO_MB } from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
@@ -54,7 +55,7 @@ export default async function PaginaArquivos() {
     })),
   ]);
 
-  const data = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+  const data = dataBR;
 
   const arquivos: ArquivoNaTela[] = dados.arquivos.map((a) => ({
     id: a.id,

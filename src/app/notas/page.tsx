@@ -1,5 +1,6 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
+import { dataBR } from "@/lib/datas";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { emReais } from "@/lib/dinheiro";
 import { Navegacao } from "@/componentes/Navegacao";
@@ -40,7 +41,7 @@ export default async function PaginaNotas() {
     })),
   ]);
 
-  const data = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+  const data = dataBR;
 
   const notas: NotaNaTela[] = dados.notas.map((nota) => ({
     id: nota.id,

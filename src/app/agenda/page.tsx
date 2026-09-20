@@ -1,5 +1,6 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
+import { dataHoraBR } from "@/lib/datas";
 import { modulosAtivos } from "@/lib/modulos";
 import { Navegacao } from "@/componentes/Navegacao";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
@@ -26,7 +27,7 @@ export default async function PaginaAgenda() {
     processos: await db.processo.findMany({ orderBy: { criadoEm: "desc" }, take: 500 }),
   }));
 
-  const formato = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  const formato = dataHoraBR;
 
   return (
     <>

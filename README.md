@@ -211,6 +211,9 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/lib/avisos.ts` | Gera e envia os avisos, com idempotencia |
 | `src/lib/textos-aviso.ts` | Textos do resumo e do lembrete |
 | `src/lib/email.ts` | Envio pelo SMTP do escritorio, em lote |
+| `src/lib/painel.ts` | O que precisa de atencao hoje, por modulo contratado |
+| `src/lib/busca.ts` | Busca unica: cliente, processo, publicacao e arquivo |
+| `src/lib/datas.ts` | Todo formato de data, no fuso de Brasilia |
 | `src/lib/nfse/assinatura.ts` | Assinatura do XML com o certificado A1 |
 | `src/lib/nfse/layout.ts` | XML do padrao nacional (a conferir em homologacao) |
 | `src/lib/nfse/nacional.ts` | Transporte ate o ambiente nacional (a conferir) |
@@ -258,6 +261,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `testes/publicacoes.test.ts` | Triagem, cliente do DJEN e captura (28 casos) |
 | `testes/avisos.test.ts` | Textos, idempotencia e envio real por SMTP (16 casos) |
 | `testes/ia.test.ts` | Instrucoes, medicao, recusa e travas (17 casos) |
+| `testes/painel.test.ts` | Painel, busca e fuso horario (14 casos) |
 | `testes/seguranca.test.ts` | Forca bruta, segundo fator e conta do operador (6 casos) |
 | `testes/migracoes.test.ts` | Ordem das migracoes: alfabetica = numerica (3 casos) |
 | `testes/nfse.test.ts` | Assinatura, numeracao, recusa e cancelamento (23 casos) |

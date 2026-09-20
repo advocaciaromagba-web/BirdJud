@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Modulo } from "@/lib/modulos";
 import { Sair } from "./Sair";
+import { CampoDeBusca } from "./CampoDeBusca";
 
 type Area = { href: string; rotulo: string; modulo?: Modulo; soAdmin?: boolean };
 
@@ -28,10 +29,12 @@ export function Navegacao({
   nomeEscritorio,
   papel,
   modulos,
+  termoDeBusca,
 }: {
   nomeEscritorio: string;
   papel: string;
   modulos: Modulo[];
+  termoDeBusca?: string;
 }) {
   const contratados = new Set(modulos);
   const areas = AREAS.filter(
@@ -49,6 +52,7 @@ export function Navegacao({
             {area.rotulo}
           </Link>
         ))}
+        <CampoDeBusca termoInicial={termoDeBusca} />
         <Sair />
       </nav>
     </header>

@@ -1,5 +1,6 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
+import { dataBR } from "@/lib/datas";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { Navegacao } from "@/componentes/Navegacao";
@@ -49,7 +50,7 @@ export default async function PaginaPublicacoes() {
     })),
   ]);
 
-  const data = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+  const data = dataBR;
 
   const publicacoes: PublicacaoNaTela[] = dados.publicacoes.map((p) => ({
     id: p.id,

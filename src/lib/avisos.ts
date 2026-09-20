@@ -13,6 +13,7 @@ import { registrarConsumo } from "./consumo";
 import { moduloAtivo } from "./modulos";
 import { enviarModelo, FalhaNoWhatsapp, paraE164BR, SemNumeroDeWhatsapp } from "./whatsapp";
 import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
+import { dataHoraBR } from "./datas";
 import {
   assuntoDoLembrete,
   assuntoDoResumo,
@@ -160,11 +161,7 @@ async function gerarLembretes(
   if (compromissos.length === 0 || usuarios.length === 0) return 0;
 
   const modelo = modeloDoTipo("LEMBRETE_COMPROMISSO");
-  const quando = new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "America/Sao_Paulo",
-  });
+  const quando = dataHoraBR;
 
   let criados = 0;
   for (const compromisso of compromissos) {
