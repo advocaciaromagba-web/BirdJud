@@ -103,6 +103,49 @@ Para agendar as rotinas, crons do Railway chamando:
 - `npm run espalhar SINCRONIZAR_COBRANCAS` — uma ou duas vezes por dia,
   confere no Asaas o que foi pago e da baixa.
 
+## O que existe hoje no Railway (23/09/2026)
+
+Projeto **birdjud**, ambiente **production**, na conta pessoal. Montado pela API
+do Railway, nao a mao — o que esta aqui e o retrato do que foi criado.
+
+| Servico | O que e | Detalhe |
+|---|---|---|
+| `postgres` | PostgreSQL 16 (imagem oficial do Railway, com SSL) | volume proprio em `/var/lib/postgresql/data`; banco `birdjud` pertencente a `birdjud_owner` |
+| `aplicacao` | a aplicacao web, do repositorio, branch `main` | volume em `/dados/arquivos`; healthcheck em `/api/saude`; start `npm run start:producao` |
+| `trabalhador` | consome a fila | start `npm run trabalhador`, reinicio sempre |
+| `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN e, em seguida, os avisos — nessa ordem |
+| `cron-diario` | `0 9 * * *` (06h de Brasilia) | consumo, regua de cobranca e sincronizacao de cobrancas |
+| `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados |
+
+Os horarios do cron do Railway sao em **UTC**; os da tabela ja estao
+convertidos.
+
+### Como os papeis do banco foram criados
+
+A API do Railway nao cria proxy TCP publico, entao o banco nao e alcancavel de
+fora. Os tres papeis foram criados **por dentro**: um servico temporario, com a
+mesma imagem do Postgres, rodou o SQL uma vez e foi apagado em seguida — ele
+era o unico lugar com a URL de superusuario.
+
+Conferido na saida: `birdjud_app` e `birdjud_owner` sem superusuario e sem
+BYPASSRLS, `birdjud_plataforma` como unico com BYPASSRLS.
+
+### A conferencia roda antes de cada deploy
+
+`npm run conferir-producao` esta como **preDeployCommand** do servico da
+aplicacao. Ele roda no container novo, com o volume montado e o banco
+alcancavel, **antes** de o trafego mudar para a versao nova: se algo estiver
+errado — papel de banco trocado, RLS sem forca, volume que nao aceita escrita —
+o deploy nao sobe. Aviso nao trava; erro trava.
+
+### O que ainda falta para um escritorio entrar
+
+O sistema atende cada escritorio em `<slug>.<dominio>`, e o endereco gerado
+pelo Railway nao aceita curinga. Enquanto `*.birdjud.com.br` nao apontar para
+o servico da aplicacao, so o lado da plataforma funciona (cadastro e painel do
+operador). Com o dominio em maos: adicionar o dominio personalizado no servico
+`aplicacao` e criar no registrador o CNAME curinga que o Railway indicar.
+
 ## Antes de deixar o primeiro escritorio entrar
 
 ```bash
