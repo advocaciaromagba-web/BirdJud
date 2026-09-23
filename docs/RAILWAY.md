@@ -130,13 +130,18 @@ era o unico lugar com a URL de superusuario.
 Conferido na saida: `birdjud_app` e `birdjud_owner` sem superusuario e sem
 BYPASSRLS, `birdjud_plataforma` como unico com BYPASSRLS.
 
-### A conferencia roda antes de cada deploy
+### A conferencia roda no start, e falha fechado
 
-`npm run conferir-producao` esta como **preDeployCommand** do servico da
-aplicacao. Ele roda no container novo, com o volume montado e o banco
-alcancavel, **antes** de o trafego mudar para a versao nova: se algo estiver
-errado — papel de banco trocado, RLS sem forca, volume que nao aceita escrita —
-o deploy nao sobe. Aviso nao trava; erro trava.
+`npm run conferir-producao` faz parte de `start:producao`, depois das migracoes
+e do RLS e **antes** de a aplicacao servir. Erro trava a subida; aviso passa.
+
+Ela nao ficou no **preDeployCommand** do Railway por um motivo descoberto na
+pratica: o pre-deploy roda em um container **sem os volumes montados**, e a
+conferencia acusava, corretamente, que `/dados/arquivos` nao aceitava escrita.
+No start o volume esta la, e o teste diz a verdade.
+
+Uma aplicacao que nao sobe chama atencao; uma que sobe com o isolamento
+quebrado, nao. Por isso falha fechado.
 
 ### O que ainda falta para um escritorio entrar
 

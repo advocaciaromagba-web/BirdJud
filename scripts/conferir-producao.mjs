@@ -7,7 +7,7 @@
 // prazo — ou, pior, aparece como dado de um escritorio na tela de outro.
 //
 // Sai com codigo 1 se algo estiver errado, para poder travar um deploy.
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import pg from "pg";
 
@@ -178,6 +178,9 @@ async function conferirDisco() {
   }
 
   try {
+    // A aplicacao tambem cria a pasta quando precisa: aqui o teste imita o
+    // caminho real, em vez de exigir que ela ja exista.
+    await mkdir(raiz, { recursive: true });
     const pasta = await mkdtemp(join(raiz, "conferencia-"));
     const arquivo = join(pasta, "teste.txt");
     await writeFile(arquivo, "conferencia de producao");
