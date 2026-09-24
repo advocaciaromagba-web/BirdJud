@@ -231,6 +231,31 @@ Cada escritorio atende em `<slug>.birdjud.com.br`, entao o servico precisa de um
 Sem o curinga, so o dominio cadastrado responde e os escritorios ficam sem
 endereco proprio.
 
+### O registro TXT de verificacao (facil de esquecer)
+
+Alem do CNAME curinga e do `_acme-challenge`, o Railway so passa a **rotear** o
+dominio depois que a posse e confirmada por um registro TXT:
+
+    _railway-verify.birdjud.com.br   TXT   railway-verify=<token do dominio>
+
+O token aparece em `customDomain.status.verificationToken` na API (e na tela do
+dominio no Railway). Enquanto `status.verified` for `false`, acontece exatamente
+isto: o HTTPS funciona (o certificado curinga e emitido), mas toda requisicao
+volta `404 Application not found` da borda do Railway, porque nenhum servico
+esta associado aquele Host.
+
+Dois detalhes do DNS:
+
+- o CNAME curinga `*` responde tambem por `_railway-verify`, entao sem o TXT
+  explicito a consulta devolve o CNAME e a verificacao nunca conclui. Um
+  registro criado no nome exato tem precedencia sobre o curinga, entao basta
+  criar o TXT;
+- no Cloudflare o registro precisa ficar como **Somente DNS** (sem proxy), como
+  os demais.
+
+Depois de criar o TXT, a verificacao costuma concluir em poucos minutos; o
+`certificateStatus` sai de `VALIDATING_OWNERSHIP` e o dominio comeca a servir.
+
 ## 6. Antes de cada deploy
 
 O CI (`.github/workflows/ci.yml`) roda `npm run teste:isolamento` contra um
