@@ -256,6 +256,26 @@ Dois detalhes do DNS:
 Depois de criar o TXT, a verificacao costuma concluir em poucos minutos; o
 `certificateStatus` sai de `VALIDATING_OWNERSHIP` e o dominio comeca a servir.
 
+### A porta de destino
+
+Verificado o dominio, o 404 vira `502 Application failed to respond` se a
+`targetPort` do dominio nao for a porta em que a aplicacao escuta. Aqui o
+`next start` sobe em **8080** (aparece no log do deploy, `Local:
+http://localhost:8080`), entao os dois dominios ficam com `targetPort: 8080`.
+
+### Estado em 24/09/2026
+
+Funcionando, com certificado valido:
+
+- `https://birdjud.com.br` (o apex; o Cloudflare achata o CNAME em A e, com a
+  posse ja verificada, o Railway roteia assim mesmo);
+- `https://app.birdjud.com.br` (a plataforma);
+- `https://<slug>.birdjud.com.br` (cada escritorio).
+
+Prova de ponta a ponta feita no ar: cadastro pelo endereco da plataforma,
+login no subdominio do escritorio, sessao com o `escritorioId` certo e o
+cookie preso ao subdominio (a mesma sessao nao vale em `app.birdjud.com.br`).
+
 ## 6. Antes de cada deploy
 
 O CI (`.github/workflows/ci.yml`) roda `npm run teste:isolamento` contra um
