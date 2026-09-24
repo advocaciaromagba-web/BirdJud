@@ -143,13 +143,37 @@ No start o volume esta la, e o teste diz a verdade.
 Uma aplicacao que nao sobe chama atencao; uma que sobe com o isolamento
 quebrado, nao. Por isso falha fechado.
 
+### O dominio, e o CNAME que nao existe na raiz
+
+O Railway pede um CNAME na **raiz** (`@`) para `birdjud.com.br`. Isso nao e
+possivel: o padrao DNS proibe CNAME convivendo com os registros que toda raiz
+de dominio tem (SOA e NS). Nao e limitacao do Registro.br — e de qualquer DNS.
+
+Por isso a plataforma atende em **`app.birdjud.com.br`**, e nao na raiz. O
+codigo ja tratava `app` como reservado (`src/lib/subdominio.ts`), junto com
+`www`, `api`, `admin` e `painel`: ele cai na tela da plataforma em vez de virar
+slug de escritorio.
+
+No Registro.br, dois registros resolvem tudo:
+
+| Tipo | Nome | Valor |
+|---|---|---|
+| CNAME | `*` | o alvo que o Railway mostrar para `*.birdjud.com.br` |
+| CNAME | `_acme-challenge` | o alvo `...authorize.railwaydns.net` do mesmo painel |
+
+O curinga cobre `app.birdjud.com.br` e o subdominio de cada escritorio. O
+segundo registro e o que permite emitir o certificado do curinga — sem ele,
+`https://<escritorio>.birdjud.com.br` nao fecha cadeado.
+
+O dominio da raiz continua cadastrado no Railway, pendente. Se um dia o DNS for
+para um provedor que achata CNAME na raiz (a Cloudflare faz isso de graca), ele
+passa a funcionar sozinho, sem mexer em nada aqui.
+
 ### O que ainda falta para um escritorio entrar
 
-O sistema atende cada escritorio em `<slug>.<dominio>`, e o endereco gerado
-pelo Railway nao aceita curinga. Enquanto `*.birdjud.com.br` nao apontar para
-o servico da aplicacao, so o lado da plataforma funciona (cadastro e painel do
-operador). Com o dominio em maos: adicionar o dominio personalizado no servico
-`aplicacao` e criar no registrador o CNAME curinga que o Railway indicar.
+Os dominios ja estao cadastrados no servico `aplicacao`; falta o DNS apontar.
+Enquanto os dois CNAMEs acima nao existirem no Registro.br, escritorio nenhum
+entra — cada um atende no proprio subdominio.
 
 ## Antes de deixar o primeiro escritorio entrar
 
