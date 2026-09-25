@@ -16,10 +16,10 @@ export type CobrancaNaTela = {
 };
 
 const CORES: Record<string, string> = {
-  ABERTA: "bg-neutral-100 text-neutral-700",
+  ABERTA: "bg-slate-100 text-slate-700",
   PAGA: "bg-emerald-100 text-emerald-800",
   VENCIDA: "bg-amber-100 text-amber-900",
-  CANCELADA: "bg-neutral-100 text-neutral-500",
+  CANCELADA: "bg-slate-100 text-slate-500",
   ESTORNADA: "bg-rose-100 text-rose-800",
 };
 
@@ -64,19 +64,17 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
               return `${r.conferidas ?? 0} conferida(s), ${r.pagas ?? 0} baixada(s).`;
             })
           }
-          className="rounded border border-neutral-300 px-3 py-2 text-sm hover:border-marca disabled:opacity-50"
+          className="rounded border border-slate-300 px-3 py-2 text-sm hover:border-marca disabled:opacity-50"
         >
           {ocupado ? "Conferindo…" : "Conferir no Asaas"}
         </button>
-        {aviso ? (
-          <span className="text-sm text-neutral-600">{aviso}</span>
-        ) : null}
+        {aviso ? <span className="text-sm text-slate-600">{aviso}</span> : null}
       </div>
 
       {cobrancas.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Nenhuma cobranca emitida ainda.</p>
+        <p className="mt-6 text-slate-600">Nenhuma cobranca emitida ainda.</p>
       ) : (
-        <ul className="mt-4 divide-y divide-neutral-200">
+        <ul className="mt-4 divide-y divide-slate-200">
           {cobrancas.map((cobranca) => (
             <li
               key={cobranca.id}
@@ -89,8 +87,8 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
               </span>
               <span className="font-semibold">{cobranca.valor}</span>
               <span>{cobranca.cliente}</span>
-              <span className="text-neutral-500">{cobranca.descricao}</span>
-              <span className="ml-auto text-sm text-neutral-500">
+              <span className="text-slate-500">{cobranca.descricao}</span>
+              <span className="ml-auto text-sm text-slate-500">
                 {cobranca.pagoEm
                   ? `pago em ${cobranca.pagoEm}`
                   : `vence em ${cobranca.vencimento}`}
@@ -117,7 +115,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
                         () => "Cobranca cancelada.",
                       )
                     }
-                    className="-my-1 ml-3 py-2 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
+                    className="-my-1 ml-3 py-2 text-slate-500 hover:text-rose-700 disabled:opacity-50"
                   >
                     Cancelar
                   </button>

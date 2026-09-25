@@ -45,14 +45,16 @@ export function FormularioCadastro({
 
   if (pronto) {
     return (
-      <div className="mt-8 rounded border border-neutral-200 p-5">
-        <h2 className="font-semibold">Escritorio criado</h2>
-        <p className="mt-2 text-neutral-700">
+      <div className="cartao mt-8">
+        <h2>Escritorio criado</h2>
+        <p className="mt-2 text-slate-700">
           O endereco do seu escritorio e{" "}
-          <strong className="text-marca">{pronto.endereco}</strong>. Entre por
-          ele com o e-mail e a senha que voce acabou de definir.
+          <strong style={{ color: "var(--marca-primaria)" }}>
+            {pronto.endereco}
+          </strong>
+          . Entre por ele com o e-mail e a senha que voce acabou de definir.
         </p>
-        <p className="mt-2 text-sm text-neutral-500">
+        <p className="ajuda">
           Periodo de teste de {dias} dias. A primeira fatura so e gerada depois
           disso.
         </p>
@@ -61,56 +63,67 @@ export function FormularioCadastro({
   }
 
   return (
-    <form onSubmit={enviar} className="mt-8 grid gap-3">
-      <label className="grid gap-1 text-sm">
-        Nome do escritorio
+    <form onSubmit={enviar} className="cartao mt-8 grid gap-4">
+      <div>
+        <label htmlFor="cad-escritorio" className="rotulo">
+          Nome do escritorio
+        </label>
         <input
+          id="cad-escritorio"
           name="escritorio"
           required
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
-      </label>
-      <label className="grid gap-1 text-sm">
-        Endereco do sistema
-        <span className="text-xs text-neutral-500">
-          Vai ficar assim: <code>seu-escritorio.{dominio}</code>
-        </span>
+      </div>
+      <div>
+        <label htmlFor="cad-slug" className="rotulo">
+          Endereco do sistema
+        </label>
         <input
+          id="cad-slug"
           name="slug"
           required
           pattern="[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]"
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
-      </label>
-      <label className="grid gap-1 text-sm">
-        Seu nome
+        <p className="ajuda">
+          Vai ficar assim: <code>seu-escritorio.{dominio}</code>
+        </p>
+      </div>
+      <div>
+        <label htmlFor="cad-nome" className="rotulo">
+          Seu nome
+        </label>
+        <input id="cad-nome" name="nome" required className="campo" />
+      </div>
+      <div>
+        <label htmlFor="cad-email" className="rotulo">
+          Seu e-mail
+        </label>
         <input
-          name="nome"
-          required
-          className="rounded border border-neutral-300 px-3 py-2"
-        />
-      </label>
-      <label className="grid gap-1 text-sm">
-        Seu e-mail
-        <input
+          id="cad-email"
           name="email"
           type="email"
           required
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
-      </label>
-      <label className="grid gap-1 text-sm">
-        Senha (minimo 10 caracteres)
+      </div>
+      <div>
+        <label htmlFor="cad-senha" className="rotulo">
+          Senha
+        </label>
         <input
+          id="cad-senha"
           name="senha"
           type="password"
           required
           minLength={10}
           autoComplete="new-password"
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
-      </label>
-      <label className="mt-2 grid grid-cols-[auto_1fr] items-start gap-2 text-sm">
+        <p className="ajuda">Minimo de 10 caracteres.</p>
+      </div>
+      <label className="grid grid-cols-[auto_1fr] items-start gap-2 text-sm">
         <input
           name="aceite"
           type="checkbox"
@@ -130,25 +143,26 @@ export function FormularioCadastro({
                 href={`/juridico/${documento.caminho}`}
                 target="_blank"
                 rel="noreferrer"
-                className="text-marca underline"
+                className="underline"
+                style={{ color: "var(--marca-primaria)" }}
               >
                 {documento.rotulo}
               </a>
             </span>
           ))}
           .
-          <span className="block text-xs text-neutral-500">
+          <span className="ajuda block">
             Versao {VERSAO_DOS_DOCUMENTOS}. O aceite fica registrado com data e
             hora.
           </span>
         </span>
       </label>
 
-      {erro ? <p className="text-sm text-red-700">{erro}</p> : null}
+      {erro ? <p className="aviso-erro">{erro}</p> : null}
       <button
         type="submit"
         disabled={enviando}
-        className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
+        className="botao-principal justify-self-start"
       >
         {enviando ? "Criando..." : `Comecar teste de ${dias} dias`}
       </button>

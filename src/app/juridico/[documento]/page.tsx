@@ -40,7 +40,7 @@ export default async function PaginaDocumento({
   return (
     <main className="mx-auto max-w-3xl p-8">
       <p className="text-sm uppercase tracking-wide text-marca">BirdJud</p>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 text-xs text-slate-500">
         Versao {VERSAO_DOS_DOCUMENTOS}
       </p>
       <article className="mt-6 space-y-3 text-[15px] leading-relaxed">
@@ -72,21 +72,21 @@ export default async function PaginaDocumento({
           }
           if (linha.startsWith("- ")) {
             return (
-              <p key={chave} className="pl-5 text-neutral-800">
+              <p key={chave} className="pl-5 text-slate-800">
                 • {linha.slice(2)}
               </p>
             );
           }
           if (linha.startsWith("|")) {
             return (
-              <p key={chave} className="font-mono text-xs text-neutral-700">
+              <p key={chave} className="font-mono text-xs text-slate-700">
                 {linha}
               </p>
             );
           }
           if (!linha.trim()) return null;
           return (
-            <p key={chave} className="text-neutral-800">
+            <p key={chave} className="text-slate-800">
               {linha}
             </p>
           );

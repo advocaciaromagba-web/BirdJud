@@ -25,7 +25,7 @@ export default async function PaginaArquivos() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-neutral-600">
+          <p className="mt-3 text-slate-600">
             O modulo Nuvem nao faz parte do plano deste escritorio.
           </p>
         </main>
@@ -81,7 +81,7 @@ export default async function PaginaArquivos() {
       modulos={modulos}
       titulo="Arquivos"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         {espaco.arquivos} arquivo(s) · {espaco.usadoMb} MB usados de{" "}
         {espaco.franquiaMb} MB contratados (teto de {espaco.tetoMb} MB)
       </p>

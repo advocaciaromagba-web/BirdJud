@@ -23,7 +23,7 @@ export default async function PaginaUsuarios() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Area restrita</h1>
-          <p className="mt-3 text-neutral-600">
+          <p className="mt-3 text-slate-600">
             So administradores do escritorio cadastram usuarios.
           </p>
         </main>
@@ -57,14 +57,14 @@ export default async function PaginaUsuarios() {
       modulos={modulos}
       titulo="Usuarios"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         A senha definida aqui e provisoria: o usuario a troca em Minha conta.
       </p>
 
       {/* A faixa limita pessoas; quem esta inativo nao ocupa lugar. */}
-      <div className="mt-4 rounded border border-neutral-200 p-4 text-sm">
+      <div className="cartao-aperto mt-4 text-sm">
         <p className="font-semibold">Faixa {uso.rotulo}</p>
-        <p className="mt-1 text-neutral-600">
+        <p className="mt-1 text-slate-600">
           Advogados: {uso.advogados.usados} de {uso.advogados.limite} · Apoio:{" "}
           {uso.apoio.usados} de {uso.apoio.limite}
         </p>
@@ -97,22 +97,22 @@ export default async function PaginaUsuarios() {
         <a href="/api/exportacao" className="text-marca underline">
           Baixar todos os dados do escritorio (JSON)
         </a>
-        <span className="block text-xs text-neutral-500">
+        <span className="block text-xs text-slate-500">
           Inclui clientes, processos, agenda, financeiro e faturas. Nao inclui
           senhas nem credenciais de integracao.
         </span>
       </p>
 
-      <ul className="mt-6 divide-y divide-neutral-200">
+      <ul className="mt-6 divide-y divide-slate-200">
         {usuarios.map((usuario) => (
           <li key={usuario.id} className="py-3">
             <p className="font-semibold">
               {usuario.nome}{" "}
               {usuario.id === contexto.usuarioId ? (
-                <span className="text-xs text-neutral-500">(voce)</span>
+                <span className="text-xs text-slate-500">(voce)</span>
               ) : null}
             </p>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-slate-500">
               {usuario.email} · {usuario.papel}
               {usuario.doisFatores ? " · 2FA ativo" : ""}
               {usuario.ativo ? "" : " · inativo"}

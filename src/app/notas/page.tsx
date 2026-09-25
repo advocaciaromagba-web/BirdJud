@@ -15,7 +15,7 @@ export default async function PaginaNotas() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-neutral-600">
+          <p className="mt-3 text-slate-600">
             O modulo de notas fiscais nao faz parte do plano deste escritorio.
           </p>
         </main>
@@ -66,7 +66,7 @@ export default async function PaginaNotas() {
       modulos={modulos}
       titulo="Notas fiscais"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         {dados.fiscal
           ? `Serie ${dados.fiscal.serie} · proxima nota ${dados.fiscal.proximoNumero} · ambiente ${dados.fiscal.ambiente}`
           : "Cadastro fiscal ainda nao preenchido"}

@@ -7,7 +7,8 @@ import { competenciaDe, consumoDoMes } from "@/lib/consumo";
 import { montarPainel, pendenciasVisiveis } from "@/lib/painel";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { emReais } from "@/lib/dinheiro";
-import { MARCA_NEUTRA } from "@/lib/escritorio";
+import { DIAS_DE_TESTE } from "@/lib/precos";
+import { CapaDaPlataforma } from "@/componentes/CapaDaPlataforma";
 import { Estrutura } from "@/componentes/Estrutura";
 import { Icone } from "@/componentes/Icone";
 
@@ -19,17 +20,8 @@ function recortar(texto: string, limite = 180): string {
 export default async function Painel() {
   const marca = await escritorioDoEndereco();
 
-  if (!marca?.id) {
-    return (
-      <main className="pagina-estreita">
-        <p className="sobretitulo">{MARCA_NEUTRA.nome}</p>
-        <h1 className="mt-2 text-3xl">Sistema juridico white label</h1>
-        <p className="chamada">
-          Cada escritorio atende em seu proprio endereco.
-        </p>
-      </main>
-    );
-  }
+  // Sem escritorio no endereco, quem chegou veio pela plataforma.
+  if (!marca?.id) return <CapaDaPlataforma dias={DIAS_DE_TESTE} />;
 
   const contexto = await contextoDaPagina();
 

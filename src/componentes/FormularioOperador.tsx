@@ -37,7 +37,7 @@ export function FormularioOperador() {
           type="email"
           required
           autoComplete="username"
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
       </label>
       <label className="grid gap-1 text-sm">
@@ -47,14 +47,14 @@ export function FormularioOperador() {
           type="password"
           required
           autoComplete="current-password"
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
       </label>
       {erro ? <p className="text-sm text-red-700">{erro}</p> : null}
       <button
         type="submit"
         disabled={enviando}
-        className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
+        className="botao-principal justify-self-start"
       >
         {enviando ? "Entrando..." : "Entrar"}
       </button>

@@ -19,7 +19,7 @@ export default async function PaginaCobrancas() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-neutral-600">
+          <p className="mt-3 text-slate-600">
             O modulo Cobrancas nao faz parte do plano deste escritorio.
           </p>
         </main>
@@ -72,7 +72,7 @@ export default async function PaginaCobrancas() {
       modulos={modulos}
       titulo="Cobrancas"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         {emReais(emAberto)} em aberto · cobranca na conta Asaas do proprio
         escritorio
       </p>
@@ -89,7 +89,7 @@ export default async function PaginaCobrancas() {
           <summary className="cursor-pointer text-sm font-semibold text-marca">
             Nova cobranca
           </summary>
-          <p className="mt-2 text-sm text-neutral-500">
+          <p className="mt-2 text-sm text-slate-500">
             O Asaas exige CPF/CNPJ do cliente. Cliente sem documento cadastrado
             e recusado com essa mensagem.
           </p>
@@ -133,7 +133,7 @@ export default async function PaginaCobrancas() {
           />
         </details>
       ) : (
-        <div className="mt-4 rounded border border-neutral-300 p-4 text-sm text-neutral-600">
+        <div className="mt-4 rounded border border-slate-300 p-4 text-sm text-slate-600">
           Cadastre um cliente antes de emitir cobranca.
         </div>
       )}

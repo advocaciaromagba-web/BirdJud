@@ -29,7 +29,7 @@ export function ListaPublicacoes({
 }) {
   if (publicacoes.length === 0) {
     return (
-      <p className="mt-6 text-neutral-600">
+      <p className="mt-6 text-slate-600">
         Nenhuma publicacao em aberto. As capturas rodam de madrugada, por OAB
         monitorada.
       </p>
@@ -87,9 +87,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
   return (
     <li
       className={`rounded border p-4 ${
-        publicacao.urgente
-          ? "border-red-300 bg-red-50/40"
-          : "border-neutral-200"
+        publicacao.urgente ? "border-red-300 bg-red-50/40" : "border-slate-200"
       } ${publicacao.lida ? "opacity-70" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -104,13 +102,13 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
           </span>
         ) : null}
         {publicacao.lida ? (
-          <span className="rounded bg-neutral-100 px-2 py-0.5 text-neutral-600">
+          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">
             lida
           </span>
         ) : null}
-        <span className="text-neutral-500">{publicacao.data}</span>
+        <span className="text-slate-500">{publicacao.data}</span>
         {publicacao.oab ? (
-          <span className="text-neutral-500">· OAB {publicacao.oab}</span>
+          <span className="text-slate-500">· OAB {publicacao.oab}</span>
         ) : null}
       </div>
 
@@ -122,7 +120,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
           </span>
         ) : null}
       </p>
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-slate-500">
         {[publicacao.tribunal, publicacao.orgao, publicacao.tipoComunicacao]
           .filter(Boolean)
           .join(" · ")}
@@ -135,8 +133,8 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
       </p>
 
       {analise ? (
-        <div className="mt-3 rounded border border-neutral-200 bg-neutral-50 p-3 text-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <div className="mt-3 rounded border border-slate-200 bg-slate-50 p-3 text-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Leitura da IA · rascunho, confira nos autos
           </p>
           <p className="mt-2 whitespace-pre-line">{analise}</p>
@@ -158,7 +156,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
         <button
           type="button"
           onClick={() => setAberta((v) => !v)}
-          className="rounded border border-neutral-300 px-3 py-2 font-semibold"
+          className="rounded border border-slate-300 px-3 py-2 font-semibold"
         >
           {aberta ? "Recolher" : "Ler tudo"}
         </button>
@@ -167,7 +165,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
             type="button"
             disabled={ocupado}
             onClick={() => marcar({ lida: true })}
-            className="rounded bg-marca px-3 py-2 font-semibold text-white disabled:opacity-60"
+            className="botao-principal"
           >
             Marcar como lida
           </button>
@@ -176,7 +174,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
           type="button"
           disabled={ocupado}
           onClick={() => marcar({ arquivada: true })}
-          className="rounded border border-neutral-300 px-3 py-2 text-neutral-700 disabled:opacity-60"
+          className="rounded border border-slate-300 px-3 py-2 text-slate-700 disabled:opacity-60"
         >
           Arquivar
         </button>
@@ -185,7 +183,7 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
             href={publicacao.link}
             target="_blank"
             rel="noreferrer"
-            className="rounded border border-neutral-300 px-3 py-1 text-marca"
+            className="rounded border border-slate-300 px-3 py-1 text-marca"
           >
             Abrir no diario
           </a>

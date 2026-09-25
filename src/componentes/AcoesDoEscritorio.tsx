@@ -48,11 +48,11 @@ export function AcoesDoEscritorio({
   }
 
   return (
-    <section className="mt-6 rounded border border-neutral-200 p-4 text-sm">
+    <section className="cartao-aperto mt-6 text-sm">
       <h2 className="font-semibold">Acoes da plataforma</h2>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-neutral-600">Faixa:</span>
+        <span className="text-slate-600">Faixa:</span>
         {FAIXAS.map((faixa) => (
           <button
             key={faixa}
@@ -62,7 +62,7 @@ export function AcoesDoEscritorio({
             className={`rounded border px-2 py-1 text-xs ${
               faixa === faixaAtual
                 ? "border-marca bg-marca/10 font-semibold text-marca"
-                : "border-neutral-300"
+                : "border-slate-300"
             } disabled:opacity-60`}
           >
             {faixa}
@@ -71,7 +71,7 @@ export function AcoesDoEscritorio({
       </div>
 
       <div className="mt-4">
-        <p className="text-neutral-600">Modulos contratados:</p>
+        <p className="text-slate-600">Modulos contratados:</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {MODULOS.filter((modulo) => modulo !== "NUCLEO").map((modulo) => {
             const ativo = contratados.get(modulo) === true;
@@ -84,7 +84,7 @@ export function AcoesDoEscritorio({
                 className={`rounded border px-2 py-1 text-xs ${
                   ativo
                     ? "border-green-600 bg-green-50 text-green-800"
-                    : "border-neutral-300"
+                    : "border-slate-300"
                 } disabled:opacity-60`}
               >
                 {ativo ? "✓ " : ""}
@@ -100,7 +100,7 @@ export function AcoesDoEscritorio({
           type="button"
           disabled={ocupado}
           onClick={() => agir({ acao: "regua" })}
-          className="rounded border border-neutral-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+          className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
         >
           Passar a regua agora
         </button>
@@ -127,7 +127,7 @@ export function AcaoDaFatura({ id, status }: { id: string; status: string }) {
   const [ocupado, setOcupado] = useState(false);
 
   if (status !== "ABERTA") {
-    return <span className="text-xs text-neutral-500">{status}</span>;
+    return <span className="text-xs text-slate-500">{status}</span>;
   }
 
   return (
@@ -143,7 +143,7 @@ export function AcaoDaFatura({ id, status }: { id: string; status: string }) {
         setOcupado(false);
         router.refresh();
       }}
-      className="rounded border border-neutral-400 px-2 py-1 text-xs font-semibold disabled:opacity-60"
+      className="rounded border border-slate-400 px-2 py-1 text-xs font-semibold disabled:opacity-60"
     >
       {ocupado ? "..." : "Registrar pagamento"}
     </button>

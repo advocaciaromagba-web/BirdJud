@@ -112,9 +112,9 @@ function Avisos({
   });
 
   return (
-    <section className="rounded border border-neutral-200 p-4">
+    <section className="cartao-aperto">
       <h2 className="font-semibold">Avisos</h2>
-      <p className="mt-1 text-sm text-neutral-600">
+      <p className="mt-1 text-sm text-slate-600">
         Enviados pelo e-mail{temModuloWhatsapp ? " e pelo WhatsApp" : ""} do
         proprio escritorio, uma vez por dia.
       </p>
@@ -151,7 +151,7 @@ function Avisos({
                 onChange={(e) => setFone(e.target.value)}
                 onBlur={() => guardar(atual())}
                 placeholder="(71) 99999-8888"
-                className="max-w-xs rounded border border-neutral-300 px-3 py-2"
+                className="max-w-xs rounded border border-slate-300 px-3 py-2"
               />
             </label>
             <label className="flex items-center gap-2">
@@ -219,7 +219,7 @@ function TrocarSenha() {
   }
 
   return (
-    <section className="rounded border border-neutral-200 p-4">
+    <section className="cartao-aperto">
       <h2 className="font-semibold">Trocar senha</h2>
       <form onSubmit={trocar} className="mt-3 grid gap-3">
         <label className="grid gap-1 text-sm">
@@ -229,7 +229,7 @@ function TrocarSenha() {
             type="password"
             required
             autoComplete="current-password"
-            className="rounded border border-neutral-300 px-3 py-2"
+            className="campo"
           />
         </label>
         <label className="grid gap-1 text-sm">
@@ -240,7 +240,7 @@ function TrocarSenha() {
             required
             minLength={10}
             autoComplete="new-password"
-            className="rounded border border-neutral-300 px-3 py-2"
+            className="campo"
           />
         </label>
         <label className="grid gap-1 text-sm">
@@ -251,14 +251,14 @@ function TrocarSenha() {
             required
             minLength={10}
             autoComplete="new-password"
-            className="rounded border border-neutral-300 px-3 py-2"
+            className="campo"
           />
         </label>
         <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
         <button
           type="submit"
           disabled={enviando}
-          className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
+          className="botao-principal justify-self-start"
         >
           {enviando ? "Trocando..." : "Trocar senha"}
         </button>
@@ -331,7 +331,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
   }
 
   return (
-    <section className="rounded border border-neutral-200 p-4">
+    <section className="cartao-aperto">
       <h2 className="font-semibold">
         Segundo fator{" "}
         {ativo ? <span className="text-green-700">· ativo</span> : null}
@@ -339,17 +339,12 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
 
       {ativo ? (
         <form onSubmit={desativar} className="mt-3 grid gap-3">
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-slate-600">
             Para desligar, confirme com a senha e um codigo do aplicativo.
           </p>
           <label className="grid gap-1 text-sm">
             Senha
-            <input
-              name="senha"
-              type="password"
-              required
-              className="rounded border border-neutral-300 px-3 py-2"
-            />
+            <input name="senha" type="password" required className="campo" />
           </label>
           <label className="grid gap-1 text-sm">
             Codigo de 6 digitos
@@ -357,20 +352,20 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
               name="codigo"
               inputMode="numeric"
               required
-              className="rounded border border-neutral-300 px-3 py-2"
+              className="campo"
             />
           </label>
           <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
           <button
             type="submit"
-            className="justify-self-start rounded border border-neutral-400 px-4 py-2 font-semibold"
+            className="justify-self-start rounded border border-slate-400 px-4 py-2 font-semibold"
           >
             Desativar
           </button>
         </form>
       ) : preparo ? (
         <form onSubmit={ativar} className="mt-3 grid gap-3">
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-slate-600">
             Leia o codigo no aplicativo autenticador e digite os 6 digitos para
             confirmar.
           </p>
@@ -380,7 +375,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
             alt="QR Code do segundo fator"
             className="h-44 w-44"
           />
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-slate-500">
             Nao consegue ler? Use o codigo: <code>{preparo.segredo}</code>
           </p>
           <label className="grid gap-1 text-sm">
@@ -389,27 +384,24 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
               name="codigo"
               inputMode="numeric"
               required
-              className="rounded border border-neutral-300 px-3 py-2"
+              className="campo"
             />
           </label>
           <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
-          <button
-            type="submit"
-            className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white"
-          >
+          <button type="submit" className="botao-principal justify-self-start">
             Confirmar e ativar
           </button>
         </form>
       ) : (
         <div className="mt-3 grid gap-3">
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-slate-600">
             Uma segunda confirmacao no login, por aplicativo autenticador.
           </p>
           <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
           <button
             type="button"
             onClick={preparar}
-            className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white"
+            className="botao-principal justify-self-start"
           >
             Ativar segundo fator
           </button>

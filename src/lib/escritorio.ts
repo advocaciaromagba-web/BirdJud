@@ -26,8 +26,8 @@ export const MARCA_NEUTRA: Marca = {
   nome: "BirdJud",
   status: null,
   logoUrl: null,
-  corPrimaria: "#0E6B66",
-  corSecundaria: "#16202A",
+  corPrimaria: "#0B1F3B",
+  corSecundaria: "#D4AF7C",
   telefoneAtendimento: null,
   cidade: null,
 };

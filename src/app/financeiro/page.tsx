@@ -20,7 +20,7 @@ export default async function PaginaFinanceiro() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-neutral-600">
+          <p className="mt-3 text-slate-600">
             O modulo Financeiro nao faz parte do plano deste escritorio.
           </p>
         </main>
@@ -50,7 +50,7 @@ export default async function PaginaFinanceiro() {
       modulos={modulos}
       titulo="Financeiro"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         Saldo dos lancamentos listados: {emReais(saldo)}
       </p>
 
@@ -71,14 +71,14 @@ export default async function PaginaFinanceiro() {
       />
 
       {lancamentos.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Nenhum lancamento.</p>
+        <p className="mt-6 text-slate-600">Nenhum lancamento.</p>
       ) : (
-        <ul className="mt-6 divide-y divide-neutral-200">
+        <ul className="mt-6 divide-y divide-slate-200">
           {lancamentos.map((lancamento) => (
             <li key={lancamento.id} className="flex justify-between gap-4 py-3">
               <span>
                 <span className="font-semibold">{lancamento.descricao}</span>
-                <span className="block text-sm text-neutral-500">
+                <span className="block text-sm text-slate-500">
                   {lancamento.competencia}
                 </span>
               </span>

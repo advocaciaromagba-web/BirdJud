@@ -20,7 +20,7 @@ export default async function PaginaIntegracoes() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Area restrita</h1>
-          <p className="mt-3 text-neutral-600">
+          <p className="mt-3 text-slate-600">
             So administradores do escritorio conectam integracoes.
           </p>
         </main>
@@ -67,7 +67,7 @@ export default async function PaginaIntegracoes() {
       modulos={modulos}
       titulo="Integracoes"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         Cada escritorio conecta as proprias contas. As credenciais ficam
         cifradas e nunca aparecem de volta na tela.
       </p>

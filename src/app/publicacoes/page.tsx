@@ -49,7 +49,7 @@ export default async function PaginaPublicacoes() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-neutral-600">
+          <p className="mt-3 text-slate-600">
             O modulo Publicacoes nao faz parte do plano deste escritorio.
           </p>
         </main>
@@ -111,7 +111,7 @@ export default async function PaginaPublicacoes() {
       modulos={modulos}
       titulo="Publicacoes"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         {dados.naoLidas} nao lida(s) ·{" "}
         {dados.oabs.filter((o) => o.ativo).length} OAB(s) monitorada(s) · fonte:
         DJEN
@@ -129,7 +129,7 @@ export default async function PaginaPublicacoes() {
           <summary className="cursor-pointer text-sm font-semibold text-marca">
             OABs monitoradas ({dados.oabs.length})
           </summary>
-          <ul className="mt-3 divide-y divide-neutral-200 text-sm">
+          <ul className="mt-3 divide-y divide-slate-200 text-sm">
             {dados.oabs.map((oab) => (
               <li key={oab.id} className="flex justify-between gap-3 py-2">
                 <span>
@@ -137,12 +137,12 @@ export default async function PaginaPublicacoes() {
                     {oab.numero}/{oab.uf}
                   </span>
                   {oab.nomeAdvogado ? (
-                    <span className="block text-neutral-500">
+                    <span className="block text-slate-500">
                       {oab.nomeAdvogado}
                     </span>
                   ) : null}
                 </span>
-                <span className="text-neutral-500">
+                <span className="text-slate-500">
                   {oab.ultimaCaptura
                     ? `capturada em ${data.format(oab.ultimaCaptura)}`
                     : "ainda nao capturada"}

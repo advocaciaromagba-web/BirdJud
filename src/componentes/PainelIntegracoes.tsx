@@ -38,7 +38,7 @@ function Selo({ status }: { status: string | null }) {
     );
   }
   return (
-    <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
+    <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
       nao conectada
     </span>
   );
@@ -51,7 +51,7 @@ export function PainelIntegracoes({
 }) {
   if (integracoes.length === 0) {
     return (
-      <p className="mt-6 text-neutral-600">
+      <p className="mt-6 text-slate-600">
         Nenhuma integracao disponivel: elas aparecem conforme os modulos
         contratados.
       </p>
@@ -135,12 +135,12 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
   }
 
   return (
-    <section className="rounded border border-neutral-200 p-4">
+    <section className="cartao-aperto">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="font-semibold">{integracao.rotulo}</h2>
         <Selo status={integracao.status} />
       </div>
-      <p className="mt-1 text-sm text-neutral-600">{integracao.descricao}</p>
+      <p className="mt-1 text-sm text-slate-600">{integracao.descricao}</p>
 
       {integracao.erro ? (
         <p className="mt-2 text-sm text-red-700">
@@ -148,7 +148,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
         </p>
       ) : null}
       {integracao.verificadoEm ? (
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-slate-500">
           Verificada em{" "}
           {new Date(integracao.verificadoEm).toLocaleString("pt-BR")}
         </p>
@@ -159,7 +159,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
           <button
             type="button"
             onClick={() => setAberto((v) => !v)}
-            className="rounded bg-marca px-3 py-1.5 text-sm font-semibold text-white"
+            className="botao-principal"
           >
             {integracao.conectada ? "Trocar credenciais" : "Conectar"}
           </button>
@@ -170,7 +170,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
               type="button"
               onClick={testar}
               disabled={ocupado}
-              className="rounded border border-neutral-400 px-3 py-1.5 text-sm font-semibold disabled:opacity-60"
+              className="rounded border border-slate-400 px-3 py-1.5 text-sm font-semibold disabled:opacity-60"
             >
               {ocupado ? "Testando..." : "Testar conexao"}
             </button>
@@ -178,7 +178,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
               type="button"
               onClick={desconectar}
               disabled={ocupado}
-              className="rounded border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 disabled:opacity-60"
+              className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:opacity-60"
             >
               Desconectar
             </button>
@@ -197,20 +197,20 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
       {aberto ? (
         <form
           onSubmit={conectar}
-          className="mt-4 grid gap-3 border-t border-neutral-200 pt-4"
+          className="mt-4 grid gap-3 border-t border-slate-200 pt-4"
         >
           {integracao.campos.map((campo) => (
             <label key={campo.nome} className="grid gap-1 text-sm">
               {campo.rotulo}
               {campo.ajuda ? (
-                <span className="text-xs text-neutral-500">{campo.ajuda}</span>
+                <span className="text-xs text-slate-500">{campo.ajuda}</span>
               ) : null}
               {campo.tipo === "textarea" ? (
                 <textarea
                   name={campo.nome}
                   required={campo.obrigatorio}
                   rows={4}
-                  className="rounded border border-neutral-300 px-3 py-2 font-mono text-xs"
+                  className="rounded border border-slate-300 px-3 py-2 font-mono text-xs"
                 />
               ) : (
                 <input
@@ -218,7 +218,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
                   type={campo.tipo}
                   required={campo.obrigatorio}
                   autoComplete="off"
-                  className="rounded border border-neutral-300 px-3 py-2"
+                  className="campo"
                 />
               )}
             </label>
@@ -226,7 +226,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
           <button
             type="submit"
             disabled={ocupado}
-            className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
+            className="botao-principal justify-self-start"
           >
             {ocupado ? "Conectando..." : "Conectar e testar"}
           </button>

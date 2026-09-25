@@ -32,7 +32,7 @@ export default async function PaginaConta() {
       modulos={modulos}
       titulo="Minha conta"
     >
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         {usuario?.nome} · {usuario?.email} · {usuario?.papel}
       </p>
       {/* O segredo do 2FA nunca vai para a tela; so se ele esta ligado. */}

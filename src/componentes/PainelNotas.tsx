@@ -31,8 +31,8 @@ export type Fiscal = {
 const CORES: Record<string, string> = {
   EMITIDA: "bg-emerald-100 text-emerald-800",
   RECUSADA: "bg-rose-100 text-rose-800",
-  CANCELADA: "bg-neutral-100 text-neutral-500",
-  RASCUNHO: "bg-neutral-100 text-neutral-700",
+  CANCELADA: "bg-slate-100 text-slate-500",
+  RASCUNHO: "bg-slate-100 text-slate-700",
 };
 
 export function PainelNotas({
@@ -121,14 +121,14 @@ export function PainelNotas({
             Cadastro fiscal{" "}
             {fiscal ? "" : "(obrigatorio antes da primeira nota)"}
           </summary>
-          <p className="mt-2 text-sm text-neutral-500">
+          <p className="mt-2 text-sm text-slate-500">
             Estes dados saem impressos na nota. O codigo do servico e a aliquota
             vem do contador do escritorio — nao ha padrao que sirva para todo
             mundo.
           </p>
           <form
             onSubmit={salvarCadastro}
-            className="mt-3 grid gap-3 rounded border border-neutral-200 p-4 sm:grid-cols-2"
+            className="cartao-aperto mt-3 grid gap-3 sm:grid-cols-2"
           >
             <Campo
               nome="razaoSocial"
@@ -151,7 +151,7 @@ export function PainelNotas({
               <select
                 name="regime"
                 defaultValue={fiscal?.regime ?? "SIMPLES"}
-                className="rounded border border-neutral-300 px-3 py-2"
+                className="campo"
               >
                 <option value="SIMPLES">Simples Nacional</option>
                 <option value="MEI">MEI</option>
@@ -174,7 +174,7 @@ export function PainelNotas({
               <select
                 name="ambiente"
                 defaultValue={fiscal?.ambiente ?? "HOMOLOGACAO"}
-                className="rounded border border-neutral-300 px-3 py-2"
+                className="campo"
               >
                 <option value="HOMOLOGACAO">
                   Homologacao (sem valor fiscal)
@@ -185,7 +185,7 @@ export function PainelNotas({
             <button
               type="submit"
               disabled={ocupado}
-              className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60 sm:col-span-2"
+              className="botao-principal justify-self-start sm:col-span-2"
             >
               Guardar cadastro
             </button>
@@ -198,17 +198,10 @@ export function PainelNotas({
           <summary className="cursor-pointer text-sm font-semibold text-marca">
             Emitir nota
           </summary>
-          <form
-            onSubmit={emitir}
-            className="mt-3 grid gap-3 rounded border border-neutral-200 p-4"
-          >
+          <form onSubmit={emitir} className="cartao-aperto mt-3 grid gap-3">
             <label className="grid gap-1 text-sm">
               Cliente
-              <select
-                name="clienteId"
-                required
-                className="rounded border border-neutral-300 px-3 py-2"
-              >
+              <select name="clienteId" required className="campo">
                 <option value="">—</option>
                 {clientes.map((cliente) => (
                   <option key={cliente.id} value={cliente.id}>
@@ -221,24 +214,16 @@ export function PainelNotas({
             </label>
             <label className="grid gap-1 text-sm">
               Descricao do servico
-              <input
-                name="descricao"
-                required
-                className="rounded border border-neutral-300 px-3 py-2"
-              />
+              <input name="descricao" required className="campo" />
             </label>
             <label className="grid gap-1 text-sm">
               Valor (R$)
-              <input
-                name="valor"
-                required
-                className="rounded border border-neutral-300 px-3 py-2"
-              />
+              <input name="valor" required className="campo" />
             </label>
             <button
               type="submit"
               disabled={ocupado}
-              className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
+              className="botao-principal justify-self-start"
             >
               {ocupado ? "Emitindo…" : "Emitir nota"}
             </button>
@@ -249,9 +234,9 @@ export function PainelNotas({
       {erro ? <p className="mt-3 text-sm text-red-700">{erro}</p> : null}
 
       {notas.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Nenhuma nota emitida ainda.</p>
+        <p className="mt-6 text-slate-600">Nenhuma nota emitida ainda.</p>
       ) : (
-        <ul className="mt-6 divide-y divide-neutral-200">
+        <ul className="mt-6 divide-y divide-slate-200">
           {notas.map((nota) => (
             <li
               key={nota.id}
@@ -264,9 +249,9 @@ export function PainelNotas({
               </span>
               <span className="font-semibold">{nota.numero}</span>
               <span>{nota.cliente}</span>
-              <span className="text-neutral-500">{nota.descricao}</span>
+              <span className="text-slate-500">{nota.descricao}</span>
               <span className="ml-auto">{nota.valor}</span>
-              <span className="w-full text-sm text-neutral-500">
+              <span className="w-full text-sm text-slate-500">
                 {nota.data}
                 {nota.chaveAcesso ? (
                   <span className="break-all"> · chave {nota.chaveAcesso}</span>
@@ -294,7 +279,7 @@ export function PainelNotas({
                         () => {},
                       )
                     }
-                    className="-my-1 ml-3 py-2 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
+                    className="-my-1 ml-3 py-2 text-slate-500 hover:text-rose-700 disabled:opacity-50"
                   >
                     Cancelar
                   </button>
@@ -329,7 +314,7 @@ function Campo({
         name={nome}
         defaultValue={valor ?? ""}
         required
-        className="rounded border border-neutral-300 px-3 py-2"
+        className="campo"
       />
     </label>
   );

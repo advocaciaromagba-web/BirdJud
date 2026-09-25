@@ -17,9 +17,12 @@
  */
 
 :root {
-  /* marca neutra; sobrescrita em tempo de execucao pela marca do escritorio */
-  --marca-primaria: #0e6b66;
-  --marca-secundaria: #16202a;
+  /*
+   * Marca neutra: as cores do BirdJud. Em subdominio de escritorio as duas
+   * primeiras sao trocadas em tempo de execucao pelas cores dele.
+   */
+  --marca-primaria: #0b1f3b; /* azul profundo */
+  --marca-secundaria: #d4af7c; /* ouro elegante */
 
   /* Texto sobre a cor primaria. Branco serve para as cores densas que o
      cadastro aceita; a conferencia de contraste fica na tela de marca. */
@@ -28,11 +31,21 @@
   --fonte-texto:
     var(--fonte-interface), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", sans-serif;
+  --fonte-titulo: var(--fonte-display), Georgia, "Times New Roman", serif;
   --fonte-leitura: var(--fonte-serifada), Georgia, "Times New Roman", serif;
+
+  /*
+   * O resto da paleta do manual. Estas NAO mudam por escritorio: sao o
+   * grafite, o prata e o off-white que sustentam a leitura em qualquer marca.
+   */
+  --grafite: #1f1f1f;
+  --prata: #a7a9ac;
+  --off-white: #f6f7f8;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply text-slate-900 antialiased;
+  background-color: var(--off-white);
   font-family: var(--fonte-texto);
   /*
    * Palavra sem espaco nao empurra a tela.
@@ -47,11 +60,20 @@ body {
 
 /* ---------- tipografia ---------- */
 
+/*
+ * Titulo em serifada, texto em sans.
+ *
+ * O manual da marca pede as duas familias com papeis separados: a serifada e
+ * identidade e aparece pouco; a de tela e a que se le o dia inteiro. Numero
+ * de processo, tabela e formulario ficam todos na sans.
+ */
 h1 {
+  font-family: var(--fonte-titulo);
   @apply text-2xl font-bold tracking-tight text-slate-900;
 }
 
 h2 {
+  font-family: var(--fonte-titulo);
   @apply text-lg font-semibold tracking-tight text-slate-900;
 }
 
@@ -59,9 +81,38 @@ h3 {
   @apply text-base font-semibold text-slate-900;
 }
 
-/* Rotulo pequeno em versalete, acima de um titulo de secao. */
+/* Rotulo pequeno em versalete, acima de um titulo de secao. Em ouro. */
 .sobretitulo {
-  @apply text-xs font-semibold uppercase tracking-[0.18em] text-slate-500;
+  @apply text-xs font-semibold uppercase tracking-[0.18em];
+  color: var(--marca-secundaria);
+}
+
+/*
+ * O ouro e de selo, filete e realce — nunca de superficie grande.
+ *
+ * Ouro cobrindo area deixa de ser destaque e vira ruido; e em fundo claro
+ * ele nao tem contraste para texto corrido. Por isso nao existe botao nem
+ * fundo em ouro neste arquivo.
+ */
+.destaque {
+  color: var(--marca-secundaria);
+}
+
+.filete-destaque {
+  border-left: 3px solid var(--marca-secundaria);
+}
+
+/* Regua fina sob o titulo, como no lockup da marca. */
+.regua-destaque::after {
+  content: "";
+  @apply mt-3 block h-px w-16;
+  background-color: var(--marca-secundaria);
+}
+
+/* Faixa escura: capa de pagina publica e rodape. */
+.faixa-escura {
+  background-color: var(--marca-primaria);
+  color: var(--marca-contraste);
 }
 
 /* A frase que apresenta uma tela. */

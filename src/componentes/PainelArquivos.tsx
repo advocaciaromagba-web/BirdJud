@@ -63,33 +63,19 @@ export function PainelArquivos({
 
   return (
     <>
-      <form
-        onSubmit={enviar}
-        className="mt-6 grid gap-3 rounded border border-neutral-200 p-4"
-      >
+      <form onSubmit={enviar} className="cartao-aperto mt-6 grid gap-3">
         <label className="grid gap-1 text-sm">
           Arquivo (ate {tamanhoMaximoMb} MB)
-          <input
-            type="file"
-            name="arquivo"
-            required
-            className="rounded border border-neutral-300 px-3 py-2"
-          />
+          <input type="file" name="arquivo" required className="campo" />
         </label>
         <label className="grid gap-1 text-sm">
           Descricao (opcional)
-          <input
-            name="descricao"
-            className="rounded border border-neutral-300 px-3 py-2"
-          />
+          <input name="descricao" className="campo" />
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">
             Processo (opcional)
-            <select
-              name="processoId"
-              className="rounded border border-neutral-300 px-3 py-2"
-            >
+            <select name="processoId" className="campo">
               <option value="">—</option>
               {processos.map((p) => (
                 <option key={p.valor} value={p.valor}>
@@ -100,10 +86,7 @@ export function PainelArquivos({
           </label>
           <label className="grid gap-1 text-sm">
             Cliente (opcional)
-            <select
-              name="clienteId"
-              className="rounded border border-neutral-300 px-3 py-2"
-            >
+            <select name="clienteId" className="campo">
               <option value="">—</option>
               {clientes.map((c) => (
                 <option key={c.valor} value={c.valor}>
@@ -117,16 +100,16 @@ export function PainelArquivos({
         <button
           type="submit"
           disabled={enviando}
-          className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
+          className="botao-principal justify-self-start"
         >
           {enviando ? "Enviando…" : "Guardar arquivo"}
         </button>
       </form>
 
       {arquivos.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Nenhum arquivo guardado ainda.</p>
+        <p className="mt-6 text-slate-600">Nenhum arquivo guardado ainda.</p>
       ) : (
-        <ul className="mt-6 divide-y divide-neutral-200">
+        <ul className="mt-6 divide-y divide-slate-200">
           {arquivos.map((arquivo) => (
             <li
               key={arquivo.id}
@@ -138,26 +121,24 @@ export function PainelArquivos({
               >
                 {arquivo.nome}
               </a>
-              <span className="text-sm text-neutral-500">
-                {arquivo.tamanho}
-              </span>
+              <span className="text-sm text-slate-500">{arquivo.tamanho}</span>
               {arquivo.vinculo ? (
-                <span className="text-sm text-neutral-600">
+                <span className="text-sm text-slate-600">
                   {arquivo.vinculo}
                 </span>
               ) : null}
               {arquivo.descricao ? (
-                <span className="w-full text-sm text-neutral-500">
+                <span className="w-full text-sm text-slate-500">
                   {arquivo.descricao}
                 </span>
               ) : null}
-              <span className="ml-auto text-sm text-neutral-500">
+              <span className="ml-auto text-sm text-slate-500">
                 {arquivo.data}
               </span>
               <button
                 type="button"
                 onClick={() => apagar(arquivo.id, arquivo.nome)}
-                className="text-sm text-neutral-500 hover:text-rose-700"
+                className="text-sm text-slate-500 hover:text-rose-700"
               >
                 Apagar
               </button>

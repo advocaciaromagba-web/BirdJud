@@ -54,27 +54,27 @@ export default async function EscritorioNoPainel({
 
   return (
     <main className="mx-auto max-w-3xl p-8">
-      <Link href="/plataforma" className="text-sm text-neutral-500">
+      <Link href="/plataforma" className="text-sm text-slate-500">
         ← todos os escritorios
       </Link>
       <h1 className="mt-2 text-2xl font-bold">{escritorio.nome}</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-slate-500">
         {escritorio.slug} · {escritorio.status} · faixa {escritorio.faixa} (
         {uso.rotulo})
       </p>
 
-      <section className="mt-6 rounded border border-neutral-200 p-4 text-sm">
+      <section className="cartao-aperto mt-6 text-sm">
         <h2 className="font-semibold">Assinatura</h2>
         {escritorio.assinatura ? (
-          <p className="mt-2 text-neutral-700">
+          <p className="mt-2 text-slate-700">
             {emReais(escritorio.assinatura.valorCentavos)} por mes · vencimento
             dia {escritorio.assinatura.diaVencimento} · teste ate{" "}
             {escritorio.assinatura.fimDoTeste.toLocaleDateString("pt-BR")}
           </p>
         ) : (
-          <p className="mt-2 text-neutral-600">Sem assinatura.</p>
+          <p className="mt-2 text-slate-600">Sem assinatura.</p>
         )}
-        <p className="mt-2 text-neutral-600">
+        <p className="mt-2 text-slate-600">
           Advogados {uso.advogados.usados}/{uso.advogados.limite} · apoio{" "}
           {uso.apoio.usados}/{uso.apoio.limite}
         </p>
@@ -92,11 +92,9 @@ export default async function EscritorioNoPainel({
       <section className="mt-6">
         <h2 className="font-semibold">Faturas</h2>
         {escritorio.faturas.length === 0 ? (
-          <p className="mt-2 text-sm text-neutral-600">
-            Nenhuma fatura emitida.
-          </p>
+          <p className="mt-2 text-sm text-slate-600">Nenhuma fatura emitida.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-neutral-200 text-sm">
+          <ul className="mt-2 divide-y divide-slate-200 text-sm">
             {escritorio.faturas.map((fatura) => {
               const atraso = diasDeAtraso(fatura.vencimento, agora);
               return (
@@ -106,7 +104,7 @@ export default async function EscritorioNoPainel({
                 >
                   <span>
                     <span className="font-semibold">{fatura.competencia}</span>
-                    <span className="block text-xs text-neutral-500">
+                    <span className="block text-xs text-slate-500">
                       vence {fatura.vencimento.toLocaleDateString("pt-BR")}
                       {fatura.status === "ABERTA" && atraso > 0
                         ? ` · ${atraso} dia(s) de atraso`
@@ -132,17 +130,15 @@ export default async function EscritorioNoPainel({
       <section className="mt-6">
         <h2 className="font-semibold">Consumo de {competenciaDe()}</h2>
         {consumo.length === 0 ? (
-          <p className="mt-2 text-sm text-neutral-600">
-            Nada medido neste mes.
-          </p>
+          <p className="mt-2 text-sm text-slate-600">Nada medido neste mes.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-neutral-200 text-sm">
+          <ul className="mt-2 divide-y divide-slate-200 text-sm">
             {consumo.map((linha) => (
               <li
                 key={linha.metrica}
                 className="flex justify-between gap-4 py-2"
               >
-                <span className="text-neutral-600">{linha.metrica}</span>
+                <span className="text-slate-600">{linha.metrica}</span>
                 <span className="tabular-nums">
                   {linha.quantidade}
                   {linha.franquia !== null ? ` de ${linha.franquia}` : ""}
