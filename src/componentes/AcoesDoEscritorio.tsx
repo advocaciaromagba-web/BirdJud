@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 // Catalogo puro: importar de @/lib/faixas ou @/lib/modulos traria o Prisma
 // para o bundle do navegador.
 import { FAIXAS, MODULOS } from "@/lib/catalogo";
+import { PLANO, PLANOS, modulosDoPlano, planoExato } from "@/lib/planos";
+import { ROTULO_DO_MODULO } from "@/lib/rotulos";
+import type { Modulo } from "@/lib/catalogo";
 
 async function chamar(rota: string, corpo: unknown) {
   const resposta = await fetch(rota, {
@@ -31,6 +34,11 @@ export function AcoesDoEscritorio({
   );
   const [ocupado, setOcupado] = useState(false);
   const contratados = new Map(modulos.map((m) => [m.modulo, m.ativo]));
+  const ativos = modulos
+    .filter((m) => m.ativo)
+    .map((m) => m.modulo as Modulo)
+    .filter((m) => m !== "NUCLEO");
+  const planoAtual = planoExato(ativos);
 
   async function agir(corpo: Record<string, unknown>) {
     setOcupado(true);
@@ -71,6 +79,36 @@ export function AcoesDoEscritorio({
       </div>
 
       <div className="mt-4">
+        <p className="text-slate-600">
+          Plano{planoAtual ? `: ${PLANO[planoAtual].rotulo}` : " (montado)"}
+        </p>
+        <p className="ajuda">
+          Aplicar um plano diz o conjunto inteiro: o que nao esta nele sai. O
+          valor da assinatura nao muda sozinho.
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {PLANOS.map((plano) => (
+            <button
+              key={plano}
+              type="button"
+              disabled={ocupado || plano === planoAtual}
+              onClick={() => agir({ acao: "plano", plano })}
+              className={`rounded border px-2 py-1 text-xs ${
+                plano === planoAtual
+                  ? "border-marca bg-marca/10 font-semibold text-marca"
+                  : "border-slate-300"
+              } disabled:opacity-60`}
+              title={modulosDoPlano(plano)
+                .map((modulo) => ROTULO_DO_MODULO[modulo])
+                .join(", ")}
+            >
+              {PLANO[plano].rotulo}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4">
         <p className="text-slate-600">Modulos contratados:</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {MODULOS.filter((modulo) => modulo !== "NUCLEO").map((modulo) => {
@@ -88,7 +126,7 @@ export function AcoesDoEscritorio({
                 } disabled:opacity-60`}
               >
                 {ativo ? "✓ " : ""}
-                {modulo}
+                {ROTULO_DO_MODULO[modulo as Modulo] ?? modulo}
               </button>
             );
           })}

@@ -71,6 +71,12 @@ export function CapaDaPlataforma({ dias }: { dias: number }) {
             >
               Criar o sistema do meu escritorio
             </Link>
+            <Link
+              href="/planos"
+              className="botao border border-white/25 font-semibold text-[color:var(--marca-contraste)] hover:bg-white/10"
+            >
+              Ver os planos
+            </Link>
             <span className="text-sm text-slate-400">
               {dias} dias de teste, sem cartao.
             </span>
@@ -110,6 +116,9 @@ export function CapaDaPlataforma({ dias }: { dias: number }) {
           <span>
             BirdJud <span className="destaque">·</span> by Blackbird
           </span>
+          <Link href="/planos" className="hover:text-slate-900">
+            Planos
+          </Link>
           <Link href="/juridico/TERMOS-DE-USO" className="hover:text-slate-900">
             Termos de uso
           </Link>

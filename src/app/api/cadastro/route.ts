@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "@/lib/prisma";
 import { criarAssinatura } from "@/lib/cobranca";
-import { DIAS_DE_TESTE, PRECO_DA_FAIXA } from "@/lib/precos";
+import { DIAS_DE_TESTE } from "@/lib/precos";
+import { MODULOS, type Modulo } from "@/lib/catalogo";
+import { contaMontada, modulosDoPlano } from "@/lib/planos";
 import { gerarHash } from "@/lib/senhas";
 import { slugDoHost } from "@/lib/subdominio";
 import { ipDaRequisicao, registrarAceite } from "@/lib/aceite";
@@ -34,6 +36,10 @@ const cadastro = z.object({
   email: z.string().email(),
   senha: z.string().min(10, "A senha precisa ter ao menos 10 caracteres."),
   // O aceite e do contrato, dos termos e do acordo de LGPD, na versao vigente.
+  // O plano escolhido chega como a lista de modulos, nao como o nome do
+  // plano: quem monta o proprio conjunto tambem passa por aqui, e o preco
+  // sai da mesma conta nos dois casos.
+  modulos: z.array(z.enum(MODULOS)).max(MODULOS.length).optional(),
   aceite: z.literal(true, {
     errorMap: () => ({
       message: "E preciso aceitar os documentos para continuar.",
@@ -98,6 +104,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // Sem escolha, o teste comeca com tudo ligado: quem esta avaliando
+    // precisa ver o sistema inteiro, inclusive a leitura por IA. Reduzir o
+    // plano depois e conversa comercial; comecar cego nao ajuda ninguem.
+    const escolhidos = (
+      corpo.data.modulos ?? modulosDoPlano("COMPLETO")
+    ).filter((modulo): modulo is Modulo => modulo !== "NUCLEO");
+    const conta = contaMontada(escolhidos, "ATE_3");
+    // A conta pode ter subido para um plano pronto mais barato que a soma; os
+    // modulos contratados sao os desse plano, nao so os que foram marcados.
+    const contratados = conta.modulos.map((linha) => linha.modulo);
+
     const escritorio = await prismaPlataforma().escritorio.create({
       data: {
         slug,
@@ -119,6 +136,16 @@ export async function POST(req: Request) {
       }),
     );
 
+    if (contratados.length > 0) {
+      await comEscritorio(escritorio.id, (db) =>
+        db.moduloContratado.createMany({
+          data: contratados.map((modulo) =>
+            semEscritorio({ modulo, ativo: true }),
+          ),
+        }),
+      );
+    }
+
     await registrarAceite(escritorio.id, {
       nome: corpo.data.nome,
       email: corpo.data.email,
@@ -126,7 +153,7 @@ export async function POST(req: Request) {
       navegador: req.headers.get("user-agent"),
     });
 
-    await criarAssinatura(escritorio.id, PRECO_DA_FAIXA.ATE_3, DIAS_DE_TESTE);
+    await criarAssinatura(escritorio.id, conta.totalCentavos, DIAS_DE_TESTE);
 
     const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
     return NextResponse.json(
@@ -134,6 +161,8 @@ export async function POST(req: Request) {
         ok: true,
         endereco: `${slug}.${dominio}`,
         diasDeTeste: DIAS_DE_TESTE,
+        plano: conta.plano,
+        mensalidadeCentavos: conta.totalCentavos,
       },
       { status: 201 },
     );

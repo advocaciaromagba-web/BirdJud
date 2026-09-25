@@ -2,8 +2,14 @@ import { escritorioDoEndereco } from "@/lib/sessao";
 import { DIAS_DE_TESTE } from "@/lib/precos";
 import { FormularioCadastro } from "@/componentes/FormularioCadastro";
 import { MarcaBirdJud } from "@/componentes/MarcaBirdJud";
+import { MODULOS, type Modulo } from "@/lib/catalogo";
+import { contaMontada, modulosDoPlano } from "@/lib/planos";
 
-export default async function PaginaCadastro() {
+export default async function PaginaCadastro({
+  searchParams,
+}: {
+  searchParams: Promise<{ modulos?: string }>;
+}) {
   // De dentro do subdominio de um escritorio nao se cria outro escritorio.
   const marca = await escritorioDoEndereco();
   if (marca?.id) {
@@ -20,6 +26,20 @@ export default async function PaginaCadastro() {
 
   const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
 
+  // A escolha feita na pagina de planos chega pelo endereco. Sem ela, o teste
+  // comeca com o plano Completo — e o formulario diz isso.
+  const pedidos = (await searchParams).modulos;
+  const escolhidos =
+    pedidos === undefined
+      ? modulosDoPlano("COMPLETO")
+      : pedidos
+          .split(",")
+          .map((parte) => parte.trim())
+          .filter((parte): parte is Modulo =>
+            (MODULOS as readonly string[]).includes(parte),
+          );
+  const conta = contaMontada(escolhidos, "ATE_3");
+
   return (
     <main className="pagina-estreita">
       <MarcaBirdJud forma="completa" largura={300} />
@@ -30,7 +50,13 @@ export default async function PaginaCadastro() {
         Seu escritorio, sua marca, seus dados isolados. {DIAS_DE_TESTE} dias de
         teste, sem cartao.
       </p>
-      <FormularioCadastro dominio={dominio} dias={DIAS_DE_TESTE} />
+      <FormularioCadastro
+        dominio={dominio}
+        dias={DIAS_DE_TESTE}
+        modulos={conta.modulos.map((linha) => linha.modulo)}
+        plano={conta.plano}
+        mensalidadeCentavos={conta.totalCentavos}
+      />
     </main>
   );
 }

@@ -2,13 +2,23 @@
 
 import { useState } from "react";
 import { DOCUMENTOS, VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
+import { emReais } from "@/lib/dinheiro";
+import { PLANO, type Plano } from "@/lib/planos";
+import type { Modulo } from "@/lib/catalogo";
 
 export function FormularioCadastro({
   dominio,
   dias,
+  modulos,
+  plano,
+  mensalidadeCentavos,
 }: {
   dominio: string;
   dias: number;
+  /** Os modulos que o cadastro vai contratar, ja resolvidos pela conta. */
+  modulos: Modulo[];
+  plano: Plano | null;
+  mensalidadeCentavos: number;
 }) {
   const [erro, setErro] = useState<string | null>(null);
   const [pronto, setPronto] = useState<{ endereco: string } | null>(null);
@@ -29,6 +39,7 @@ export function FormularioCadastro({
         nome: String(dados.get("nome") ?? ""),
         email: String(dados.get("email") ?? ""),
         senha: String(dados.get("senha") ?? ""),
+        modulos,
         aceite: dados.get("aceite") === "on",
         versaoAceita: VERSAO_DOS_DOCUMENTOS,
       }),
@@ -64,6 +75,29 @@ export function FormularioCadastro({
 
   return (
     <form onSubmit={enviar} className="cartao mt-8 grid gap-4">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span>
+            <span className="sobretitulo">Plano escolhido</span>
+            <span className="mt-0.5 block font-semibold">
+              {plano ? PLANO[plano].rotulo : "Montado por voce"}
+            </span>
+          </span>
+          <span className="text-right">
+            <span className="text-lg font-bold tracking-tight">
+              {emReais(mensalidadeCentavos)}
+            </span>
+            <span className="text-slate-500"> /mes depois do teste</span>
+          </span>
+        </div>
+        <p className="ajuda">
+          Ate {dias} dias sem pagar nada.{" "}
+          <a href="/planos" className="underline">
+            Ver os planos
+          </a>{" "}
+          ou trocar depois — o que voce marcar agora vale so para comecar.
+        </p>
+      </div>
       <div>
         <label htmlFor="cad-escritorio" className="rotulo">
           Nome do escritorio

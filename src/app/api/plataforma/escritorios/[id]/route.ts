@@ -9,6 +9,8 @@ import {
 import { aplicarRegua } from "@/lib/cobranca";
 import { FAIXAS } from "@/lib/faixas";
 import { MODULOS } from "@/lib/modulos";
+import { contaMontada, modulosDoPlano, PLANO, PLANOS } from "@/lib/planos";
+import type { Modulo } from "@/lib/catalogo";
 
 const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("faixa"), faixa: z.enum(FAIXAS) }),
@@ -17,6 +19,7 @@ const acao = z.discriminatedUnion("acao", [
     modulo: z.enum(MODULOS),
     ativo: z.boolean(),
   }),
+  z.object({ acao: z.literal("plano"), plano: z.enum(PLANOS) }),
   z.object({ acao: z.literal("regua") }),
 ]);
 
@@ -41,7 +44,7 @@ export async function POST(
 
     const escritorio = await prismaPlataforma().escritorio.findUnique({
       where: { id: (await params).id },
-      select: { id: true, nome: true },
+      select: { id: true, nome: true, faixa: true },
     });
     if (!escritorio) {
       return NextResponse.json(
@@ -80,6 +83,34 @@ export async function POST(
       );
       return NextResponse.json({
         detalhe: `${modulo} ${ativo ? "contratado" : "desligado"}.`,
+      });
+    }
+
+    if (corpo.data.acao === "plano") {
+      const doPlano = modulosDoPlano(corpo.data.plano);
+      const conta = contaMontada(doPlano, (escritorio.faixa as Parameters<typeof contaMontada>[1]) ?? "ATE_3");
+      const contratados = new Set<Modulo>(conta.modulos.map((linha) => linha.modulo));
+
+      // Aplicar plano e dizer o conjunto inteiro, nao acrescentar: o que nao
+      // esta no plano sai. Senao "mudar para o Essencial" deixaria ligado o
+      // que veio de antes, e o escritorio continuaria usando o que nao paga.
+      await comEscritorio(escritorio.id, async (db) => {
+        for (const modulo of MODULOS) {
+          if (modulo === "NUCLEO") continue;
+          const ativo = contratados.has(modulo);
+          await db.moduloContratado.upsert({
+            where: { escritorioId_modulo: { escritorioId: escritorio.id, modulo } },
+            create: semEscritorio({ modulo, ativo }),
+            update: { ativo },
+          });
+        }
+      });
+
+      return NextResponse.json({
+        detalhe:
+          `Plano ${PLANO[corpo.data.plano].rotulo} aplicado. ` +
+          `Mensalidade pela tabela de hoje: ${(conta.totalCentavos / 100).toFixed(2)}. ` +
+          "O valor da assinatura nao foi alterado.",
       });
     }
 
