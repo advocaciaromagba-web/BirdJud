@@ -36,6 +36,14 @@ export async function exigirOperador(): Promise<ContextoOperador> {
     throw new SemOperador();
   }
 
+  // O JWT pode continuar no navegador depois que o operador e desativado.
+  // Acesso ao plano de controle exige que a conta ainda exista e esteja ativa.
+  const operador = await prismaPlataforma().operadorPlataforma.findUnique({
+    where: { id: sessao.usuarioId },
+    select: { ativo: true },
+  });
+  if (!operador?.ativo) throw new SemOperador();
+
   return {
     operadorId: sessao.usuarioId,
     nome: sessao.user?.name ?? "operador",

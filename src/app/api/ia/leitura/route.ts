@@ -3,6 +3,7 @@ import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import { arquivosDoCampo } from "@/lib/formulario";
+import { CorpoGrandeDemais, formularioLimitado } from "@/lib/multipart-limitado";
 import { registrarTentativa } from "@/lib/limite";
 import { registrarConsumo } from "@/lib/consumo";
 import {
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const formulario = await req.formData();
+    const formulario = await formularioLimitado(req, MAXIMO_DE_BYTES + 1024 * 1024);
     const perfil = String(formulario.get("perfil") ?? "");
     if (!PERFIS.includes(perfil as Perfil)) {
       return NextResponse.json(
@@ -141,6 +142,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ leitura });
   } catch (erro) {
+    if (erro instanceof CorpoGrandeDemais) return NextResponse.json({ erro: "Documentos grandes demais." }, { status: 413 });
     if (
       erro instanceof SemChaveDeIA ||
       erro instanceof IARecusou ||

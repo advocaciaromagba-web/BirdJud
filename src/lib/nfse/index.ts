@@ -106,6 +106,7 @@ export async function emitirNota(
   }
 
   let credencial: CredencialCertificado;
+  let envioIniciado = false;
   try {
     credencial = await obterIntegracao<CredencialCertificado>(
       escritorioId,
@@ -163,6 +164,7 @@ export async function emitirNota(
   };
 
   const ambiente = fiscal.ambiente as Ambiente;
+  let retornoConfirmado: { chaveAcesso: string } | null = null;
 
   try {
     const certificado = abrirCertificado(credencial.arquivo, credencial.senha);
@@ -171,6 +173,7 @@ export async function emitirNota(
       certificado,
       idDaDps(dados),
     );
+    envioIniciado = true;
     const retorno = await enviarAoNacional(assinado, ambiente);
 
     await comEscritorio(escritorioId, (db) =>
@@ -188,14 +191,26 @@ export async function emitirNota(
         },
       }),
     );
+    retornoConfirmado = retorno;
     await registrarConsumo(escritorioId, "NFSE_EMITIDA", 1);
     return { id: nota.id, status: "EMITIDA", chaveAcesso: retorno.chaveAcesso };
   } catch (erro) {
+    if (retornoConfirmado) {
+      // Falha na medicao nao altera uma nota ja gravada como emitida.
+      console.error("Consumo da NFS-e nao registrado:", erro);
+      return { id: nota.id, status: "EMITIDA", chaveAcesso: retornoConfirmado.chaveAcesso };
+    }
     const motivo = erro instanceof Error ? erro.message : "falha desconhecida";
+    const definitiva = erro instanceof FalhaNaNfse && erro.definitivo;
     await comEscritorio(escritorioId, (db) =>
       db.notaFiscal.update({
         where: { id: nota.id },
-        data: { status: "RECUSADA", erro: motivo.slice(0, 1000) },
+        data: {
+          // Depois do envio, timeout, 5xx ou erro local nao provam recusa.
+          // A mesma DPS deve ser conciliada antes de qualquer nova emissao.
+          status: envioIniciado && !definitiva ? "INDETERMINADA" : "RECUSADA",
+          erro: motivo.slice(0, 1000),
+        },
       }),
     );
 

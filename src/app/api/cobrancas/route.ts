@@ -6,6 +6,7 @@ import { paraCentavos } from "@/lib/dinheiro";
 import { tratarErro } from "@/lib/respostas";
 import {
   cancelarCobranca,
+  conciliarCobranca,
   ClienteSemDocumento,
   emitirCobranca,
   FalhaNoAsaas,
@@ -22,11 +23,13 @@ const novaCobranca = z.object({
   valor: z.string().min(1), // em reais, como digitado
   vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   forma: z.enum(FORMAS),
+  chaveOperacao: z.string().uuid(),
 });
 
 const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("CANCELAR"), id: z.string().min(1) }),
   z.object({ acao: z.literal("SINCRONIZAR") }),
+  z.object({ acao: z.literal("CONCILIAR"), id: z.string().min(1) }),
 ]);
 
 /** Erro de dominio do modulo -> status proprio. O resto cai no tratarErro. */
@@ -79,6 +82,7 @@ export async function POST(req: Request) {
       // Meio-dia UTC para o vencimento nao escorregar de dia por fuso.
       vencimento: new Date(`${corpo.data.vencimento}T12:00:00Z`),
       forma: corpo.data.forma,
+      chaveOperacao: corpo.data.chaveOperacao,
     });
     return NextResponse.json({ cobranca }, { status: 201 });
   } catch (erro) {
@@ -97,6 +101,11 @@ export async function PATCH(req: Request) {
     if (corpo.data.acao === "CANCELAR") {
       await cancelarCobranca(escritorioId, corpo.data.id);
       return NextResponse.json({ ok: true });
+    }
+
+    if (corpo.data.acao === "CONCILIAR") {
+      const cobranca = await conciliarCobranca(escritorioId, corpo.data.id);
+      return NextResponse.json({ cobranca });
     }
 
     const resultado = await sincronizarCobrancas(escritorioId);

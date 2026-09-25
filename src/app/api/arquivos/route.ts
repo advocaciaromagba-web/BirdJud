@@ -3,6 +3,7 @@ import { ehArquivoEnviado } from "@/lib/formulario";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
+import { CorpoGrandeDemais, formularioLimitado } from "@/lib/multipart-limitado";
 import {
   ArquivoRecusado,
   EspacoEsgotado,
@@ -44,7 +45,10 @@ export async function POST(req: Request) {
   try {
     const { escritorioId, usuarioId } = await exigirSessao("NUVEM");
 
-    const formulario = await req.formData().catch(() => null);
+    const formulario = await formularioLimitado(req, (TAMANHO_MAXIMO_MB + 1) * 1024 * 1024).catch((erro) => {
+      if (erro instanceof CorpoGrandeDemais) throw erro;
+      return null;
+    });
     // Nao usar `instanceof File`: o File global so existe do Node 20 em
     // diante, e a imagem do provedor pode estar em versao anterior — em
     // producao isso derrubava a rota com "File is not defined".
@@ -76,6 +80,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ arquivo }, { status: 201 });
   } catch (erro) {
+    if (erro instanceof CorpoGrandeDemais) return NextResponse.json({ erro: "Arquivo grande demais." }, { status: 413 });
     return respostaDoDominio(erro) ?? tratarErro(erro);
   }
 }

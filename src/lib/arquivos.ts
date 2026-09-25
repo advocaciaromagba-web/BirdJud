@@ -176,6 +176,17 @@ export async function guardarArquivo(
     throw new EspacoEsgotado(espaco.usadoMb, espaco.tetoMb);
   }
 
+  // Uma FK isolada nao prova que o registro relacionado pertence ao mesmo
+  // escritorio. Conferir ambos antes de gravar os vinculos informados.
+  await comEscritorio(escritorioId, async (db) => {
+    if (pedido.clienteId && !(await db.cliente.findFirst({ where: { id: pedido.clienteId } }))) {
+      throw new ArquivoRecusado("Cliente nao encontrado neste escritorio.", 400);
+    }
+    if (pedido.processoId && !(await db.processo.findFirst({ where: { id: pedido.processoId } }))) {
+      throw new ArquivoRecusado("Processo nao encontrado neste escritorio.", 400);
+    }
+  });
+
   const arquivo = await comEscritorio(escritorioId, (db) =>
     db.arquivo.create({
       data: semEscritorio({

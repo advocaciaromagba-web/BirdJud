@@ -13,6 +13,7 @@ import { obterIntegracao, IntegracaoAusente } from "./integracao";
 import { buscarComLimite, descreverFalha } from "./conectores/tipos";
 import { registrarConsumo, competenciaDe } from "./consumo";
 import { moduloAtivo } from "./modulos";
+import { randomUUID } from "node:crypto";
 
 export const FORMAS = ["BOLETO", "PIX", "CARTAO", "QUALQUER"] as const;
 export type Forma = (typeof FORMAS)[number];
@@ -76,7 +77,7 @@ export class ClienteSemDocumento extends Error {
 
 export class FalhaNoAsaas extends Error {
   readonly status = 502;
-  constructor(motivo: string) {
+  constructor(motivo: string, readonly definitiva = false) {
     super(motivo);
     this.name = "FalhaNoAsaas";
   }
@@ -142,6 +143,7 @@ async function chamarAsaas(
         : "";
     throw new FalhaNoAsaas(
       descricao || `O Asaas respondeu ${resposta.status}.`,
+      resposta.status >= 400 && resposta.status < 500 && resposta.status !== 429,
     );
   }
   if (!corpo) throw new FalhaNoAsaas("O Asaas respondeu sem corpo.");
@@ -220,6 +222,7 @@ export async function clienteNoAsaas(
 // ---------------------------------------------------------------------------
 
 export type PedidoDeCobranca = {
+  chaveOperacao?: string;
   clienteId: string;
   processoId?: string | null;
   descricao: string;
@@ -239,9 +242,8 @@ export class PedidoInvalido extends Error {
 /**
  * Emite a cobranca no Asaas e grava o espelho.
  *
- * A ordem importa: primeiro o Asaas, depois o nosso banco. Se gravassemos
- * antes, uma falha de rede deixaria cobranca nossa sem par do outro lado — e
- * o escritorio cobraria duas vezes ao repetir. Falhando aqui, nao sobra nada.
+ * Reserva a tentativa antes do POST externo. Uma resposta perdida deixa a
+ * tentativa pendente para conciliacao, sem criar uma segunda cobranca.
  */
 export async function emitirCobranca(
   escritorioId: string,
@@ -263,9 +265,70 @@ export async function emitirCobranca(
   );
   if (!cliente) throw new PedidoInvalido("Cliente nao encontrado.");
 
+  if (pedido.processoId) {
+    const processoId = pedido.processoId;
+    const processo = await comEscritorio(escritorioId, (db) =>
+      db.processo.findFirst({ where: { id: processoId } }),
+    );
+    if (!processo) throw new PedidoInvalido("Processo nao encontrado.");
+  }
+
   const idDoCliente = await clienteNoAsaas(escritorioId, cliente, chave);
 
-  const criada = await chamarAsaas(chave, "/payments", {
+  const chaveOperacao = pedido.chaveOperacao ?? randomUUID();
+  const outraPendente = await comEscritorio(escritorioId, (db) =>
+    db.cobranca.findFirst({ where: {
+      status: "PENDENTE", clienteId: pedido.clienteId,
+      descricao: pedido.descricao, valorCentavos: pedido.valorCentavos,
+      vencimento: pedido.vencimento, forma: pedido.forma,
+      NOT: { chaveOperacao },
+    } }),
+  );
+  if (outraPendente) throw new PedidoInvalido("Ha uma emissao identica pendente de conciliacao no Asaas.");
+  let existente = await comEscritorio(escritorioId, (db) =>
+    db.cobranca.findFirst({ where: { chaveOperacao } }),
+  );
+  if (existente && (
+    existente.clienteId !== pedido.clienteId ||
+    existente.processoId !== (pedido.processoId ?? null) ||
+    existente.descricao !== pedido.descricao ||
+    existente.valorCentavos !== pedido.valorCentavos ||
+    existente.vencimento.getTime() !== pedido.vencimento.getTime() ||
+    existente.forma !== pedido.forma
+  )) throw new PedidoInvalido("Esta tentativa pertence a outra cobranca.");
+
+  if (!existente) {
+    try {
+      existente = await comEscritorio(escritorioId, (db) => db.cobranca.create({
+        data: semEscritorio({
+          chaveOperacao,
+          clienteId: pedido.clienteId,
+          processoId: pedido.processoId ?? null,
+          descricao: pedido.descricao,
+          valorCentavos: pedido.valorCentavos,
+          vencimento: pedido.vencimento,
+          forma: pedido.forma,
+          status: "PENDENTE",
+          idNoAsaas: `pendente:${chaveOperacao}`,
+        }),
+      }));
+    } catch (erro) {
+      // Outra requisicao ganhou a reserva. Ela faz a chamada externa.
+      const concorrente = await comEscritorio(escritorioId, (db) =>
+        db.cobranca.findFirst({ where: { chaveOperacao } }),
+      );
+      if (concorrente) throw new PedidoInvalido("Emissao em andamento. Confira a lista antes de repetir.");
+      throw erro;
+    }
+  } else if (existente.status !== "PENDENTE") {
+    return { id: existente.id, linkPagamento: existente.linkPagamento };
+  } else {
+    return conciliarCobranca(escritorioId, existente.id, chave);
+  }
+
+  let criada: Record<string, unknown>;
+  try {
+    criada = await chamarAsaas(chave, "/payments", {
     method: "POST",
     body: JSON.stringify({
       customer: idDoCliente,
@@ -273,22 +336,49 @@ export async function emitirCobranca(
       value: emReaisDecimal(pedido.valorCentavos),
       dueDate: comoDia(pedido.vencimento),
       description: pedido.descricao,
+      externalReference: existente.id,
     }),
   });
+  } catch (erro) {
+    // Apenas rejeicao definitiva do provedor autoriza descartar a reserva.
+    if (erro instanceof FalhaNoAsaas && erro.definitiva) {
+      await comEscritorio(escritorioId, (db) => db.cobranca.delete({ where: { id: existente.id } }));
+    }
+    throw erro;
+  }
 
+  return finalizarCobranca(escritorioId, existente.id, criada);
+}
+
+export async function conciliarCobranca(
+  escritorioId: string, id: string, chaveConhecida?: string,
+): Promise<{ id: string; linkPagamento: string | null }> {
+  const pendente = await comEscritorio(escritorioId, (db) => db.cobranca.findFirst({ where: { id } }));
+  if (!pendente) throw new PedidoInvalido("Cobranca nao encontrada.");
+  if (pendente.status !== "PENDENTE") return { id, linkPagamento: pendente.linkPagamento };
+  const chave = chaveConhecida ?? await chaveDoEscritorio(escritorioId);
+  // Consulta pelo identificador que foi enviado na criacao. Zero resultados
+  // ainda nao prova que o POST anterior falhou: nao repetir automaticamente.
+  const lista = await chamarAsaas(chave, `/payments?externalReference=${encodeURIComponent(id)}`);
+  const achadas = Array.isArray(lista.data) ? lista.data : [];
+  if (achadas.length !== 1 || !achadas[0] || typeof achadas[0] !== "object") {
+    throw new PedidoInvalido("Emissao pendente de conciliacao no Asaas. Confira a conta antes de criar outra cobranca.");
+  }
+  return finalizarCobranca(escritorioId, id, achadas[0] as Record<string, unknown>);
+}
+
+async function finalizarCobranca(
+  escritorioId: string,
+  id: string,
+  criada: Record<string, unknown>,
+): Promise<{ id: string; linkPagamento: string | null }> {
   const idNoAsaas = typeof criada.id === "string" ? criada.id : null;
-  if (!idNoAsaas)
-    throw new FalhaNoAsaas("O Asaas nao devolveu o id da cobranca.");
+  if (!idNoAsaas) throw new FalhaNoAsaas("O Asaas nao devolveu o id da cobranca.");
 
   const cobranca = await comEscritorio(escritorioId, (db) =>
-    db.cobranca.create({
-      data: semEscritorio({
-        clienteId: pedido.clienteId,
-        processoId: pedido.processoId ?? null,
-        descricao: pedido.descricao,
-        valorCentavos: pedido.valorCentavos,
-        vencimento: pedido.vencimento,
-        forma: pedido.forma,
+    db.cobranca.update({
+      where: { id },
+      data: {
         status: statusNosso(String(criada.status ?? "")) ?? "ABERTA",
         idNoAsaas,
         linkPagamento:
@@ -296,7 +386,7 @@ export async function emitirCobranca(
         linkBoleto:
           typeof criada.bankSlipUrl === "string" ? criada.bankSlipUrl : null,
         sincronizadoEm: new Date(),
-      }),
+      },
     }),
   );
 
@@ -445,6 +535,9 @@ export async function cancelarCobranca(
     db.cobranca.findUnique({ where: { id } }),
   );
   if (!cobranca) throw new PedidoInvalido("Cobranca nao encontrada.");
+  if (cobranca.status === "PENDENTE") {
+    throw new PedidoInvalido("Concilie a emissao pendente antes de cancelar no Asaas.");
+  }
   if (cobranca.status === "PAGA") {
     throw new PedidoInvalido(
       "Cobranca ja paga: o estorno e feito no painel do Asaas.",
