@@ -27,7 +27,8 @@
     "conferir-producao": "node scripts/conferir-producao.mjs",
     "vitrine:dados": "tsx scripts/vitrine-dados.ts",
     "vitrine:telas": "node scripts/vitrine-telas.mjs",
-    "conferir-recuperacao": "node scripts/conferir-recuperacao.mjs"
+    "conferir-recuperacao": "node scripts/conferir-recuperacao.mjs",
+    "backup:banco": "node scripts/backup-banco.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

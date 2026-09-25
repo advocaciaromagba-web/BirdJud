@@ -44,16 +44,16 @@ publicacao e a minuta respondem com uma mensagem honesta ("a plataforma ainda
 nao configurou a chave de IA"), mas nao funcionam — e sao o que a pagina
 inicial promete primeiro.
 
-### 4. Nao ha backup automatico do banco `[nos + voce]`
+### 4. ~~Nao ha backup automatico do banco~~ — FEITO pela metade `[voce escolhe o destino]`
 
-Existe `gerarBackup()` por escritorio e existe exportacao para o cliente, mas
-**nenhum dos dois roda sozinho**, e o Postgres do Railway nao tem backup
-automatico configurado. Hoje, um erro de operacao ou uma exclusao errada nao
-tem de onde voltar.
+Existe agora um `pg_dump` diario as 02h de Brasilia, no servico `cron-backup`,
+com volume proprio, retencao de 14 dias, conferencia do conteudo (nao so do
+tamanho) e **ensaio de restauracao ja feito** — ver `docs/BACKUP.md`.
 
-Para um piloto: um `pg_dump` diario para fora do Railway, com retencao, e um
-teste de restauracao feito uma vez — backup que nunca foi restaurado nao e
-backup, e esperanca.
+O que falta: **a copia sair do Railway**. Como esta, protege contra o acidente
+mais comum (exclusao errada, migracao ruim) e nao contra perder o projeto ou a
+conta. Falta escolher um destino externo (S3, Backblaze B2, Storage Box); o
+resto ja esta pronto.
 
 ---
 
@@ -144,7 +144,7 @@ Para nao parecer que falta tudo:
 1. ~~Recuperacao de senha~~ feita; falta so a credencial do remetente;
 2. Rele do DJEN na Vercel (destrava o modulo que mais vende);
 3. Chave de IA e contato comercial (duas variaveis, cinco minutos);
-4. Backup diario com restauracao testada;
+4. ~~Backup diario com restauracao testada~~ feito; falta so o destino externo;
 5. Monitor externo do healthcheck;
 6. Revisao juridica das minutas, em paralelo com tudo acima.
 
