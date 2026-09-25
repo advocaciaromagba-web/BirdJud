@@ -57,3 +57,20 @@ jobs:
       - run: npm run teste
 
       - run: npm run build
+
+  # O build de producao instala so o que esta em "dependencies". Ferramenta
+  # de build que ficou em devDependencies passa no CI e quebra no deploy —
+  # foi o que aconteceu com o postcss. Este job instala como o Railway
+  # instala e constroi como o Railway constroi.
+  build-de-producao:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build

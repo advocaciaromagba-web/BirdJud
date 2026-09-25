@@ -17,5 +17,6 @@
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "//": "testes e a config do vitest ficam fora do build: la o vitest e uma dependencia de desenvolvimento, e o build de producao nao a instala. Os tipos deles sao conferidos por tsconfig.testes.json, no 'npm run tipos'.",
+  "exclude": ["node_modules", "testes", "vitest.config.ts", "scripts"]
 }
