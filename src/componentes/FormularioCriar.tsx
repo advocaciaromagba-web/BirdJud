@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
 import type { Perfil } from "@/lib/leitura-documento";
@@ -56,6 +56,7 @@ export function FormularioCriar({
   const [enviando, setEnviando] = useState(false);
   const [aberto, setAberto] = useState(!recolhivel);
   const [valores, setValores] = useState<Record<string, string>>({});
+  const chaveDaCobranca = useRef<string | null>(null);
 
   function mudar(nome: string, valor: string) {
     setValores((atuais) => ({ ...atuais, [nome]: valor }));
@@ -82,6 +83,10 @@ export function FormularioCriar({
       const valor = (valores[campo.nome] ?? "").trim();
       if (valor) corpo[campo.nome] = valor;
     }
+    if (rota === "/api/cobrancas") {
+      chaveDaCobranca.current ??= crypto.randomUUID();
+      corpo.chaveOperacao = chaveDaCobranca.current;
+    }
 
     const resposta = await fetch(rota, {
       method: "POST",
@@ -91,6 +96,7 @@ export function FormularioCriar({
     setEnviando(false);
 
     if (resposta.ok) {
+      chaveDaCobranca.current = null;
       setValores({});
       if (recolhivel) setAberto(false);
       router.refresh();

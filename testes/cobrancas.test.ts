@@ -257,6 +257,33 @@ d("cobrancas por escritorio", () => {
     expect(cobranca?.idNoAsaas).toMatch(/^pay_/);
   });
 
+  it("repetir a mesma operacao nao emite novamente", async () => {
+    const pedido = {
+      chaveOperacao: crypto.randomUUID(), clienteId: clienteAlfa,
+      descricao: "Tentativa unica", valorCentavos: 12000,
+      vencimento: amanha(), forma: "PIX" as const,
+    };
+    const primeira = await emitirCobranca(alfa, pedido);
+    const segunda = await emitirCobranca(alfa, pedido);
+    expect(segunda.id).toBe(primeira.id);
+    expect(chamadas.filter((c) => c.metodo === "POST" && c.caminho === "/payments")).toHaveLength(1);
+  });
+
+  it("resposta incerta preserva a reserva e nao faz outro POST", async () => {
+    const normal = asaasNormal();
+    responder = (chamada) => chamada.caminho === "/payments" && chamada.metodo === "POST"
+      ? { status: 503, json: {} } : chamada.caminho === "/payments" && chamada.metodo === "GET"
+        ? { status: 200, json: { data: [] } } : normal(chamada);
+    const pedido = {
+      chaveOperacao: crypto.randomUUID(), clienteId: clienteAlfa,
+      descricao: "Resultado incerto", valorCentavos: 12000,
+      vencimento: amanha(), forma: "PIX" as const,
+    };
+    await expect(emitirCobranca(alfa, pedido)).rejects.toBeInstanceOf(FalhaNoAsaas);
+    await expect(emitirCobranca(alfa, pedido)).rejects.toBeInstanceOf(PedidoInvalido);
+    expect(chamadas.filter((c) => c.metodo === "POST" && c.caminho === "/payments")).toHaveLength(1);
+  });
+
   it("mede uma cobranca emitida no consumo do mes", async () => {
     const antes = (await consumoDoMes(alfa)).find(
       (l) => l.metrica === "COBRANCA_EMITIDA",

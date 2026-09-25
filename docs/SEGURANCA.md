@@ -162,6 +162,24 @@ substituir a conferencia nos autos.
 
 ## Registro de revisoes de seguranca
 
+### Revisao de 25/09/2026
+
+- O acesso do operador agora consulta se a conta continua ativa em cada rota
+  protegida; desativar a conta invalida tambem os JWTs ja emitidos.
+- O upload confere se o cliente e o processo vinculados pertencem ao mesmo
+  escritorio. A API limita os bytes do multipart antes de chamar `formData()`.
+- A emissao de cobranca reserva uma operacao identificada por UUID antes do
+  POST no Asaas e envia o id interno em `externalReference`. Uma resposta
+  incerta deixa a linha `PENDENTE`: o botao de conciliacao consulta o Asaas e
+  nao dispara outro POST. Resultado vazio ou multiplo exige conferencia na
+  conta Asaas. A migracao `17_cobranca_idempotente` acrescenta a chave unica.
+- Uma falha temporaria apos enviar uma DPS deixa a nota `INDETERMINADA`, nunca
+  `RECUSADA` sem resposta definitiva. Consulte a DPS no ambiente nacional
+  antes de emitir outra. O transporte da NFS-e ainda depende de homologacao.
+
+Estas mudancas nao substituem a prova com banco, Asaas sandbox e NFS-e em
+homologacao antes de uso real.
+
 | Data | O que foi feito | Resultado |
 | --- | --- | --- |
 | 2026-09-18 | Revisao antes do piloto: guarda de todas as rotas e paginas, uso do papel que atravessa o RLS, campos sensiveis em respostas, travessia de caminho nas paginas juridicas, cabecalhos e limite de taxa | 3 achados, todos corrigidos: purga nao apagava os trabalhos da fila (e o comentario dizia que apagava faturas, que ficam de proposito); faltavam cabecalhos de seguranca; cadastro publico sem limite de taxa |

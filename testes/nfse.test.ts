@@ -443,6 +443,16 @@ d("emissao por escritorio", () => {
     expect(fiscalDepois!.proximoNumero).toBe(fiscalAntes!.proximoNumero + 1);
   });
 
+  it("erro temporario apos o envio fica indeterminado, sem afirmar recusa", async () => {
+    responder = () => ({ status: 503, json: { mensagem: "indisponivel" } });
+    await expect(emitirNota(alfa, { ...pedido, clienteId: clienteAlfa }))
+      .rejects.toBeInstanceOf(FalhaNaNfse);
+    const nota = await comEscritorio(alfa, (db) => db.notaFiscal.findFirst({
+      where: { status: "INDETERMINADA" }, orderBy: { criadoEm: "desc" },
+    }));
+    expect(nota).not.toBeNull();
+  });
+
   it("cliente sem CPF/CNPJ nao vira nota", async () => {
     await expect(
       emitirNota(alfa, { ...pedido, clienteId: clienteSemDocumento }),

@@ -21,6 +21,7 @@ const CORES: Record<string, string> = {
   VENCIDA: "bg-amber-100 text-amber-900",
   CANCELADA: "bg-slate-100 text-slate-500",
   ESTORNADA: "bg-rose-100 text-rose-800",
+  PENDENTE: "bg-amber-100 text-amber-900",
 };
 
 export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
@@ -94,6 +95,12 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
                   : `vence em ${cobranca.vencimento}`}
               </span>
               <span className="w-full text-sm">
+                {cobranca.status === "PENDENTE" ? "Emissao pendente: confira esta cobranca no Asaas antes de emitir outra. " : null}
+                {cobranca.status === "PENDENTE" ? (
+                  <button type="button" disabled={ocupado}
+                    onClick={() => chamar({ acao: "CONCILIAR", id: cobranca.id }, () => "Cobranca conciliada.")}
+                    className="text-marca underline disabled:opacity-50">Conferir no Asaas</button>
+                ) : null}
                 {cobranca.linkPagamento ? (
                   <a
                     href={cobranca.linkPagamento}

@@ -33,6 +33,7 @@ const CORES: Record<string, string> = {
   RECUSADA: "bg-rose-100 text-rose-800",
   CANCELADA: "bg-slate-100 text-slate-500",
   RASCUNHO: "bg-slate-100 text-slate-700",
+  INDETERMINADA: "bg-amber-100 text-amber-900",
 };
 
 export function PainelNotas({
@@ -285,6 +286,11 @@ export function PainelNotas({
                   </button>
                 ) : null}
               </span>
+              {nota.status === "INDETERMINADA" ? (
+                <span className="w-full text-sm text-amber-800">
+                  Resultado do envio incerto. Consulte esta DPS no ambiente da NFS-e antes de emitir outra nota.
+                </span>
+              ) : null}
               {nota.erro ? (
                 <span className="w-full text-sm text-rose-700">
                   {nota.erro}

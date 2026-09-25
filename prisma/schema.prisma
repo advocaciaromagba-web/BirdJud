@@ -337,7 +337,7 @@ model NotaFiscal {
   numero        Int
   descricao     String
   valorCentavos Int
-  // RASCUNHO -> EMITIDA | RECUSADA; EMITIDA -> CANCELADA
+  // RASCUNHO -> EMITIDA | RECUSADA | INDETERMINADA; EMITIDA -> CANCELADA
   status        String    @default("RASCUNHO")
   chaveAcesso   String?
   numeroNaPrefeitura String?
@@ -396,6 +396,7 @@ model Arquivo {
 
 model Cobranca {
   id            String    @id @default(cuid())
+  chaveOperacao  String?   @unique // mesma tentativa, inclusive apos perda da resposta
   escritorioId  String
   clienteId     String
   processoId    String?
@@ -403,7 +404,7 @@ model Cobranca {
   valorCentavos Int // em centavos: dinheiro nunca em ponto flutuante
   vencimento    DateTime
   forma         String // BOLETO | PIX | CARTAO | QUALQUER
-  status        String    @default("ABERTA") // ABERTA | PAGA | VENCIDA | CANCELADA | ESTORNADA
+  status        String    @default("ABERTA") // PENDENTE | ABERTA | PAGA | VENCIDA | CANCELADA | ESTORNADA
   // Id da cobranca na conta Asaas do escritorio. E a chave da sincronizacao.
   idNoAsaas     String
   linkPagamento String?

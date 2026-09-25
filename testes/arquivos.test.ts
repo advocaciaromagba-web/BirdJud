@@ -296,6 +296,16 @@ d("arquivos por escritorio", () => {
     );
   });
 
+  it("nao vincula arquivo a processo de outro escritorio", async () => {
+    const processo = await comEscritorio(beta, (db) =>
+      db.processo.create({ data: semEscritorio({ numero: `outro-${marca}` }) }),
+    );
+    await expect(guardarArquivo(alfa, {
+      nome: "teste.pdf", tipo: "application/pdf", conteudo: pdf("teste"),
+      usuarioId: usuarioAlfa, processoId: processo.id,
+    })).rejects.toMatchObject({ status: 400 });
+  });
+
   it("linha sem byte no disco responde como nao encontrado", async () => {
     // Acontece se alguem mexer no volume por fora. Melhor 404 do que 500.
     const orfao = await comEscritorio(alfa, (db) =>
