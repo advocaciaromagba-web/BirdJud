@@ -76,6 +76,34 @@ async function bater() {
  * internet".
  */
 if (process.env.VIGIA_DIAGNOSTICO === "1") {
+  // Portas de e-mail: provedor de nuvem costuma bloquear saida SMTP para
+  // conter spam, e o sintoma e sempre o mesmo — "connection timeout" —, que
+  // se confunde com senha errada. Esta conferencia separa as duas coisas.
+  const { connect } = await import("node:net");
+  for (const [maquina, porta] of [
+    ["smtp.gmail.com", 587],
+    ["smtp.gmail.com", 465],
+    ["smtp.gmail.com", 25],
+    ["api.resend.com", 443],
+  ]) {
+    const comecou = Date.now();
+    const resultado = await new Promise((pronto) => {
+      const tomada = connect({ host: maquina, port: porta, timeout: 8000 });
+      tomada.on("connect", () => {
+        tomada.destroy();
+        pronto("abriu");
+      });
+      tomada.on("timeout", () => {
+        tomada.destroy();
+        pronto("tempo esgotado");
+      });
+      tomada.on("error", (erro) => pronto(erro.code ?? erro.message));
+    });
+    console.log(
+      `diagnostico: ${maquina}:${porta} -> ${resultado} em ${Date.now() - comecou} ms`,
+    );
+  }
+
   const alvos = [
     ENDERECO,
     "https://aplicacao-production-836b.up.railway.app/api/saude",
