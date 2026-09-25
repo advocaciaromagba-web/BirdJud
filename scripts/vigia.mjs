@@ -59,6 +59,37 @@ async function bater() {
   }
 }
 
+/*
+ * Modo diagnostico: VIGIA_DIAGNOSTICO=1.
+ *
+ * Existe porque "fetch failed" nao diz nada. Ele bate em varios enderecos e
+ * mostra o que cada um respondeu — publico, dominio do Railway e rede
+ * interna — para separar "a aplicacao caiu" de "este container nao alcanca a
+ * internet".
+ */
+if (process.env.VIGIA_DIAGNOSTICO === "1") {
+  const alvos = [
+    ENDERECO,
+    "https://aplicacao-production-836b.up.railway.app/api/saude",
+    `http://${process.env.APLICACAO_INTERNA ?? "aplicacao.railway.internal"}:8080/api/saude`,
+    "https://example.com",
+  ];
+  for (const alvo of alvos) {
+    const comecou = Date.now();
+    try {
+      const resposta = await fetch(alvo, { cache: "no-store" });
+      console.log(
+        `diagnostico: ${alvo} -> ${resposta.status} em ${Date.now() - comecou} ms`,
+      );
+    } catch (erro) {
+      console.log(
+        `diagnostico: ${alvo} -> ${erro.name}: ${erro.message} (${erro.cause?.code ?? "sem codigo"})`,
+      );
+    }
+  }
+  process.exit(0);
+}
+
 // Tres batidas antes de acusar: rede tem soluco, e alarme por soluco e o jeito
 // mais rapido de ensinar todo mundo a ignorar o alarme.
 const motivos = [];
