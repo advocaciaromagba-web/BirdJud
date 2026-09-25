@@ -11,7 +11,7 @@ const [slug, nome, email, senha] = process.argv.slice(2);
 
 if (!slug || !nome || !email || !senha) {
   console.error(
-    'Uso: node scripts/criar-escritorio.mjs <slug> "<nome>" <email> <senha>'
+    'Uso: node scripts/criar-escritorio.mjs <slug> "<nome>" <email> <senha>',
   );
   process.exit(1);
 }
@@ -45,7 +45,9 @@ try {
   });
 
   console.log(`Escritorio ${escritorio.nome} criado.`);
-  console.log(`Endereco: ${slug}.${process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br"}`);
+  console.log(
+    `Endereco: ${slug}.${process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br"}`,
+  );
   console.log(`Administrador: ${email}`);
 } catch (erro) {
   console.error("Falha ao criar:", erro.message);

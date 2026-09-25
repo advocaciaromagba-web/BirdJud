@@ -12,7 +12,8 @@ import { join } from "node:path";
 import pg from "pg";
 
 const resultados = [];
-const anotar = (nivel, item, detalhe) => resultados.push({ nivel, item, detalhe });
+const anotar = (nivel, item, detalhe) =>
+  resultados.push({ nivel, item, detalhe });
 const ok = (item, detalhe) => anotar("ok", item, detalhe);
 const alerta = (item, detalhe) => anotar("alerta", item, detalhe);
 const erro = (item, detalhe) => anotar("erro", item, detalhe);
@@ -44,13 +45,20 @@ if (process.env.SEGREDO_CHAVE) {
   }
 }
 
-if (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.startsWith("https://")) {
+if (
+  process.env.NEXTAUTH_URL &&
+  !process.env.NEXTAUTH_URL.startsWith("https://")
+) {
   // Sem https o cookie de sessao sai sem a marca Secure.
   alerta("NEXTAUTH_URL", "nao e https: o cookie de sessao vai sem Secure");
 }
 
 // Os tres papeis precisam ser DIFERENTES: e a trava toda.
-const urls = ["DATABASE_URL", "DATABASE_URL_MIGRACAO", "DATABASE_URL_PLATAFORMA"]
+const urls = [
+  "DATABASE_URL",
+  "DATABASE_URL_MIGRACAO",
+  "DATABASE_URL_PLATAFORMA",
+]
   .map((nome) => process.env[nome])
   .filter(Boolean);
 const usuarios = urls.map((url) => {
@@ -63,7 +71,7 @@ const usuarios = urls.map((url) => {
 if (new Set(usuarios).size !== usuarios.length) {
   erro(
     "papeis do banco",
-    `a aplicacao, o dono e o plano de controle usam o mesmo usuario (${usuarios.join(", ")}) — o RLS nao protege nada assim`
+    `a aplicacao, o dono e o plano de controle usam o mesmo usuario (${usuarios.join(", ")}) — o RLS nao protege nada assim`,
   );
 } else if (usuarios.length === 3) {
   ok("papeis do banco", `tres usuarios distintos (${usuarios.join(", ")})`);
@@ -74,10 +82,27 @@ if (new Set(usuarios).size !== usuarios.length) {
 // ---------------------------------------------------------------------------
 
 const TABELAS_COM_RLS = [
-  "Usuario", "Cliente", "Processo", "Compromisso", "Lancamento", "Publicacao",
-  "Aviso", "AnaliseIA", "Cobranca", "Arquivo", "NotaFiscal", "Fiscal",
-  "Integracao", "ConsumoMensal", "ModuloContratado", "OabMonitorada",
-  "Assinatura", "Fatura", "AceiteDeTermos", "AcessoSuporte",
+  "Usuario",
+  "Cliente",
+  "Processo",
+  "Compromisso",
+  "Lancamento",
+  "Publicacao",
+  "Aviso",
+  "AnaliseIA",
+  "Cobranca",
+  "Arquivo",
+  "NotaFiscal",
+  "Fiscal",
+  "Integracao",
+  "ConsumoMensal",
+  "ModuloContratado",
+  "OabMonitorada",
+  "Assinatura",
+  "Fatura",
+  "AceiteDeTermos",
+  "AcessoSuporte",
+  "RedefinicaoDeSenha",
 ];
 
 async function conferirBanco() {
@@ -94,10 +119,13 @@ async function conferirBanco() {
   try {
     // O usuario da aplicacao NAO pode ser superusuario nem contornar RLS.
     const { rows: papel } = await cliente.query(
-      "SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user"
+      "SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user",
     );
     if (papel[0]?.rolsuper) {
-      erro("usuario da aplicacao", "e superusuario: o RLS e ignorado por completo");
+      erro(
+        "usuario da aplicacao",
+        "e superusuario: o RLS e ignorado por completo",
+      );
     } else if (papel[0]?.rolbypassrls) {
       erro("usuario da aplicacao", "tem BYPASSRLS: atravessa o isolamento");
     } else {
@@ -108,7 +136,7 @@ async function conferirBanco() {
     const { rows: tabelas } = await cliente.query(
       `SELECT c.relname AS tabela, c.relrowsecurity AS ligado, c.relforcerowsecurity AS forcado
          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-        WHERE n.nspname = 'public' AND c.relkind = 'r'`
+        WHERE n.nspname = 'public' AND c.relkind = 'r'`,
     );
     const porNome = new Map(tabelas.map((t) => [t.tabela, t]));
 
@@ -123,24 +151,38 @@ async function conferirBanco() {
     }
 
     if (ausentes.length > 0) {
-      erro("migracoes", `tabela(s) que nao existem no banco: ${ausentes.join(", ")}`);
+      erro(
+        "migracoes",
+        `tabela(s) que nao existem no banco: ${ausentes.join(", ")}`,
+      );
     }
     if (semRls.length > 0) {
-      erro("RLS", `sem row level security: ${semRls.join(", ")} — rode npm run rls:aplicar`);
+      erro(
+        "RLS",
+        `sem row level security: ${semRls.join(", ")} — rode npm run rls:aplicar`,
+      );
     }
     if (semForce.length > 0) {
-      erro("RLS", `sem FORCE: ${semForce.join(", ")} — o dono das tabelas escapa da politica`);
+      erro(
+        "RLS",
+        `sem FORCE: ${semForce.join(", ")} — o dono das tabelas escapa da politica`,
+      );
     }
     if (ausentes.length === 0 && semRls.length === 0 && semForce.length === 0) {
-      ok("RLS", `ligado e forcado nas ${TABELAS_COM_RLS.length} tabelas de escritorio`);
+      ok(
+        "RLS",
+        `ligado e forcado nas ${TABELAS_COM_RLS.length} tabelas de escritorio`,
+      );
     }
 
     // A trava de verdade: sem contexto de escritorio, nao se le nada.
-    const { rows: vazamento } = await cliente.query('SELECT count(*)::int AS total FROM "Cliente"');
+    const { rows: vazamento } = await cliente.query(
+      'SELECT count(*)::int AS total FROM "Cliente"',
+    );
     if (vazamento[0].total > 0) {
       erro(
         "isolamento",
-        `sem contexto de escritorio, a aplicacao leu ${vazamento[0].total} cliente(s) — o RLS nao esta valendo`
+        `sem contexto de escritorio, a aplicacao leu ${vazamento[0].total} cliente(s) — o RLS nao esta valendo`,
       );
     } else {
       ok("isolamento", "sem contexto de escritorio, nenhuma linha e visivel");
@@ -150,11 +192,14 @@ async function conferirBanco() {
     const { rows: pendentes } = await cliente
       .query(
         `SELECT migration_name FROM "_prisma_migrations"
-          WHERE finished_at IS NULL OR rolled_back_at IS NOT NULL`
+          WHERE finished_at IS NULL OR rolled_back_at IS NOT NULL`,
       )
       .catch(() => ({ rows: [] }));
     if (pendentes.length > 0) {
-      erro("migracoes", `nao terminaram: ${pendentes.map((p) => p.migration_name).join(", ")}`);
+      erro(
+        "migracoes",
+        `nao terminaram: ${pendentes.map((p) => p.migration_name).join(", ")}`,
+      );
     } else {
       ok("migracoes", "todas aplicadas");
     }
@@ -172,7 +217,7 @@ async function conferirDisco() {
   if (!raiz) {
     alerta(
       "RAIZ_ARQUIVOS",
-      "nao definida: os arquivos vao para ./dados/arquivos, que some no proximo deploy"
+      "nao definida: os arquivos vao para ./dados/arquivos, que some no proximo deploy",
     );
     return;
   }
@@ -198,8 +243,14 @@ async function conferirDisco() {
 function conferirOpcionais() {
   const opcionais = [
     ["ANTHROPIC_API_KEY", "modulo de IA responde 503 sem ela"],
-    ["DJEN_RELE_URL", "sem o rele, a captura do DJEN so funciona de dentro do Brasil"],
-    ["ASAAS_WEBHOOK_TOKEN", "sem ele, a baixa das faturas da plataforma e manual"],
+    [
+      "DJEN_RELE_URL",
+      "sem o rele, a captura do DJEN so funciona de dentro do Brasil",
+    ],
+    [
+      "ASAAS_WEBHOOK_TOKEN",
+      "sem ele, a baixa das faturas da plataforma e manual",
+    ],
   ];
   for (const [nome, consequencia] of opcionais) {
     if (process.env[nome]) ok(nome, "definida");
@@ -207,7 +258,10 @@ function conferirOpcionais() {
   }
 
   if (process.env.DJEN_RELE_URL && !process.env.DJEN_RELE_TOKEN) {
-    erro("DJEN_RELE_TOKEN", "o rele esta configurado mas sem token: toda consulta volta 401");
+    erro(
+      "DJEN_RELE_TOKEN",
+      "o rele esta configurado mas sem token: toda consulta volta 401",
+    );
   }
 }
 
@@ -226,7 +280,7 @@ const erros = resultados.filter((r) => r.nivel === "erro").length;
 const alertas = resultados.filter((r) => r.nivel === "alerta").length;
 
 console.log(
-  `\n${resultados.length - erros - alertas} conferido(s), ${alertas} aviso(s), ${erros} erro(s).`
+  `\n${resultados.length - erros - alertas} conferido(s), ${alertas} aviso(s), ${erros} erro(s).`,
 );
 if (erros > 0) {
   console.log("Nao suba escritorio nenhum antes de resolver os erros acima.");

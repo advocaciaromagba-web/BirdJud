@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { escritorioDoEndereco } from "@/lib/sessao";
 import { FormularioLogin } from "@/componentes/FormularioLogin";
 
@@ -50,6 +51,15 @@ export default async function PaginaLogin() {
           </div>
 
           <FormularioLogin />
+
+          <p className="mt-4 text-center text-sm">
+            <Link
+              href="/esqueci-senha"
+              className="text-slate-500 underline hover:text-slate-900"
+            >
+              Esqueci minha senha
+            </Link>
+          </p>
         </div>
 
         {marca.telefoneAtendimento ? (

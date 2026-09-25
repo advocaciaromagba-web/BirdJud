@@ -58,6 +58,7 @@ model Escritorio {
   fiscal       Fiscal?
   trabalhos    Trabalho[]
   modulos      ModuloContratado[]
+  redefinicoes RedefinicaoDeSenha[]
   integracoes  Integracao[]
   consumos     ConsumoMensal[]
 }
@@ -597,4 +598,26 @@ model AnaliseIA {
 
   @@index([escritorioId, criadoEm])
   @@index([publicacaoId])
+}
+
+// Pedido de redefinicao de senha.
+//
+// Guarda o HASH do token, nunca o token: quem ler esta tabela nao entra na
+// conta de ninguem. O token em si so existe no link que foi para o e-mail.
+model RedefinicaoDeSenha {
+  id           String    @id @default(cuid())
+  escritorioId String
+  usuarioId    String
+  tokenHash    String    @unique
+  expiraEm     DateTime
+  usadoEm      DateTime?
+  // IP de quem pediu, para investigar pedido em massa.
+  pedidoDe     String?
+  criadoEm     DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId])
+  @@index([escritorioId, usuarioId])
+  @@index([expiraEm])
 }

@@ -11,7 +11,8 @@ export default async function NaoEncontrado() {
         <p className="sobretitulo">Erro 404</p>
         <h1 className="mt-2 text-3xl">Esta pagina nao existe</h1>
         <p className="chamada esquerda mt-3">
-          O endereco pode ter mudado, ou o link que voce seguiu pode estar incompleto.
+          O endereco pode ter mudado, ou o link que voce seguiu pode estar
+          incompleto.
         </p>
         <Link href="/" className="botao-principal mt-6">
           {marca?.id ? `Voltar para ${marca.nome}` : "Voltar para o inicio"}

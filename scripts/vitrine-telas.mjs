@@ -22,10 +22,26 @@ const DESTINO = "public/vitrine";
 
 const LEITURA_DE_EXEMPLO = {
   campos: {
-    nome: { valor: "Construtora Aurora Ltda", confianca: "ALTA", origem: "cabecalho do contrato social" },
-    documento: { valor: "11222333000181", confianca: "ALTA", origem: "campo CNPJ" },
-    telefone: { valor: "(71) 3000-1122", confianca: "MEDIA", origem: "rodape da primeira pagina" },
-    email: { valor: "contato@aurora.com.br", confianca: "BAIXA", origem: "carimbo, parcialmente ilegivel" },
+    nome: {
+      valor: "Construtora Aurora Ltda",
+      confianca: "ALTA",
+      origem: "cabecalho do contrato social",
+    },
+    documento: {
+      valor: "11222333000181",
+      confianca: "ALTA",
+      origem: "campo CNPJ",
+    },
+    telefone: {
+      valor: "(71) 3000-1122",
+      confianca: "MEDIA",
+      origem: "rodape da primeira pagina",
+    },
+    email: {
+      valor: "contato@aurora.com.br",
+      confianca: "BAIXA",
+      origem: "carimbo, parcialmente ilegivel",
+    },
   },
   observacoes: [
     "O contrato social esta na 3a alteracao, de marco de 2026. Confirme se e a versao vigente antes de usar em peca.",
@@ -48,7 +64,7 @@ function respondedorDeIA() {
           content: [{ type: "text", text: JSON.stringify(LEITURA_DE_EXEMPLO) }],
           stop_reason: "end_turn",
           usage: { input_tokens: 1840, output_tokens: 260 },
-        })
+        }),
       );
     });
   });
@@ -81,8 +97,12 @@ async function esperarAplicacao() {
 
 /** Converte as capturas em JPEG do tamanho que a pagina usa. */
 async function otimizar() {
-  const { default: sharp } = await import("sharp").catch(() => ({ default: null }));
-  const arquivos = (await readdir(DESTINO)).filter((nome) => nome.endsWith(".png"));
+  const { default: sharp } = await import("sharp").catch(() => ({
+    default: null,
+  }));
+  const arquivos = (await readdir(DESTINO)).filter((nome) =>
+    nome.endsWith(".png"),
+  );
   if (!sharp) {
     console.log(
       `sem sharp: ${arquivos.length} PNG ficaram como estao. Converter a mao antes de publicar.`,

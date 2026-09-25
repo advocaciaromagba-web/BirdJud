@@ -20,7 +20,16 @@ const telas = [
   { nome: "tablet", viewport: { width: 768, height: 1024 } },
 ];
 
-const paginas = ["/", "/processos", "/publicacoes", "/cobrancas", "/arquivos", "/notas", "/agenda", "/conta"];
+const paginas = [
+  "/",
+  "/processos",
+  "/publicacoes",
+  "/cobrancas",
+  "/arquivos",
+  "/notas",
+  "/agenda",
+  "/conta",
+];
 
 // O Chromium nao deixa forjar o cabecalho Host: em vez disso, o DNS do
 // proprio navegador aponta o subdominio para a maquina local.
@@ -52,13 +61,21 @@ for (const tela of telas) {
       for (const el of document.querySelectorAll("body *")) {
         const r = el.getBoundingClientRect();
         if (r.width > 0 && (r.right > window.innerWidth + 1 || r.left < -1)) {
-          vazando.push(`${el.tagName.toLowerCase()}.${(el.className||"").toString().slice(0,40)} (${Math.round(r.left)}..${Math.round(r.right)})`);
+          vazando.push(
+            `${el.tagName.toLowerCase()}.${(el.className || "").toString().slice(0, 40)} (${Math.round(r.left)}..${Math.round(r.right)})`,
+          );
         }
       }
       // Alvos de toque pequenos demais (menos de 32px de altura).
       const pequenos = [...document.querySelectorAll("a,button,input,select")]
-        .filter((el) => { const r = el.getBoundingClientRect(); return r.height > 0 && r.height < 32; })
-        .map((el) => `${el.tagName.toLowerCase()}: ${(el.textContent||el.getAttribute("name")||"").trim().slice(0,30)}`);
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.height > 0 && r.height < 32;
+        })
+        .map(
+          (el) =>
+            `${el.tagName.toLowerCase()}: ${(el.textContent || el.getAttribute("name") || "").trim().slice(0, 30)}`,
+        );
       return {
         rolagemLateral: doc.scrollWidth > window.innerWidth + 1,
         scrollWidth: doc.scrollWidth,
@@ -69,8 +86,12 @@ for (const tela of telas) {
     console.log(
       `${tela.nome.padEnd(8)} ${caminho.padEnd(14)} janela ${largura} · conteudo ${medidas.scrollWidth}` +
         (medidas.rolagemLateral ? "  ROLAGEM LATERAL" : "") +
-        (medidas.vazando.length ? `\n         vaza: ${medidas.vazando.join(" | ")}` : "") +
-        (medidas.pequenos.length ? `\n         alvo pequeno: ${medidas.pequenos.join(" | ")}` : "")
+        (medidas.vazando.length
+          ? `\n         vaza: ${medidas.vazando.join(" | ")}`
+          : "") +
+        (medidas.pequenos.length
+          ? `\n         alvo pequeno: ${medidas.pequenos.join(" | ")}`
+          : ""),
     );
   }
   await contexto.close();

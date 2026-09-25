@@ -34,6 +34,7 @@ DECLARE
     'Assinatura',
     'Fatura',
     'AceiteDeTermos',
+    'RedefinicaoDeSenha',
     'AcessoSuporte'
   ];
 BEGIN

@@ -13,7 +13,7 @@ const [slug, modulo, franquiaBruta] = args.filter((a) => a !== "--desligar");
 
 if (!slug || !modulo) {
   console.error(
-    "Uso: node scripts/contratar-modulo.mjs <slug> <MODULO> [franquia] [--desligar]"
+    "Uso: node scripts/contratar-modulo.mjs <slug> <MODULO> [franquia] [--desligar]",
   );
   process.exit(1);
 }
@@ -42,7 +42,7 @@ try {
 
   console.log(
     `${desligar ? "Desligado" : "Contratado"}: ${modulo} para ${escritorio.nome}` +
-      (franquia !== null ? ` (franquia ${franquia})` : "")
+      (franquia !== null ? ` (franquia ${franquia})` : ""),
   );
 } catch (erro) {
   console.error("Falha:", erro.message);

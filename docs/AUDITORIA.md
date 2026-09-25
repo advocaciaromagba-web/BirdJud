@@ -14,20 +14,17 @@ uma decisao, uma credencial ou um contrato.
 
 ## Impedem o teste
 
-### 1. Nao existe recuperacao de senha `[nos]`
+### 1. ~~Nao existe recuperacao de senha~~ — FEITO, falta a credencial `[voce]`
 
-Nao ha "esqueci minha senha" em lugar nenhum. Quem esquecer a senha fica de
-fora do proprio sistema, e a unica saida hoje e alguem com acesso ao banco
-trocar o hash na mao.
+O fluxo esta pronto e provado de ponta a ponta (`npm run conferir-recuperacao`):
+link que vale uma vez e por uma hora, token guardado como hash, sessoes
+abertas derrubadas na troca, resposta identica para conta que existe e que
+nao existe.
 
-Em um piloto isso acontece na primeira semana. E o unico item desta lista que
-eu consideraria impeditivo sozinho.
-
-Complicacao real: a plataforma **nao tem remetente de e-mail proprio**. O
-envio hoje sai do SMTP que cada escritorio conecta em Integracoes — de
-proposito, para o cliente receber do advogado e nao de nos. Recuperacao de
-senha precisa sair de um remetente da plataforma, entao isso significa: um
-dominio de envio, um SMTP nosso e o fluxo de token com expiracao.
+Falta so ligar o remetente em producao: as variaveis `PLATAFORMA_SMTP_*` no
+Railway. Ver `docs/EMAIL-DA-PLATAFORMA.md`. Enquanto elas nao existirem, a
+tela diz que a recuperacao automatica nao esta disponivel — nao finge que o
+e-mail saiu.
 
 ### 2. A captura do DJEN nao funciona de dentro do Railway `[nos + voce]`
 
@@ -66,7 +63,10 @@ backup, e esperanca.
 
 O administrador cria o usuario digitando uma senha e precisa passa-la por
 fora (WhatsApp, papel, voz). Alem de ruim, e inseguro. O certo e convite por
-e-mail com link de definicao de senha — e depende do mesmo remetente do item 1.
+e-mail com link de definicao de senha.
+
+Agora e barato: o remetente da plataforma e o fluxo de token ja existem, e o
+convite e o mesmo mecanismo com outro texto.
 
 ### 6. Nao existe cobranca automatica da assinatura `[nos + voce]`
 
@@ -141,7 +141,7 @@ Para nao parecer que falta tudo:
 
 ## Ordem que eu seguiria
 
-1. Recuperacao de senha + remetente da plataforma (resolve 1 e destrava 5);
+1. ~~Recuperacao de senha~~ feita; falta so a credencial do remetente;
 2. Rele do DJEN na Vercel (destrava o modulo que mais vende);
 3. Chave de IA e contato comercial (duas variaveis, cinco minutos);
 4. Backup diario com restauracao testada;

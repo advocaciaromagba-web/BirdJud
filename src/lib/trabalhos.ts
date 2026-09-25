@@ -7,6 +7,8 @@ import { comEscritorio, prismaPlataforma } from "./prisma";
 import { competenciaDe, definirConsumo } from "./consumo";
 import { moduloAtivo, type Modulo } from "./modulos";
 import { enfileirar } from "./fila";
+import { limparLimitesVencidos } from "./limite";
+import { limparPedidosVencidosDeTodos } from "./redefinicao";
 import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
@@ -159,6 +161,21 @@ async function sincronizarCobrancasDoEscritorio({
   }
 }
 
+/**
+ * Faxina do que vence sozinho: janela de limite de tentativas e pedido de
+ * redefinicao de senha. Roda para a plataforma toda, uma vez por dia.
+ *
+ * Nao e cosmetico: pedido de redefinicao usado ou vencido e uma linha que so
+ * serve para quem for ler a tabela depois.
+ */
+async function limparVencidos(): Promise<void> {
+  const janelas = await limparLimitesVencidos();
+  const pedidos = await limparPedidosVencidosDeTodos();
+  console.log(
+    `limpeza: ${janelas} janela(s) de limite e ${pedidos} pedido(s) de senha`,
+  );
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   SINCRONIZAR_COBRANCAS: sincronizarCobrancasDoEscritorio,
@@ -166,10 +183,14 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
   PURGAR_ENCERRADOS: purgar,
+  LIMPAR_VENCIDOS: limparVencidos,
 };
 
 /** Trabalhos que rodam uma vez para a plataforma toda, nao por escritorio. */
-export const TRABALHOS_DA_PLATAFORMA = new Set(["PURGAR_ENCERRADOS"]);
+export const TRABALHOS_DA_PLATAFORMA = new Set([
+  "PURGAR_ENCERRADOS",
+  "LIMPAR_VENCIDOS",
+]);
 
 /** Modulo exigido por tipo de trabalho. Sem modulo, so o nucleo. */
 const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
@@ -179,6 +200,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   SINCRONIZAR_COBRANCAS: "COBRANCAS",
   APURAR_CONSUMO: undefined,
   REGUA_DE_COBRANCA: undefined,
+  LIMPAR_VENCIDOS: undefined,
 };
 
 /**
