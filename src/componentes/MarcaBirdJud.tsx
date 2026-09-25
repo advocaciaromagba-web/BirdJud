@@ -19,10 +19,13 @@ import Link from "next/link";
 export function MarcaBirdJud({
   forma = "compacta",
   fundo = "claro",
+  tamanho = "media",
   largura,
   comLink = true,
 }: {
   forma?: "completa" | "compacta";
+  /** No cabecalho a marca e assinatura, nao anuncio: entra pequena. */
+  tamanho?: "pequena" | "media";
   /** A cor do fundo em que a marca vai pousar, nao a cor da marca. */
   fundo?: "claro" | "escuro";
   largura?: number;
@@ -71,10 +74,14 @@ export function MarcaBirdJud({
           width={512}
           height={522}
           priority
-          className="h-9 w-auto"
+          className={tamanho === "pequena" ? "h-7 w-auto" : "h-9 w-auto"}
         />
         <span
-          className="text-xl font-bold tracking-tight"
+          className={
+            tamanho === "pequena"
+              ? "text-base font-bold tracking-tight"
+              : "text-xl font-bold tracking-tight"
+          }
           style={{ fontFamily: "var(--fonte-titulo)" }}
         >
           <span style={{ color: "var(--marca-primaria)" }}>BIRD</span>

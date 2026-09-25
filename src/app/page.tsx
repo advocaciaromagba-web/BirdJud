@@ -21,7 +21,13 @@ export default async function Painel() {
   const marca = await escritorioDoEndereco();
 
   // Sem escritorio no endereco, quem chegou veio pela plataforma.
-  if (!marca?.id) return <CapaDaPlataforma dias={DIAS_DE_TESTE} />;
+  if (!marca?.id)
+    return (
+      <CapaDaPlataforma
+        dias={DIAS_DE_TESTE}
+        contato={process.env.CONTATO_COMERCIAL}
+      />
+    );
 
   const contexto = await contextoDaPagina();
 

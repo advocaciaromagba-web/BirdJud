@@ -1,8 +1,8 @@
 import { escritorioDoEndereco } from "@/lib/sessao";
 import { DIAS_DE_TESTE } from "@/lib/precos";
 import { FormularioCadastro } from "@/componentes/FormularioCadastro";
-import { MarcaBirdJud } from "@/componentes/MarcaBirdJud";
-import { MODULOS, type Modulo } from "@/lib/catalogo";
+import { CabecalhoPublico } from "@/componentes/CabecalhoPublico";
+import { MODULOS, FAIXAS_PUBLICADAS, type Modulo } from "@/lib/catalogo";
 import { contaMontada, modulosDoPlano } from "@/lib/planos";
 
 export default async function PaginaCadastro({
@@ -38,25 +38,28 @@ export default async function PaginaCadastro({
           .filter((parte): parte is Modulo =>
             (MODULOS as readonly string[]).includes(parte),
           );
-  const conta = contaMontada(escolhidos, "ATE_3");
+  // Todo escritorio novo entra na faixa de entrada; a conta da tela e a dela.
+  const conta = contaMontada(escolhidos, FAIXAS_PUBLICADAS[0]);
 
   return (
-    <main className="pagina-estreita">
-      <MarcaBirdJud forma="completa" largura={300} />
-      <h1 className="regua-destaque mt-8 text-3xl">
-        Criar o sistema do seu escritorio
-      </h1>
-      <p className="chamada mt-4">
-        Seu escritorio, sua marca, seus dados isolados. {DIAS_DE_TESTE} dias de
-        teste, sem cartao.
-      </p>
-      <FormularioCadastro
-        dominio={dominio}
-        dias={DIAS_DE_TESTE}
-        modulos={conta.modulos.map((linha) => linha.modulo)}
-        plano={conta.plano}
-        mensalidadeCentavos={conta.totalCentavos}
-      />
-    </main>
+    <>
+      <CabecalhoPublico />
+      <main className="pagina-estreita">
+        <h1 className="regua-destaque text-3xl">
+          Criar o sistema do seu escritorio
+        </h1>
+        <p className="chamada mt-4">
+          Seu escritorio, sua marca, seus dados isolados. {DIAS_DE_TESTE} dias
+          de teste, sem cartao.
+        </p>
+        <FormularioCadastro
+          dominio={dominio}
+          dias={DIAS_DE_TESTE}
+          modulos={conta.modulos.map((linha) => linha.modulo)}
+          plano={conta.plano}
+          mensalidadeCentavos={conta.totalCentavos}
+        />
+      </main>
+    </>
   );
 }

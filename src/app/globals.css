@@ -120,6 +120,28 @@ h3 {
   @apply mt-1 text-sm leading-relaxed text-slate-600;
 }
 
+/*
+ * Texto corrido sai justificado.
+ *
+ * E o pedido da marca, e o que da ao site o aspecto de documento em vez de
+ * rascunho. Duas defesas contra o efeito colateral do justificado, que e o
+ * buraco entre palavras em coluna estreita: hifenizacao automatica (o <html>
+ * declara lang="pt-BR", entao o navegador hifeniza em portugues) e a classe
+ * .esquerda, para o caso em que a coluna e curta demais para justificar.
+ */
+p,
+.leitura {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+}
+
+.esquerda,
+p.esquerda {
+  text-align: left;
+  hyphens: manual;
+}
+
 /* Texto corrido de peca, clausula ou publicacao: serifada, medida curta. */
 .leitura {
   font-family: var(--fonte-leitura);
