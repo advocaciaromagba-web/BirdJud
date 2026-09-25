@@ -90,12 +90,17 @@ Quem se cadastra cai no painel vazio. As pendencias ("cadastre uma OAB",
 primeira configuracao. Em piloto acompanhado de perto da para viver sem; em
 autoatendimento, nao.
 
-### 9. Nao ha monitoramento externo `[nos + voce]`
+### 9. ~~Nao ha monitoramento~~ — FEITO por dentro; o externo continua faltando
 
-O `/api/saude` existe e o Railway reinicia o servico quando ele falha, mas
-ninguem e avisado. Se o sistema cair as 2h de um sabado, quem descobre e o
-escritorio na segunda. Um monitor externo batendo no healthcheck e um aviso
-por e-mail ou WhatsApp resolvem em uma tarde.
+O servico `cron-vigia` bate no healthcheck de quinze em quinze minutos, tenta
+tres vezes antes de acusar (rede tem soluco, e alarme por soluco ensina todo
+mundo a ignorar o alarme) e manda e-mail quando o sistema nao responde.
+
+**O que ele nao resolve, e precisa ser dito:** ele roda dentro do mesmo
+provedor que vigia. Se o Railway inteiro cair, o vigia cai junto e ninguem e
+avisado. Ele pega o caso comum — aplicacao fora do ar com a plataforma de pe —
+e nao substitui um monitor de fora (UptimeRobot, Better Stack e afins tem
+plano gratuito que basta).
 
 ### 10. Sem canal de contato configurado `[voce]`
 
@@ -147,7 +152,7 @@ Para nao parecer que falta tudo:
 2. Rele do DJEN na Vercel (destrava o modulo que mais vende);
 3. Chave de IA e contato comercial (duas variaveis, cinco minutos);
 4. ~~Backup diario com restauracao testada~~ feito; falta so o destino externo;
-5. Monitor externo do healthcheck;
+5. ~~Monitor do healthcheck~~ feito por dentro; o de fora ainda vale a pena;
 6. Revisao juridica das minutas, em paralelo com tudo acima.
 
 Com 1 a 5 feitos, eu poria um escritorio amigo para usar de verdade — de

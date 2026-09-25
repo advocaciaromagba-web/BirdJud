@@ -28,7 +28,8 @@
     "vitrine:dados": "tsx scripts/vitrine-dados.ts",
     "vitrine:telas": "node scripts/vitrine-telas.mjs",
     "conferir-recuperacao": "node scripts/conferir-recuperacao.mjs",
-    "backup:banco": "node scripts/backup-banco.mjs"
+    "backup:banco": "node scripts/backup-banco.mjs",
+    "vigia": "tsx scripts/vigia.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
