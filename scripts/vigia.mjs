@@ -6,10 +6,18 @@
 // hoje, se a aplicacao cair as 2h de um sabado, quem descobre e o escritorio
 // na segunda-feira.
 //
-// O que ele NAO resolve, e e preciso dizer: ele roda dentro do mesmo provedor
-// que vigia. Se o Railway inteiro cair, o vigia cai junto e ninguem e avisado.
-// Ele pega o caso comum — a aplicacao fora do ar com a plataforma de pe — e
-// nao substitui um monitor externo.
+// Duas coisas que ele NAO resolve, e que precisam ser ditas:
+//
+// 1. ele roda dentro do mesmo provedor que vigia. Se o Railway inteiro cair,
+//    o vigia cai junto e ninguem e avisado;
+// 2. ele bate no dominio do Railway, nao em app.birdjud.com.br. De dentro do
+//    Railway, chamar o proprio dominio publico do projeto falha ("fetch
+//    failed") — a borda nao aceita a volta. Entao a camada de DNS e
+//    certificado do dominio proprio fica de fora desta vigilancia.
+//
+// Ele pega o caso comum — a aplicacao fora do ar com a plataforma de pe. As
+// duas lacunas acima sao exatamente o que um monitor de fora cobre, e por
+// isso o monitor externo continua valendo a pena.
 import {
   enviarPelaPlataforma,
   temRemetenteDaPlataforma,

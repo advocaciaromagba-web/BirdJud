@@ -96,11 +96,16 @@ O servico `cron-vigia` bate no healthcheck de quinze em quinze minutos, tenta
 tres vezes antes de acusar (rede tem soluco, e alarme por soluco ensina todo
 mundo a ignorar o alarme) e manda e-mail quando o sistema nao responde.
 
-**O que ele nao resolve, e precisa ser dito:** ele roda dentro do mesmo
-provedor que vigia. Se o Railway inteiro cair, o vigia cai junto e ninguem e
-avisado. Ele pega o caso comum — aplicacao fora do ar com a plataforma de pe —
-e nao substitui um monitor de fora (UptimeRobot, Better Stack e afins tem
-plano gratuito que basta).
+**Duas coisas que ele nao resolve, e precisam ser ditas.** Primeira: ele roda
+dentro do mesmo provedor que vigia — se o Railway inteiro cair, o vigia cai
+junto. Segunda: ele bate no dominio do Railway, nao em `app.birdjud.com.br`.
+De dentro do Railway, chamar o proprio dominio publico do projeto falha — a
+borda nao aceita a volta —, entao a camada de DNS e certificado do dominio
+proprio fica de fora.
+
+As duas lacunas sao exatamente o que um monitor de fora cobre (UptimeRobot,
+Better Stack e afins tem plano gratuito que basta), e por isso ele continua
+valendo a pena.
 
 ### 10. Sem canal de contato configurado `[voce]`
 
