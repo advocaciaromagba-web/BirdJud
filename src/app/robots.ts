@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { dominioDaPlataforma } from "@/lib/dominio";
 
 /**
  * O que os buscadores podem indexar.
@@ -8,7 +9,7 @@ import type { MetadataRoute } from "next";
  * de login e gera ruido no registro de seguranca.
  */
 export default function robots(): MetadataRoute.Robots {
-  const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
+  const dominio = dominioDaPlataforma();
 
   return {
     rules: {

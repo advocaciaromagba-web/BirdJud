@@ -16,6 +16,7 @@ import { ipDaRequisicao, registrarAceite } from "@/lib/aceite";
 import { registrarTentativa } from "@/lib/limite";
 import { VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
+import { dominioDaPlataforma } from "@/lib/dominio";
 
 const RESERVADOS = new Set([
   "www",
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
 
     await criarAssinatura(escritorio.id, conta.totalCentavos, DIAS_DE_TESTE);
 
-    const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
+    const dominio = dominioDaPlataforma();
     return NextResponse.json(
       {
         ok: true,

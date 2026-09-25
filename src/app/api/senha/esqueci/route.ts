@@ -15,6 +15,7 @@ import {
   PlataformaSemRemetente,
   temRemetenteDaPlataforma,
 } from "@/lib/email-plataforma";
+import { dominioDaPlataforma } from "@/lib/dominio";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
     if (!usuario) return NextResponse.json(RESPOSTA);
 
     const { token } = await criarPedido(marca.id, usuario.id, ip);
-    const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
+    const dominio = dominioDaPlataforma();
     const link = `https://${marca.slug}.${dominio}/redefinir-senha?t=${token}`;
 
     const mensagem = mensagemDeRedefinicao({

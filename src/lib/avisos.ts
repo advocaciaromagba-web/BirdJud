@@ -25,6 +25,7 @@ import {
   corpoDoLembrete,
   corpoDoResumo,
 } from "./textos-aviso";
+import { dominioDaPlataforma } from "./dominio";
 
 const HORA = 60 * 60 * 1000;
 
@@ -61,7 +62,7 @@ export async function gerarAvisos(
     where: { id: escritorioId },
     select: { nome: true, slug: true },
   });
-  const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
+  const dominio = dominioDaPlataforma();
   const endereco = `https://${escritorio.slug}.${dominio}`;
 
   const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");

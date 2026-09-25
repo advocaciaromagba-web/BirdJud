@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
 import { DOCUMENTOS } from "@/lib/juridico";
+import { dominioDaPlataforma } from "@/lib/dominio";
 
 /** As paginas publicas da plataforma. O sistema do escritorio nao entra. */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
+  const dominio = dominioDaPlataforma();
   const base = `https://${dominio}`;
   const agora = new Date();
 

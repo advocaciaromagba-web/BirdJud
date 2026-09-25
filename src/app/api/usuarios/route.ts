@@ -16,6 +16,7 @@ import {
 import { PAPEIS } from "@/lib/papeis";
 import { exigirVagaNaFaixa, FaixaEsgotada } from "@/lib/faixas";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
+import { dominioDaPlataforma } from "@/lib/dominio";
 
 /*
  * A senha e OPCIONAL de proposito.
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
       null,
       "CONVITE",
     );
-    const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
+    const dominio = dominioDaPlataforma();
     const link = `https://${contexto.marca.slug}.${dominio}/redefinir-senha?t=${token}&c=1`;
 
     const mensagem = mensagemDeConvite({

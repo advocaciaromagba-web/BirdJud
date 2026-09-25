@@ -8,8 +8,10 @@ const RESERVADOS = new Set(["www", "app", "api", "admin", "painel"]);
 /** Extrai o slug de <slug>.birdjud.com.br. Devolve null quando nao ha. */
 export function slugDoHost(host: string | null): string | null {
   if (!host) return null;
+  // Variavel vazia nao cai no padrao com ??, e provedor de nuvem cria chave
+  // vazia com facilidade: por isso o trim antes do ||.
   const dominio = (
-    process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br"
+    process.env.DOMINIO_PLATAFORMA?.trim() || "birdjud.com.br"
   ).toLowerCase();
   const semPorta = host.split(":")[0]?.toLowerCase() ?? "";
   if (!semPorta.endsWith(`.${dominio}`)) return null;

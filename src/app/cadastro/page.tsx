@@ -4,6 +4,7 @@ import { FormularioCadastro } from "@/componentes/FormularioCadastro";
 import { CabecalhoPublico } from "@/componentes/CabecalhoPublico";
 import { MODULOS, FAIXAS_PUBLICADAS, type Modulo } from "@/lib/catalogo";
 import { contaMontada, modulosDoPlano } from "@/lib/planos";
+import { dominioDaPlataforma } from "@/lib/dominio";
 
 export default async function PaginaCadastro({
   searchParams,
@@ -24,7 +25,7 @@ export default async function PaginaCadastro({
     );
   }
 
-  const dominio = process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br";
+  const dominio = dominioDaPlataforma();
 
   // A escolha feita na pagina de planos chega pelo endereco. Sem ela, o teste
   // comeca com o plano Completo — e o formulario diz isso.
