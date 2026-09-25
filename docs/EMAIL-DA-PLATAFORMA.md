@@ -6,7 +6,7 @@ e um erro caro:
 | quem manda | de onde sai | para que serve |
 | --- | --- | --- |
 | **o escritorio** | SMTP que ele conectou em Integracoes | aviso de prazo, resumo do dia, mensagem para o cliente dele |
-| **a plataforma** | `PLATAFORMA_SMTP_*` | recuperacao de senha, e no futuro convite de usuario |
+| **a plataforma** | `PLATAFORMA_SMTP_*` | recuperacao de senha e convite de usuario novo |
 
 O cliente do escritorio tem de receber do advogado, nao de nos — por isso o
 primeiro existe. E a recuperacao de senha nao pode depender de o escritorio

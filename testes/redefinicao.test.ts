@@ -16,8 +16,11 @@ import {
   hashDoToken,
   limparPedidosVencidos,
   mensagemDeRedefinicao,
+  mensagemDeConvite,
   redefinirComToken,
   TokenInvalido,
+  validadeEmMinutos,
+  VALIDADE_DO_CONVITE_MINUTOS,
   VALIDADE_MINUTOS,
 } from "../src/lib/redefinicao";
 
@@ -211,5 +214,79 @@ d("redefinicao de senha", () => {
     // So o pedido em aberto sobrou.
     expect(sobraram).toHaveLength(1);
     expect(sobraram[0].usadoEm).toBeNull();
+  });
+});
+
+d("convite de usuario", () => {
+  let escritorio = "";
+  let convidado = "";
+
+  beforeAll(async () => {
+    const e = await prismaPlataforma().escritorio.create({
+      data: { slug: `convite-${Date.now()}`, nome: "Escritorio do Convite" },
+    });
+    escritorio = e.id;
+    convidado = await criarUsuario(escritorio, "novato@convite.adv.br");
+  });
+
+  afterAll(async () => {
+    if (escritorio) {
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
+    }
+  });
+
+  it("convite vale dias; redefinicao vale uma hora", () => {
+    expect(validadeEmMinutos("CONVITE")).toBe(VALIDADE_DO_CONVITE_MINUTOS);
+    expect(validadeEmMinutos("REDEFINICAO")).toBe(VALIDADE_MINUTOS);
+    expect(VALIDADE_DO_CONVITE_MINUTOS).toBeGreaterThan(VALIDADE_MINUTOS);
+  });
+
+  it("o pedido guarda o tipo, e o convite expira depois", async () => {
+    const agora = new Date();
+    const convite = await criarPedido(
+      escritorio,
+      convidado,
+      null,
+      "CONVITE",
+      agora,
+    );
+
+    const pedido = await comEscritorio(escritorio, (db) =>
+      db.redefinicaoDeSenha.findFirst({
+        where: { usuarioId: convidado, usadoEm: null },
+      }),
+    );
+
+    expect(pedido!.tipo).toBe("CONVITE");
+    const horas =
+      (convite.expiraEm.getTime() - agora.getTime()) / (60 * 60 * 1000);
+    expect(horas).toBeGreaterThan(24);
+  });
+
+  it("o convite troca a senha pelo mesmo caminho da redefinicao", async () => {
+    const { token } = await criarPedido(escritorio, convidado, null, "CONVITE");
+    await expect(
+      redefinirComToken(escritorio, token, "primeira-senha-123"),
+    ).resolves.toBe("novato@convite.adv.br");
+  });
+
+  it("o texto do convite diz quem convidou, o prazo e o que fazer se nao esperava", () => {
+    const mensagem = mensagemDeConvite({
+      nomeDoEscritorio: "Escritorio do Convite",
+      nomeDeQuemConvidou: "Helena Vasconcelos",
+      link: "https://convite.birdjud.com.br/redefinir-senha?t=abc&c=1",
+      validadeMinutos: VALIDADE_DO_CONVITE_MINUTOS,
+    });
+
+    expect(mensagem.assunto).toContain("Escritorio do Convite");
+    expect(mensagem.texto).toContain("Helena Vasconcelos");
+    expect(mensagem.texto).toContain("7 dia(s)");
+    expect(mensagem.texto).toContain("nao esperava este convite");
+    // Convite nunca CARREGA senha: o que vai e o link. (O texto fala em
+    // "escolher sua senha", o que e outra coisa — por isso a regra e sobre
+    // senha atribuida, "senha: xxx", e nao sobre a palavra.)
+    expect(mensagem.texto).not.toMatch(/senha\s*[:=]/i);
   });
 });

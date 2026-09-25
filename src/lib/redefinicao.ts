@@ -16,8 +16,24 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { gerarHash } from "./senhas";
 
-/** Uma hora. Tempo de ler o e-mail, nao de deixar o link guardado. */
+export const TIPOS = ["REDEFINICAO", "CONVITE"] as const;
+export type TipoDePedido = (typeof TIPOS)[number];
+
+/**
+ * Quanto cada link dura.
+ *
+ * Redefinicao vale uma hora: quem pediu esta na frente da tela agora, e o
+ * link e uma chave do sistema andando por e-mail. Convite vale dias, porque
+ * quem recebe pode estar de ferias, de plantao ou sem ler e-mail no fim de
+ * semana — e convite vencido antes de ser aberto so gera retrabalho para quem
+ * administra.
+ */
 export const VALIDADE_MINUTOS = 60;
+export const VALIDADE_DO_CONVITE_MINUTOS = 7 * 24 * 60;
+
+export function validadeEmMinutos(tipo: TipoDePedido): number {
+  return tipo === "CONVITE" ? VALIDADE_DO_CONVITE_MINUTOS : VALIDADE_MINUTOS;
+}
 
 export function gerarToken(): string {
   return randomBytes(32).toString("base64url");
@@ -46,10 +62,13 @@ export async function criarPedido(
   escritorioId: string,
   usuarioId: string,
   pedidoDe: string | null,
+  tipo: TipoDePedido = "REDEFINICAO",
   agora = new Date(),
 ): Promise<PedidoCriado> {
   const token = gerarToken();
-  const expiraEm = new Date(agora.getTime() + VALIDADE_MINUTOS * 60 * 1000);
+  const expiraEm = new Date(
+    agora.getTime() + validadeEmMinutos(tipo) * 60 * 1000,
+  );
 
   await comEscritorio(escritorioId, async (db) => {
     await db.redefinicaoDeSenha.updateMany({
@@ -59,6 +78,7 @@ export async function criarPedido(
     await db.redefinicaoDeSenha.create({
       data: semEscritorio({
         usuarioId,
+        tipo,
         tokenHash: hashDoToken(token),
         expiraEm,
         pedidoDe,
@@ -157,6 +177,31 @@ export async function limparPedidosVencidosDeTodos(
     where: { OR: [{ expiraEm: { lt: agora } }, { usadoEm: { not: null } }] },
   });
   return count;
+}
+
+/** O texto do convite. Quem recebe pode nunca ter ouvido falar do sistema. */
+export function mensagemDeConvite(opcoes: {
+  nomeDoEscritorio: string;
+  nomeDeQuemConvidou: string;
+  link: string;
+  validadeMinutos: number;
+}): { assunto: string; texto: string } {
+  const dias = Math.round(opcoes.validadeMinutos / (24 * 60));
+  return {
+    assunto: `Seu acesso ao sistema de ${opcoes.nomeDoEscritorio}`,
+    texto: [
+      `${opcoes.nomeDeQuemConvidou} criou um acesso para voce no sistema de ${opcoes.nomeDoEscritorio}.`,
+      "",
+      "Para escolher sua senha e entrar pela primeira vez, abra o endereco abaixo:",
+      opcoes.link,
+      "",
+      `O link vale por ${dias} dia(s) e so pode ser usado uma vez. Depois disso, peca outro a quem administra o sistema do escritorio.`,
+      "",
+      "Se voce nao esperava este convite, ignore esta mensagem e avise o escritorio.",
+      "",
+      "BirdJud · by Blackbird",
+    ].join("\n"),
+  };
 }
 
 /** O texto do e-mail. Curto, sem HTML, e dizendo o que fazer se nao foi voce. */

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
 import { Estrutura } from "@/componentes/Estrutura";
+import { temRemetenteDaPlataforma } from "@/lib/email-plataforma";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 
 const PAPEIS = [
@@ -14,6 +15,8 @@ const PAPEIS = [
 ];
 
 export default async function PaginaUsuarios() {
+  // Com remetente configurado, o caminho normal e o convite por e-mail.
+  const temConvite = temRemetenteDaPlataforma();
   let contexto;
   try {
     contexto = await exigirAdmin();
@@ -57,8 +60,10 @@ export default async function PaginaUsuarios() {
       modulos={modulos}
       titulo="Usuarios"
     >
-      <p className="mt-1 text-sm text-slate-500">
-        A senha definida aqui e provisoria: o usuario a troca em Minha conta.
+      <p className="chamada esquerda">
+        {temConvite
+          ? "O usuario novo recebe um convite por e-mail e escolhe a propria senha. Ninguem precisa passar senha por WhatsApp nem no papel."
+          : "Sem remetente de e-mail configurado na plataforma, defina uma senha provisoria aqui e passe para a pessoa; ela troca em Minha conta."}
       </p>
 
       {/* A faixa limita pessoas; quem esta inativo nao ocupa lugar. */}
@@ -77,9 +82,14 @@ export default async function PaginaUsuarios() {
           { nome: "email", rotulo: "E-mail", tipo: "email", obrigatorio: true },
           {
             nome: "senha",
-            rotulo: "Senha provisoria (minimo 10 caracteres)",
+            rotulo: temConvite
+              ? "Senha provisoria (opcional)"
+              : "Senha provisoria (minimo 10 caracteres)",
             tipo: "password",
-            obrigatorio: true,
+            obrigatorio: !temConvite,
+            ajuda: temConvite
+              ? "Deixe em branco para o sistema enviar um convite por e-mail."
+              : "Minimo de 10 caracteres.",
           },
           {
             nome: "papel",

@@ -8,10 +8,19 @@ export const metadata = { title: "Escolher uma senha nova" };
 export default async function PaginaRedefinirSenha({
   searchParams,
 }: {
-  searchParams: Promise<{ t?: string }>;
+  searchParams: Promise<{ t?: string; c?: string }>;
 }) {
   const marca = await escritorioDoEndereco();
-  const token = (await searchParams).t ?? "";
+  const parametros = await searchParams;
+  const token = parametros.t ?? "";
+  /*
+   * "c=1" so muda o texto da tela, nada mais.
+   *
+   * Quem chega por convite nunca teve senha aqui: "escolher uma senha nova"
+   * confunde. O parametro NAO da direito nenhum — o que vale e o token, e
+   * quem o confere e a rota, na hora de trocar.
+   */
+  const ehConvite = parametros.c === "1";
 
   if (!marca?.id) {
     return (
@@ -29,7 +38,7 @@ export default async function PaginaRedefinirSenha({
     <CartaoDoEscritorio
       nome={marca.nome}
       logoUrl={marca.logoUrl}
-      titulo="Escolher uma senha nova"
+      titulo={ehConvite ? "Criar sua senha" : "Escolher uma senha nova"}
       chamada={marca.nome}
       rodape={
         <Link

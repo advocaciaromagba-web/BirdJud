@@ -59,14 +59,16 @@ resto ja esta pronto.
 
 ## Fazem falta antes do segundo escritorio
 
-### 5. Usuario novo nao recebe convite `[nos]`
+### 5. ~~Usuario novo nao recebe convite~~ — FEITO `[voce: a mesma credencial]`
 
-O administrador cria o usuario digitando uma senha e precisa passa-la por
-fora (WhatsApp, papel, voz). Alem de ruim, e inseguro. O certo e convite por
-e-mail com link de definicao de senha.
+Com remetente configurado, a senha no formulario vira **opcional**: em branco,
+o usuario nasce com um hash que ninguem reproduz e recebe convite por e-mail
+para escolher a propria senha. Ninguem precisa passar senha por WhatsApp.
 
-Agora e barato: o remetente da plataforma e o fluxo de token ja existem, e o
-convite e o mesmo mecanismo com outro texto.
+O convite vale 7 dias (contra 1 hora da redefinicao), porque quem recebe pode
+estar de plantao ou de ferias — convite vencido antes de ser aberto so gera
+retrabalho. Sem remetente, o caminho antigo continua valendo, e a tela diz
+isso.
 
 ### 6. Nao existe cobranca automatica da assinatura `[nos + voce]`
 

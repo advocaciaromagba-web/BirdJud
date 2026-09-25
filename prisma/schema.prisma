@@ -608,6 +608,9 @@ model RedefinicaoDeSenha {
   id           String    @id @default(cuid())
   escritorioId String
   usuarioId    String
+  // REDEFINICAO (esqueci a senha) | CONVITE (usuario novo definindo a
+  // primeira senha). Muda o texto do e-mail e a validade do link.
+  tipo         String    @default("REDEFINICAO")
   tokenHash    String    @unique
   expiraEm     DateTime
   usadoEm      DateTime?
