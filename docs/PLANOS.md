@@ -10,7 +10,16 @@ mais do que o plano pronto que ja lhe daria aquilo.**
 | Essencial | nada — clientes, processos, agenda e prazos, com cadastro digitado a mao | 149 | 299 | 549 | 899 |
 | Profissional | publicacoes do DJEN, arquivos, aviso por e-mail | 199 | 399 | 699 | 1.099 |
 | Avancado | + cobrancas, financeiro, nota fiscal de servico | 249 | 499 | 849 | 1.299 |
-| Completo | + inteligencia artificial, aviso por WhatsApp, assinatura eletronica | **299** | 599 | 999 | 1.499 |
+| Completo | + inteligencia artificial, aviso por WhatsApp, assinatura eletronica | **299** | 599 | 999 | sob consulta |
+
+**A faixa de 50 advogados nao tem preco na vitrine.** Escritorio desse tamanho
+no Brasil e escritorio grande: tem sistema, negocia, compara proposta, e o
+preco depende de migracao e de volume proprio de uso. Tabela publica nessa
+faixa so ancora a conversa no numero errado — e a ancora util e o Completo de
+R$ 299 para escritorio pequeno. O preco continua existindo no sistema
+(`PRECO_DO_PLANO`) como **referencia interna** de quem monta a proposta, e
+continua obedecendo a escada; quem decide o que aparece na tela e
+`FAIXAS_PUBLICADAS`, em `catalogo.ts`.
 
 O numero que manda e o R$ 299 do Completo para escritorio pequeno: e o que o
 mercado brasileiro cobra por sistema "completo" dessa faixa. O BirdJud entrega

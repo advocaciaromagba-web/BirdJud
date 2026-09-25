@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { FAIXAS, LIMITES, type Faixa, type Modulo } from "@/lib/catalogo";
+import {
+  FAIXAS_PUBLICADAS,
+  LIMITES,
+  type Faixa,
+  type Modulo,
+} from "@/lib/catalogo";
 import { precoDoModulo } from "@/lib/precos";
 import {
   contaDoPlano,
@@ -73,10 +78,13 @@ const DESCRICAO_DO_MODULO: Record<
   },
 };
 
-export function SimuladorDePlanos() {
+export function SimuladorDePlanos({ contato }: { contato?: string }) {
   const [faixa, setFaixa] = useState<Faixa>("ATE_3");
+  // Acima da maior faixa publicada nao ha preco na tela: ha uma conversa.
+  const [sobConsulta, setSobConsulta] = useState(false);
   const [escolhidos, setEscolhidos] = useState<Set<Modulo>>(new Set());
 
+  const maiorPublicada = FAIXAS_PUBLICADAS[FAIXAS_PUBLICADAS.length - 1];
   const conta = contaMontada([...escolhidos], faixa);
   const equivalente = planoExato([...escolhidos]);
 
@@ -98,19 +106,32 @@ export function SimuladorDePlanos() {
       <section>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-slate-600">Tamanho do escritorio:</span>
-          {FAIXAS.map((opcao) => (
+          {FAIXAS_PUBLICADAS.map((opcao) => (
             <button
               key={opcao}
               type="button"
-              onClick={() => setFaixa(opcao)}
-              aria-pressed={opcao === faixa}
+              onClick={() => {
+                setFaixa(opcao);
+                setSobConsulta(false);
+              }}
+              aria-pressed={!sobConsulta && opcao === faixa}
               className={
-                opcao === faixa ? "botao-principal" : "botao-secundario"
+                !sobConsulta && opcao === faixa
+                  ? "botao-principal"
+                  : "botao-secundario"
               }
             >
               ate {LIMITES[opcao].advogados} advogados
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setSobConsulta(true)}
+            aria-pressed={sobConsulta}
+            className={sobConsulta ? "botao-principal" : "botao-secundario"}
+          >
+            mais de {LIMITES[maiorPublicada].advogados}
+          </button>
         </div>
         <p className="ajuda">
           A faixa vale para advogados e para a equipe de apoio, separadamente: a{" "}
@@ -138,20 +159,33 @@ export function SimuladorDePlanos() {
                 {PLANO[plano].chamada}
               </p>
 
-              <p className="mt-4 text-2xl font-bold tracking-tight">
-                {emReais(doPlano.totalCentavos)}
-                <span className="text-sm font-normal text-slate-500">
-                  {" "}
-                  /mes
-                </span>
-              </p>
-              {doPlano.descontoCentavos > 0 ? (
-                <p className="ajuda">
-                  {emReais(doPlano.descontoCentavos)} por mes a menos do que
-                  levar estes modulos avulsos.
-                </p>
+              {sobConsulta ? (
+                <>
+                  <p className="mt-4 text-2xl font-bold tracking-tight">
+                    Sob consulta
+                  </p>
+                  <p className="ajuda">
+                    Os modulos sao os mesmos; muda o tamanho.
+                  </p>
+                </>
               ) : (
-                <p className="ajuda">So o nucleo do sistema, sem modulo.</p>
+                <>
+                  <p className="mt-4 text-2xl font-bold tracking-tight">
+                    {emReais(doPlano.totalCentavos)}
+                    <span className="text-sm font-normal text-slate-500">
+                      {" "}
+                      /mes
+                    </span>
+                  </p>
+                  {doPlano.descontoCentavos > 0 ? (
+                    <p className="ajuda">
+                      {emReais(doPlano.descontoCentavos)} por mes a menos do que
+                      levar estes modulos avulsos.
+                    </p>
+                  ) : (
+                    <p className="ajuda">So o nucleo do sistema, sem modulo.</p>
+                  )}
+                </>
               )}
 
               <ul className="mt-4 grid flex-1 content-start gap-1.5 text-sm">
@@ -174,7 +208,11 @@ export function SimuladorDePlanos() {
                   escolhido ? "botao-secundario mt-4" : "botao-principal mt-4"
                 }
               >
-                {escolhido ? "Selecionado" : "Escolher este"}
+                {sobConsulta
+                  ? "Escolher este"
+                  : escolhido
+                    ? "Selecionado"
+                    : "Escolher este"}
               </button>
             </article>
           );
@@ -236,63 +274,109 @@ export function SimuladorDePlanos() {
           </ul>
 
           <aside className="cartao h-fit lg:sticky lg:top-6">
-            <h3>Sua mensalidade</h3>
-            <dl className="mt-3 grid gap-1.5 text-sm">
-              <div className="flex justify-between gap-3">
-                <dt className="text-slate-600">
-                  Sistema, ate {LIMITES[faixa].advogados} advogados
-                </dt>
-                <dd className="tabular-nums">{emReais(conta.faixaCentavos)}</dd>
-              </div>
-              {conta.modulos.map((linha) => (
-                <div key={linha.modulo} className="flex justify-between gap-3">
-                  <dt className="text-slate-600">
-                    {DESCRICAO_DO_MODULO[linha.modulo]?.rotulo ?? linha.modulo}
-                  </dt>
-                  <dd className="tabular-nums">
-                    {emReais(linha.valorCentavos)}
-                  </dd>
-                </div>
-              ))}
-              {conta.descontoCentavos > 0 ? (
-                <div className="flex justify-between gap-3">
-                  <dt className="destaque">
-                    Desconto do plano {PLANO[conta.plano!].rotulo}
-                  </dt>
-                  <dd className="destaque tabular-nums">
-                    − {emReais(conta.descontoCentavos)}
-                  </dd>
-                </div>
-              ) : null}
-            </dl>
+            {sobConsulta ? (
+              <>
+                <h3>Escritorio grande</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  Acima de {LIMITES[maiorPublicada].advogados} advogados o preco
+                  sai de uma proposta: a franquia de cada modulo e ajustada ao
+                  uso real do escritorio, e a migracao do sistema atual entra na
+                  conversa.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  Os modulos sao os mesmos desta pagina — o que muda e o
+                  tamanho, nao o que o sistema faz.
+                </p>
+                {contato ? (
+                  <a
+                    href={`mailto:${contato}`}
+                    className="botao-principal mt-4 w-full"
+                  >
+                    Pedir uma proposta
+                  </a>
+                ) : (
+                  <Link
+                    href="/cadastro"
+                    className="botao-principal mt-4 w-full"
+                  >
+                    Comecar pelo teste
+                  </Link>
+                )}
+                <p className="ajuda">
+                  O teste de 14 dias vale igual, e serve para o escritorio ver o
+                  sistema antes de qualquer proposta.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3>Sua mensalidade</h3>
+                <dl className="mt-3 grid gap-1.5 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-slate-600">
+                      Sistema, ate {LIMITES[faixa].advogados} advogados
+                    </dt>
+                    <dd className="tabular-nums">
+                      {emReais(conta.faixaCentavos)}
+                    </dd>
+                  </div>
+                  {conta.modulos.map((linha) => (
+                    <div
+                      key={linha.modulo}
+                      className="flex justify-between gap-3"
+                    >
+                      <dt className="text-slate-600">
+                        {DESCRICAO_DO_MODULO[linha.modulo]?.rotulo ??
+                          linha.modulo}
+                      </dt>
+                      <dd className="tabular-nums">
+                        {emReais(linha.valorCentavos)}
+                      </dd>
+                    </div>
+                  ))}
+                  {conta.descontoCentavos > 0 ? (
+                    <div className="flex justify-between gap-3">
+                      <dt className="destaque">
+                        Economia do plano {PLANO[conta.plano!].rotulo}
+                      </dt>
+                      <dd className="destaque tabular-nums">
+                        − {emReais(conta.descontoCentavos)}
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
 
-            <p className="mt-4 border-t border-slate-200 pt-3 text-2xl font-bold tracking-tight">
-              {emReais(conta.totalCentavos)}
-              <span className="text-sm font-normal text-slate-500"> /mes</span>
-            </p>
+                <p className="mt-4 border-t border-slate-200 pt-3 text-2xl font-bold tracking-tight">
+                  {emReais(conta.totalCentavos)}
+                  <span className="text-sm font-normal text-slate-500">
+                    {" "}
+                    /mes
+                  </span>
+                </p>
 
-            {conta.plano && conta.plano !== "ESSENCIAL" ? (
-              <p className="aviso-ok mt-3">
-                O plano {PLANO[conta.plano].rotulo} cobre o que voce marcou e
-                sai mais barato que a soma avulsa. Voce leva tambem o que sobra
-                dele.
-              </p>
-            ) : null}
+                {conta.plano && conta.plano !== "ESSENCIAL" ? (
+                  <p className="aviso-ok mt-3">
+                    O plano {PLANO[conta.plano].rotulo} cobre o que voce marcou
+                    e sai mais barato que a soma avulsa. Voce leva tambem o que
+                    sobra dele.
+                  </p>
+                ) : null}
 
-            <Link
-              href={
-                conta.modulos.length > 0
-                  ? `/cadastro?modulos=${conta.modulos.map((l) => l.modulo).join(",")}`
-                  : "/cadastro?modulos="
-              }
-              className="botao-principal mt-4 w-full"
-            >
-              Comecar o teste
-            </Link>
-            <p className="ajuda">
-              Consumo que passa da franquia (mensagem, nota, token de IA,
-              armazenamento) e cobrado a parte, pelo que foi usado.
-            </p>
+                <Link
+                  href={
+                    conta.modulos.length > 0
+                      ? `/cadastro?modulos=${conta.modulos.map((l) => l.modulo).join(",")}`
+                      : "/cadastro?modulos="
+                  }
+                  className="botao-principal mt-4 w-full"
+                >
+                  Comecar o teste
+                </Link>
+                <p className="ajuda">
+                  Consumo que passa da franquia (mensagem, nota, token de IA,
+                  armazenamento) e cobrado a parte, pelo que foi usado.
+                </p>
+              </>
+            )}
           </aside>
         </div>
       </section>

@@ -45,7 +45,7 @@ export default async function PaginaPlanos() {
       </div>
 
       <div className="mt-10">
-        <SimuladorDePlanos />
+        <SimuladorDePlanos contato={process.env.CONTATO_COMERCIAL} />
       </div>
 
       <section className="mt-14 max-w-3xl">
@@ -63,6 +63,11 @@ export default async function PaginaPlanos() {
           <li className="filete-destaque pl-4">
             O preco muda com o tamanho do escritorio, contado em advogados e em
             equipe de apoio ativos. Desativar alguem libera a vaga.
+          </li>
+          <li className="filete-destaque pl-4">
+            Acima de 25 advogados o preco sai de uma proposta. Escritorio desse
+            tamanho tem migracao de sistema, volume proprio de uso e franquia
+            ajustada — coisas que tabela de vitrine nao resolve bem.
           </li>
           <li className="filete-destaque pl-4">
             Consumo que passa da franquia — mensagem de WhatsApp, nota emitida,

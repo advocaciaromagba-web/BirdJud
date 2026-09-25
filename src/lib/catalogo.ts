@@ -40,6 +40,23 @@ export const LIMITES: Record<
   ATE_50: { advogados: 50, apoio: 50, rotulo: "Completo" },
 };
 
+/**
+ * As faixas com preco na vitrine.
+ *
+ * A maior fica de fora de proposito. Escritorio de 50 advogados no Brasil e
+ * escritorio grande: tem sistema, negocia, compara proposta. Tabela publica
+ * nessa faixa so serve para ancorar a conversa no numero errado — e a nossa
+ * ancora util e o Completo de R$ 299 para escritorio pequeno. O preco da
+ * faixa maior continua existindo no sistema, como referencia interna para
+ * quem monta a proposta.
+ */
+export const FAIXAS_PUBLICADAS: Faixa[] = ["ATE_3", "ATE_10", "ATE_25"];
+export const FAIXA_SOB_CONSULTA: Faixa = "ATE_50";
+
+export function faixaPublicada(faixa: Faixa): boolean {
+  return FAIXAS_PUBLICADAS.includes(faixa);
+}
+
 export function ehFaixa(valor: string): valor is Faixa {
   return (FAIXAS as readonly string[]).includes(valor);
 }
