@@ -60,7 +60,7 @@ export async function exigirSessao(modulo?: Modulo): Promise<ContextoRota> {
     db.usuario.findFirst({
       where: { id: sessao.usuarioId },
       select: { ativo: true, sessoesValidasApos: true },
-    })
+    }),
   );
   if (!usuario?.ativo) throw new SemSessao("Usuario inativo ou removido.");
   if (sessaoRevogada(sessao.emitidaEm, usuario.sessoesValidasApos)) {
@@ -85,7 +85,7 @@ export async function exigirSessao(modulo?: Modulo): Promise<ContextoRota> {
  */
 export function sessaoRevogada(
   emitidaEm: number,
-  sessoesValidasApos: Date | null
+  sessoesValidasApos: Date | null,
 ): boolean {
   if (!sessoesValidasApos) return false;
   return emitidaEm < sessoesValidasApos.getTime();
@@ -97,14 +97,15 @@ export function sessaoRevogada(
  */
 export function motivoParaRecusar(
   escritorioDoEndereco: { id: string; status: string } | null,
-  sessao: { escritorioId: string } | null
+  sessao: { escritorioId: string } | null,
 ): string | null {
   if (!escritorioDoEndereco) return "Endereco sem escritorio.";
   if (!STATUS_QUE_ENTRAM.has(escritorioDoEndereco.status)) {
     return "Escritorio suspenso ou encerrado.";
   }
   if (!sessao) return "Sessao ausente ou invalida para este endereco.";
-  if (sessao.escritorioId !== escritorioDoEndereco.id) return "Sessao de outro escritorio.";
+  if (sessao.escritorioId !== escritorioDoEndereco.id)
+    return "Sessao de outro escritorio.";
   return null;
 }
 

@@ -13,16 +13,17 @@ export function CampoDeBusca({ termoInicial = "" }: { termoInicial?: string }) {
       onSubmit={(evento) => {
         evento.preventDefault();
         const limpo = termo.trim();
-        if (limpo.length >= 3) router.push(`/busca?q=${encodeURIComponent(limpo)}`);
+        if (limpo.length >= 3)
+          router.push(`/busca?q=${encodeURIComponent(limpo)}`);
       }}
-      className="min-w-0 flex-1 sm:flex-none"
+      className="min-w-0 flex-1"
     >
       <input
         value={termo}
         onChange={(e) => setTermo(e.target.value)}
         placeholder="Buscar cliente, processo, publicacao…"
         aria-label="Buscar"
-        className="w-full rounded border border-neutral-300 px-3 py-2 text-sm focus:border-marca focus:outline-none sm:w-48"
+        className="campo lg:max-w-sm"
       />
     </form>
   );

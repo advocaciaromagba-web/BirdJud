@@ -20,7 +20,6 @@ export type CompromissoNoLembrete = {
   numeroProcesso: string | null;
 };
 
-
 function recortar(texto: string, limite = 220): string {
   const limpo = texto.replace(/\s+/g, " ").trim();
   return limpo.length <= limite ? limpo : `${limpo.slice(0, limite)}…`;
@@ -35,7 +34,7 @@ export function assuntoDoResumo(quantidade: number, urgentes: number): string {
 export function corpoDoResumo(
   nomeEscritorio: string,
   publicacoes: PublicacaoNoResumo[],
-  endereco: string
+  endereco: string,
 ): string {
   const urgentes = publicacoes.filter((p) => p.urgente);
   const demais = publicacoes.filter((p) => !p.urgente);
@@ -56,7 +55,7 @@ export function corpoDoResumo(
     endereco,
     "",
     "O prazo indicado e leitura automatica do texto e serve como alerta —",
-    "confira sempre nos autos."
+    "confira sempre nos autos.",
   );
 
   return linhas.join("\n");
@@ -66,7 +65,10 @@ function item(publicacao: PublicacaoNoResumo): string[] {
   const numero = publicacao.numeroProcesso
     ? formatarNumeroProcesso(publicacao.numeroProcesso)
     : "sem numero de processo";
-  const prazo = publicacao.prazoDias !== null ? ` · prazo indicado: ${publicacao.prazoDias} dia(s)` : "";
+  const prazo =
+    publicacao.prazoDias !== null
+      ? ` · prazo indicado: ${publicacao.prazoDias} dia(s)`
+      : "";
   return [
     `- ${numero}${publicacao.tribunal ? ` (${publicacao.tribunal})` : ""}${prazo}`,
     `  ${recortar(publicacao.texto)}`,
@@ -81,7 +83,7 @@ export function assuntoDoLembrete(compromisso: CompromissoNoLembrete): string {
 export function corpoDoLembrete(
   nomeEscritorio: string,
   compromisso: CompromissoNoLembrete,
-  endereco: string
+  endereco: string,
 ): string {
   const linhas = [
     `${nomeEscritorio} — lembrete de compromisso`,
@@ -92,7 +94,9 @@ export function corpoDoLembrete(
 
   if (compromisso.local) linhas.push(`Local: ${compromisso.local}`);
   if (compromisso.numeroProcesso) {
-    linhas.push(`Processo: ${formatarNumeroProcesso(compromisso.numeroProcesso)}`);
+    linhas.push(
+      `Processo: ${formatarNumeroProcesso(compromisso.numeroProcesso)}`,
+    );
   }
 
   linhas.push("", "Agenda completa:", endereco);

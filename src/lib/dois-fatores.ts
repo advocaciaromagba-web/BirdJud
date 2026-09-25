@@ -10,11 +10,18 @@ export function gerarSegredo(): string {
 }
 
 /** URI do QR Code. O emissor e o nome do escritorio, nao "BirdJud". */
-export function urlDeCadastro(emissor: string, email: string, segredo: string): string {
+export function urlDeCadastro(
+  emissor: string,
+  email: string,
+  segredo: string,
+): string {
   return generateURI({ issuer: emissor, label: email, secret: segredo });
 }
 
-export async function conferirCodigo(codigo: string, segredo: string): Promise<boolean> {
+export async function conferirCodigo(
+  codigo: string,
+  segredo: string,
+): Promise<boolean> {
   const limpo = codigo.replace(/\D/g, "");
   if (limpo.length !== 6) return false;
   try {

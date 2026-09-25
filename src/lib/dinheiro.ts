@@ -14,7 +14,8 @@ export function paraCentavos(valor: string): number | null {
 }
 
 export function emReais(centavos: number): string {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    centavos / 100
-  );
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(centavos / 100);
 }

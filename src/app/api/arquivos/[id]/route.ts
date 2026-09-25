@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
-import { apagarArquivo, ArquivoNaoEncontrado, lerArquivo } from "@/lib/arquivos";
+import {
+  apagarArquivo,
+  ArquivoNaoEncontrado,
+  lerArquivo,
+} from "@/lib/arquivos";
 
 type Parametros = { params: Promise<{ id: string }> };
 

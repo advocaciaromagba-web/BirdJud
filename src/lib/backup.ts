@@ -35,7 +35,9 @@ const TABELAS = [
 export async function gerarBackup(escritorioId: string): Promise<Backup> {
   const db = prismaPlataforma();
 
-  const escritorio = await db.escritorio.findUniqueOrThrow({ where: { id: escritorioId } });
+  const escritorio = await db.escritorio.findUniqueOrThrow({
+    where: { id: escritorioId },
+  });
 
   const tabelas: Record<string, unknown[]> = {};
   for (const tabela of TABELAS) {
@@ -71,7 +73,7 @@ export type ResultadoDaRestauracao = {
  */
 export async function restaurarBackup(
   backup: Backup,
-  slugNovo: string
+  slugNovo: string,
 ): Promise<ResultadoDaRestauracao> {
   if (backup.formato !== FORMATO_DO_BACKUP) {
     throw new Error(`Formato de backup nao suportado: ${backup.formato}`);
@@ -92,7 +94,8 @@ export async function restaurarBackup(
       logoUrl: (original.logoUrl as string | null) ?? null,
       corPrimaria: (original.corPrimaria as string | null) ?? null,
       corSecundaria: (original.corSecundaria as string | null) ?? null,
-      telefoneAtendimento: (original.telefoneAtendimento as string | null) ?? null,
+      telefoneAtendimento:
+        (original.telefoneAtendimento as string | null) ?? null,
       cidade: (original.cidade as string | null) ?? null,
       enderecos: (original.enderecos as never) ?? undefined,
       expediente: (original.expediente as never) ?? undefined,
@@ -106,7 +109,10 @@ export async function restaurarBackup(
   // para testar o procedimento sem risco.
   const idNovo = new Map<string, string>();
   for (const tabela of TABELAS) {
-    for (const linha of (backup.tabelas[tabela] ?? []) as Record<string, unknown>[]) {
+    for (const linha of (backup.tabelas[tabela] ?? []) as Record<
+      string,
+      unknown
+    >[]) {
       if (typeof linha.id === "string") idNovo.set(linha.id, randomUUID());
     }
   }
@@ -143,7 +149,7 @@ function remapear(
   linha: Record<string, unknown>,
   idNovo: Map<string, string>,
   escritorioId: string,
-  tabela: string
+  tabela: string,
 ): Record<string, unknown> {
   const saida: Record<string, unknown> = {};
 
@@ -156,7 +162,11 @@ function remapear(
       saida[campo] = idNovo.get(valor) ?? randomUUID();
       continue;
     }
-    if (campo.endsWith("Id") && typeof valor === "string" && idNovo.has(valor)) {
+    if (
+      campo.endsWith("Id") &&
+      typeof valor === "string" &&
+      idNovo.has(valor)
+    ) {
       saida[campo] = idNovo.get(valor);
       continue;
     }

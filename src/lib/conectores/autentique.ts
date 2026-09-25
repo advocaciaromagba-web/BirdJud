@@ -1,8 +1,16 @@
 // Assinatura eletronica pelo Autentique, com o plano do proprio escritorio.
-import { buscarComLimite, descreverFalha, mascarar, type Conector } from "./tipos";
+import {
+  buscarComLimite,
+  descreverFalha,
+  mascarar,
+  type Conector,
+} from "./tipos";
 
 function baseAutentique(): string {
-  return process.env.AUTENTIQUE_BASE_URL ?? "https://api.autentique.com.br/v2/graphql";
+  return (
+    process.env.AUTENTIQUE_BASE_URL ??
+    "https://api.autentique.com.br/v2/graphql"
+  );
 }
 
 export const conectorAutentique: Conector = {
@@ -11,7 +19,12 @@ export const conectorAutentique: Conector = {
   descricao: "Envio de contratos e procuracoes para assinatura eletronica.",
   modulo: "ASSINATURA",
   campos: [
-    { nome: "token", rotulo: "Token da API", tipo: "password", obrigatorio: true },
+    {
+      nome: "token",
+      rotulo: "Token da API",
+      tipo: "password",
+      obrigatorio: true,
+    },
   ],
   resumo: (dados) => `Token ${mascarar(dados.token)}`,
 
@@ -29,7 +42,11 @@ export const conectorAutentique: Conector = {
       if (resposta.status === 401 || resposta.status === 403) {
         return { ok: false, detalhe: "Token recusado pelo Autentique." };
       }
-      if (!resposta.ok) return { ok: false, detalhe: `Autentique respondeu ${resposta.status}.` };
+      if (!resposta.ok)
+        return {
+          ok: false,
+          detalhe: `Autentique respondeu ${resposta.status}.`,
+        };
 
       const corpo = (await resposta.json()) as {
         data?: { me?: { email?: string } };
@@ -37,11 +54,18 @@ export const conectorAutentique: Conector = {
       };
       // GraphQL responde 200 mesmo com erro: o corpo e que diz.
       if (corpo.errors?.length) {
-        return { ok: false, detalhe: corpo.errors[0]?.message ?? "Token recusado." };
+        return {
+          ok: false,
+          detalhe: corpo.errors[0]?.message ?? "Token recusado.",
+        };
       }
-      if (!corpo.data?.me) return { ok: false, detalhe: "Resposta sem conta associada." };
+      if (!corpo.data?.me)
+        return { ok: false, detalhe: "Resposta sem conta associada." };
 
-      return { ok: true, detalhe: `Conta ${corpo.data.me.email ?? "conectada"}.` };
+      return {
+        ok: true,
+        detalhe: `Conta ${corpo.data.me.email ?? "conectada"}.`,
+      };
     } catch (erro) {
       return { ok: false, detalhe: descreverFalha(erro) };
     }

@@ -66,7 +66,7 @@ function motivoDoErro(corpo: CorpoDeErro | null, status: number): string {
  */
 export async function emitir(
   xmlAssinado: string,
-  ambiente: Ambiente
+  ambiente: Ambiente,
 ): Promise<RetornoDaEmissao> {
   let resposta: Response;
   try {
@@ -89,10 +89,16 @@ export async function emitir(
     | null;
 
   if (!resposta.ok) {
-    throw new FalhaNaNfse(motivoDoErro(corpo, resposta.status), resposta.status < 500);
+    throw new FalhaNaNfse(
+      motivoDoErro(corpo, resposta.status),
+      resposta.status < 500,
+    );
   }
   if (!corpo?.chaveAcesso) {
-    throw new FalhaNaNfse("A nota foi aceita sem chave de acesso no retorno.", false);
+    throw new FalhaNaNfse(
+      "A nota foi aceita sem chave de acesso no retorno.",
+      false,
+    );
   }
 
   return {
@@ -114,7 +120,7 @@ export async function emitir(
 export async function cancelar(
   chaveAcesso: string,
   xmlDoEventoAssinado: string,
-  ambiente: Ambiente
+  ambiente: Ambiente,
 ): Promise<void> {
   let resposta: Response;
   try {
@@ -123,15 +129,22 @@ export async function cancelar(
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pedidoRegistroEventoXmlGZipB64: empacotar(xmlDoEventoAssinado) }),
-      }
+        body: JSON.stringify({
+          pedidoRegistroEventoXmlGZipB64: empacotar(xmlDoEventoAssinado),
+        }),
+      },
     );
   } catch (erro) {
     throw new FalhaNaNfse(descreverFalha(erro), false);
   }
 
   if (!resposta.ok) {
-    const corpo = (await resposta.json().catch(() => null)) as CorpoDeErro | null;
-    throw new FalhaNaNfse(motivoDoErro(corpo, resposta.status), resposta.status < 500);
+    const corpo = (await resposta
+      .json()
+      .catch(() => null)) as CorpoDeErro | null;
+    throw new FalhaNaNfse(
+      motivoDoErro(corpo, resposta.status),
+      resposta.status < 500,
+    );
   }
 }

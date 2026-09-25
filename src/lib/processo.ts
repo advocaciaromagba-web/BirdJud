@@ -36,7 +36,12 @@ export type FichaDoProcesso = {
     local: string | null;
     concluido: boolean;
   }[];
-  arquivos: { id: string; nome: string; tamanhoBytes: number; criadoEm: Date }[];
+  arquivos: {
+    id: string;
+    nome: string;
+    tamanhoBytes: number;
+    criadoEm: Date;
+  }[];
   cobrancas: {
     id: string;
     descricao: string;
@@ -50,7 +55,7 @@ export type FichaDoProcesso = {
 /** null quando o processo nao e deste escritorio — quem decide e o RLS. */
 export async function fichaDoProcesso(
   escritorioId: string,
-  id: string
+  id: string,
 ): Promise<FichaDoProcesso | null> {
   const modulos = await modulosAtivos(escritorioId);
   const tem = (modulo: Modulo) => modulos.includes(modulo);
@@ -58,8 +63,10 @@ export async function fichaDoProcesso(
   const processo = await comEscritorio(escritorioId, (db) =>
     db.processo.findUnique({
       where: { id },
-      include: { cliente: { select: { id: true, nome: true, documento: true } } },
-    })
+      include: {
+        cliente: { select: { id: true, nome: true, documento: true } },
+      },
+    }),
   );
   if (!processo) return null;
 

@@ -21,7 +21,7 @@ export async function GET() {
         orderBy: { criadoEm: "desc" },
         take: 200,
         include: { cliente: { select: { id: true, nome: true } } },
-      })
+      }),
     );
     return NextResponse.json({ processos });
   } catch (erro) {
@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     // simplesmente nao aparece aqui.
     const processo = await comEscritorio(escritorioId, async (db) => {
       if (corpo.data.clienteId) {
-        const cliente = await db.cliente.findFirst({ where: { id: corpo.data.clienteId } });
+        const cliente = await db.cliente.findFirst({
+          where: { id: corpo.data.clienteId },
+        });
         if (!cliente) return null;
       }
       return db.processo.create({
@@ -55,14 +57,17 @@ export async function POST(req: Request) {
     });
 
     if (!processo) {
-      return NextResponse.json({ erro: "Cliente nao encontrado." }, { status: 400 });
+      return NextResponse.json(
+        { erro: "Cliente nao encontrado." },
+        { status: 400 },
+      );
     }
     return NextResponse.json({ processo }, { status: 201 });
   } catch (erro) {
     if (ehDuplicado(erro)) {
       return NextResponse.json(
         { erro: "Ja existe um processo com este numero neste escritorio." },
-        { status: 409 }
+        { status: 409 },
       );
     }
     return tratarErro(erro);

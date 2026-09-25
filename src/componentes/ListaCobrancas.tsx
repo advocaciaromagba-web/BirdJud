@@ -30,7 +30,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
 
   async function chamar(
     corpo: Record<string, string>,
-    sucesso: (json: Record<string, unknown>) => string
+    sucesso: (json: Record<string, unknown>) => string,
   ) {
     setOcupado(true);
     setAviso(null);
@@ -57,7 +57,10 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
           disabled={ocupado}
           onClick={() =>
             chamar({ acao: "SINCRONIZAR" }, (json) => {
-              const r = (json.resultado ?? {}) as { conferidas?: number; pagas?: number };
+              const r = (json.resultado ?? {}) as {
+                conferidas?: number;
+                pagas?: number;
+              };
               return `${r.conferidas ?? 0} conferida(s), ${r.pagas ?? 0} baixada(s).`;
             })
           }
@@ -65,25 +68,32 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
         >
           {ocupado ? "Conferindo…" : "Conferir no Asaas"}
         </button>
-        {aviso ? <span className="text-sm text-neutral-600">{aviso}</span> : null}
+        {aviso ? (
+          <span className="text-sm text-neutral-600">{aviso}</span>
+        ) : null}
       </div>
 
       {cobrancas.length === 0 ? (
-        <p className="mt-6 text-neutral-600">
-          Nenhuma cobranca emitida ainda.
-        </p>
+        <p className="mt-6 text-neutral-600">Nenhuma cobranca emitida ainda.</p>
       ) : (
         <ul className="mt-4 divide-y divide-neutral-200">
           {cobrancas.map((cobranca) => (
-            <li key={cobranca.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3">
-              <span className={`rounded px-2 py-0.5 text-xs font-semibold ${CORES[cobranca.status] ?? CORES.ABERTA}`}>
+            <li
+              key={cobranca.id}
+              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3"
+            >
+              <span
+                className={`rounded px-2 py-0.5 text-xs font-semibold ${CORES[cobranca.status] ?? CORES.ABERTA}`}
+              >
                 {cobranca.status}
               </span>
               <span className="font-semibold">{cobranca.valor}</span>
               <span>{cobranca.cliente}</span>
               <span className="text-neutral-500">{cobranca.descricao}</span>
               <span className="ml-auto text-sm text-neutral-500">
-                {cobranca.pagoEm ? `pago em ${cobranca.pagoEm}` : `vence em ${cobranca.vencimento}`}
+                {cobranca.pagoEm
+                  ? `pago em ${cobranca.pagoEm}`
+                  : `vence em ${cobranca.vencimento}`}
               </span>
               <span className="w-full text-sm">
                 {cobranca.linkPagamento ? (
@@ -96,12 +106,16 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
                     Link de pagamento
                   </a>
                 ) : null}
-                {cobranca.status === "ABERTA" || cobranca.status === "VENCIDA" ? (
+                {cobranca.status === "ABERTA" ||
+                cobranca.status === "VENCIDA" ? (
                   <button
                     type="button"
                     disabled={ocupado}
                     onClick={() =>
-                      chamar({ acao: "CANCELAR", id: cobranca.id }, () => "Cobranca cancelada.")
+                      chamar(
+                        { acao: "CANCELAR", id: cobranca.id },
+                        () => "Cobranca cancelada.",
+                      )
                     }
                     className="-my-1 ml-3 py-2 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
                   >

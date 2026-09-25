@@ -33,42 +33,50 @@ export function FormularioLogin() {
   }
 
   return (
-    <form onSubmit={enviar} className="mt-6 grid gap-3">
-      <label className="grid gap-1 text-sm">
-        E-mail
+    <form onSubmit={enviar} className="mt-6 grid gap-4">
+      <div>
+        <label htmlFor="login-email" className="rotulo">
+          E-mail
+        </label>
         <input
+          id="login-email"
           name="email"
           type="email"
           required
           autoComplete="username"
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
-      </label>
-      <label className="grid gap-1 text-sm">
-        Senha
+      </div>
+      <div>
+        <label htmlFor="login-senha" className="rotulo">
+          Senha
+        </label>
         <input
+          id="login-senha"
           name="senha"
           type="password"
           required
           autoComplete="current-password"
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
-      </label>
-      <label className="grid gap-1 text-sm">
-        Codigo de 6 digitos <span className="text-neutral-500">(se ativado)</span>
+      </div>
+      <div>
+        <label htmlFor="login-codigo" className="rotulo">
+          Codigo de 6 digitos
+        </label>
         <input
+          id="login-codigo"
           name="codigo"
           inputMode="numeric"
           autoComplete="one-time-code"
-          className="rounded border border-neutral-300 px-3 py-2"
+          className="campo"
         />
-      </label>
-      {erro ? <p className="text-sm text-red-700">{erro}</p> : null}
-      <button
-        type="submit"
-        disabled={enviando}
-        className="mt-2 rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
-      >
+        <p className="ajuda">
+          So se o segundo fator estiver ativado na sua conta.
+        </p>
+      </div>
+      {erro ? <p className="aviso-erro">{erro}</p> : null}
+      <button type="submit" disabled={enviando} className="botao-principal">
         {enviando ? "Entrando..." : "Entrar"}
       </button>
     </form>

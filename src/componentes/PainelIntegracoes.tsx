@@ -24,19 +24,36 @@ export type IntegracaoNaTela = {
 
 function Selo({ status }: { status: string | null }) {
   if (status === "OK") {
-    return <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">conectada</span>;
+    return (
+      <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">
+        conectada
+      </span>
+    );
   }
   if (status === "ERRO") {
-    return <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-800">com erro</span>;
+    return (
+      <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-800">
+        com erro
+      </span>
+    );
   }
-  return <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">nao conectada</span>;
+  return (
+    <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
+      nao conectada
+    </span>
+  );
 }
 
-export function PainelIntegracoes({ integracoes }: { integracoes: IntegracaoNaTela[] }) {
+export function PainelIntegracoes({
+  integracoes,
+}: {
+  integracoes: IntegracaoNaTela[];
+}) {
   if (integracoes.length === 0) {
     return (
       <p className="mt-6 text-neutral-600">
-        Nenhuma integracao disponivel: elas aparecem conforme os modulos contratados.
+        Nenhuma integracao disponivel: elas aparecem conforme os modulos
+        contratados.
       </p>
     );
   }
@@ -54,7 +71,9 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [ocupado, setOcupado] = useState(false);
-  const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(null);
+  const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
+    null,
+  );
 
   async function chamar(rota: string, opcoes: RequestInit) {
     setOcupado(true);
@@ -82,7 +101,10 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
     });
 
     if (!resposta.ok) {
-      setRecado({ texto: json.erro ?? "Nao foi possivel conectar.", ok: false });
+      setRecado({
+        texto: json.erro ?? "Nao foi possivel conectar.",
+        ok: false,
+      });
       return;
     }
     // A credencial fica guardada mesmo quando o teste falha: o escritorio
@@ -95,11 +117,14 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
   }
 
   async function testar() {
-    const { resposta, json } = await chamar(`/api/integracoes/${integracao.tipo}/testar`, {
-      method: "POST",
-    });
+    const { resposta, json } = await chamar(
+      `/api/integracoes/${integracao.tipo}/testar`,
+      {
+        method: "POST",
+      },
+    );
     setRecado({
-      texto: resposta.ok ? json.detalhe : json.erro ?? "Falha no teste.",
+      texto: resposta.ok ? json.detalhe : (json.erro ?? "Falha no teste."),
       ok: resposta.ok && json.ok,
     });
   }
@@ -118,11 +143,14 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
       <p className="mt-1 text-sm text-neutral-600">{integracao.descricao}</p>
 
       {integracao.erro ? (
-        <p className="mt-2 text-sm text-red-700">Ultimo erro: {integracao.erro}</p>
+        <p className="mt-2 text-sm text-red-700">
+          Ultimo erro: {integracao.erro}
+        </p>
       ) : null}
       {integracao.verificadoEm ? (
         <p className="mt-1 text-xs text-neutral-500">
-          Verificada em {new Date(integracao.verificadoEm).toLocaleString("pt-BR")}
+          Verificada em{" "}
+          {new Date(integracao.verificadoEm).toLocaleString("pt-BR")}
         </p>
       ) : null}
 
@@ -159,13 +187,18 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
       </div>
 
       {recado ? (
-        <p className={`mt-3 text-sm ${recado.ok ? "text-green-700" : "text-red-700"}`}>
+        <p
+          className={`mt-3 text-sm ${recado.ok ? "text-green-700" : "text-red-700"}`}
+        >
           {recado.texto}
         </p>
       ) : null}
 
       {aberto ? (
-        <form onSubmit={conectar} className="mt-4 grid gap-3 border-t border-neutral-200 pt-4">
+        <form
+          onSubmit={conectar}
+          className="mt-4 grid gap-3 border-t border-neutral-200 pt-4"
+        >
           {integracao.campos.map((campo) => (
             <label key={campo.nome} className="grid gap-1 text-sm">
               {campo.rotulo}

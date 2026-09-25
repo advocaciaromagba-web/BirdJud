@@ -30,7 +30,7 @@ export function diasDeAtraso(vencimento: Date, agora = new Date()): number {
 export function statusPelaRegua(
   statusAtual: string,
   maiorAtraso: number | null,
-  testeAcabou = false
+  testeAcabou = false,
 ): string {
   // Encerrado e decisao humana: a regua nao reativa nem mexe nele.
   if (statusAtual === "ENCERRADO") return "ENCERRADO";
@@ -64,7 +64,7 @@ export function vencimentoDe(competencia: string, dia: number): Date {
 export function vencimentoComPrazo(
   competencia: string,
   dia: number,
-  emissao: Date
+  emissao: Date,
 ): Date {
   const doMes = vencimentoDe(competencia, dia);
   const minimo = new Date(emissao.getTime() + PRAZO_MINIMO_DIAS * DIA);
@@ -83,7 +83,7 @@ export type ResultadoDaRegua = {
  */
 export async function aplicarRegua(
   escritorioId: string,
-  agora = new Date()
+  agora = new Date(),
 ): Promise<ResultadoDaRegua> {
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
@@ -101,14 +101,22 @@ export async function aplicarRegua(
     });
 
     if (!existente) {
-      const itens = await itensDaFatura(escritorioId, escritorio.faixa, competencia);
+      const itens = await itensDaFatura(
+        escritorioId,
+        escritorio.faixa,
+        competencia,
+      );
       const fatura = await prismaPlataforma().fatura.create({
         data: {
           escritorioId,
           competencia,
           valorCentavos: somar(itens),
           detalhe: itens,
-          vencimento: vencimentoComPrazo(competencia, assinatura.diaVencimento, agora),
+          vencimento: vencimentoComPrazo(
+            competencia,
+            assinatura.diaVencimento,
+            agora,
+          ),
         },
       });
       faturaGerada = fatura.id;
@@ -121,11 +129,13 @@ export async function aplicarRegua(
     orderBy: { vencimento: "asc" },
   });
   const atraso = maisAntiga ? diasDeAtraso(maisAntiga.vencimento, agora) : null;
-  const testeAcabou = Boolean(assinatura && !assinatura.canceladaEm && assinatura.fimDoTeste <= agora);
+  const testeAcabou = Boolean(
+    assinatura && !assinatura.canceladaEm && assinatura.fimDoTeste <= agora,
+  );
   const statusNovo = statusPelaRegua(
     escritorio.status,
     atraso !== null && atraso > 0 ? atraso : null,
-    testeAcabou
+    testeAcabou,
   );
 
   if (statusNovo !== escritorio.status) {
@@ -142,12 +152,12 @@ export async function aplicarRegua(
 export async function itensDaFatura(
   escritorioId: string,
   faixaBruta: string,
-  competencia: string
+  competencia: string,
 ): Promise<ItemDaFatura[]> {
   const faixa = ehFaixa(faixaBruta) ? faixaBruta : "ATE_3";
 
   const modulos = await comEscritorio(escritorioId, (db) =>
-    db.moduloContratado.findMany({ where: { ativo: true } })
+    db.moduloContratado.findMany({ where: { ativo: true } }),
   );
 
   const consumo = await consumoDoMes(escritorioId, competencia);
@@ -155,7 +165,7 @@ export async function itensDaFatura(
   return [
     ...mensalidade(
       faixa,
-      modulos.map((m) => m.modulo as Modulo)
+      modulos.map((m) => m.modulo as Modulo),
     ),
     ...excedentes(consumo as { metrica: Metrica; excedente: number }[]),
   ];
@@ -165,7 +175,7 @@ export async function itensDaFatura(
 export async function registrarPagamento(
   faturaId: string,
   idExterno: string | null = null,
-  agora = new Date()
+  agora = new Date(),
 ): Promise<{ escritorioId: string; statusNovo: string }> {
   const fatura = await prismaPlataforma().fatura.update({
     where: { id: faturaId },
@@ -173,7 +183,10 @@ export async function registrarPagamento(
   });
 
   const resultado = await aplicarRegua(fatura.escritorioId, agora);
-  return { escritorioId: fatura.escritorioId, statusNovo: resultado.statusNovo };
+  return {
+    escritorioId: fatura.escritorioId,
+    statusNovo: resultado.statusNovo,
+  };
 }
 
 /** Cria a assinatura no cadastro, ja com o periodo de teste correndo. */
@@ -181,7 +194,7 @@ export async function criarAssinatura(
   escritorioId: string,
   valorCentavos: number,
   diasDeTeste: number,
-  agora = new Date()
+  agora = new Date(),
 ) {
   return prismaPlataforma().assinatura.create({
     data: {

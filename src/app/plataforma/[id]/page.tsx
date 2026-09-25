@@ -1,14 +1,25 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prismaPlataforma } from "@/lib/prisma";
-import { exigirOperador, registrarAcessoSuporte, SemOperador } from "@/lib/plataforma";
+import {
+  exigirOperador,
+  registrarAcessoSuporte,
+  SemOperador,
+} from "@/lib/plataforma";
 import { consumoDoMes, competenciaDe } from "@/lib/consumo";
 import { usoDaFaixa } from "@/lib/faixas";
 import { diasDeAtraso } from "@/lib/cobranca";
 import { emReais } from "@/lib/dinheiro";
-import { AcaoDaFatura, AcoesDoEscritorio } from "@/componentes/AcoesDoEscritorio";
+import {
+  AcaoDaFatura,
+  AcoesDoEscritorio,
+} from "@/componentes/AcoesDoEscritorio";
 
-export default async function EscritorioNoPainel({ params }: { params: Promise<{ id: string }> }) {
+export default async function EscritorioNoPainel({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   let operador;
   try {
     operador = await exigirOperador();
@@ -28,7 +39,11 @@ export default async function EscritorioNoPainel({ params }: { params: Promise<{
   if (!escritorio) notFound();
 
   // Olhar os dados de um escritorio e acesso de suporte: fica registrado.
-  await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Abertura no painel");
+  await registrarAcessoSuporte(
+    operador.operadorId,
+    escritorio.id,
+    "Abertura no painel",
+  );
 
   const [uso, consumo] = await Promise.all([
     usoDaFaixa(escritorio.id),
@@ -52,8 +67,8 @@ export default async function EscritorioNoPainel({ params }: { params: Promise<{
         <h2 className="font-semibold">Assinatura</h2>
         {escritorio.assinatura ? (
           <p className="mt-2 text-neutral-700">
-            {emReais(escritorio.assinatura.valorCentavos)} por mes · vencimento dia{" "}
-            {escritorio.assinatura.diaVencimento} · teste ate{" "}
+            {emReais(escritorio.assinatura.valorCentavos)} por mes · vencimento
+            dia {escritorio.assinatura.diaVencimento} · teste ate{" "}
             {escritorio.assinatura.fimDoTeste.toLocaleDateString("pt-BR")}
           </p>
         ) : (
@@ -68,29 +83,43 @@ export default async function EscritorioNoPainel({ params }: { params: Promise<{
       <AcoesDoEscritorio
         escritorioId={escritorio.id}
         faixaAtual={escritorio.faixa}
-        modulos={escritorio.modulos.map((m) => ({ modulo: m.modulo, ativo: m.ativo }))}
+        modulos={escritorio.modulos.map((m) => ({
+          modulo: m.modulo,
+          ativo: m.ativo,
+        }))}
       />
 
       <section className="mt-6">
         <h2 className="font-semibold">Faturas</h2>
         {escritorio.faturas.length === 0 ? (
-          <p className="mt-2 text-sm text-neutral-600">Nenhuma fatura emitida.</p>
+          <p className="mt-2 text-sm text-neutral-600">
+            Nenhuma fatura emitida.
+          </p>
         ) : (
           <ul className="mt-2 divide-y divide-neutral-200 text-sm">
             {escritorio.faturas.map((fatura) => {
               const atraso = diasDeAtraso(fatura.vencimento, agora);
               return (
-                <li key={fatura.id} className="flex flex-wrap items-center justify-between gap-3 py-2">
+                <li
+                  key={fatura.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-2"
+                >
                   <span>
                     <span className="font-semibold">{fatura.competencia}</span>
                     <span className="block text-xs text-neutral-500">
                       vence {fatura.vencimento.toLocaleDateString("pt-BR")}
-                      {fatura.status === "ABERTA" && atraso > 0 ? ` · ${atraso} dia(s) de atraso` : ""}
-                      {fatura.pagoEm ? ` · paga em ${fatura.pagoEm.toLocaleDateString("pt-BR")}` : ""}
+                      {fatura.status === "ABERTA" && atraso > 0
+                        ? ` · ${atraso} dia(s) de atraso`
+                        : ""}
+                      {fatura.pagoEm
+                        ? ` · paga em ${fatura.pagoEm.toLocaleDateString("pt-BR")}`
+                        : ""}
                     </span>
                   </span>
                   <span className="flex items-center gap-3">
-                    <span className="tabular-nums">{emReais(fatura.valorCentavos)}</span>
+                    <span className="tabular-nums">
+                      {emReais(fatura.valorCentavos)}
+                    </span>
                     <AcaoDaFatura id={fatura.id} status={fatura.status} />
                   </span>
                 </li>
@@ -103,11 +132,16 @@ export default async function EscritorioNoPainel({ params }: { params: Promise<{
       <section className="mt-6">
         <h2 className="font-semibold">Consumo de {competenciaDe()}</h2>
         {consumo.length === 0 ? (
-          <p className="mt-2 text-sm text-neutral-600">Nada medido neste mes.</p>
+          <p className="mt-2 text-sm text-neutral-600">
+            Nada medido neste mes.
+          </p>
         ) : (
           <ul className="mt-2 divide-y divide-neutral-200 text-sm">
             {consumo.map((linha) => (
-              <li key={linha.metrica} className="flex justify-between gap-4 py-2">
+              <li
+                key={linha.metrica}
+                className="flex justify-between gap-4 py-2"
+              >
                 <span className="text-neutral-600">{linha.metrica}</span>
                 <span className="tabular-nums">
                   {linha.quantidade}

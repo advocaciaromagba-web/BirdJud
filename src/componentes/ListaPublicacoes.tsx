@@ -22,11 +22,16 @@ export type PublicacaoNaTela = {
   lida: boolean;
 };
 
-export function ListaPublicacoes({ publicacoes }: { publicacoes: PublicacaoNaTela[] }) {
+export function ListaPublicacoes({
+  publicacoes,
+}: {
+  publicacoes: PublicacaoNaTela[];
+}) {
   if (publicacoes.length === 0) {
     return (
       <p className="mt-6 text-neutral-600">
-        Nenhuma publicacao em aberto. As capturas rodam de madrugada, por OAB monitorada.
+        Nenhuma publicacao em aberto. As capturas rodam de madrugada, por OAB
+        monitorada.
       </p>
     );
   }
@@ -53,7 +58,10 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
     const resposta = await fetch("/api/ia", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tipo: "ANALISE_PUBLICACAO", publicacaoId: publicacao.id }),
+      body: JSON.stringify({
+        tipo: "ANALISE_PUBLICACAO",
+        publicacaoId: publicacao.id,
+      }),
     });
     const json = await resposta.json().catch(() => ({}));
     setOcupado(false);
@@ -79,7 +87,9 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
   return (
     <li
       className={`rounded border p-4 ${
-        publicacao.urgente ? "border-red-300 bg-red-50/40" : "border-neutral-200"
+        publicacao.urgente
+          ? "border-red-300 bg-red-50/40"
+          : "border-neutral-200"
       } ${publicacao.lida ? "opacity-70" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -94,10 +104,14 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
           </span>
         ) : null}
         {publicacao.lida ? (
-          <span className="rounded bg-neutral-100 px-2 py-0.5 text-neutral-600">lida</span>
+          <span className="rounded bg-neutral-100 px-2 py-0.5 text-neutral-600">
+            lida
+          </span>
         ) : null}
         <span className="text-neutral-500">{publicacao.data}</span>
-        {publicacao.oab ? <span className="text-neutral-500">· OAB {publicacao.oab}</span> : null}
+        {publicacao.oab ? (
+          <span className="text-neutral-500">· OAB {publicacao.oab}</span>
+        ) : null}
       </div>
 
       <p className="mt-2 font-semibold">
@@ -114,7 +128,9 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
           .join(" · ")}
       </p>
 
-      <p className={`mt-3 whitespace-pre-line text-sm ${aberta ? "" : "line-clamp-3"}`}>
+      <p
+        className={`mt-3 whitespace-pre-line text-sm ${aberta ? "" : "line-clamp-3"}`}
+      >
         {publicacao.texto}
       </p>
 

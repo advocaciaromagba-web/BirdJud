@@ -10,8 +10,8 @@ export default async function PaginaCadastro() {
       <main className="mx-auto max-w-2xl p-10">
         <h1 className="text-2xl font-bold">Cadastro</h1>
         <p className="mt-3 text-neutral-600">
-          Este endereco pertence a {marca.nome}. O cadastro de escritorios novos e
-          feito no endereco da plataforma.
+          Este endereco pertence a {marca.nome}. O cadastro de escritorios novos
+          e feito no endereco da plataforma.
         </p>
       </main>
     );
@@ -22,7 +22,9 @@ export default async function PaginaCadastro() {
   return (
     <main className="mx-auto max-w-xl p-10">
       <p className="text-sm uppercase tracking-wide text-marca">BirdJud</p>
-      <h1 className="mt-2 text-3xl font-bold">Criar o sistema do seu escritorio</h1>
+      <h1 className="mt-2 text-3xl font-bold">
+        Criar o sistema do seu escritorio
+      </h1>
       <p className="mt-3 text-neutral-600">
         Seu escritorio, sua marca, seus dados isolados. {DIAS_DE_TESTE} dias de
         teste, sem cartao.

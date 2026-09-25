@@ -2,21 +2,225 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * A identidade visual do BirdJud.
+ *
+ * Duas regras que valem para o arquivo inteiro:
+ *
+ * 1. nenhuma cor de escritorio fica escrita aqui. `--marca-primaria` e
+ *    `--marca-secundaria` chegam no <body> em tempo de execucao, vindas da
+ *    tabela Escritorio, e tudo que e "da marca" se apoia nelas. Trocar a cor
+ *    de um escritorio nao mexe em uma linha de CSS;
+ * 2. o que se repete em duas telas vira classe aqui. Cartao, campo, botao e
+ *    tabela escritos a mao em cada pagina foi o que deixou o sistema com cara
+ *    de rascunho.
+ */
+
 :root {
   /* marca neutra; sobrescrita em tempo de execucao pela marca do escritorio */
   --marca-primaria: #0e6b66;
   --marca-secundaria: #16202a;
-  color-scheme: light dark;
+
+  /* Texto sobre a cor primaria. Branco serve para as cores densas que o
+     cadastro aceita; a conferencia de contraste fica na tela de marca. */
+  --marca-contraste: #ffffff;
+
+  --fonte-texto:
+    var(--fonte-interface), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", sans-serif;
+  --fonte-leitura: var(--fonte-serifada), Georgia, "Times New Roman", serif;
 }
 
-/*
- * Palavra sem espaco nao empurra a tela.
- *
- * Chave de acesso de nota tem 44 caracteres seguidos; e-mail e link tambem
- * nao tem onde quebrar. No celular isso alargava a pagina inteira e o
- * navegador respondia afastando o zoom — letra miuda em todo o sistema por
- * causa de uma linha.
- */
 body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  font-family: var(--fonte-texto);
+  /*
+   * Palavra sem espaco nao empurra a tela.
+   *
+   * Chave de acesso de nota tem 44 caracteres seguidos; e-mail e link tambem
+   * nao tem onde quebrar. No celular isso alargava a pagina inteira e o
+   * navegador respondia afastando o zoom — letra miuda em todo o sistema por
+   * causa de uma linha.
+   */
   overflow-wrap: break-word;
+}
+
+/* ---------- tipografia ---------- */
+
+h1 {
+  @apply text-2xl font-bold tracking-tight text-slate-900;
+}
+
+h2 {
+  @apply text-lg font-semibold tracking-tight text-slate-900;
+}
+
+h3 {
+  @apply text-base font-semibold text-slate-900;
+}
+
+/* Rotulo pequeno em versalete, acima de um titulo de secao. */
+.sobretitulo {
+  @apply text-xs font-semibold uppercase tracking-[0.18em] text-slate-500;
+}
+
+/* A frase que apresenta uma tela. */
+.chamada {
+  @apply mt-1 text-sm leading-relaxed text-slate-600;
+}
+
+/* Texto corrido de peca, clausula ou publicacao: serifada, medida curta. */
+.leitura {
+  font-family: var(--fonte-leitura);
+  @apply text-[15px] leading-relaxed text-slate-800;
+}
+
+/* ---------- superficies ---------- */
+
+.cartao {
+  @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
+}
+
+.cartao-aperto {
+  @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm;
+}
+
+/* Numero grande com rotulo: contadores do painel. */
+.indicador {
+  @apply rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm;
+}
+
+.indicador-numero {
+  @apply text-2xl font-bold tracking-tight text-slate-900;
+}
+
+.indicador-rotulo {
+  @apply text-xs font-medium uppercase tracking-wide text-slate-500;
+}
+
+/* Linha de lista clicavel: cliente, processo, arquivo. */
+.linha {
+  @apply flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg px-3 py-3 transition hover:bg-slate-50;
+}
+
+/* ---------- formulario ---------- */
+
+.rotulo {
+  @apply mb-1 block text-sm font-medium text-slate-700;
+}
+
+.campo {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition
+         focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100;
+}
+
+.ajuda {
+  @apply mt-1 text-xs text-slate-500;
+}
+
+/* ---------- botoes ---------- */
+
+.botao {
+  /* min-h-11: alvo de toque de 44px, o minimo que a mao acerta no celular. */
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+         transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.botao-principal {
+  @apply botao;
+  background-color: var(--marca-primaria);
+  color: var(--marca-contraste);
+}
+.botao-principal:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.botao-secundario {
+  @apply botao border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+}
+
+.botao-discreto {
+  @apply botao px-2 text-slate-600 hover:text-slate-900;
+}
+
+.botao-perigo {
+  @apply botao border border-red-200 bg-white text-red-700 hover:bg-red-50;
+}
+
+/* ---------- sinalizacao ---------- */
+
+.etiqueta {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.etiqueta-marca {
+  @apply etiqueta;
+  background-color: color-mix(in srgb, var(--marca-primaria) 12%, white);
+  color: var(--marca-primaria);
+}
+
+.etiqueta-neutra {
+  @apply etiqueta bg-slate-100 text-slate-600;
+}
+
+.etiqueta-atencao {
+  @apply etiqueta bg-amber-100 text-amber-800;
+}
+
+.etiqueta-ok {
+  @apply etiqueta bg-emerald-100 text-emerald-800;
+}
+
+.etiqueta-erro {
+  @apply etiqueta bg-red-100 text-red-800;
+}
+
+.aviso {
+  @apply rounded-lg border-l-4 p-4 text-sm;
+}
+.aviso-atencao {
+  @apply aviso border-amber-400 bg-amber-50 text-amber-900;
+}
+.aviso-erro {
+  @apply aviso border-red-400 bg-red-50 text-red-900;
+}
+.aviso-info {
+  @apply aviso border-sky-400 bg-sky-50 text-sky-900;
+}
+.aviso-ok {
+  @apply aviso border-emerald-400 bg-emerald-50 text-emerald-900;
+}
+
+/* Tela sem nada ainda: diz o que fazer, nao so que esta vazio. */
+.vazio {
+  @apply rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600;
+}
+
+/* ---------- tabela ---------- */
+
+.tabela {
+  @apply w-full border-collapse text-sm;
+}
+.tabela thead th {
+  @apply border-b border-slate-200 bg-slate-50 px-3 py-2 text-left font-medium text-slate-600;
+}
+.tabela tbody td {
+  @apply border-b border-slate-100 px-3 py-2.5 align-top;
+}
+.tabela tbody tr:hover {
+  @apply bg-slate-50;
+}
+
+/* ---------- estrutura da pagina ---------- */
+
+.pagina {
+  @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8;
+}
+
+.pagina-estreita {
+  @apply mx-auto w-full max-w-3xl px-4 py-8 sm:px-6;
+}
+
+.cabecalho-da-pagina {
+  @apply mb-6 flex flex-wrap items-end justify-between gap-3;
 }

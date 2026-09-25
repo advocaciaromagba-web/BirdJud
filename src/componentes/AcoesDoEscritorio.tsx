@@ -26,16 +26,24 @@ export function AcoesDoEscritorio({
   modulos: { modulo: string; ativo: boolean }[];
 }) {
   const router = useRouter();
-  const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(null);
+  const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
+    null,
+  );
   const [ocupado, setOcupado] = useState(false);
   const contratados = new Map(modulos.map((m) => [m.modulo, m.ativo]));
 
   async function agir(corpo: Record<string, unknown>) {
     setOcupado(true);
     setRecado(null);
-    const { ok, json } = await chamar(`/api/plataforma/escritorios/${escritorioId}`, corpo);
+    const { ok, json } = await chamar(
+      `/api/plataforma/escritorios/${escritorioId}`,
+      corpo,
+    );
     setOcupado(false);
-    setRecado({ texto: ok ? json.detalhe ?? "Feito." : json.erro ?? "Falhou.", ok });
+    setRecado({
+      texto: ok ? (json.detalhe ?? "Feito.") : (json.erro ?? "Falhou."),
+      ok,
+    });
     router.refresh();
   }
 
@@ -74,7 +82,9 @@ export function AcoesDoEscritorio({
                 disabled={ocupado}
                 onClick={() => agir({ acao: "modulo", modulo, ativo: !ativo })}
                 className={`rounded border px-2 py-1 text-xs ${
-                  ativo ? "border-green-600 bg-green-50 text-green-800" : "border-neutral-300"
+                  ativo
+                    ? "border-green-600 bg-green-50 text-green-800"
+                    : "border-neutral-300"
                 } disabled:opacity-60`}
               >
                 {ativo ? "✓ " : ""}
@@ -97,7 +107,9 @@ export function AcoesDoEscritorio({
       </div>
 
       {recado ? (
-        <p className={`mt-3 ${recado.ok ? "text-green-700" : "text-red-700"}`}>{recado.texto}</p>
+        <p className={`mt-3 ${recado.ok ? "text-green-700" : "text-red-700"}`}>
+          {recado.texto}
+        </p>
       ) : null}
     </section>
   );
@@ -124,7 +136,10 @@ export function AcaoDaFatura({ id, status }: { id: string; status: string }) {
       disabled={ocupado}
       onClick={async () => {
         setOcupado(true);
-        await chamar("/api/plataforma/faturas", { faturaId: id, acao: "pagar" });
+        await chamar("/api/plataforma/faturas", {
+          faturaId: id,
+          acao: "pagar",
+        });
         setOcupado(false);
         router.refresh();
       }}

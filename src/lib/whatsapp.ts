@@ -45,10 +45,13 @@ function baseMeta(): string {
 }
 
 export async function credencialDoEscritorio(
-  escritorioId: string
+  escritorioId: string,
 ): Promise<CredencialWhatsapp> {
   try {
-    const dados = await obterIntegracao<CredencialWhatsapp>(escritorioId, "WHATSAPP_META");
+    const dados = await obterIntegracao<CredencialWhatsapp>(
+      escritorioId,
+      "WHATSAPP_META",
+    );
     if (!dados.numeroId || !dados.token) throw new SemNumeroDeWhatsapp();
     return dados;
   } catch (erro) {
@@ -69,7 +72,10 @@ export function paraE164BR(bruto: string | null | undefined): string | null {
   let digitos = bruto.replace(/\D/g, "");
 
   // Ja veio com o pais.
-  if (digitos.startsWith("55") && (digitos.length === 12 || digitos.length === 13)) {
+  if (
+    digitos.startsWith("55") &&
+    (digitos.length === 12 || digitos.length === 13)
+  ) {
     digitos = digitos.slice(2);
   }
   // DDD + 8 (fixo) ou 9 (celular) digitos.
@@ -103,7 +109,7 @@ export type ResultadoDoEnvio = {
  */
 export async function enviarModelo(
   escritorioId: string,
-  envio: EnvioDeModelo
+  envio: EnvioDeModelo,
 ): Promise<ResultadoDoEnvio> {
   const credencial = await credencialDoEscritorio(escritorioId);
 
@@ -117,7 +123,10 @@ export async function enviarModelo(
       components: [
         {
           type: "body",
-          parameters: envio.parametros.map((texto) => ({ type: "text", text: texto })),
+          parameters: envio.parametros.map((texto) => ({
+            type: "text",
+            text: texto,
+          })),
         },
       ],
     },
@@ -134,7 +143,7 @@ export async function enviarModelo(
           "Content-Type": "application/json",
         },
         body: JSON.stringify(corpo),
-      }
+      },
     );
   } catch (erro) {
     throw new FalhaNoWhatsapp(descreverFalha(erro), false);
@@ -147,12 +156,20 @@ export async function enviarModelo(
 
   if (!resposta.ok) {
     const codigo = json?.error?.code ?? 0;
-    const mensagem = json?.error?.message ?? `A Meta respondeu ${resposta.status}.`;
-    throw new FalhaNoWhatsapp(explicar(codigo, mensagem), ehDefinitivo(codigo, resposta.status));
+    const mensagem =
+      json?.error?.message ?? `A Meta respondeu ${resposta.status}.`;
+    throw new FalhaNoWhatsapp(
+      explicar(codigo, mensagem),
+      ehDefinitivo(codigo, resposta.status),
+    );
   }
 
   const id = json?.messages?.[0]?.id;
-  if (!id) throw new FalhaNoWhatsapp("A Meta aceitou sem devolver o id da mensagem.", false);
+  if (!id)
+    throw new FalhaNoWhatsapp(
+      "A Meta aceitou sem devolver o id da mensagem.",
+      false,
+    );
   return { idNaMeta: id };
 }
 

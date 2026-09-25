@@ -11,7 +11,12 @@ import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { enviarLote, SemRemetente, type Mensagem } from "./email";
 import { registrarConsumo } from "./consumo";
 import { moduloAtivo } from "./modulos";
-import { enviarModelo, FalhaNoWhatsapp, paraE164BR, SemNumeroDeWhatsapp } from "./whatsapp";
+import {
+  enviarModelo,
+  FalhaNoWhatsapp,
+  paraE164BR,
+  SemNumeroDeWhatsapp,
+} from "./whatsapp";
 import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
 import { dataHoraBR } from "./datas";
 import {
@@ -37,7 +42,7 @@ export type ResultadoDaGeracao = {
 /** Quem recebe por WhatsApp: quis receber, tem telefone legivel, e o modulo esta contratado. */
 function telefoneDoUsuario(
   usuario: { recebeWhatsapp: boolean; telefone: string | null },
-  moduloLigado: boolean
+  moduloLigado: boolean,
 ): string | null {
   if (!moduloLigado || !usuario.recebeWhatsapp) return null;
   return paraE164BR(usuario.telefone);
@@ -50,7 +55,7 @@ export function diaDaChave(data: Date): string {
 
 export async function gerarAvisos(
   escritorioId: string,
-  agora = new Date()
+  agora = new Date(),
 ): Promise<ResultadoDaGeracao> {
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
@@ -61,13 +66,19 @@ export async function gerarAvisos(
 
   const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
 
-  const resumos = await gerarResumos(escritorioId, escritorio.nome, endereco, agora, comWhatsapp);
+  const resumos = await gerarResumos(
+    escritorioId,
+    escritorio.nome,
+    endereco,
+    agora,
+    comWhatsapp,
+  );
   const lembretes = await gerarLembretes(
     escritorioId,
     escritorio.nome,
     endereco,
     agora,
-    comWhatsapp
+    comWhatsapp,
   );
 
   return { resumos, lembretes };
@@ -78,18 +89,23 @@ async function gerarResumos(
   nomeEscritorio: string,
   endereco: string,
   agora: Date,
-  comWhatsapp: boolean
+  comWhatsapp: boolean,
 ): Promise<number> {
   const dia = diaDaChave(agora);
 
-  const { publicacoes, usuarios } = await comEscritorio(escritorioId, async (db) => ({
-    publicacoes: await db.publicacao.findMany({
-      where: { lida: false, arquivada: false },
-      orderBy: [{ urgente: "desc" }, { dataDisponibilizacao: "desc" }],
-      take: 50,
+  const { publicacoes, usuarios } = await comEscritorio(
+    escritorioId,
+    async (db) => ({
+      publicacoes: await db.publicacao.findMany({
+        where: { lida: false, arquivada: false },
+        orderBy: [{ urgente: "desc" }, { dataDisponibilizacao: "desc" }],
+        take: 50,
+      }),
+      usuarios: await db.usuario.findMany({
+        where: { ativo: true, recebeResumo: true },
+      }),
     }),
-    usuarios: await db.usuario.findMany({ where: { ativo: true, recebeResumo: true } }),
-  }));
+  );
 
   // Sem publicacao nao lida, nao ha resumo. E-mail vazio todo dia treina a
   // equipe a ignorar o remetente — justamente o que nao se pode perder.
@@ -144,19 +160,24 @@ async function gerarLembretes(
   nomeEscritorio: string,
   endereco: string,
   agora: Date,
-  comWhatsapp: boolean
+  comWhatsapp: boolean,
 ): Promise<number> {
   const limite = new Date(agora.getTime() + ANTECEDENCIA_HORAS * HORA);
 
-  const { compromissos, usuarios } = await comEscritorio(escritorioId, async (db) => ({
-    compromissos: await db.compromisso.findMany({
-      where: { concluido: false, inicio: { gte: agora, lte: limite } },
-      include: { processo: { select: { numero: true } } },
-      orderBy: { inicio: "asc" },
-      take: 100,
+  const { compromissos, usuarios } = await comEscritorio(
+    escritorioId,
+    async (db) => ({
+      compromissos: await db.compromisso.findMany({
+        where: { concluido: false, inicio: { gte: agora, lte: limite } },
+        include: { processo: { select: { numero: true } } },
+        orderBy: { inicio: "asc" },
+        take: 100,
+      }),
+      usuarios: await db.usuario.findMany({
+        where: { ativo: true, recebeLembretes: true },
+      }),
     }),
-    usuarios: await db.usuario.findMany({ where: { ativo: true, recebeLembretes: true } }),
-  }));
+  );
 
   if (compromissos.length === 0 || usuarios.length === 0) return 0;
 
@@ -206,7 +227,9 @@ async function gerarLembretes(
           limparParametro(quando.format(dados.inicio)),
           limparParametro(
             dados.local ??
-              (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null)
+              (dados.numeroProcesso
+                ? `Processo ${dados.numeroProcesso}`
+                : null),
           ),
         ],
       });
@@ -229,7 +252,10 @@ type NovoAviso = {
 };
 
 /** Devolve false quando o aviso ja existia — e o que torna a rotina repetivel. */
-async function criarAviso(escritorioId: string, aviso: NovoAviso): Promise<boolean> {
+async function criarAviso(
+  escritorioId: string,
+  aviso: NovoAviso,
+): Promise<boolean> {
   return comEscritorio(escritorioId, async (db) => {
     const existente = await db.aviso.findFirst({
       where: { chave: aviso.chave },
@@ -238,7 +264,10 @@ async function criarAviso(escritorioId: string, aviso: NovoAviso): Promise<boole
     if (existente) return false;
 
     await db.aviso.create({
-      data: semEscritorio({ ...aviso, parametros: aviso.parametros ?? undefined }),
+      data: semEscritorio({
+        ...aviso,
+        parametros: aviso.parametros ?? undefined,
+      }),
     });
     return true;
   });
@@ -251,16 +280,21 @@ export type ResultadoDoEnvio = {
 };
 
 export async function enviarAvisosPendentes(
-  escritorioId: string
+  escritorioId: string,
 ): Promise<ResultadoDoEnvio> {
   const pendentes = await comEscritorio(escritorioId, (db) =>
     db.aviso.findMany({
-      where: { estado: "PENDENTE", canal: "EMAIL", tentativas: { lt: MAX_TENTATIVAS } },
+      where: {
+        estado: "PENDENTE",
+        canal: "EMAIL",
+        tentativas: { lt: MAX_TENTATIVAS },
+      },
       orderBy: { criadoEm: "asc" },
       take: 200,
-    })
+    }),
   );
-  if (pendentes.length === 0) return { enviados: 0, falhas: 0, semRemetente: false };
+  if (pendentes.length === 0)
+    return { enviados: 0, falhas: 0, semRemetente: false };
 
   const mensagens: Mensagem[] = pendentes.map((aviso) => ({
     para: aviso.destino,
@@ -310,7 +344,11 @@ export async function enviarAvisosPendentes(
     await registrarConsumo(escritorioId, "EMAIL_ENVIADO", resultado.enviadas);
   }
 
-  return { enviados: resultado.enviadas, falhas: resultado.falhas.length, semRemetente: false };
+  return {
+    enviados: resultado.enviadas,
+    falhas: resultado.falhas.length,
+    semRemetente: false,
+  };
 }
 
 export type ResultadoDoEnvioNoWhatsapp = {
@@ -329,16 +367,21 @@ export type ResultadoDoEnvioNoWhatsapp = {
  * atrasa os que dariam certo e gasta a nota de qualidade do numero.
  */
 export async function enviarAvisosNoWhatsapp(
-  escritorioId: string
+  escritorioId: string,
 ): Promise<ResultadoDoEnvioNoWhatsapp> {
   const pendentes = await comEscritorio(escritorioId, (db) =>
     db.aviso.findMany({
-      where: { estado: "PENDENTE", canal: "WHATSAPP", tentativas: { lt: MAX_TENTATIVAS } },
+      where: {
+        estado: "PENDENTE",
+        canal: "WHATSAPP",
+        tentativas: { lt: MAX_TENTATIVAS },
+      },
       orderBy: { criadoEm: "asc" },
       take: 200,
-    })
+    }),
   );
-  if (pendentes.length === 0) return { enviados: 0, falhas: 0, semNumero: false };
+  if (pendentes.length === 0)
+    return { enviados: 0, falhas: 0, semNumero: false };
 
   let enviados = 0;
   let falhas = 0;
@@ -350,7 +393,12 @@ export async function enviarAvisosNoWhatsapp(
 
     if (!aviso.modelo || parametros.length === 0) {
       // Aviso de WhatsApp sem modelo nao tem como sair: marca e segue.
-      await marcarFalha(escritorioId, aviso.id, MAX_TENTATIVAS, "Aviso sem modelo aprovado.");
+      await marcarFalha(
+        escritorioId,
+        aviso.id,
+        MAX_TENTATIVAS,
+        "Aviso sem modelo aprovado.",
+      );
       falhas += 1;
       continue;
     }
@@ -365,7 +413,7 @@ export async function enviarAvisosNoWhatsapp(
         db.aviso.update({
           where: { id: aviso.id },
           data: { estado: "ENVIADO", enviadoEm: new Date(), erro: null },
-        })
+        }),
       );
       enviados += 1;
     } catch (erro) {
@@ -376,13 +424,16 @@ export async function enviarAvisosNoWhatsapp(
       }
       if (!(erro instanceof FalhaNoWhatsapp)) throw erro;
 
-      const tentativas = erro.definitivo ? MAX_TENTATIVAS : aviso.tentativas + 1;
+      const tentativas = erro.definitivo
+        ? MAX_TENTATIVAS
+        : aviso.tentativas + 1;
       await marcarFalha(escritorioId, aviso.id, tentativas, erro.message);
       falhas += 1;
     }
   }
 
-  if (enviados > 0) await registrarConsumo(escritorioId, "WHATSAPP_MSG", enviados);
+  if (enviados > 0)
+    await registrarConsumo(escritorioId, "WHATSAPP_MSG", enviados);
   return { enviados, falhas, semNumero: false };
 }
 
@@ -390,7 +441,7 @@ async function marcarFalha(
   escritorioId: string,
   id: string,
   tentativas: number,
-  motivo: string
+  motivo: string,
 ): Promise<void> {
   await comEscritorio(escritorioId, (db) =>
     db.aviso.update({
@@ -400,6 +451,6 @@ async function marcarFalha(
         erro: motivo.slice(0, 500),
         estado: tentativas >= MAX_TENTATIVAS ? "FALHOU" : "PENDENTE",
       },
-    })
+    }),
   );
 }

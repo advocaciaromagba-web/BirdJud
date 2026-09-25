@@ -40,7 +40,9 @@ export const TIPOS_ACEITOS: Record<string, string[]> = {
   "text/plain": ["txt"],
   "text/csv": ["csv"],
   "application/msword": ["doc"],
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ["docx"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    "docx",
+  ],
   "application/vnd.oasis.opendocument.text": ["odt"],
   "application/vnd.ms-excel": ["xls"],
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ["xlsx"],
@@ -61,7 +63,7 @@ export class EspacoEsgotado extends Error {
   readonly status = 507;
   constructor(usadoMb: number, tetoMb: number) {
     super(
-      `O espaco do escritorio acabou: ${usadoMb} MB usados de um teto de ${tetoMb} MB. Apague o que nao serve mais ou fale com o suporte para aumentar o plano.`
+      `O espaco do escritorio acabou: ${usadoMb} MB usados de um teto de ${tetoMb} MB. Apague o que nao serve mais ou fale com o suporte para aumentar o plano.`,
     );
     this.name = "EspacoEsgotado";
   }
@@ -102,10 +104,17 @@ export type EspacoDoEscritorio = {
   arquivos: number;
 };
 
-export async function espacoDoEscritorio(escritorioId: string): Promise<EspacoDoEscritorio> {
+export async function espacoDoEscritorio(
+  escritorioId: string,
+): Promise<EspacoDoEscritorio> {
   const { soma, contrato } = await comEscritorio(escritorioId, async (db) => ({
-    soma: await db.arquivo.aggregate({ _sum: { tamanhoBytes: true }, _count: true }),
-    contrato: await db.moduloContratado.findFirst({ where: { modulo: "NUVEM", ativo: true } }),
+    soma: await db.arquivo.aggregate({
+      _sum: { tamanhoBytes: true },
+      _count: true,
+    }),
+    contrato: await db.moduloContratado.findFirst({
+      where: { modulo: "NUVEM", ativo: true },
+    }),
   }));
 
   const franquiaMb = contrato?.franquia ?? FRANQUIA_PADRAO_MB;
@@ -144,17 +153,21 @@ export type PedidoDeArquivo = {
  */
 export async function guardarArquivo(
   escritorioId: string,
-  pedido: PedidoDeArquivo
+  pedido: PedidoDeArquivo,
 ): Promise<{ id: string; nome: string; tamanhoBytes: number }> {
   const nome = nomeLimpo(pedido.nome);
 
-  if (pedido.conteudo.byteLength === 0) throw new ArquivoRecusado("Arquivo vazio.");
+  if (pedido.conteudo.byteLength === 0)
+    throw new ArquivoRecusado("Arquivo vazio.");
   if (pedido.conteudo.byteLength > TAMANHO_MAXIMO_MB * MB) {
-    throw new ArquivoRecusado(`Arquivo maior que ${TAMANHO_MAXIMO_MB} MB.`, 413);
+    throw new ArquivoRecusado(
+      `Arquivo maior que ${TAMANHO_MAXIMO_MB} MB.`,
+      413,
+    );
   }
   if (!tipoConfere(pedido.tipo, nome)) {
     throw new ArquivoRecusado(
-      `Tipo de arquivo nao aceito (${pedido.tipo || "sem tipo"} / .${extensaoDe(nome)}).`
+      `Tipo de arquivo nao aceito (${pedido.tipo || "sem tipo"} / .${extensaoDe(nome)}).`,
     );
   }
 
@@ -174,22 +187,26 @@ export async function guardarArquivo(
         clienteId: pedido.clienteId ?? null,
         processoId: pedido.processoId ?? null,
       }),
-    })
+    }),
   );
 
   try {
-    const gravado = await disco.gravar(escritorioId, arquivo.id, pedido.conteudo);
+    const gravado = await disco.gravar(
+      escritorioId,
+      arquivo.id,
+      pedido.conteudo,
+    );
     await comEscritorio(escritorioId, (db) =>
       db.arquivo.update({
         where: { id: arquivo.id },
         data: { tamanhoBytes: gravado.tamanhoBytes, hash: gravado.hash },
-      })
+      }),
     );
     await medirEspaco(escritorioId);
     return { id: arquivo.id, nome, tamanhoBytes: gravado.tamanhoBytes };
   } catch (erro) {
     await comEscritorio(escritorioId, (db) =>
-      db.arquivo.delete({ where: { id: arquivo.id } })
+      db.arquivo.delete({ where: { id: arquivo.id } }),
     ).catch(() => {});
     await disco.apagar(escritorioId, arquivo.id).catch(() => {});
     throw erro;
@@ -212,10 +229,10 @@ export class ArquivoNaoEncontrado extends Error {
  */
 export async function lerArquivo(
   escritorioId: string,
-  id: string
+  id: string,
 ): Promise<{ nome: string; tipo: string; conteudo: Buffer }> {
   const arquivo = await comEscritorio(escritorioId, (db) =>
-    db.arquivo.findUnique({ where: { id } })
+    db.arquivo.findUnique({ where: { id } }),
   );
   if (!arquivo) throw new ArquivoNaoEncontrado();
 
@@ -227,13 +244,18 @@ export async function lerArquivo(
   }
 }
 
-export async function apagarArquivo(escritorioId: string, id: string): Promise<void> {
+export async function apagarArquivo(
+  escritorioId: string,
+  id: string,
+): Promise<void> {
   const arquivo = await comEscritorio(escritorioId, (db) =>
-    db.arquivo.findUnique({ where: { id } })
+    db.arquivo.findUnique({ where: { id } }),
   );
   if (!arquivo) throw new ArquivoNaoEncontrado();
 
-  await comEscritorio(escritorioId, (db) => db.arquivo.delete({ where: { id } }));
+  await comEscritorio(escritorioId, (db) =>
+    db.arquivo.delete({ where: { id } }),
+  );
   await disco.apagar(escritorioId, id);
   await medirEspaco(escritorioId);
 }

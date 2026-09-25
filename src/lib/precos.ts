@@ -75,14 +75,15 @@ export function mensalidade(faixa: Faixa, modulos: Modulo[]): ItemDaFatura[] {
   ];
   for (const modulo of modulos) {
     const preco = PRECO_DO_MODULO[modulo];
-    if (preco) itens.push({ descricao: `Modulo ${modulo}`, valorCentavos: preco });
+    if (preco)
+      itens.push({ descricao: `Modulo ${modulo}`, valorCentavos: preco });
   }
   return itens;
 }
 
 /** Excedentes do mes, a partir do consumo ja apurado. */
 export function excedentes(
-  linhas: { metrica: Metrica; excedente: number }[]
+  linhas: { metrica: Metrica; excedente: number }[],
 ): ItemDaFatura[] {
   return linhas
     .filter((linha) => linha.excedente > 0 && PRECO_DO_EXCEDENTE[linha.metrica])

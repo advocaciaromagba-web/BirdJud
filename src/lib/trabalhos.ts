@@ -11,7 +11,11 @@ import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
-import { enviarAvisosNoWhatsapp, enviarAvisosPendentes, gerarAvisos } from "./avisos";
+import {
+  enviarAvisosNoWhatsapp,
+  enviarAvisosPendentes,
+  gerarAvisos,
+} from "./avisos";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -31,8 +35,18 @@ async function apurarConsumo({ escritorioId, dados }: Contexto): Promise<void> {
     usuarios: await db.usuario.count({ where: { ativo: true } }),
   }));
 
-  await definirConsumo(escritorioId, "REGISTROS", numeros.registros, competencia);
-  await definirConsumo(escritorioId, "USUARIOS_ATIVOS", numeros.usuarios, competencia);
+  await definirConsumo(
+    escritorioId,
+    "REGISTROS",
+    numeros.registros,
+    competencia,
+  );
+  await definirConsumo(
+    escritorioId,
+    "USUARIOS_ATIVOS",
+    numeros.usuarios,
+    competencia,
+  );
 }
 
 /**
@@ -51,7 +65,9 @@ async function ruaDeCobranca({ escritorioId }: Contexto): Promise<void> {
 async function purgar(): Promise<void> {
   const resultado = await purgarEncerrados();
   if (resultado.apagados > 0) {
-    console.log(`Purga: ${resultado.apagados} escritorio(s): ${resultado.escritorios.join(", ")}`);
+    console.log(
+      `Purga: ${resultado.apagados} escritorio(s): ${resultado.escritorios.join(", ")}`,
+    );
   }
 }
 
@@ -66,7 +82,9 @@ async function capturar({ escritorioId }: Contexto): Promise<void> {
   const resultado = await capturarPublicacoes(escritorioId);
 
   if (resultado.falhas.length > 0) {
-    const nomes = resultado.falhas.map((f) => `${f.oab}: ${f.motivo}`).join(" | ");
+    const nomes = resultado.falhas
+      .map((f) => `${f.oab}: ${f.motivo}`)
+      .join(" | ");
     throw new Error(`Falha em ${resultado.falhas.length} OAB(s) — ${nomes}`);
   }
 }
@@ -87,14 +105,18 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
   if (envio.semRemetente) {
     // Nao e erro do trabalho: e configuracao que falta no escritorio. Repetir
     // a tentativa nao ajuda, e marcar como falha encheria a fila de ruido.
-    console.log(`AVISAR ${escritorioId}: e-mail nao conectado, avisos aguardando.`);
+    console.log(
+      `AVISAR ${escritorioId}: e-mail nao conectado, avisos aguardando.`,
+    );
   }
 
   // O WhatsApp so tem pendente se o modulo estiver contratado — a geracao
   // cuida disso. Falta de numero conectado tambem nao e falha do trabalho.
   const zap = await enviarAvisosNoWhatsapp(escritorioId);
   if (zap.semNumero) {
-    console.log(`AVISAR ${escritorioId}: WhatsApp nao conectado, avisos aguardando.`);
+    console.log(
+      `AVISAR ${escritorioId}: WhatsApp nao conectado, avisos aguardando.`,
+    );
   }
 
   const falhas = envio.falhas + zap.falhas;
@@ -109,7 +131,9 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
  * Escritorio sem conta conectada nao e falha do trabalho: e configuracao que
  * falta, e repetir a tentativa nao ajudaria — vira aviso no log.
  */
-async function sincronizarCobrancasDoEscritorio({ escritorioId }: Contexto): Promise<void> {
+async function sincronizarCobrancasDoEscritorio({
+  escritorioId,
+}: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("SINCRONIZAR_COBRANCAS exige escritorio.");
 
   let resultado;
@@ -117,15 +141,21 @@ async function sincronizarCobrancasDoEscritorio({ escritorioId }: Contexto): Pro
     resultado = await sincronizarCobrancas(escritorioId);
   } catch (erro) {
     if (erro instanceof SemContaDeCobranca) {
-      console.log(`SINCRONIZAR_COBRANCAS ${escritorioId}: conta Asaas nao conectada.`);
+      console.log(
+        `SINCRONIZAR_COBRANCAS ${escritorioId}: conta Asaas nao conectada.`,
+      );
       return;
     }
     throw erro;
   }
 
   if (resultado.falhas.length > 0) {
-    const motivos = resultado.falhas.map((f) => `${f.cobranca}: ${f.motivo}`).join(" | ");
-    throw new Error(`Falha em ${resultado.falhas.length} cobranca(s) — ${motivos}`);
+    const motivos = resultado.falhas
+      .map((f) => `${f.cobranca}: ${f.motivo}`)
+      .join(" | ");
+    throw new Error(
+      `Falha em ${resultado.falhas.length} cobranca(s) — ${motivos}`,
+    );
   }
 }
 
@@ -158,7 +188,10 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
  * modulo daquele trabalho tambem. E o lugar onde "rotina para o escritorio"
  * vira "uma rotina por escritorio".
  */
-export async function espalhar(tipo: string, dados: Record<string, unknown> = {}): Promise<number> {
+export async function espalhar(
+  tipo: string,
+  dados: Record<string, unknown> = {},
+): Promise<number> {
   // Trabalho da plataforma entra uma vez so, sem escritorio.
   if (TRABALHOS_DA_PLATAFORMA.has(tipo)) {
     await enfileirar(tipo, null, dados);

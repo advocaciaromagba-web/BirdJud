@@ -1,6 +1,10 @@
 // Registro de aceite dos documentos juridicos.
 import { comEscritorio, semEscritorio } from "./prisma";
-import { DOCUMENTOS, VERSAO_DOS_DOCUMENTOS, type DocumentoJuridico } from "./juridico";
+import {
+  DOCUMENTOS,
+  VERSAO_DOS_DOCUMENTOS,
+  type DocumentoJuridico,
+} from "./juridico";
 
 export type Assinante = {
   nome: string;
@@ -18,7 +22,7 @@ export type Assinante = {
 export async function registrarAceite(
   escritorioId: string,
   assinante: Assinante,
-  documentos: readonly DocumentoJuridico[] = DOCUMENTOS.map((d) => d.chave)
+  documentos: readonly DocumentoJuridico[] = DOCUMENTOS.map((d) => d.chave),
 ): Promise<number> {
   const { count } = await comEscritorio(escritorioId, (db) =>
     db.aceiteDeTermos.createMany({
@@ -30,19 +34,19 @@ export async function registrarAceite(
           versao: VERSAO_DOS_DOCUMENTOS,
           ip: assinante.ip,
           navegador: assinante.navegador?.slice(0, 300) ?? null,
-        })
+        }),
       ),
-    })
+    }),
   );
   return count;
 }
 
 /** Documentos cuja versao vigente ainda nao foi aceita por este escritorio. */
 export async function documentosPendentes(
-  escritorioId: string
+  escritorioId: string,
 ): Promise<DocumentoJuridico[]> {
   const aceites = await comEscritorio(escritorioId, (db) =>
-    db.aceiteDeTermos.findMany({ where: { versao: VERSAO_DOS_DOCUMENTOS } })
+    db.aceiteDeTermos.findMany({ where: { versao: VERSAO_DOS_DOCUMENTOS } }),
   );
   const aceitos = new Set(aceites.map((a) => a.documento));
   return DOCUMENTOS.map((d) => d.chave).filter((chave) => !aceitos.has(chave));

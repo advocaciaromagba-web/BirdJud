@@ -37,7 +37,9 @@ const TENTATIVAS_DO_OPERADOR = 10;
 const JANELA_DO_OPERADOR = 15 * 60;
 
 /** IP de quem chamou, como o NextAuth entrega os cabecalhos. */
-function origemDaTentativa(cabecalhos: Record<string, unknown> | undefined): string {
+function origemDaTentativa(
+  cabecalhos: Record<string, unknown> | undefined,
+): string {
   const encaminhado = cabecalhos?.["x-forwarded-for"];
   if (typeof encaminhado === "string" && encaminhado.trim()) {
     return encaminhado.split(",")[0]!.trim();
@@ -45,7 +47,6 @@ function origemDaTentativa(cabecalhos: Record<string, unknown> | undefined): str
   const real = cabecalhos?.["x-real-ip"];
   return typeof real === "string" && real.trim() ? real.trim() : "sem-ip";
 }
-
 
 export const opcoesAuth: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: 60 * 60 * 12 },
@@ -68,15 +69,19 @@ export const opcoesAuth: NextAuthOptions = {
         // O escritorio vem do endereco, resolvido aqui no servidor. Nada do
         // corpo do POST participa dessa decisao: se viesse de la, bastaria
         // forjar o id de outro escritorio ou um status que ja esta suspenso.
-        const origem = origemDaTentativa(req?.headers as Record<string, unknown> | undefined);
+        const origem = origemDaTentativa(
+          req?.headers as Record<string, unknown> | undefined,
+        );
         const porOrigem = await registrarTentativa(
           `login:${origem}`,
           TENTATIVAS_POR_ORIGEM,
-          JANELA_DA_ORIGEM
+          JANELA_DA_ORIGEM,
         );
         if (!porOrigem.permitido) return null;
 
-        const marca = await escritorioPorSlug(slugDoHost(req?.headers?.host ?? null) ?? "");
+        const marca = await escritorioPorSlug(
+          slugDoHost(req?.headers?.host ?? null) ?? "",
+        );
         if (!marca?.id) return null;
 
         // Escritorio suspenso ou encerrado nao abre sessao nenhuma.
@@ -88,7 +93,8 @@ export const opcoesAuth: NextAuthOptions = {
           const usuario = await db.usuario.findFirst({ where: { email } });
           if (!usuario || !usuario.ativo) return null;
 
-          if (usuario.bloqueadoAte && usuario.bloqueadoAte > new Date()) return null;
+          if (usuario.bloqueadoAte && usuario.bloqueadoAte > new Date())
+            return null;
 
           const senhaOk = await conferirSenha(senha, usuario.senhaHash);
           if (!senhaOk) {
@@ -131,7 +137,11 @@ export const opcoesAuth: NextAuthOptions = {
 
           await db.usuario.update({
             where: { id: usuario.id },
-            data: { tentativasFalhas: 0, bloqueadoAte: null, ultimoAcesso: new Date() },
+            data: {
+              tentativasFalhas: 0,
+              bloqueadoAte: null,
+              ultimoAcesso: new Date(),
+            },
           });
 
           return {
@@ -167,19 +177,26 @@ export const opcoesAuth: NextAuthOptions = {
         // coluna de bloqueio como o usuario de escritorio. O limite aqui vale
         // por conta E por origem: sem ele, sao tentativas infinitas contra a
         // senha mais importante do sistema.
-        const origem = origemDaTentativa(req?.headers as Record<string, unknown> | undefined);
-        for (const chave of [`operador:${email}`, `operador-origem:${origem}`]) {
+        const origem = origemDaTentativa(
+          req?.headers as Record<string, unknown> | undefined,
+        );
+        for (const chave of [
+          `operador:${email}`,
+          `operador-origem:${origem}`,
+        ]) {
           const limite = await registrarTentativa(
             chave,
             TENTATIVAS_DO_OPERADOR,
-            JANELA_DO_OPERADOR
+            JANELA_DO_OPERADOR,
           );
           if (!limite.permitido) return null;
         }
 
-        const operador = await prismaPlataforma().operadorPlataforma.findUnique({
-          where: { email },
-        });
+        const operador = await prismaPlataforma().operadorPlataforma.findUnique(
+          {
+            where: { email },
+          },
+        );
         if (!operador?.ativo) return null;
         if (!(await conferirSenha(senha, operador.senhaHash))) return null;
 

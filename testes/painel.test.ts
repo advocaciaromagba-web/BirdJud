@@ -3,7 +3,7 @@
 // O que se prova: o painel mostra o que pede acao e cala sobre modulo nao
 // contratado; a busca acha pelo numero com e sem mascara, cobre os quatro
 // tipos e nao atravessa escritorio.
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { salvarIntegracao } from "../src/lib/integracao";
 import { montarPainel, pendenciasVisiveis } from "../src/lib/painel";
@@ -37,12 +37,24 @@ describe("pendencia por papel", () => {
   });
 });
 
+// Relogio preso no meio da tarde de Brasilia.
+//
+// O teste do painel afirma que uma audiencia daqui a tres horas e "hoje".
+// Com o relogio real isso deixava de ser verdade entre 21h e meia-noite de
+// Brasilia: tres horas depois ja e o dia seguinte, e a suite quebrava so por
+// causa da hora em que rodou. So a Date e falsa; os temporizadores continuam
+// reais, senao o cliente do banco trava.
+const AGORA = new Date("2026-09-24T17:00:00Z"); // 14h em Brasilia
+
 const marca = Date.now();
 let alfa = "";
 let beta = "";
 
 d("painel e busca por escritorio", () => {
   beforeAll(async () => {
+    vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
+    vi.setSystemTime(AGORA);
+
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 6).toString("base64");
 
     const a = await prismaPlataforma().escritorio.create({
@@ -124,6 +136,7 @@ d("painel e busca por escritorio", () => {
   });
 
   afterAll(async () => {
+    vi.useRealTimers();
     for (const id of [alfa, beta]) {
       if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
     }

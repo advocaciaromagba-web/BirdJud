@@ -7,8 +7,20 @@
 // Funcoes puras: entram texto, sai classificacao. Sem banco, sem rede.
 
 const NUMERO_POR_EXTENSO: Record<string, number> = {
-  um: 1, dois: 2, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8,
-  nove: 9, dez: 10, quinze: 15, vinte: 20, trinta: 30, sessenta: 60,
+  um: 1,
+  dois: 2,
+  tres: 3,
+  quatro: 4,
+  cinco: 5,
+  seis: 6,
+  sete: 7,
+  oito: 8,
+  nove: 9,
+  dez: 10,
+  quinze: 15,
+  vinte: 20,
+  trinta: 30,
+  sessenta: 60,
 };
 
 /** Palavras que, sozinhas, ja pedem olhar imediato. */
@@ -45,15 +57,21 @@ export function detectarPrazo(texto: string): number | null {
   const achados: number[] = [];
 
   // Forma numerica: "15 dias", "5 (cinco) dias uteis"
-  for (const achado of limpo.matchAll(/(\d{1,3})\s*(?:\([^)]*\)\s*)?dias?\b/g)) {
+  for (const achado of limpo.matchAll(
+    /(\d{1,3})\s*(?:\([^)]*\)\s*)?dias?\b/g,
+  )) {
     const dias = Number(achado[1]);
     if (dias > 0 && dias <= 365) achados.push(dias);
   }
 
   // Forma por extenso: "quinze dias"
   const extenso = Object.keys(NUMERO_POR_EXTENSO).join("|");
-  for (const achado of limpo.matchAll(new RegExp(`\\b(${extenso})\\s+dias?\\b`, "g"))) {
-    achados.push(NUMERO_POR_EXTENSO[achado[1] as keyof typeof NUMERO_POR_EXTENSO]);
+  for (const achado of limpo.matchAll(
+    new RegExp(`\\b(${extenso})\\s+dias?\\b`, "g"),
+  )) {
+    achados.push(
+      NUMERO_POR_EXTENSO[achado[1] as keyof typeof NUMERO_POR_EXTENSO],
+    );
   }
 
   if (achados.length === 0) return null;

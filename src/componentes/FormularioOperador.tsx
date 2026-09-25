@@ -32,17 +32,30 @@ export function FormularioOperador() {
     <form onSubmit={enviar} className="mt-6 grid gap-3">
       <label className="grid gap-1 text-sm">
         E-mail
-        <input name="email" type="email" required autoComplete="username"
-          className="rounded border border-neutral-300 px-3 py-2" />
+        <input
+          name="email"
+          type="email"
+          required
+          autoComplete="username"
+          className="rounded border border-neutral-300 px-3 py-2"
+        />
       </label>
       <label className="grid gap-1 text-sm">
         Senha
-        <input name="senha" type="password" required autoComplete="current-password"
-          className="rounded border border-neutral-300 px-3 py-2" />
+        <input
+          name="senha"
+          type="password"
+          required
+          autoComplete="current-password"
+          className="rounded border border-neutral-300 px-3 py-2"
+        />
       </label>
       {erro ? <p className="text-sm text-red-700">{erro}</p> : null}
-      <button type="submit" disabled={enviando}
-        className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60">
+      <button
+        type="submit"
+        disabled={enviando}
+        className="justify-self-start rounded bg-marca px-4 py-2 font-semibold text-white disabled:opacity-60"
+      >
         {enviando ? "Entrando..." : "Entrar"}
       </button>
     </form>

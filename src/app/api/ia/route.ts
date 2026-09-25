@@ -33,7 +33,10 @@ const POR_PESSOA = 60;
 const JANELA = 60 * 60;
 
 const pedido = z.discriminatedUnion("tipo", [
-  z.object({ tipo: z.literal("ANALISE_PUBLICACAO"), publicacaoId: z.string().min(1) }),
+  z.object({
+    tipo: z.literal("ANALISE_PUBLICACAO"),
+    publicacaoId: z.string().min(1),
+  }),
   z.object({
     tipo: z.literal("MINUTA_MANIFESTACAO"),
     publicacaoId: z.string().min(1),
@@ -54,8 +57,13 @@ export async function POST(req: Request) {
       const limite = await registrarTentativa(chave, teto, JANELA);
       if (!limite.permitido) {
         return NextResponse.json(
-          { erro: "Muitos pedidos de IA em pouco tempo. Tente de novo mais tarde." },
-          { status: 429, headers: { "Retry-After": String(limite.esperarSegundos) } }
+          {
+            erro: "Muitos pedidos de IA em pouco tempo. Tente de novo mais tarde.",
+          },
+          {
+            status: 429,
+            headers: { "Retry-After": String(limite.esperarSegundos) },
+          },
         );
       }
     }
@@ -68,11 +76,16 @@ export async function POST(req: Request) {
     const publicacao = await comEscritorio(escritorioId, (db) =>
       db.publicacao.findFirst({
         where: { id: corpo.data.publicacaoId },
-        include: { processo: { include: { cliente: { select: { nome: true } } } } },
-      })
+        include: {
+          processo: { include: { cliente: { select: { nome: true } } } },
+        },
+      }),
     );
     if (!publicacao) {
-      return NextResponse.json({ erro: "Publicacao nao encontrada." }, { status: 404 });
+      return NextResponse.json(
+        { erro: "Publicacao nao encontrada." },
+        { status: 404 },
+      );
     }
 
     const base = {
@@ -88,7 +101,11 @@ export async function POST(req: Request) {
       tipo: corpo.data.tipo,
       publicacaoId: publicacao.id,
       ...(corpo.data.tipo === "ANALISE_PUBLICACAO"
-        ? { sistema: SISTEMA_ANALISE, entrada: entradaDaAnalise(base), esforco: "low" as const }
+        ? {
+            sistema: SISTEMA_ANALISE,
+            entrada: entradaDaAnalise(base),
+            esforco: "low" as const,
+          }
         : {
             sistema: SISTEMA_MINUTA,
             entrada: entradaDaMinuta({
@@ -103,7 +120,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ analise });
   } catch (erro) {
-    if (erro instanceof SemChaveDeIA || erro instanceof EntradaLongaDemais || erro instanceof IARecusou) {
+    if (
+      erro instanceof SemChaveDeIA ||
+      erro instanceof EntradaLongaDemais ||
+      erro instanceof IARecusou
+    ) {
       return NextResponse.json({ erro: erro.message }, { status: erro.status });
     }
     return tratarErro(erro);

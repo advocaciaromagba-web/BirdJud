@@ -26,6 +26,14 @@ export const horaBR = new Intl.DateTimeFormat("pt-BR", {
   timeZone: FUSO,
 });
 
+/** Cabecalho de dia na agenda, como "quinta-feira, 25 de setembro". */
+export const diaPorExtensoBR = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "2-digit",
+  month: "long",
+  timeZone: FUSO,
+});
+
 /** O dia de uma data em Brasilia, como "2026-09-20". */
 export function diaEmBrasilia(data: Date): string {
   return new Intl.DateTimeFormat("en-CA", {

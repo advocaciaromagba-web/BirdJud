@@ -5,12 +5,18 @@ import { ehTipoDeIntegracao } from "@/lib/conectores";
 import { tratarErro } from "@/lib/respostas";
 
 /** Desconectar apaga a credencial guardada deste escritorio. */
-export async function DELETE(_req: Request, { params }: { params: Promise<{ tipo: string }> }) {
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ tipo: string }> },
+) {
   try {
     const { escritorioId } = await exigirAdmin();
     const { tipo } = await params;
     if (!ehTipoDeIntegracao(tipo)) {
-      return NextResponse.json({ erro: "Integracao desconhecida." }, { status: 400 });
+      return NextResponse.json(
+        { erro: "Integracao desconhecida." },
+        { status: 400 },
+      );
     }
     await apagarIntegracao(escritorioId, tipo);
     return NextResponse.json({ ok: true });

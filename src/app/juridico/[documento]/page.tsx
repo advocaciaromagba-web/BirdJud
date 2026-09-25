@@ -27,7 +27,7 @@ export default async function PaginaDocumento({
   try {
     texto = await readFile(
       join(process.cwd(), "docs", "juridico", `${documento}.md`),
-      "utf8"
+      "utf8",
     );
   } catch {
     notFound();
@@ -40,7 +40,9 @@ export default async function PaginaDocumento({
   return (
     <main className="mx-auto max-w-3xl p-8">
       <p className="text-sm uppercase tracking-wide text-marca">BirdJud</p>
-      <p className="mt-1 text-xs text-neutral-500">Versao {VERSAO_DOS_DOCUMENTOS}</p>
+      <p className="mt-1 text-xs text-neutral-500">
+        Versao {VERSAO_DOS_DOCUMENTOS}
+      </p>
       <article className="mt-6 space-y-3 text-[15px] leading-relaxed">
         {linhas.map((linha, indice) => {
           const chave = `${indice}`;
@@ -60,7 +62,10 @@ export default async function PaginaDocumento({
           }
           if (linha.startsWith("> ")) {
             return (
-              <p key={chave} className="border-l-4 border-amber-400 bg-amber-50 px-3 py-2 text-sm">
+              <p
+                key={chave}
+                className="border-l-4 border-amber-400 bg-amber-50 px-3 py-2 text-sm"
+              >
                 {linha.slice(2)}
               </p>
             );

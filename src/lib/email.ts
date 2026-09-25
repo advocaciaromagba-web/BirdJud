@@ -27,7 +27,9 @@ export class SemRemetente extends Error {
   }
 }
 
-export async function credencialDoEscritorio(escritorioId: string): Promise<CredencialSmtp> {
+export async function credencialDoEscritorio(
+  escritorioId: string,
+): Promise<CredencialSmtp> {
   try {
     return await obterIntegracao<CredencialSmtp>(escritorioId, "SMTP");
   } catch (erro) {
@@ -46,7 +48,7 @@ export async function credencialDoEscritorio(escritorioId: string): Promise<Cred
  */
 export async function enviarLote(
   escritorioId: string,
-  mensagens: Mensagem[]
+  mensagens: Mensagem[],
 ): Promise<{ enviadas: number; falhas: { para: string; motivo: string }[] }> {
   if (mensagens.length === 0) return { enviadas: 0, falhas: [] };
 

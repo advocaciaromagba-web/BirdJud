@@ -26,7 +26,9 @@ export type ContextoOperador = {
 
 export async function exigirOperador(): Promise<ContextoOperador> {
   if ((await headers()).get(CABECALHO_SLUG)) {
-    throw new SemOperador("O painel da plataforma nao abre dentro de um escritorio.");
+    throw new SemOperador(
+      "O painel da plataforma nao abre dentro de um escritorio.",
+    );
   }
 
   const sessao = await getServerSession(opcoesAuth);
@@ -34,7 +36,10 @@ export async function exigirOperador(): Promise<ContextoOperador> {
     throw new SemOperador();
   }
 
-  return { operadorId: sessao.usuarioId, nome: sessao.user?.name ?? "operador" };
+  return {
+    operadorId: sessao.usuarioId,
+    nome: sessao.user?.name ?? "operador",
+  };
 }
 
 /**
@@ -47,7 +52,7 @@ export async function exigirOperador(): Promise<ContextoOperador> {
 export async function registrarAcessoSuporte(
   operadorId: string,
   escritorioId: string,
-  motivo: string
+  motivo: string,
 ): Promise<void> {
   await prismaPlataforma().acessoSuporte.create({
     data: { operadorId, escritorioId, motivo },

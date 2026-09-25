@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prismaPlataforma } from "@/lib/prisma";
-import { exigirOperador, registrarAcessoSuporte, SemOperador } from "@/lib/plataforma";
+import {
+  exigirOperador,
+  registrarAcessoSuporte,
+  SemOperador,
+} from "@/lib/plataforma";
 import { registrarPagamento } from "@/lib/cobranca";
 
 const corpoEsperado = z.object({
@@ -29,18 +33,28 @@ export async function POST(req: Request) {
       where: { id: corpo.data.faturaId },
       select: { id: true, escritorioId: true, status: true, competencia: true },
     });
-    if (!fatura) return NextResponse.json({ erro: "Fatura nao encontrada." }, { status: 404 });
+    if (!fatura)
+      return NextResponse.json(
+        { erro: "Fatura nao encontrada." },
+        { status: 404 },
+      );
     if (fatura.status !== "ABERTA") {
-      return NextResponse.json({ erro: `Fatura ja esta ${fatura.status}.` }, { status: 409 });
+      return NextResponse.json(
+        { erro: `Fatura ja esta ${fatura.status}.` },
+        { status: 409 },
+      );
     }
 
     await registrarAcessoSuporte(
       operador.operadorId,
       fatura.escritorioId,
-      `Baixa manual da fatura ${fatura.competencia}`
+      `Baixa manual da fatura ${fatura.competencia}`,
     );
 
-    const resultado = await registrarPagamento(fatura.id, corpo.data.idExterno ?? null);
+    const resultado = await registrarPagamento(
+      fatura.id,
+      corpo.data.idExterno ?? null,
+    );
     return NextResponse.json({
       detalhe: `Pagamento registrado. Escritorio agora ${resultado.statusNovo}.`,
     });

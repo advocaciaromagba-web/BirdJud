@@ -30,21 +30,24 @@ export class IntegracaoAusente extends Error {
 export async function obterIntegracao<T = Record<string, unknown>>(
   escritorioId: string,
   tipo: TipoIntegracao,
-  opcoes: { mesmoComErro?: boolean } = {}
+  opcoes: { mesmoComErro?: boolean } = {},
 ): Promise<T> {
   const registro = await comEscritorio(escritorioId, (db) =>
-    db.integracao.findFirst({ where: { tipo } })
+    db.integracao.findFirst({ where: { tipo } }),
   );
   if (!registro) throw new IntegracaoAusente(tipo);
-  if (registro.status === "ERRO" && !opcoes.mesmoComErro) throw new IntegracaoAusente(tipo);
+  if (registro.status === "ERRO" && !opcoes.mesmoComErro)
+    throw new IntegracaoAusente(tipo);
   return decifrar<T>(registro.dados);
 }
 
 export async function apagarIntegracao(
   escritorioId: string,
-  tipo: TipoIntegracao
+  tipo: TipoIntegracao,
 ): Promise<void> {
-  await comEscritorio(escritorioId, (db) => db.integracao.deleteMany({ where: { tipo } }));
+  await comEscritorio(escritorioId, (db) =>
+    db.integracao.deleteMany({ where: { tipo } }),
+  );
 }
 
 /** Guarda o resultado do teste sem tocar nas credenciais. */
@@ -52,7 +55,7 @@ export async function anotarTeste(
   escritorioId: string,
   tipo: TipoIntegracao,
   ok: boolean,
-  detalhe: string
+  detalhe: string,
 ): Promise<void> {
   await comEscritorio(escritorioId, (db) =>
     db.integracao.updateMany({
@@ -62,7 +65,7 @@ export async function anotarTeste(
         erro: ok ? null : detalhe.slice(0, 500),
         verificadoEm: new Date(),
       },
-    })
+    }),
   );
 }
 
@@ -71,19 +74,24 @@ export async function salvarIntegracao(
   tipo: TipoIntegracao,
   dados: Record<string, unknown>,
   status: "PENDENTE" | "OK" | "ERRO" = "PENDENTE",
-  erro: string | null = null
+  erro: string | null = null,
 ) {
   const pacote = cifrar(dados);
   return comEscritorio(escritorioId, (db) =>
     db.integracao.upsert({
       where: { escritorioId_tipo: { escritorioId, tipo } },
-      create: semEscritorio({ tipo, dados: pacote, status, erro: erro?.slice(0, 500) ?? null }),
+      create: semEscritorio({
+        tipo,
+        dados: pacote,
+        status,
+        erro: erro?.slice(0, 500) ?? null,
+      }),
       update: {
         dados: pacote,
         status,
         erro: erro?.slice(0, 500) ?? null,
         verificadoEm: new Date(),
       },
-    })
+    }),
   );
 }

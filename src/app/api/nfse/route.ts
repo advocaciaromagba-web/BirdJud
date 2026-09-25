@@ -59,7 +59,7 @@ export async function GET() {
     const { escritorioId } = await exigirSessao("NFSE");
     const [notas, fiscal] = await Promise.all([
       comEscritorio(escritorioId, (db) =>
-        db.notaFiscal.findMany({ orderBy: { criadoEm: "desc" }, take: 200 })
+        db.notaFiscal.findMany({ orderBy: { criadoEm: "desc" }, take: 200 }),
       ),
       comEscritorio(escritorioId, (db) => db.fiscal.findFirst()),
     ]);

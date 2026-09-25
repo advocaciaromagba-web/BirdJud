@@ -20,7 +20,7 @@ type Linha = { tentativas: number; ate: Date };
 export async function registrarTentativa(
   chave: string,
   maximo: number,
-  janelaSegundos: number
+  janelaSegundos: number,
 ): Promise<ResultadoDoLimite> {
   const janelaMs = janelaSegundos * 1000;
 
@@ -49,8 +49,15 @@ export async function registrarTentativa(
   }
 
   if (linha.tentativas > maximo) {
-    const esperar = Math.max(1, Math.ceil((linha.ate.getTime() - Date.now()) / 1000));
-    return { permitido: false, restantes: 0, esperarSegundos: Math.min(esperar, janelaSegundos) };
+    const esperar = Math.max(
+      1,
+      Math.ceil((linha.ate.getTime() - Date.now()) / 1000),
+    );
+    return {
+      permitido: false,
+      restantes: 0,
+      esperarSegundos: Math.min(esperar, janelaSegundos),
+    };
   }
 
   return {

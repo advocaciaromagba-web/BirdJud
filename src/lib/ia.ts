@@ -35,7 +35,7 @@ export class EntradaLongaDemais extends Error {
   readonly status = 413;
   constructor(caracteres: number) {
     super(
-      `O texto tem ${caracteres} caracteres; o limite por chamada e ${LIMITE_DE_CARACTERES}.`
+      `O texto tem ${caracteres} caracteres; o limite por chamada e ${LIMITE_DE_CARACTERES}.`,
     );
     this.name = "EntradaLongaDemais";
   }
@@ -45,7 +45,7 @@ export class IARecusou extends Error {
   readonly status = 422;
   constructor(categoria: string | null) {
     super(
-      `A IA recusou responder a este pedido${categoria ? ` (${categoria})` : ""}.`
+      `A IA recusou responder a este pedido${categoria ? ` (${categoria})` : ""}.`,
     );
     this.name = "IARecusou";
   }
@@ -55,7 +55,9 @@ function obterCliente(): Anthropic {
   if (!process.env.ANTHROPIC_API_KEY) throw new SemChaveDeIA();
   cliente ??= new Anthropic({
     // baseURL so muda em teste; em producao o padrao do SDK e o certo.
-    ...(process.env.ANTHROPIC_BASE_URL ? { baseURL: process.env.ANTHROPIC_BASE_URL } : {}),
+    ...(process.env.ANTHROPIC_BASE_URL
+      ? { baseURL: process.env.ANTHROPIC_BASE_URL }
+      : {}),
   });
   return cliente;
 }
@@ -78,9 +80,10 @@ export type Resultado = {
 export async function pedir(
   sistema: string,
   entrada: string,
-  esforco: "low" | "medium" | "high" = "medium"
+  esforco: "low" | "medium" | "high" = "medium",
 ): Promise<Resultado> {
-  if (entrada.length > LIMITE_DE_CARACTERES) throw new EntradaLongaDemais(entrada.length);
+  if (entrada.length > LIMITE_DE_CARACTERES)
+    throw new EntradaLongaDemais(entrada.length);
 
   const resposta = await obterCliente().beta.messages.create({
     model: MODELO,
@@ -88,7 +91,9 @@ export async function pedir(
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     // O sistema e estavel entre chamadas: cabe em cache e sai mais barato.
-    system: [{ type: "text", text: sistema, cache_control: { type: "ephemeral" } }],
+    system: [
+      { type: "text", text: sistema, cache_control: { type: "ephemeral" } },
+    ],
     output_config: { effort: esforco },
     messages: [{ role: "user", content: entrada }],
   });
@@ -98,14 +103,18 @@ export async function pedir(
   }
 
   const texto = resposta.content
-    .filter((bloco): bloco is Anthropic.Beta.BetaTextBlock => bloco.type === "text")
+    .filter(
+      (bloco): bloco is Anthropic.Beta.BetaTextBlock => bloco.type === "text",
+    )
     .map((bloco) => bloco.text)
     .join("\n")
     .trim();
 
   return {
     texto,
-    tokensEntrada: resposta.usage.input_tokens + (resposta.usage.cache_read_input_tokens ?? 0),
+    tokensEntrada:
+      resposta.usage.input_tokens +
+      (resposta.usage.cache_read_input_tokens ?? 0),
     tokensSaida: resposta.usage.output_tokens,
     // O modelo que respondeu pode nao ser o pedido, quando houve fallback.
     modelo: resposta.model,
@@ -133,7 +142,11 @@ export async function pedirEGravar(opcoes: {
   entrada: string;
   esforco?: "low" | "medium" | "high";
 }): Promise<Analise> {
-  const resultado = await pedir(opcoes.sistema, opcoes.entrada, opcoes.esforco ?? "medium");
+  const resultado = await pedir(
+    opcoes.sistema,
+    opcoes.entrada,
+    opcoes.esforco ?? "medium",
+  );
 
   const registro = await comEscritorio(opcoes.escritorioId, (db) =>
     db.analiseIA.create({
@@ -146,13 +159,13 @@ export async function pedirEGravar(opcoes: {
         tokensEntrada: resultado.tokensEntrada,
         tokensSaida: resultado.tokensSaida,
       }),
-    })
+    }),
   );
 
   await registrarConsumo(
     opcoes.escritorioId,
     "IA_MIL_TOKENS",
-    milTokens(resultado.tokensEntrada, resultado.tokensSaida)
+    milTokens(resultado.tokensEntrada, resultado.tokensSaida),
   );
 
   return { id: registro.id, texto: resultado.texto, modelo: resultado.modelo };

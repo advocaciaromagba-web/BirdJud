@@ -63,7 +63,10 @@ export function PainelArquivos({
 
   return (
     <>
-      <form onSubmit={enviar} className="mt-6 grid gap-3 rounded border border-neutral-200 p-4">
+      <form
+        onSubmit={enviar}
+        className="mt-6 grid gap-3 rounded border border-neutral-200 p-4"
+      >
         <label className="grid gap-1 text-sm">
           Arquivo (ate {tamanhoMaximoMb} MB)
           <input
@@ -75,12 +78,18 @@ export function PainelArquivos({
         </label>
         <label className="grid gap-1 text-sm">
           Descricao (opcional)
-          <input name="descricao" className="rounded border border-neutral-300 px-3 py-2" />
+          <input
+            name="descricao"
+            className="rounded border border-neutral-300 px-3 py-2"
+          />
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">
             Processo (opcional)
-            <select name="processoId" className="rounded border border-neutral-300 px-3 py-2">
+            <select
+              name="processoId"
+              className="rounded border border-neutral-300 px-3 py-2"
+            >
               <option value="">—</option>
               {processos.map((p) => (
                 <option key={p.valor} value={p.valor}>
@@ -91,7 +100,10 @@ export function PainelArquivos({
           </label>
           <label className="grid gap-1 text-sm">
             Cliente (opcional)
-            <select name="clienteId" className="rounded border border-neutral-300 px-3 py-2">
+            <select
+              name="clienteId"
+              className="rounded border border-neutral-300 px-3 py-2"
+            >
               <option value="">—</option>
               {clientes.map((c) => (
                 <option key={c.valor} value={c.valor}>
@@ -116,21 +128,32 @@ export function PainelArquivos({
       ) : (
         <ul className="mt-6 divide-y divide-neutral-200">
           {arquivos.map((arquivo) => (
-            <li key={arquivo.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3">
+            <li
+              key={arquivo.id}
+              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3"
+            >
               <a
                 href={`/api/arquivos/${arquivo.id}`}
                 className="font-semibold text-marca hover:underline"
               >
                 {arquivo.nome}
               </a>
-              <span className="text-sm text-neutral-500">{arquivo.tamanho}</span>
+              <span className="text-sm text-neutral-500">
+                {arquivo.tamanho}
+              </span>
               {arquivo.vinculo ? (
-                <span className="text-sm text-neutral-600">{arquivo.vinculo}</span>
+                <span className="text-sm text-neutral-600">
+                  {arquivo.vinculo}
+                </span>
               ) : null}
               {arquivo.descricao ? (
-                <span className="w-full text-sm text-neutral-500">{arquivo.descricao}</span>
+                <span className="w-full text-sm text-neutral-500">
+                  {arquivo.descricao}
+                </span>
               ) : null}
-              <span className="ml-auto text-sm text-neutral-500">{arquivo.data}</span>
+              <span className="ml-auto text-sm text-neutral-500">
+                {arquivo.data}
+              </span>
               <button
                 type="button"
                 onClick={() => apagar(arquivo.id, arquivo.nome)}

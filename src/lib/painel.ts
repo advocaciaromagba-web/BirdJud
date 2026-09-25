@@ -13,7 +13,6 @@ import { ehMesmoDiaEmBrasilia } from "./datas";
 
 const DIA = 24 * 60 * 60 * 1000;
 
-
 export type CompromissoDoDia = {
   id: string;
   titulo: string;
@@ -64,7 +63,7 @@ export type Painel = {
  */
 export async function montarPainel(
   escritorioId: string,
-  agora = new Date()
+  agora = new Date(),
 ): Promise<Painel> {
   const modulos = await modulosAtivos(escritorioId);
   const tem = (modulo: Modulo) => modulos.includes(modulo);
@@ -93,17 +92,24 @@ export async function montarPainel(
       : 1,
     cobrancas: tem("COBRANCAS")
       ? await db.cobranca.findMany({
-          where: { status: { in: ["ABERTA", "VENCIDA"] }, vencimento: { lt: agora } },
+          where: {
+            status: { in: ["ABERTA", "VENCIDA"] },
+            vencimento: { lt: agora },
+          },
           select: { valorCentavos: true },
         })
       : [],
-    integracoes: await db.integracao.findMany({ select: { tipo: true, status: true } }),
-    avisosFalhados: tem("EMAIL") || tem("WHATSAPP")
-      ? await db.aviso.count({ where: { estado: "FALHOU" } })
-      : 0,
-    fiscal: tem("NFSE") ? await db.fiscal.findFirst({ select: { id: true } }) : { id: "x" },
+    integracoes: await db.integracao.findMany({
+      select: { tipo: true, status: true },
+    }),
+    avisosFalhados:
+      tem("EMAIL") || tem("WHATSAPP")
+        ? await db.aviso.count({ where: { estado: "FALHOU" } })
+        : 0,
+    fiscal: tem("NFSE")
+      ? await db.fiscal.findFirst({ select: { id: true } })
+      : { id: "x" },
   }));
-
 
   const pendencias: Pendencia[] = [];
 
@@ -176,13 +182,19 @@ export async function montarPainel(
     naoLidas: dados.naoLidas,
     cobrancasVencidas: {
       quantidade: dados.cobrancas.length,
-      totalCentavos: dados.cobrancas.reduce((total, c) => total + c.valorCentavos, 0),
+      totalCentavos: dados.cobrancas.reduce(
+        (total, c) => total + c.valorCentavos,
+        0,
+      ),
     },
     pendencias,
   };
 }
 
 /** Pendencia que esta pessoa pode resolver. Ruido para quem nao pode e ruido. */
-export function pendenciasVisiveis(pendencias: Pendencia[], papel: string): Pendencia[] {
+export function pendenciasVisiveis(
+  pendencias: Pendencia[],
+  papel: string,
+): Pendencia[] {
   return pendencias.filter((p) => !p.soAdmin || papel === "ADMIN");
 }

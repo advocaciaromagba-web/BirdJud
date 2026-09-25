@@ -13,13 +13,16 @@ export function podePurgar(
   encerradoEm: Date | null,
   purgadoEm: Date | null,
   agora = new Date(),
-  prazoDias = PRAZO_DE_RETENCAO_DIAS
+  prazoDias = PRAZO_DE_RETENCAO_DIAS,
 ): boolean {
   if (!encerradoEm || purgadoEm) return false;
   return agora.getTime() - encerradoEm.getTime() >= prazoDias * DIA;
 }
 
-export async function encerrarEscritorio(escritorioId: string, agora = new Date()) {
+export async function encerrarEscritorio(
+  escritorioId: string,
+  agora = new Date(),
+) {
   return prismaPlataforma().escritorio.update({
     where: { id: escritorioId },
     data: { status: "ENCERRADO", encerradoEm: agora },
@@ -53,7 +56,9 @@ export type ResultadoDaPurga = {
  * dados do escritorio. Fica tambem a casca do escritorio (id, slug, nome,
  * `purgadoEm`), para constar que a purga aconteceu.
  */
-export async function purgarEncerrados(agora = new Date()): Promise<ResultadoDaPurga> {
+export async function purgarEncerrados(
+  agora = new Date(),
+): Promise<ResultadoDaPurga> {
   const limite = new Date(agora.getTime() - PRAZO_DE_RETENCAO_DIAS * DIA);
 
   const candidatos = await prismaPlataforma().escritorio.findMany({
@@ -68,25 +73,55 @@ export async function purgarEncerrados(agora = new Date()): Promise<ResultadoDaP
   for (const escritorio of candidatos) {
     // Em uma transacao: ou some tudo, ou nao some nada.
     await prismaPlataforma().$transaction([
-      prismaPlataforma().usuario.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().cliente.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().processo.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().compromisso.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().lancamento.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().usuario.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().cliente.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().processo.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().compromisso.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().lancamento.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
       // Modulos que vieram depois da fase 5. Sem estas linhas, publicacao e
       // analise de IA sobreviviam a purga — dado de cliente que a LGPD e o
       // nosso proprio contrato mandam apagar.
-      prismaPlataforma().arquivo.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().cobranca.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().analiseIA.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().aviso.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().publicacao.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().oabMonitorada.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().integracao.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().consumoMensal.deleteMany({ where: { escritorioId: escritorio.id } }),
-      prismaPlataforma().moduloContratado.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().arquivo.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().cobranca.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().analiseIA.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().aviso.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().publicacao.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().oabMonitorada.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().integracao.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().consumoMensal.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
+      prismaPlataforma().moduloContratado.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
       // Trabalhos da fila carregam payload do escritorio: vao junto.
-      prismaPlataforma().trabalho.deleteMany({ where: { escritorioId: escritorio.id } }),
+      prismaPlataforma().trabalho.deleteMany({
+        where: { escritorioId: escritorio.id },
+      }),
       prismaPlataforma().escritorio.update({
         where: { id: escritorio.id },
         data: { purgadoEm: agora },
@@ -98,5 +133,8 @@ export async function purgarEncerrados(agora = new Date()): Promise<ResultadoDaP
     await apagarTudoDoEscritorio(escritorio.id);
   }
 
-  return { apagados: candidatos.length, escritorios: candidatos.map((e) => e.slug) };
+  return {
+    apagados: candidatos.length,
+    escritorios: candidatos.map((e) => e.slug),
+  };
 }

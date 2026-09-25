@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { DOCUMENTOS, VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 
-export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: number }) {
+export function FormularioCadastro({
+  dominio,
+  dias,
+}: {
+  dominio: string;
+  dias: number;
+}) {
   const [erro, setErro] = useState<string | null>(null);
   const [pronto, setPronto] = useState<{ endereco: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -43,11 +49,12 @@ export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: n
         <h2 className="font-semibold">Escritorio criado</h2>
         <p className="mt-2 text-neutral-700">
           O endereco do seu escritorio e{" "}
-          <strong className="text-marca">{pronto.endereco}</strong>. Entre por ele
-          com o e-mail e a senha que voce acabou de definir.
+          <strong className="text-marca">{pronto.endereco}</strong>. Entre por
+          ele com o e-mail e a senha que voce acabou de definir.
         </p>
         <p className="mt-2 text-sm text-neutral-500">
-          Periodo de teste de {dias} dias. A primeira fatura so e gerada depois disso.
+          Periodo de teste de {dias} dias. A primeira fatura so e gerada depois
+          disso.
         </p>
       </div>
     );
@@ -57,7 +64,11 @@ export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: n
     <form onSubmit={enviar} className="mt-8 grid gap-3">
       <label className="grid gap-1 text-sm">
         Nome do escritorio
-        <input name="escritorio" required className="rounded border border-neutral-300 px-3 py-2" />
+        <input
+          name="escritorio"
+          required
+          className="rounded border border-neutral-300 px-3 py-2"
+        />
       </label>
       <label className="grid gap-1 text-sm">
         Endereco do sistema
@@ -73,11 +84,20 @@ export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: n
       </label>
       <label className="grid gap-1 text-sm">
         Seu nome
-        <input name="nome" required className="rounded border border-neutral-300 px-3 py-2" />
+        <input
+          name="nome"
+          required
+          className="rounded border border-neutral-300 px-3 py-2"
+        />
       </label>
       <label className="grid gap-1 text-sm">
         Seu e-mail
-        <input name="email" type="email" required className="rounded border border-neutral-300 px-3 py-2" />
+        <input
+          name="email"
+          type="email"
+          required
+          className="rounded border border-neutral-300 px-3 py-2"
+        />
       </label>
       <label className="grid gap-1 text-sm">
         Senha (minimo 10 caracteres)
@@ -91,12 +111,21 @@ export function FormularioCadastro({ dominio, dias }: { dominio: string; dias: n
         />
       </label>
       <label className="mt-2 grid grid-cols-[auto_1fr] items-start gap-2 text-sm">
-        <input name="aceite" type="checkbox" required className="mt-1 accent-[var(--marca-primaria)]" />
+        <input
+          name="aceite"
+          type="checkbox"
+          required
+          className="mt-1 accent-[var(--marca-primaria)]"
+        />
         <span>
           Li e aceito{" "}
           {DOCUMENTOS.map((documento, indice) => (
             <span key={documento.chave}>
-              {indice > 0 ? (indice === DOCUMENTOS.length - 1 ? " e " : ", ") : ""}
+              {indice > 0
+                ? indice === DOCUMENTOS.length - 1
+                  ? " e "
+                  : ", "
+                : ""}
               <a
                 href={`/juridico/${documento.caminho}`}
                 target="_blank"

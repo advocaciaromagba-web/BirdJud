@@ -4,8 +4,11 @@ import { exigirAdmin, SemSessao } from "@/lib/sessao";
 import { SemPermissao } from "@/lib/papeis";
 import { moduloAtivo, modulosAtivos } from "@/lib/modulos";
 import { CONECTORES } from "@/lib/conectores";
-import { Navegacao } from "@/componentes/Navegacao";
-import { PainelIntegracoes, type IntegracaoNaTela } from "@/componentes/PainelIntegracoes";
+import { Estrutura } from "@/componentes/Estrutura";
+import {
+  PainelIntegracoes,
+  type IntegracaoNaTela,
+} from "@/componentes/PainelIntegracoes";
 
 export default async function PaginaIntegracoes() {
   let contexto;
@@ -32,13 +35,17 @@ export default async function PaginaIntegracoes() {
       // Note o que NAO esta aqui: o campo `dados`. A credencial nunca sai do
       // servidor, nem para o administrador que a cadastrou.
       select: { tipo: true, status: true, erro: true, verificadoEm: true },
-    })
+    }),
   );
   const porTipo = new Map(guardadas.map((i) => [i.tipo, i]));
 
   const integracoes: IntegracaoNaTela[] = [];
   for (const conector of Object.values(CONECTORES)) {
-    if (conector.modulo && !(await moduloAtivo(contexto.escritorioId, conector.modulo))) continue;
+    if (
+      conector.modulo &&
+      !(await moduloAtivo(contexto.escritorioId, conector.modulo))
+    )
+      continue;
     const guardada = porTipo.get(conector.tipo);
     integracoes.push({
       tipo: conector.tipo,
@@ -53,16 +60,18 @@ export default async function PaginaIntegracoes() {
   }
 
   return (
-    <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
-      <main className="mx-auto max-w-3xl p-8">
-        <h1 className="text-2xl font-bold">Integracoes</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Cada escritorio conecta as proprias contas. As credenciais ficam
-          cifradas e nunca aparecem de volta na tela.
-        </p>
-        <PainelIntegracoes integracoes={integracoes} />
-      </main>
-    </>
+    <Estrutura
+      nomeEscritorio={contexto.marca.nome}
+      logoUrl={contexto.marca.logoUrl}
+      papel={contexto.papel}
+      modulos={modulos}
+      titulo="Integracoes"
+    >
+      <p className="mt-1 text-sm text-neutral-500">
+        Cada escritorio conecta as proprias contas. As credenciais ficam
+        cifradas e nunca aparecem de volta na tela.
+      </p>
+      <PainelIntegracoes integracoes={integracoes} />
+    </Estrutura>
   );
 }

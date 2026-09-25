@@ -53,27 +53,39 @@ export default async function PainelPlataforma() {
           </thead>
           <tbody>
             {escritorios.map((escritorio) => {
-              const emAberto = escritorio.faturas.reduce((t, f) => t + f.valorCentavos, 0);
+              const emAberto = escritorio.faturas.reduce(
+                (t, f) => t + f.valorCentavos,
+                0,
+              );
               const atraso = escritorio.faturas[0]
                 ? diasDeAtraso(escritorio.faturas[0].vencimento, agora)
                 : null;
               return (
                 <tr key={escritorio.id} className="border-b border-neutral-100">
                   <td className="py-2">
-                    <Link href={`/plataforma/${escritorio.id}`} className="font-semibold text-marca">
+                    <Link
+                      href={`/plataforma/${escritorio.id}`}
+                      className="font-semibold text-marca"
+                    >
                       {escritorio.nome}
                     </Link>
-                    <span className="block text-xs text-neutral-500">{escritorio.slug}</span>
+                    <span className="block text-xs text-neutral-500">
+                      {escritorio.slug}
+                    </span>
                   </td>
                   <td className="py-2">
-                    <span className={`rounded px-2 py-0.5 text-xs ${CORES[escritorio.status] ?? ""}`}>
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs ${CORES[escritorio.status] ?? ""}`}
+                    >
                       {escritorio.status}
                     </span>
                   </td>
                   <td className="py-2">{escritorio.faixa}</td>
                   <td className="py-2">
                     {escritorio.assinatura
-                      ? escritorio.assinatura.fimDoTeste.toLocaleDateString("pt-BR")
+                      ? escritorio.assinatura.fimDoTeste.toLocaleDateString(
+                          "pt-BR",
+                        )
                       : "—"}
                   </td>
                   <td className="py-2 text-right tabular-nums">
@@ -90,7 +102,9 @@ export default async function PainelPlataforma() {
       </div>
 
       {escritorios.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Nenhum escritorio cadastrado ainda.</p>
+        <p className="mt-6 text-neutral-600">
+          Nenhum escritorio cadastrado ainda.
+        </p>
       ) : null}
     </main>
   );

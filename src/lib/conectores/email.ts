@@ -8,16 +8,36 @@ import { mascarar, type Conector } from "./tipos";
 export const conectorEmail: Conector = {
   tipo: "SMTP",
   rotulo: "E-mail (SMTP)",
-  descricao: "Envio de compromissos, recibos e avisos pelo dominio do escritorio.",
+  descricao:
+    "Envio de compromissos, recibos e avisos pelo dominio do escritorio.",
   modulo: "EMAIL",
   campos: [
-    { nome: "host", rotulo: "Servidor", tipo: "text", obrigatorio: true, ajuda: "smtp.seudominio.com.br" },
-    { nome: "porta", rotulo: "Porta", tipo: "text", obrigatorio: true, ajuda: "587 (TLS) ou 465 (SSL)" },
+    {
+      nome: "host",
+      rotulo: "Servidor",
+      tipo: "text",
+      obrigatorio: true,
+      ajuda: "smtp.seudominio.com.br",
+    },
+    {
+      nome: "porta",
+      rotulo: "Porta",
+      tipo: "text",
+      obrigatorio: true,
+      ajuda: "587 (TLS) ou 465 (SSL)",
+    },
     { nome: "usuario", rotulo: "Usuario", tipo: "text", obrigatorio: true },
     { nome: "senha", rotulo: "Senha", tipo: "password", obrigatorio: true },
-    { nome: "remetente", rotulo: "Remetente", tipo: "text", obrigatorio: true, ajuda: "contato@seudominio.com.br" },
+    {
+      nome: "remetente",
+      rotulo: "Remetente",
+      tipo: "text",
+      obrigatorio: true,
+      ajuda: "contato@seudominio.com.br",
+    },
   ],
-  resumo: (dados) => `${dados.remetente ?? "—"} via ${dados.host ?? "—"}:${dados.porta ?? "—"}`,
+  resumo: (dados) =>
+    `${dados.remetente ?? "—"} via ${dados.host ?? "—"}:${dados.porta ?? "—"}`,
 
   async testar(dados) {
     const porta = Number(dados.porta);
@@ -37,7 +57,10 @@ export const conectorEmail: Conector = {
 
     try {
       await transporte.verify();
-      return { ok: true, detalhe: `Autenticado como ${mascarar(dados.usuario, 6)}.` };
+      return {
+        ok: true,
+        detalhe: `Autenticado como ${mascarar(dados.usuario, 6)}.`,
+      };
     } catch (erro) {
       return { ok: false, detalhe: (erro as Error).message };
     } finally {

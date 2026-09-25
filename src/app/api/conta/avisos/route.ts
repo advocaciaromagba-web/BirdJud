@@ -30,13 +30,15 @@ export async function POST(req: Request) {
     if (telefone !== undefined && telefone.trim() && !paraE164BR(telefone)) {
       return NextResponse.json(
         { erro: "Telefone invalido. Use DDD e numero, como (71) 99999-8888." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (resto.recebeWhatsapp && !paraE164BR(telefone ?? "")) {
       return NextResponse.json(
-        { erro: "Para receber no WhatsApp e preciso informar um telefone valido." },
-        { status: 400 }
+        {
+          erro: "Para receber no WhatsApp e preciso informar um telefone valido.",
+        },
+        { status: 400 },
       );
     }
 
@@ -45,9 +47,11 @@ export async function POST(req: Request) {
         where: { id: usuarioId },
         data: {
           ...resto,
-          ...(telefone === undefined ? {} : { telefone: telefone.trim() || null }),
+          ...(telefone === undefined
+            ? {}
+            : { telefone: telefone.trim() || null }),
         },
-      })
+      }),
     );
     return NextResponse.json({ ok: true });
   } catch (erro) {

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       db.usuario.update({
         where: { id: usuarioId },
         data: { doisFatores: corpo.data.segredo },
-      })
+      }),
     );
     return NextResponse.json({ ok: true });
   } catch (erro) {

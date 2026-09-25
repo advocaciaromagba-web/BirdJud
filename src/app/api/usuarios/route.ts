@@ -33,7 +33,7 @@ export async function GET() {
           ultimoAcesso: true,
           doisFatores: false,
         },
-      })
+      }),
     );
     return NextResponse.json({ usuarios });
   } catch (erro) {
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     if (!corpo.success) {
       return NextResponse.json(
         { erro: corpo.error.issues[0]?.message ?? "Dados invalidos." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
           senhaHash,
         }),
         select: { id: true, nome: true, email: true, papel: true },
-      })
+      }),
     );
     return NextResponse.json({ usuario }, { status: 201 });
   } catch (erro) {
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     if (ehDuplicado(erro)) {
       return NextResponse.json(
         { erro: "Ja existe um usuario com este e-mail neste escritorio." },
-        { status: 409 }
+        { status: 409 },
       );
     }
     return tratarErro(erro);

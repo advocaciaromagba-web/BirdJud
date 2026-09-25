@@ -28,7 +28,10 @@ export class CertificadoInvalido extends Error {
 }
 
 /** Abre o .pfx e devolve chave e certificado em PEM, prontos para assinar. */
-export function abrirCertificado(pfxBase64: string, senha: string): ChaveDoCertificado {
+export function abrirCertificado(
+  pfxBase64: string,
+  senha: string,
+): ChaveDoCertificado {
   let p12: forge.pkcs12.Pkcs12Pfx;
   try {
     const binario = forge.util.decode64(pfxBase64.replace(/\s/g, ""));
@@ -38,7 +41,7 @@ export function abrirCertificado(pfxBase64: string, senha: string): ChaveDoCerti
     throw new CertificadoInvalido(
       /password/i.test(mensagem)
         ? "Senha do certificado incorreta."
-        : `Certificado ilegivel: ${mensagem}`
+        : `Certificado ilegivel: ${mensagem}`,
     );
   }
 
@@ -52,16 +55,20 @@ export function abrirCertificado(pfxBase64: string, senha: string): ChaveDoCerti
     p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[
       forge.pki.oids.pkcs8ShroudedKeyBag
     ]?.[0]?.key ??
-    p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag]?.[0]?.key;
+    p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag]?.[0]
+      ?.key;
 
   if (!certificado || !chave) {
-    throw new CertificadoInvalido("O arquivo nao traz certificado e chave privada.");
+    throw new CertificadoInvalido(
+      "O arquivo nao traz certificado e chave privada.",
+    );
   }
 
   return {
     chavePrivadaPem: forge.pki.privateKeyToPem(chave as forge.pki.PrivateKey),
     certificadoPem: forge.pki.certificateToPem(certificado),
-    titular: certificado.subject.getField("CN")?.value ?? "titular nao identificado",
+    titular:
+      certificado.subject.getField("CN")?.value ?? "titular nao identificado",
     validoAte: certificado.validity.notAfter,
   };
 }
@@ -84,7 +91,7 @@ export function certificadoEmBase64(pem: string): string {
 export function assinarDps(
   xml: string,
   certificado: ChaveDoCertificado,
-  idDoInfDps: string
+  idDoInfDps: string,
 ): string {
   return assinar(xml, certificado, idDoInfDps, "infDPS", "DPS");
 }
@@ -93,7 +100,7 @@ export function assinarDps(
 export function assinarEvento(
   xml: string,
   certificado: ChaveDoCertificado,
-  idDoEvento: string
+  idDoEvento: string,
 ): string {
   return assinar(xml, certificado, idDoEvento, "infPedReg", "pedRegEvento");
 }
@@ -103,7 +110,7 @@ function assinar(
   certificado: ChaveDoCertificado,
   id: string,
   elementoAssinado: string,
-  raiz: string
+  raiz: string,
 ): string {
   const assinador = new SignedXml({
     privateKey: certificado.chavePrivadaPem,
@@ -130,8 +137,13 @@ function assinar(
 }
 
 /** Confere a propria assinatura. E o que o teste usa para provar o caminho. */
-export function conferirAssinatura(xmlAssinado: string, certificadoPem: string): boolean {
-  const extrair = /<(?:\w+:)?Signature[\s\S]*?<\/(?:\w+:)?Signature>/.exec(xmlAssinado);
+export function conferirAssinatura(
+  xmlAssinado: string,
+  certificadoPem: string,
+): boolean {
+  const extrair = /<(?:\w+:)?Signature[\s\S]*?<\/(?:\w+:)?Signature>/.exec(
+    xmlAssinado,
+  );
   if (!extrair) return false;
 
   const verificador = new SignedXml({ publicCert: certificadoPem });

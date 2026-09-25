@@ -25,7 +25,7 @@ export function escritorioAtual(): string {
   const ctx = armazem.getStore();
   if (!ctx?.escritorioId) {
     throw new Error(
-      "Consulta sem escritorio no contexto. Toda rota precisa rodar dentro de comEscritorio()."
+      "Consulta sem escritorio no contexto. Toda rota precisa rodar dentro de comEscritorio().",
     );
   }
   return ctx.escritorioId;

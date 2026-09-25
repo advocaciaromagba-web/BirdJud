@@ -14,7 +14,7 @@ import { type Conector } from "./tipos";
 function nuvemPendente(
   tipo: Conector["tipo"],
   rotulo: string,
-  provedor: string
+  provedor: string,
 ): Conector {
   return {
     tipo,
@@ -32,5 +32,13 @@ function nuvemPendente(
   };
 }
 
-export const conectorMicrosoft = nuvemPendente("MICROSOFT", "OneDrive", "OneDrive");
-export const conectorGoogle = nuvemPendente("GOOGLE", "Google Drive", "Google Drive");
+export const conectorMicrosoft = nuvemPendente(
+  "MICROSOFT",
+  "OneDrive",
+  "OneDrive",
+);
+export const conectorGoogle = nuvemPendente(
+  "GOOGLE",
+  "Google Drive",
+  "Google Drive",
+);

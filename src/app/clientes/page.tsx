@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
-import { Navegacao } from "@/componentes/Navegacao";
+import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 
 export default async function PaginaClientes() {
@@ -9,41 +10,77 @@ export default async function PaginaClientes() {
 
   const modulos = await modulosAtivos(contexto.escritorioId);
   const clientes = await comEscritorio(contexto.escritorioId, (db) =>
-    db.cliente.findMany({ orderBy: { nome: "asc" }, take: 200 })
+    db.cliente.findMany({
+      orderBy: { nome: "asc" },
+      take: 200,
+      include: { _count: { select: { processos: true } } },
+    }),
   );
 
   return (
-    <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
-      <main className="mx-auto max-w-3xl p-8">
-        <h1 className="text-2xl font-bold">Clientes</h1>
+    <Estrutura
+      nomeEscritorio={contexto.marca.nome}
+      logoUrl={contexto.marca.logoUrl}
+      papel={contexto.papel}
+      modulos={modulos}
+      titulo="Clientes"
+      chamada={`${clientes.length} cadastrado(s).`}
+    >
+      <FormularioCriar
+        rota="/api/clientes"
+        recolhivel
+        textoAbrir="Novo cliente"
+        textoBotao="Cadastrar cliente"
+        campos={[
+          { nome: "nome", rotulo: "Nome", obrigatorio: true, largo: true },
+          { nome: "documento", rotulo: "CPF / CNPJ" },
+          { nome: "telefone", rotulo: "Telefone" },
+          { nome: "email", rotulo: "E-mail", tipo: "email" },
+        ]}
+      />
 
-        <FormularioCriar
-          rota="/api/clientes"
-          campos={[
-            { nome: "nome", rotulo: "Nome", obrigatorio: true },
-            { nome: "documento", rotulo: "CPF / CNPJ" },
-            { nome: "email", rotulo: "E-mail", tipo: "email" },
-            { nome: "telefone", rotulo: "Telefone" },
-          ]}
-        />
-
-        {clientes.length === 0 ? (
-          <p className="mt-6 text-neutral-600">Nenhum cliente cadastrado ainda.</p>
-        ) : (
-          <ul className="mt-6 divide-y divide-neutral-200">
-            {clientes.map((cliente) => (
-              <li key={cliente.id} className="py-3">
-                <p className="font-semibold">{cliente.nome}</p>
-                <p className="text-sm text-neutral-500">
-                  {[cliente.documento, cliente.telefone, cliente.email].filter(Boolean).join(" · ") ||
-                    "sem outros dados"}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </main>
-    </>
+      {clientes.length === 0 ? (
+        <p className="vazio mt-6">
+          Nenhum cliente cadastrado ainda. Comece pelo botao acima — depois cada
+          processo, cobranca e arquivo se pendura no cliente.
+        </p>
+      ) : (
+        <div className="cartao mt-6 overflow-x-auto p-0">
+          <table className="tabela">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>CPF / CNPJ</th>
+                <th>Contato</th>
+                <th className="text-right">Processos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clientes.map((cliente) => (
+                <tr key={cliente.id}>
+                  <td className="font-medium">
+                    <Link
+                      href={`/busca?q=${encodeURIComponent(cliente.nome)}`}
+                      className="hover:underline"
+                    >
+                      {cliente.nome}
+                    </Link>
+                  </td>
+                  <td className="text-slate-600">{cliente.documento ?? "—"}</td>
+                  <td className="text-slate-600">
+                    {[cliente.telefone, cliente.email]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
+                  </td>
+                  <td className="text-right tabular-nums">
+                    {cliente._count.processos}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Estrutura>
   );
 }

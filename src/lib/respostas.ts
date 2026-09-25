@@ -5,7 +5,11 @@ import { SemPermissao } from "./papeis";
 import { ModuloNaoContratado } from "./modulos";
 
 export function tratarErro(erro: unknown): NextResponse {
-  if (erro instanceof SemSessao || erro instanceof SemPermissao || erro instanceof ModuloNaoContratado) {
+  if (
+    erro instanceof SemSessao ||
+    erro instanceof SemPermissao ||
+    erro instanceof ModuloNaoContratado
+  ) {
     return NextResponse.json({ erro: erro.message }, { status: erro.status });
   }
   // Nao vazar detalhe interno para o cliente.

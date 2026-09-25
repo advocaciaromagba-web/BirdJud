@@ -50,7 +50,7 @@ export async function GET() {
         orderBy: [{ status: "asc" }, { vencimento: "asc" }],
         take: 200,
         include: { cliente: { select: { nome: true } } },
-      })
+      }),
     );
     return NextResponse.json({ cobrancas });
   } catch (erro) {

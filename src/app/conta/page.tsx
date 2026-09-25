@@ -1,7 +1,7 @@
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
-import { Navegacao } from "@/componentes/Navegacao";
+import { Estrutura } from "@/componentes/Estrutura";
 import { PainelConta } from "@/componentes/PainelConta";
 
 export default async function PaginaConta() {
@@ -21,28 +21,30 @@ export default async function PaginaConta() {
         recebeWhatsapp: true,
         telefone: true,
       },
-    })
+    }),
   );
 
   return (
-    <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
-      <main className="mx-auto max-w-2xl p-8">
-        <h1 className="text-2xl font-bold">Minha conta</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {usuario?.nome} · {usuario?.email} · {usuario?.papel}
-        </p>
-        {/* O segredo do 2FA nunca vai para a tela; so se ele esta ligado. */}
-        <PainelConta
-          doisFatoresAtivo={Boolean(usuario?.doisFatores)}
-          recebeResumo={usuario?.recebeResumo ?? true}
-          recebeLembretes={usuario?.recebeLembretes ?? true}
-          recebeWhatsapp={usuario?.recebeWhatsapp ?? false}
-          telefone={usuario?.telefone ?? ""}
-          temModuloEmail={modulos.includes("EMAIL")}
-          temModuloWhatsapp={modulos.includes("WHATSAPP")}
-        />
-      </main>
-    </>
+    <Estrutura
+      nomeEscritorio={contexto.marca.nome}
+      logoUrl={contexto.marca.logoUrl}
+      papel={contexto.papel}
+      modulos={modulos}
+      titulo="Minha conta"
+    >
+      <p className="mt-1 text-sm text-neutral-500">
+        {usuario?.nome} · {usuario?.email} · {usuario?.papel}
+      </p>
+      {/* O segredo do 2FA nunca vai para a tela; so se ele esta ligado. */}
+      <PainelConta
+        doisFatoresAtivo={Boolean(usuario?.doisFatores)}
+        recebeResumo={usuario?.recebeResumo ?? true}
+        recebeLembretes={usuario?.recebeLembretes ?? true}
+        recebeWhatsapp={usuario?.recebeWhatsapp ?? false}
+        telefone={usuario?.telefone ?? ""}
+        temModuloEmail={modulos.includes("EMAIL")}
+        temModuloWhatsapp={modulos.includes("WHATSAPP")}
+      />
+    </Estrutura>
   );
 }

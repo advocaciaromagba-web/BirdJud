@@ -20,7 +20,7 @@ export async function GET() {
         where: { arquivada: false },
         orderBy: [{ urgente: "desc" }, { dataDisponibilizacao: "desc" }],
         take: 200,
-      })
+      }),
     );
     return NextResponse.json({ publicacoes });
   } catch (erro) {
@@ -41,11 +41,14 @@ export async function PATCH(req: Request) {
     // updateMany com o id no where: a extensao injeta o escritorio, entao id de
     // outro escritorio simplesmente nao encontra nada.
     const { count } = await comEscritorio(escritorioId, (db) =>
-      db.publicacao.updateMany({ where: { id }, data: campos })
+      db.publicacao.updateMany({ where: { id }, data: campos }),
     );
 
     if (count === 0) {
-      return NextResponse.json({ erro: "Publicacao nao encontrada." }, { status: 404 });
+      return NextResponse.json(
+        { erro: "Publicacao nao encontrada." },
+        { status: 404 },
+      );
     }
     return NextResponse.json({ ok: true });
   } catch (erro) {

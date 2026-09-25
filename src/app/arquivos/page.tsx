@@ -4,8 +4,11 @@ import { dataBR } from "@/lib/datas";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { espacoDoEscritorio, TAMANHO_MAXIMO_MB } from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
-import { Navegacao } from "@/componentes/Navegacao";
-import { PainelArquivos, type ArquivoNaTela } from "@/componentes/PainelArquivos";
+import { Estrutura } from "@/componentes/Estrutura";
+import {
+  PainelArquivos,
+  type ArquivoNaTela,
+} from "@/componentes/PainelArquivos";
 
 function tamanhoLegivel(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -71,32 +74,34 @@ export default async function PaginaArquivos() {
   }));
 
   return (
-    <>
-      <Navegacao nomeEscritorio={contexto.marca.nome} papel={contexto.papel} modulos={modulos} />
-      <main className="mx-auto max-w-3xl p-8">
-        <h1 className="text-2xl font-bold">Arquivos</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {espaco.arquivos} arquivo(s) · {espaco.usadoMb} MB usados de {espaco.franquiaMb} MB
-          contratados (teto de {espaco.tetoMb} MB)
-        </p>
+    <Estrutura
+      nomeEscritorio={contexto.marca.nome}
+      logoUrl={contexto.marca.logoUrl}
+      papel={contexto.papel}
+      modulos={modulos}
+      titulo="Arquivos"
+    >
+      <p className="mt-1 text-sm text-neutral-500">
+        {espaco.arquivos} arquivo(s) · {espaco.usadoMb} MB usados de{" "}
+        {espaco.franquiaMb} MB contratados (teto de {espaco.tetoMb} MB)
+      </p>
 
-        {espaco.usadoMb > espaco.franquiaMb ? (
-          <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
-            O espaco passou da franquia contratada. O que passa e cobrado como excedente, e o
-            envio para no teto de {espaco.tetoMb} MB.
-          </div>
-        ) : null}
+      {espaco.usadoMb > espaco.franquiaMb ? (
+        <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
+          O espaco passou da franquia contratada. O que passa e cobrado como
+          excedente, e o envio para no teto de {espaco.tetoMb} MB.
+        </div>
+      ) : null}
 
-        <PainelArquivos
-          arquivos={arquivos}
-          clientes={dados.clientes.map((c) => ({ valor: c.id, rotulo: c.nome }))}
-          processos={dados.processos.map((p) => ({
-            valor: p.id,
-            rotulo: formatarNumeroProcesso(p.numero),
-          }))}
-          tamanhoMaximoMb={TAMANHO_MAXIMO_MB}
-        />
-      </main>
-    </>
+      <PainelArquivos
+        arquivos={arquivos}
+        clientes={dados.clientes.map((c) => ({ valor: c.id, rotulo: c.nome }))}
+        processos={dados.processos.map((p) => ({
+          valor: p.id,
+          rotulo: formatarNumeroProcesso(p.numero),
+        }))}
+        tamanhoMaximoMb={TAMANHO_MAXIMO_MB}
+      />
+    </Estrutura>
   );
 }

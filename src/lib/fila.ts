@@ -23,10 +23,15 @@ export async function enfileirar(
   tipo: string,
   escritorioId: string | null,
   dados: Record<string, unknown> = {},
-  agendadoPara = new Date()
+  agendadoPara = new Date(),
 ): Promise<string> {
   const trabalho = await prismaPlataforma().trabalho.create({
-    data: { tipo, escritorioId, dados: dados as Prisma.InputJsonValue, agendadoPara },
+    data: {
+      tipo,
+      escritorioId,
+      dados: dados as Prisma.InputJsonValue,
+      agendadoPara,
+    },
     select: { id: true },
   });
   return trabalho.id;
@@ -87,7 +92,9 @@ export async function falhar(trabalho: Trabalho, erro: unknown): Promise<void> {
       : {
           estado: "PENDENTE",
           erro: mensagem,
-          agendadoPara: new Date(Date.now() + trabalho.tentativas ** 2 * 60_000),
+          agendadoPara: new Date(
+            Date.now() + trabalho.tentativas ** 2 * 60_000,
+          ),
         },
   });
 }
@@ -101,7 +108,10 @@ export async function destravar(minutos = 15): Promise<number> {
   const limite = new Date(Date.now() - minutos * 60_000);
   const { count } = await prismaPlataforma().trabalho.updateMany({
     where: { estado: "EXECUTANDO", iniciadoEm: { lt: limite } },
-    data: { estado: "PENDENTE", erro: "Retomado apos ficar preso em execucao." },
+    data: {
+      estado: "PENDENTE",
+      erro: "Retomado apos ficar preso em execucao.",
+    },
   });
   return count;
 }

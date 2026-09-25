@@ -8,9 +8,10 @@ import { montarPainel, pendenciasVisiveis } from "@/lib/painel";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { emReais } from "@/lib/dinheiro";
 import { MARCA_NEUTRA } from "@/lib/escritorio";
-import { Navegacao } from "@/componentes/Navegacao";
+import { Estrutura } from "@/componentes/Estrutura";
+import { Icone } from "@/componentes/Icone";
 
-function recortar(texto: string, limite = 140): string {
+function recortar(texto: string, limite = 180): string {
   const limpo = texto.replace(/\s+/g, " ").trim();
   return limpo.length <= limite ? limpo : `${limpo.slice(0, limite)}…`;
 }
@@ -20,10 +21,10 @@ export default async function Painel() {
 
   if (!marca?.id) {
     return (
-      <main className="mx-auto max-w-2xl p-10">
-        <p className="text-sm uppercase tracking-wide text-marca">{MARCA_NEUTRA.nome}</p>
-        <h1 className="mt-2 text-3xl font-bold">Sistema juridico white label</h1>
-        <p className="mt-4 text-neutral-600">
+      <main className="pagina-estreita">
+        <p className="sobretitulo">{MARCA_NEUTRA.nome}</p>
+        <h1 className="mt-2 text-3xl">Sistema juridico white label</h1>
+        <p className="chamada">
           Cada escritorio atende em seu proprio endereco.
         </p>
       </main>
@@ -37,7 +38,10 @@ export default async function Painel() {
     consumoDoMes(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, async (db) => ({
       clientes: await db.cliente.count(),
-      processos: await db.processo.count(),
+      processos: await db.processo.count({ where: { situacao: "ATIVO" } }),
+      compromissos: await db.compromisso.count({
+        where: { inicio: { gte: new Date() } },
+      }),
     })),
   ]);
 
@@ -48,90 +52,117 @@ export default async function Painel() {
     painel.cobrancasVencidas.quantidade === 0 &&
     pendencias.length === 0;
 
+  const indicadores = [
+    { rotulo: "Clientes", valor: numeros.clientes, href: "/clientes" },
+    {
+      rotulo: "Processos ativos",
+      valor: numeros.processos,
+      href: "/processos",
+    },
+    { rotulo: "Compromissos", valor: numeros.compromissos, href: "/agenda" },
+    {
+      rotulo: "Publicacoes nao lidas",
+      valor: painel.naoLidas,
+      href: "/publicacoes",
+    },
+  ];
+
   return (
-    <>
-      <Navegacao
-        nomeEscritorio={marca.nome}
-        papel={contexto.papel}
-        modulos={painel.modulos}
-      />
-      <main className="mx-auto max-w-3xl p-8">
-        <h1 className="text-2xl font-bold">Hoje</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {numeros.clientes} cliente(s) · {numeros.processos} processo(s)
-          {painel.naoLidas > 0 ? ` · ${painel.naoLidas} publicacao(oes) nao lida(s)` : ""}
+    <Estrutura
+      nomeEscritorio={marca.nome}
+      logoUrl={marca.logoUrl}
+      papel={contexto.papel}
+      modulos={painel.modulos}
+      titulo="Hoje"
+      chamada="O que pede atencao agora, em uma tela."
+    >
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {indicadores.map((indicador) => (
+          <Link
+            key={indicador.rotulo}
+            href={indicador.href}
+            className="indicador hover:border-slate-300"
+          >
+            <p className="indicador-numero">{indicador.valor}</p>
+            <p className="indicador-rotulo">{indicador.rotulo}</p>
+          </Link>
+        ))}
+      </div>
+
+      {nada ? (
+        <p className="vazio mt-6">
+          Nada pedindo atencao agora: sem compromisso nas proximas 48 horas, sem
+          publicacao nova e sem cobranca vencida.
         </p>
+      ) : null}
 
-        {nada ? (
-          <p className="mt-6 rounded border border-neutral-200 p-4 text-neutral-600">
-            Nada pedindo atencao agora: sem compromisso nas proximas 48 horas, sem
-            publicacao nova e sem cobranca vencida.
-          </p>
-        ) : null}
+      {pendencias.length > 0 ? (
+        <section className="mt-8">
+          <h2>Precisa de voce</h2>
+          <ul className="mt-3 grid gap-2">
+            {pendencias.map((pendencia) => (
+              <li key={pendencia.tipo}>
+                <Link
+                  href={pendencia.destino}
+                  className="aviso-atencao block hover:brightness-95"
+                >
+                  {pendencia.texto}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
-        {pendencias.length > 0 ? (
-          <section className="mt-6">
-            <h2 className="font-semibold">Precisa de voce</h2>
-            <ul className="mt-2 grid gap-2">
-              {pendencias.map((pendencia) => (
-                <li key={pendencia.tipo}>
-                  <Link
-                    href={pendencia.destino}
-                    className="block rounded border border-amber-300 bg-amber-50 p-3 text-sm hover:border-amber-500"
-                  >
-                    {pendencia.texto}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {painel.compromissos.length > 0 ? (
-          <section className="mt-8">
-            <h2 className="font-semibold">Agenda · proximas 48 horas</h2>
-            <ul className="mt-2 divide-y divide-neutral-200 text-sm">
+          <section className="cartao">
+            <h2>Agenda · proximas 48 horas</h2>
+            <ul className="mt-3 divide-y divide-slate-100 text-sm">
               {painel.compromissos.map((compromisso) => (
-                <li key={compromisso.id} className="flex flex-wrap items-baseline gap-x-3 py-2">
+                <li
+                  key={compromisso.id}
+                  className="flex flex-wrap items-baseline gap-x-3 py-2.5"
+                >
                   <span
-                    className={`rounded px-2 py-0.5 text-xs font-semibold ${
-                      compromisso.hoje
-                        ? "bg-marca/10 text-marca"
-                        : "bg-neutral-100 text-neutral-600"
-                    }`}
+                    className={
+                      compromisso.hoje ? "etiqueta-marca" : "etiqueta-neutra"
+                    }
                   >
-                    {compromisso.hoje ? `hoje ${horaBR.format(compromisso.inicio)}` : dataHoraBR.format(compromisso.inicio)}
+                    {compromisso.hoje
+                      ? `hoje ${horaBR.format(compromisso.inicio)}`
+                      : dataHoraBR.format(compromisso.inicio)}
                   </span>
                   <span className="font-semibold">{compromisso.titulo}</span>
-                  <span className="text-neutral-500">{compromisso.tipo}</span>
+                  <span className="text-slate-500">{compromisso.tipo}</span>
                   {compromisso.local ? (
-                    <span className="text-neutral-500">· {compromisso.local}</span>
+                    <span className="text-slate-500">
+                      · {compromisso.local}
+                    </span>
                   ) : null}
                 </li>
               ))}
             </ul>
-            <Link href="/agenda" className="mt-2 inline-block py-2 text-sm text-marca hover:underline">
+            <Link href="/agenda" className="botao-discreto mt-2">
               Ver a agenda
             </Link>
           </section>
         ) : null}
 
         {painel.publicacoes.length > 0 ? (
-          <section className="mt-8">
-            <h2 className="font-semibold">
+          <section className="cartao">
+            <h2>
               Publicacoes nao lidas
               {painel.naoLidas > painel.publicacoes.length
                 ? ` (${painel.publicacoes.length} de ${painel.naoLidas})`
                 : ""}
             </h2>
-            <ul className="mt-2 divide-y divide-neutral-200 text-sm">
+            <ul className="mt-3 divide-y divide-slate-100 text-sm">
               {painel.publicacoes.map((publicacao) => (
-                <li key={publicacao.id} className="py-2">
+                <li key={publicacao.id} className="py-2.5">
                   <div className="flex flex-wrap items-baseline gap-x-2">
                     {publicacao.urgente ? (
-                      <span className="rounded bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-800">
-                        urgente
-                      </span>
+                      <span className="etiqueta-erro">urgente</span>
                     ) : null}
                     <span className="font-semibold">
                       {publicacao.numeroProcesso
@@ -139,64 +170,75 @@ export default async function Painel() {
                         : "sem numero de processo"}
                     </span>
                     {publicacao.prazoDias !== null ? (
-                      <span className="text-neutral-600">
+                      <span className="text-slate-600">
                         prazo indicado: {publicacao.prazoDias} dia(s)
                       </span>
                     ) : null}
                   </div>
-                  <p className="mt-1 text-neutral-600">{recortar(publicacao.texto)}</p>
+                  <p className="mt-1 text-slate-600">
+                    {recortar(publicacao.texto)}
+                  </p>
                 </li>
               ))}
             </ul>
-            <Link
-              href="/publicacoes"
-              className="mt-2 inline-block py-2 text-sm text-marca hover:underline"
-            >
+            <Link href="/publicacoes" className="botao-discreto mt-2">
               Ler as publicacoes
             </Link>
-            <p className="mt-2 text-xs text-neutral-500">
-              O prazo indicado e leitura automatica do texto e serve como alerta — confira
-              sempre nos autos.
+            <p className="ajuda">
+              O prazo indicado e leitura automatica do texto e serve como alerta
+              — confira sempre nos autos.
             </p>
           </section>
         ) : null}
+      </div>
 
-        {painel.cobrancasVencidas.quantidade > 0 ? (
-          <section className="mt-8">
-            <h2 className="font-semibold">Cobrancas vencidas</h2>
-            <Link
-              href="/cobrancas"
-              className="mt-2 block rounded border border-neutral-200 p-3 text-sm hover:border-marca"
-            >
+      {painel.cobrancasVencidas.quantidade > 0 ? (
+        <section className="mt-6">
+          <Link
+            href="/cobrancas"
+            className="aviso-erro flex items-center gap-3 hover:brightness-95"
+          >
+            <Icone nome="cobrancas" />
+            <span>
               {painel.cobrancasVencidas.quantidade} cobranca(s) ·{" "}
-              {emReais(painel.cobrancasVencidas.totalCentavos)} em aberto depois do
-              vencimento
-            </Link>
-          </section>
-        ) : null}
+              {emReais(painel.cobrancasVencidas.totalCentavos)} em aberto depois
+              do vencimento
+            </span>
+          </Link>
+        </section>
+      ) : null}
 
-        {consumo.length > 0 ? (
-          <section className="mt-8">
-            <h2 className="font-semibold">Consumo de {competenciaDe()}</h2>
-            <ul className="mt-2 divide-y divide-neutral-200 text-sm">
-              {consumo.map((linha) => (
-                <li key={linha.metrica} className="flex justify-between gap-4 py-2">
-                  <span className="text-neutral-600">{linha.metrica}</span>
-                  <span className="tabular-nums">
-                    {linha.quantidade}
-                    {linha.franquia !== null ? ` de ${linha.franquia}` : ""}
-                    {linha.excedente > 0 ? (
-                      <span className="ml-2 text-amber-700">
-                        +{linha.excedente} excedente
-                      </span>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </main>
-    </>
+      {consumo.length > 0 ? (
+        <section className="mt-8">
+          <h2>Consumo de {competenciaDe()}</h2>
+          <div className="cartao mt-3 p-0">
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th>Metrica</th>
+                  <th className="text-right">No mes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {consumo.map((linha) => (
+                  <tr key={linha.metrica}>
+                    <td className="text-slate-600">{linha.metrica}</td>
+                    <td className="text-right tabular-nums">
+                      {linha.quantidade}
+                      {linha.franquia !== null ? ` de ${linha.franquia}` : ""}
+                      {linha.excedente > 0 ? (
+                        <span className="ml-2 text-amber-700">
+                          +{linha.excedente} excedente
+                        </span>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+    </Estrutura>
   );
 }

@@ -128,7 +128,10 @@ export function idDaDps(dados: DadosDaDps): string {
 }
 
 /** O XML do DPS, sem assinatura. Quem assina e assinatura.ts. */
-export function montarDps(dados: DadosDaDps, ambiente: Ambiente = "HOMOLOGACAO"): string {
+export function montarDps(
+  dados: DadosDaDps,
+  ambiente: Ambiente = "HOMOLOGACAO",
+): string {
   const id = idDaDps(dados);
   const cnpj = soDigitos(dados.prestador.cnpj);
   const documentoTomador = soDigitos(dados.tomador.documento);

@@ -18,7 +18,9 @@ export function lerCertificado(pfxBase64: string, senha: string): Leitura {
   // Lanca "Invalid password?" quando a senha nao abre o arquivo.
   const p12 = forge.pkcs12.pkcs12FromAsn1(asn1, senha);
 
-  const sacos = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag];
+  const sacos = p12.getBags({ bagType: forge.pki.oids.certBag })[
+    forge.pki.oids.certBag
+  ];
   const certificado = sacos?.[0]?.cert;
   if (!certificado) throw new Error("O arquivo nao contem certificado.");
 
@@ -40,18 +42,29 @@ const AVISO_DIAS = 30;
  * datas escolhidas — gerar um certificado vencido de verdade so com openssl e
  * pouco confiavel entre versoes.
  */
-export function avaliarValidade(leitura: Leitura, agora = new Date()): ResultadoTeste {
+export function avaliarValidade(
+  leitura: Leitura,
+  agora = new Date(),
+): ResultadoTeste {
   const data = (d: Date) => d.toLocaleDateString("pt-BR");
 
   if (leitura.ate < agora) {
-    return { ok: false, detalhe: `Certificado vencido em ${data(leitura.ate)}.` };
+    return {
+      ok: false,
+      detalhe: `Certificado vencido em ${data(leitura.ate)}.`,
+    };
   }
   if (leitura.de > agora) {
     return { ok: false, detalhe: "Certificado ainda nao esta valido." };
   }
 
-  const diasRestantes = Math.floor((leitura.ate.getTime() - agora.getTime()) / DIA);
-  const aviso = diasRestantes <= AVISO_DIAS ? ` Atencao: vence em ${diasRestantes} dia(s).` : "";
+  const diasRestantes = Math.floor(
+    (leitura.ate.getTime() - agora.getTime()) / DIA,
+  );
+  const aviso =
+    diasRestantes <= AVISO_DIAS
+      ? ` Atencao: vence em ${diasRestantes} dia(s).`
+      : "";
   return {
     ok: true,
     detalhe: `${leitura.titular}, valido ate ${data(leitura.ate)}.${aviso}`,
@@ -71,7 +84,12 @@ export const conectorCertificado: Conector = {
       obrigatorio: true,
       ajuda: "Converta o .pfx para base64 antes de colar.",
     },
-    { nome: "senha", rotulo: "Senha do certificado", tipo: "password", obrigatorio: true },
+    {
+      nome: "senha",
+      rotulo: "Senha do certificado",
+      tipo: "password",
+      obrigatorio: true,
+    },
   ],
   resumo: (dados) => {
     try {

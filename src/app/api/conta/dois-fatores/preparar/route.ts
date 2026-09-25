@@ -17,9 +17,13 @@ export async function POST() {
     const { escritorioId, usuarioId, marca } = await exigirSessao();
 
     const usuario = await comEscritorio(escritorioId, (db) =>
-      db.usuario.findFirst({ where: { id: usuarioId } })
+      db.usuario.findFirst({ where: { id: usuarioId } }),
     );
-    if (!usuario) return NextResponse.json({ erro: "Usuario nao encontrado." }, { status: 404 });
+    if (!usuario)
+      return NextResponse.json(
+        { erro: "Usuario nao encontrado." },
+        { status: 404 },
+      );
 
     const segredo = gerarSegredo();
     // O emissor e o escritorio: e o nome que aparece no aplicativo do usuario.

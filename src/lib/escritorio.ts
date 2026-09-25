@@ -56,7 +56,9 @@ export async function escritorioPorSlug(slug: string): Promise<Marca | null> {
 }
 
 /** Marca para a casca da aplicacao. Sem escritorio, devolve a marca neutra. */
-export async function marcaDoEscritorio(escritorioId: string | null): Promise<Marca> {
+export async function marcaDoEscritorio(
+  escritorioId: string | null,
+): Promise<Marca> {
   if (!escritorioId) return MARCA_NEUTRA;
   const linhas = await prismaSemEscritorio.$queryRaw<LinhaPublica[]>`
     SELECT "id", "slug", "nome", "status", "logoUrl", "corPrimaria", "corSecundaria",

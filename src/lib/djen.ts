@@ -57,7 +57,8 @@ export function destinoDaConsulta(parametros: URLSearchParams): {
 } {
   const cabecalhos: Record<string, string> = { Accept: "application/json" };
   const rele = releDjen();
-  if (!rele) return { url: `${baseDjen()}/comunicacao?${parametros}`, cabecalhos };
+  if (!rele)
+    return { url: `${baseDjen()}/comunicacao?${parametros}`, cabecalhos };
 
   const token = process.env.DJEN_RELE_TOKEN?.trim();
   if (token) cabecalhos.Authorization = `Bearer ${token}`;
@@ -79,7 +80,10 @@ export function comoData(data: Date): string {
 export function converter(item: Record<string, unknown>): Comunicacao | null {
   const texto = primeiro(item, ["texto", "conteudo"]);
   const id = primeiro(item, ["id", "hash", "idComunicacao"]);
-  const data = primeiro(item, ["data_disponibilizacao", "dataDisponibilizacao"]);
+  const data = primeiro(item, [
+    "data_disponibilizacao",
+    "dataDisponibilizacao",
+  ]);
   if (!id || !texto || !data) return null;
 
   const quando = new Date(String(data));
@@ -88,17 +92,25 @@ export function converter(item: Record<string, unknown>): Comunicacao | null {
   return {
     idExterno: String(id),
     numeroProcesso:
-      primeiro(item, ["numero_processo", "numeroProcesso", "numeroprocessocommascara"]) ?? null,
+      primeiro(item, [
+        "numero_processo",
+        "numeroProcesso",
+        "numeroprocessocommascara",
+      ]) ?? null,
     tribunal: primeiro(item, ["siglaTribunal", "sigla_tribunal"]) ?? null,
     orgao: primeiro(item, ["nomeOrgao", "nome_orgao"]) ?? null,
-    tipoComunicacao: primeiro(item, ["tipoComunicacao", "tipo_comunicacao"]) ?? null,
+    tipoComunicacao:
+      primeiro(item, ["tipoComunicacao", "tipo_comunicacao"]) ?? null,
     texto: String(texto),
     link: primeiro(item, ["link"]) ?? null,
     dataDisponibilizacao: quando,
   };
 }
 
-function primeiro(item: Record<string, unknown>, chaves: string[]): string | null {
+function primeiro(
+  item: Record<string, unknown>,
+  chaves: string[],
+): string | null {
   for (const chave of chaves) {
     const valor = item[chave];
     if (typeof valor === "string" && valor.trim()) return valor.trim();
@@ -132,7 +144,9 @@ export async function buscarPagina(consulta: ConsultaDjen): Promise<{
 
   let resposta: Response;
   try {
-    resposta = await buscarComLimite(destino.url, { headers: destino.cabecalhos });
+    resposta = await buscarComLimite(destino.url, {
+      headers: destino.cabecalhos,
+    });
   } catch (erro) {
     throw new FalhaNoDjen(descreverFalha(erro));
   }
@@ -141,21 +155,23 @@ export async function buscarPagina(consulta: ConsultaDjen): Promise<{
 
   if (resposta.status === 401 && peloRele) {
     throw new FalhaNoDjen(
-      "O rele do DJEN recusou o token (401). Confira se DJEN_RELE_TOKEN e o mesmo RELE_TOKEN configurado na Vercel."
+      "O rele do DJEN recusou o token (401). Confira se DJEN_RELE_TOKEN e o mesmo RELE_TOKEN configurado na Vercel.",
     );
   }
   if (resposta.status === 403) {
     throw new FalhaNoDjen(
       peloRele
         ? "O DJEN recusou a consulta (403) mesmo pelo rele. Confira se o projeto do rele na Vercel esta fixado na regiao gru1 (Sao Paulo)."
-        : "O DJEN recusou a consulta (403). A API bloqueia acesso de fora do Brasil: configure DJEN_RELE_URL para sair pelo rele."
+        : "O DJEN recusou a consulta (403). A API bloqueia acesso de fora do Brasil: configure DJEN_RELE_URL para sair pelo rele.",
     );
   }
-  if (!resposta.ok) throw new FalhaNoDjen(`O DJEN respondeu ${resposta.status}.`);
+  if (!resposta.ok)
+    throw new FalhaNoDjen(`O DJEN respondeu ${resposta.status}.`);
 
-  const corpo = (await resposta.json().catch(() => null)) as
-    | { items?: unknown[]; count?: number }
-    | null;
+  const corpo = (await resposta.json().catch(() => null)) as {
+    items?: unknown[];
+    count?: number;
+  } | null;
   if (!corpo || !Array.isArray(corpo.items)) {
     throw new FalhaNoDjen("Resposta do DJEN sem a lista de comunicacoes.");
   }
@@ -168,12 +184,18 @@ export async function buscarPagina(consulta: ConsultaDjen): Promise<{
 }
 
 /** Percorre as paginas ate acabar. Para em 20 paginas, por seguranca. */
-export async function buscarPeriodo(consulta: ConsultaDjen): Promise<Comunicacao[]> {
+export async function buscarPeriodo(
+  consulta: ConsultaDjen,
+): Promise<Comunicacao[]> {
   const porPagina = consulta.itensPorPagina ?? 100;
   const todas: Comunicacao[] = [];
 
   for (let pagina = 1; pagina <= 20; pagina += 1) {
-    const { comunicacoes, total } = await buscarPagina({ ...consulta, pagina, itensPorPagina: porPagina });
+    const { comunicacoes, total } = await buscarPagina({
+      ...consulta,
+      pagina,
+      itensPorPagina: porPagina,
+    });
     todas.push(...comunicacoes);
     if (comunicacoes.length === 0 || todas.length >= total) break;
   }

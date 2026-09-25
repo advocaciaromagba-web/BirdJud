@@ -13,7 +13,7 @@ export class FaixaEsgotada extends Error {
     super(
       `A faixa ${rotulo} permite ate ${limite} ${
         quem === "advogados" ? "advogados" : "usuarios de apoio"
-      }. Para cadastrar mais, e preciso mudar de faixa.`
+      }. Para cadastrar mais, e preciso mudar de faixa.`,
     );
     this.name = "FaixaEsgotada";
   }
@@ -36,7 +36,7 @@ export type UsoDaFaixa = {
  */
 async function faixaDoEscritorio(escritorioId: string): Promise<Faixa> {
   const escritorio = await comEscritorio(escritorioId, (db) =>
-    db.escritorio.findFirst({ select: { faixa: true } })
+    db.escritorio.findFirst({ select: { faixa: true } }),
   );
   const faixa = escritorio?.faixa ?? "ATE_3";
   return ehFaixa(faixa) ? faixa : "ATE_3";
@@ -47,11 +47,18 @@ export async function usoDaFaixa(escritorioId: string): Promise<UsoDaFaixa> {
   const faixa = await faixaDoEscritorio(escritorioId);
   const limites = LIMITES[faixa];
 
-  const { advogados, apoio } = await comEscritorio(escritorioId, async (db) => ({
-    // So usuario ativo ocupa lugar: desativar libera a vaga.
-    advogados: await db.usuario.count({ where: { ativo: true, advogado: true } }),
-    apoio: await db.usuario.count({ where: { ativo: true, advogado: false } }),
-  }));
+  const { advogados, apoio } = await comEscritorio(
+    escritorioId,
+    async (db) => ({
+      // So usuario ativo ocupa lugar: desativar libera a vaga.
+      advogados: await db.usuario.count({
+        where: { ativo: true, advogado: true },
+      }),
+      apoio: await db.usuario.count({
+        where: { ativo: true, advogado: false },
+      }),
+    }),
+  );
 
   return {
     faixa,
@@ -62,10 +69,17 @@ export async function usoDaFaixa(escritorioId: string): Promise<UsoDaFaixa> {
 }
 
 /** Lanca FaixaEsgotada quando nao ha vaga para mais um usuario do tipo. */
-export async function exigirVagaNaFaixa(escritorioId: string, advogado: boolean): Promise<void> {
+export async function exigirVagaNaFaixa(
+  escritorioId: string,
+  advogado: boolean,
+): Promise<void> {
   const uso = await usoDaFaixa(escritorioId);
   const alvo = advogado ? uso.advogados : uso.apoio;
   if (alvo.usados >= alvo.limite) {
-    throw new FaixaEsgotada(advogado ? "advogados" : "apoio", alvo.limite, uso.rotulo);
+    throw new FaixaEsgotada(
+      advogado ? "advogados" : "apoio",
+      alvo.limite,
+      uso.rotulo,
+    );
   }
 }

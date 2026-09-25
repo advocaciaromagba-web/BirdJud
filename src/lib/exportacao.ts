@@ -21,7 +21,9 @@ export type Exportacao = {
   integracoes: unknown[];
 };
 
-export async function exportarEscritorio(escritorioId: string): Promise<Exportacao> {
+export async function exportarEscritorio(
+  escritorioId: string,
+): Promise<Exportacao> {
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
     select: {

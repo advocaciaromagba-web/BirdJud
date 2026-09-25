@@ -8,7 +8,9 @@ const RESERVADOS = new Set(["www", "app", "api", "admin", "painel"]);
 /** Extrai o slug de <slug>.birdjud.com.br. Devolve null quando nao ha. */
 export function slugDoHost(host: string | null): string | null {
   if (!host) return null;
-  const dominio = (process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br").toLowerCase();
+  const dominio = (
+    process.env.DOMINIO_PLATAFORMA ?? "birdjud.com.br"
+  ).toLowerCase();
   const semPorta = host.split(":")[0]?.toLowerCase() ?? "";
   if (!semPorta.endsWith(`.${dominio}`)) return null;
   const slug = semPorta.slice(0, -(dominio.length + 1));

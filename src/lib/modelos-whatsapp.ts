@@ -34,7 +34,12 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     idioma: "pt_BR",
     texto:
       "{{1}}: lembrete de {{2}} em {{3}}. {{4}}. Confira a agenda no sistema.",
-    parametros: ["nome do escritorio", "titulo", "data e hora", "local ou processo"],
+    parametros: [
+      "nome do escritorio",
+      "titulo",
+      "data e hora",
+      "local ou processo",
+    ],
   },
 };
 
@@ -47,7 +52,10 @@ export function modeloDoTipo(tipo: string): ModeloDeAviso | null {
  * — a Meta recusa a mensagem inteira com erro de formato. Tambem nao pode ser
  * vazio, entao campo ausente vira travessao.
  */
-export function limparParametro(valor: string | null | undefined, limite = 200): string {
+export function limparParametro(
+  valor: string | null | undefined,
+  limite = 200,
+): string {
   const limpo = (valor ?? "").replace(/\s+/g, " ").trim();
   if (!limpo) return "—";
   return limpo.length <= limite ? limpo : `${limpo.slice(0, limite - 1)}…`;

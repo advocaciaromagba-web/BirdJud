@@ -15,7 +15,7 @@ export async function GET() {
   try {
     const { escritorioId } = await exigirSessao();
     const clientes = await comEscritorio(escritorioId, (db) =>
-      db.cliente.findMany({ orderBy: { nome: "asc" }, take: 200 })
+      db.cliente.findMany({ orderBy: { nome: "asc" }, take: 200 }),
     );
     return NextResponse.json({ clientes });
   } catch (erro) {
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
     // escritorioId nunca vem do corpo: a extensao injeta o da sessao.
     const cliente = await comEscritorio(escritorioId, (db) =>
-      db.cliente.create({ data: semEscritorio(corpo.data) })
+      db.cliente.create({ data: semEscritorio(corpo.data) }),
     );
     return NextResponse.json({ cliente }, { status: 201 });
   } catch (erro) {

@@ -13,7 +13,8 @@ export function middleware(req: NextRequest) {
   // Atras do proxy do provedor, quem sabe se o cliente veio por HTTPS e o
   // x-forwarded-proto; a URL interna e sempre http.
   const seguro =
-    req.headers.get("x-forwarded-proto") === "https" || req.nextUrl.protocol === "https:";
+    req.headers.get("x-forwarded-proto") === "https" ||
+    req.nextUrl.protocol === "https:";
   const csp = montarCSP(nonce, process.env.NODE_ENV === "production", seguro);
 
   const cabecalhos = new Headers(req.headers);

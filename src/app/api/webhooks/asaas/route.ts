@@ -8,10 +8,7 @@ import { registrarPagamento } from "@/lib/cobranca";
 export const dynamic = "force-dynamic";
 
 /** Eventos que significam dinheiro na conta. */
-const EVENTOS_DE_BAIXA = new Set([
-  "PAYMENT_RECEIVED",
-  "PAYMENT_CONFIRMED",
-]);
+const EVENTOS_DE_BAIXA = new Set(["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"]);
 
 const evento = z.object({
   event: z.string(),
@@ -44,7 +41,10 @@ export async function POST(req: Request) {
   const esperado = process.env.ASAAS_WEBHOOK_TOKEN;
   if (!esperado) {
     console.error("ASAAS_WEBHOOK_TOKEN nao definido: webhook recusado.");
-    return NextResponse.json({ erro: "Webhook nao configurado." }, { status: 503 });
+    return NextResponse.json(
+      { erro: "Webhook nao configurado." },
+      { status: 503 },
+    );
   }
 
   if (!tokenConfere(req.headers.get("asaas-access-token"), esperado)) {
@@ -64,7 +64,10 @@ export async function POST(req: Request) {
 
   const faturaId = corpo.data.payment?.externalReference;
   if (!faturaId) {
-    return NextResponse.json({ erro: "Evento sem referencia da fatura." }, { status: 400 });
+    return NextResponse.json(
+      { erro: "Evento sem referencia da fatura." },
+      { status: 400 },
+    );
   }
 
   const fatura = await prismaPlataforma().fatura.findUnique({
@@ -72,7 +75,10 @@ export async function POST(req: Request) {
     select: { id: true, status: true },
   });
   if (!fatura) {
-    return NextResponse.json({ erro: "Fatura nao encontrada." }, { status: 404 });
+    return NextResponse.json(
+      { erro: "Fatura nao encontrada." },
+      { status: 404 },
+    );
   }
 
   // Provedor reenvia evento quando nao recebe 200. Fatura ja paga responde ok
@@ -81,6 +87,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, jaProcessada: true });
   }
 
-  const resultado = await registrarPagamento(fatura.id, corpo.data.payment?.id ?? null);
+  const resultado = await registrarPagamento(
+    fatura.id,
+    corpo.data.payment?.id ?? null,
+  );
   return NextResponse.json({ ok: true, status: resultado.statusNovo });
 }

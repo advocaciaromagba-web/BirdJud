@@ -1,5 +1,10 @@
 // Cobrancas pelo Asaas, com a conta do proprio escritorio.
-import { buscarComLimite, descreverFalha, mascarar, type Conector } from "./tipos";
+import {
+  buscarComLimite,
+  descreverFalha,
+  mascarar,
+  type Conector,
+} from "./tipos";
 
 /** Producao por padrao; sandbox em desenvolvimento e nos testes. */
 function baseAsaas(): string {
@@ -28,13 +33,20 @@ export const conectorAsaas: Conector = {
         headers: { access_token: dados.chave, "User-Agent": "BirdJud" },
       });
 
-      if (resposta.status === 401) return { ok: false, detalhe: "Chave recusada pelo Asaas." };
+      if (resposta.status === 401)
+        return { ok: false, detalhe: "Chave recusada pelo Asaas." };
       if (!resposta.ok) {
         return { ok: false, detalhe: `Asaas respondeu ${resposta.status}.` };
       }
 
-      const conta = (await resposta.json()) as { name?: string; email?: string };
-      return { ok: true, detalhe: `Conta ${conta.name ?? conta.email ?? "conectada"}.` };
+      const conta = (await resposta.json()) as {
+        name?: string;
+        email?: string;
+      };
+      return {
+        ok: true,
+        detalhe: `Conta ${conta.name ?? conta.email ?? "conectada"}.`,
+      };
     } catch (erro) {
       return { ok: false, detalhe: descreverFalha(erro) };
     }

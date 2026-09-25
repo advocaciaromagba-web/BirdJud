@@ -13,8 +13,17 @@
 import { comEscritorio, semEscritorio } from "../prisma";
 import { obterIntegracao, IntegracaoAusente } from "../integracao";
 import { registrarConsumo } from "../consumo";
-import { abrirCertificado, assinarDps, assinarEvento, CertificadoInvalido } from "./assinatura";
-import { cancelar as cancelarNoNacional, emitir as enviarAoNacional, FalhaNaNfse } from "./nacional";
+import {
+  abrirCertificado,
+  assinarDps,
+  assinarEvento,
+  CertificadoInvalido,
+} from "./assinatura";
+import {
+  cancelar as cancelarNoNacional,
+  emitir as enviarAoNacional,
+  FalhaNaNfse,
+} from "./nacional";
 import {
   idDaDps,
   montarDps,
@@ -32,7 +41,7 @@ export class SemCadastroFiscal extends Error {
   readonly status = 428;
   constructor() {
     super(
-      "Cadastro fiscal incompleto: CNPJ, inscricao municipal, municipio, regime, codigo do servico e aliquota precisam estar preenchidos em Integracoes."
+      "Cadastro fiscal incompleto: CNPJ, inscricao municipal, municipio, regime, codigo do servico e aliquota precisam estar preenchidos em Integracoes.",
     );
     this.name = "SemCadastroFiscal";
   }
@@ -74,25 +83,34 @@ type CredencialCertificado = { arquivo: string; senha: string };
  */
 export async function emitirNota(
   escritorioId: string,
-  pedido: PedidoDeNota
+  pedido: PedidoDeNota,
 ): Promise<{ id: string; status: string; chaveAcesso: string | null }> {
-  if (pedido.valorCentavos <= 0) throw new NotaInvalida("O valor precisa ser maior que zero.");
-  if (!pedido.descricao.trim()) throw new NotaInvalida("A nota precisa da descricao do servico.");
+  if (pedido.valorCentavos <= 0)
+    throw new NotaInvalida("O valor precisa ser maior que zero.");
+  if (!pedido.descricao.trim())
+    throw new NotaInvalida("A nota precisa da descricao do servico.");
 
-  const fiscal = await comEscritorio(escritorioId, (db) => db.fiscal.findFirst());
+  const fiscal = await comEscritorio(escritorioId, (db) =>
+    db.fiscal.findFirst(),
+  );
   if (!fiscal) throw new SemCadastroFiscal();
 
   const cliente = await comEscritorio(escritorioId, (db) =>
-    db.cliente.findUnique({ where: { id: pedido.clienteId } })
+    db.cliente.findUnique({ where: { id: pedido.clienteId } }),
   );
   if (!cliente) throw new NotaInvalida("Cliente nao encontrado.");
   if (!cliente.documento) {
-    throw new NotaInvalida(`${cliente.nome} esta sem CPF/CNPJ, e a nota exige o documento.`);
+    throw new NotaInvalida(
+      `${cliente.nome} esta sem CPF/CNPJ, e a nota exige o documento.`,
+    );
   }
 
   let credencial: CredencialCertificado;
   try {
-    credencial = await obterIntegracao<CredencialCertificado>(escritorioId, "NFSE_CERT");
+    credencial = await obterIntegracao<CredencialCertificado>(
+      escritorioId,
+      "NFSE_CERT",
+    );
   } catch (erro) {
     if (erro instanceof IntegracaoAusente) throw new SemCertificado();
     throw erro;
@@ -148,7 +166,11 @@ export async function emitirNota(
 
   try {
     const certificado = abrirCertificado(credencial.arquivo, credencial.senha);
-    const assinado = assinarDps(montarDps(dados, ambiente), certificado, idDaDps(dados));
+    const assinado = assinarDps(
+      montarDps(dados, ambiente),
+      certificado,
+      idDaDps(dados),
+    );
     const retorno = await enviarAoNacional(assinado, ambiente);
 
     await comEscritorio(escritorioId, (db) =>
@@ -164,7 +186,7 @@ export async function emitirNota(
           emitidaEm: new Date(),
           erro: null,
         },
-      })
+      }),
     );
     await registrarConsumo(escritorioId, "NFSE_EMITIDA", 1);
     return { id: nota.id, status: "EMITIDA", chaveAcesso: retorno.chaveAcesso };
@@ -174,7 +196,7 @@ export async function emitirNota(
       db.notaFiscal.update({
         where: { id: nota.id },
         data: { status: "RECUSADA", erro: motivo.slice(0, 1000) },
-      })
+      }),
     );
 
     throw erro;
@@ -202,10 +224,10 @@ export class CancelamentoInvalido extends Error {
 export async function cancelarNota(
   escritorioId: string,
   id: string,
-  motivo: MotivoDeCancelamento = "ERRO_NA_EMISSAO"
+  motivo: MotivoDeCancelamento = "ERRO_NA_EMISSAO",
 ): Promise<void> {
   const nota = await comEscritorio(escritorioId, (db) =>
-    db.notaFiscal.findUnique({ where: { id } })
+    db.notaFiscal.findUnique({ where: { id } }),
   );
   if (!nota) throw new NotaInvalida("Nota nao encontrada.");
   if (nota.status === "CANCELADA") return;
@@ -213,12 +235,17 @@ export async function cancelarNota(
     throw new CancelamentoInvalido("So nota emitida pode ser cancelada.");
   }
 
-  const fiscal = await comEscritorio(escritorioId, (db) => db.fiscal.findFirst());
+  const fiscal = await comEscritorio(escritorioId, (db) =>
+    db.fiscal.findFirst(),
+  );
   if (!fiscal) throw new SemCadastroFiscal();
 
   let credencial: CredencialCertificado;
   try {
-    credencial = await obterIntegracao<CredencialCertificado>(escritorioId, "NFSE_CERT");
+    credencial = await obterIntegracao<CredencialCertificado>(
+      escritorioId,
+      "NFSE_CERT",
+    );
   } catch (erro) {
     if (erro instanceof IntegracaoAusente) throw new SemCertificado();
     throw erro;
@@ -237,13 +264,13 @@ export async function cancelarNota(
   await cancelarNoNacional(
     nota.chaveAcesso,
     assinarEvento(pedido.xml, certificado, pedido.id),
-    ambiente
+    ambiente,
   );
 
   await comEscritorio(escritorioId, (db) =>
     db.notaFiscal.update({
       where: { id },
       data: { status: "CANCELADA", canceladaEm: new Date(), erro: null },
-    })
+    }),
   );
 }

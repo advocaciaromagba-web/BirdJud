@@ -14,8 +14,16 @@ export const VERSAO_DOS_DOCUMENTOS = "2026-09-18";
 
 export const DOCUMENTOS = [
   { chave: "TERMOS", rotulo: "Termos de Uso", caminho: "TERMOS-DE-USO" },
-  { chave: "CONTRATO", rotulo: "Contrato de licenca e servico", caminho: "CONTRATO-SAAS" },
-  { chave: "LGPD", rotulo: "Acordo de tratamento de dados (LGPD)", caminho: "ACORDO-LGPD" },
+  {
+    chave: "CONTRATO",
+    rotulo: "Contrato de licenca e servico",
+    caminho: "CONTRATO-SAAS",
+  },
+  {
+    chave: "LGPD",
+    rotulo: "Acordo de tratamento de dados (LGPD)",
+    caminho: "ACORDO-LGPD",
+  },
 ] as const;
 
 export type DocumentoJuridico = (typeof DOCUMENTOS)[number]["chave"];

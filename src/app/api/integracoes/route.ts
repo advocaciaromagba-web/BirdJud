@@ -23,14 +23,18 @@ export async function GET() {
     const guardadas = await comEscritorio(escritorioId, (db) =>
       db.integracao.findMany({
         select: { tipo: true, status: true, erro: true, verificadoEm: true },
-      })
+      }),
     );
     const porTipo = new Map(guardadas.map((i) => [i.tipo, i]));
 
     const lista = [];
     for (const conector of Object.values(CONECTORES)) {
       // Conector de modulo nao contratado nem aparece.
-      if (conector.modulo && !(await moduloAtivo(escritorioId, conector.modulo))) continue;
+      if (
+        conector.modulo &&
+        !(await moduloAtivo(escritorioId, conector.modulo))
+      )
+        continue;
       const guardada = porTipo.get(conector.tipo);
       lista.push({
         tipo: conector.tipo,
@@ -56,24 +60,32 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirAdmin();
     const corpo = corpoEsperado.safeParse(await req.json());
     if (!corpo.success || !ehTipoDeIntegracao(corpo.data.tipo)) {
-      return NextResponse.json({ erro: "Integracao desconhecida." }, { status: 400 });
+      return NextResponse.json(
+        { erro: "Integracao desconhecida." },
+        { status: 400 },
+      );
     }
 
     const conector = CONECTORES[corpo.data.tipo as TipoIntegracao];
-    if (conector.modulo && !(await moduloAtivo(escritorioId, conector.modulo))) {
+    if (
+      conector.modulo &&
+      !(await moduloAtivo(escritorioId, conector.modulo))
+    ) {
       return NextResponse.json(
         { erro: `O modulo ${conector.modulo} nao esta contratado.` },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const faltando = conector.campos
-      .filter((campo) => campo.obrigatorio && !corpo.data.dados[campo.nome]?.trim())
+      .filter(
+        (campo) => campo.obrigatorio && !corpo.data.dados[campo.nome]?.trim(),
+      )
       .map((campo) => campo.rotulo);
     if (faltando.length > 0) {
       return NextResponse.json(
         { erro: `Faltou preencher: ${faltando.join(", ")}.` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -84,7 +96,7 @@ export async function POST(req: Request) {
       conector.tipo,
       corpo.data.dados,
       resultado.ok ? "OK" : "ERRO",
-      resultado.ok ? null : resultado.detalhe
+      resultado.ok ? null : resultado.detalhe,
     );
 
     return NextResponse.json({ ok: resultado.ok, detalhe: resultado.detalhe });

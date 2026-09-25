@@ -23,18 +23,29 @@ export async function POST(req: Request) {
     const resultado = await comEscritorio(escritorioId, async (db) => {
       const usuario = await db.usuario.findFirst({ where: { id: usuarioId } });
       if (!usuario?.doisFatores) return "nao-ativo" as const;
-      if (!(await conferirSenha(corpo.data.senha, usuario.senhaHash))) return "recusado" as const;
-      if (!(await conferirCodigo(corpo.data.codigo, usuario.doisFatores))) return "recusado" as const;
+      if (!(await conferirSenha(corpo.data.senha, usuario.senhaHash)))
+        return "recusado" as const;
+      if (!(await conferirCodigo(corpo.data.codigo, usuario.doisFatores)))
+        return "recusado" as const;
 
-      await db.usuario.update({ where: { id: usuario.id }, data: { doisFatores: null } });
+      await db.usuario.update({
+        where: { id: usuario.id },
+        data: { doisFatores: null },
+      });
       return "ok" as const;
     });
 
     if (resultado === "nao-ativo") {
-      return NextResponse.json({ erro: "O segundo fator nao esta ativo." }, { status: 400 });
+      return NextResponse.json(
+        { erro: "O segundo fator nao esta ativo." },
+        { status: 400 },
+      );
     }
     if (resultado === "recusado") {
-      return NextResponse.json({ erro: "Senha ou codigo invalido." }, { status: 400 });
+      return NextResponse.json(
+        { erro: "Senha ou codigo invalido." },
+        { status: 400 },
+      );
     }
     return NextResponse.json({ ok: true });
   } catch (erro) {

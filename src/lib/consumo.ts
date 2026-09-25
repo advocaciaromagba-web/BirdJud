@@ -20,15 +20,21 @@ export async function registrarConsumo(
   escritorioId: string,
   metrica: Metrica,
   quantidade: number,
-  competencia = competenciaDe()
+  competencia = competenciaDe(),
 ): Promise<void> {
   if (quantidade === 0) return;
   await comEscritorio(escritorioId, (db) =>
     db.consumoMensal.upsert({
-      where: { escritorioId_competencia_metrica: { escritorioId, competencia, metrica } },
+      where: {
+        escritorioId_competencia_metrica: {
+          escritorioId,
+          competencia,
+          metrica,
+        },
+      },
       create: { escritorioId, competencia, metrica, quantidade },
       update: { quantidade: { increment: quantidade } },
-    })
+    }),
   );
 }
 
@@ -37,14 +43,20 @@ export async function definirConsumo(
   escritorioId: string,
   metrica: Metrica,
   quantidade: number,
-  competencia = competenciaDe()
+  competencia = competenciaDe(),
 ): Promise<void> {
   await comEscritorio(escritorioId, (db) =>
     db.consumoMensal.upsert({
-      where: { escritorioId_competencia_metrica: { escritorioId, competencia, metrica } },
+      where: {
+        escritorioId_competencia_metrica: {
+          escritorioId,
+          competencia,
+          metrica,
+        },
+      },
       create: { escritorioId, competencia, metrica, quantidade },
       update: { quantidade },
-    })
+    }),
   );
 }
 
@@ -58,12 +70,15 @@ export type LinhaDeConsumo = {
 /** Consumo do mes com franquia e excedente ja calculados. */
 export async function consumoDoMes(
   escritorioId: string,
-  competencia = competenciaDe()
+  competencia = competenciaDe(),
 ): Promise<LinhaDeConsumo[]> {
-  const { consumos, modulos } = await comEscritorio(escritorioId, async (db) => ({
-    consumos: await db.consumoMensal.findMany({ where: { competencia } }),
-    modulos: await db.moduloContratado.findMany({ where: { ativo: true } }),
-  }));
+  const { consumos, modulos } = await comEscritorio(
+    escritorioId,
+    async (db) => ({
+      consumos: await db.consumoMensal.findMany({ where: { competencia } }),
+      modulos: await db.moduloContratado.findMany({ where: { ativo: true } }),
+    }),
+  );
 
   const franquiaPorModulo = new Map(modulos.map((m) => [m.modulo, m.franquia]));
 
@@ -71,12 +86,13 @@ export async function consumoDoMes(
     .map((consumo) => {
       const metrica = consumo.metrica as Metrica;
       const modulo = MODULO_DA_METRICA[metrica];
-      const franquia = modulo ? franquiaPorModulo.get(modulo) ?? null : null;
+      const franquia = modulo ? (franquiaPorModulo.get(modulo) ?? null) : null;
       return {
         metrica,
         quantidade: consumo.quantidade,
         franquia,
-        excedente: franquia === null ? 0 : Math.max(0, consumo.quantidade - franquia),
+        excedente:
+          franquia === null ? 0 : Math.max(0, consumo.quantidade - franquia),
       };
     })
     .sort((a, b) => a.metrica.localeCompare(b.metrica));

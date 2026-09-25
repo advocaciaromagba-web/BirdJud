@@ -33,7 +33,7 @@ export function caminhoDo(escritorioId: string, arquivoId: string): string {
 export async function gravar(
   escritorioId: string,
   arquivoId: string,
-  conteudo: Buffer
+  conteudo: Buffer,
 ): Promise<{ tamanhoBytes: number; hash: string }> {
   const caminho = caminhoDo(escritorioId, arquivoId);
   await mkdir(join(raiz(), seguro(escritorioId)), { recursive: true });
@@ -44,23 +44,37 @@ export async function gravar(
   };
 }
 
-export async function ler(escritorioId: string, arquivoId: string): Promise<Buffer> {
+export async function ler(
+  escritorioId: string,
+  arquivoId: string,
+): Promise<Buffer> {
   return readFile(caminhoDo(escritorioId, arquivoId));
 }
 
-export async function apagar(escritorioId: string, arquivoId: string): Promise<void> {
+export async function apagar(
+  escritorioId: string,
+  arquivoId: string,
+): Promise<void> {
   // force: apagar o que ja nao esta la nao e erro — a linha do banco e que
   // manda, e ela ja vai embora de qualquer jeito.
   await rm(caminhoDo(escritorioId, arquivoId), { force: true });
 }
 
 /** Apaga a pasta inteira do escritorio. So a purga usa isto. */
-export async function apagarTudoDoEscritorio(escritorioId: string): Promise<void> {
-  await rm(join(raiz(), seguro(escritorioId)), { recursive: true, force: true });
+export async function apagarTudoDoEscritorio(
+  escritorioId: string,
+): Promise<void> {
+  await rm(join(raiz(), seguro(escritorioId)), {
+    recursive: true,
+    force: true,
+  });
 }
 
 /** Existe mesmo no disco? Serve a conferencia, nao ao caminho feliz. */
-export async function existe(escritorioId: string, arquivoId: string): Promise<boolean> {
+export async function existe(
+  escritorioId: string,
+  arquivoId: string,
+): Promise<boolean> {
   try {
     await stat(caminhoDo(escritorioId, arquivoId));
     return true;

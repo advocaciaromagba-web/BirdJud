@@ -47,7 +47,7 @@ const TEMPO_LIMITE = 12_000;
  */
 export async function buscarComLimite(
   url: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
 ): Promise<Response> {
   const controle = new AbortController();
   const relogio = setTimeout(() => controle.abort(), TEMPO_LIMITE);

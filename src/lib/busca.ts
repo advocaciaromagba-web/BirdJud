@@ -36,13 +36,17 @@ function recortar(texto: string, limite = 160): string {
   return limpo.length <= limite ? limpo : `${limpo.slice(0, limite)}…`;
 }
 
-export async function buscar(escritorioId: string, termoBruto: string): Promise<Achado[]> {
+export async function buscar(
+  escritorioId: string,
+  termoBruto: string,
+): Promise<Achado[]> {
   const termo = termoUtil(termoBruto);
   if (!termo) return [];
 
   const modulos = await modulosAtivos(escritorioId);
   // Numero digitado com mascara vira a grafia que o banco guarda.
-  const comoNumero = normalizarNumeroProcesso(termo) ?? termo.replace(/\D/g, "");
+  const comoNumero =
+    normalizarNumeroProcesso(termo) ?? termo.replace(/\D/g, "");
   const porNumero = comoNumero.length >= 4 ? comoNumero : null;
 
   const contem = { contains: termo, mode: "insensitive" as const };
@@ -77,7 +81,9 @@ export async function buscar(escritorioId: string, termoBruto: string): Promise<
           where: {
             OR: [
               { texto: contem },
-              ...(porNumero ? [{ numeroProcesso: { contains: porNumero } }] : []),
+              ...(porNumero
+                ? [{ numeroProcesso: { contains: porNumero } }]
+                : []),
             ],
           },
           orderBy: { dataDisponibilizacao: "desc" },
@@ -109,9 +115,10 @@ export async function buscar(escritorioId: string, termoBruto: string): Promise<
       tipo: "PROCESSO",
       id: processo.id,
       titulo: processo.numero,
-      detalhe: [processo.cliente?.nome, processo.vara, processo.area]
-        .filter(Boolean)
-        .join(" · ") || null,
+      detalhe:
+        [processo.cliente?.nome, processo.vara, processo.area]
+          .filter(Boolean)
+          .join(" · ") || null,
       // Processo tem ficha propria: a busca leva direto a ela.
       destino: `/processos/${processo.id}`,
     });

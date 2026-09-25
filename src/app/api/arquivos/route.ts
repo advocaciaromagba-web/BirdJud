@@ -23,7 +23,7 @@ export async function GET() {
     const { escritorioId } = await exigirSessao("NUVEM");
     const [arquivos, espaco] = await Promise.all([
       comEscritorio(escritorioId, (db) =>
-        db.arquivo.findMany({ orderBy: { criadoEm: "desc" }, take: 200 })
+        db.arquivo.findMany({ orderBy: { criadoEm: "desc" }, take: 200 }),
       ),
       espacoDoEscritorio(escritorioId),
     ]);
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     if (enviado.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
       return NextResponse.json(
         { erro: `Arquivo maior que ${TAMANHO_MAXIMO_MB} MB.` },
-        { status: 413 }
+        { status: 413 },
       );
     }
 

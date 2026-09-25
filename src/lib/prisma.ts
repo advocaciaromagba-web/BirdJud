@@ -28,7 +28,12 @@ const OPERACOES_LEITURA = new Set([
   "deleteMany",
 ]);
 
-const OPERACOES_ESCRITA_UNICA = new Set(["create", "update", "delete", "upsert"]);
+const OPERACOES_ESCRITA_UNICA = new Set([
+  "create",
+  "update",
+  "delete",
+  "upsert",
+]);
 
 const extensaoEscritorio = Prisma.defineExtension({
   name: "isolamento-por-escritorio",
@@ -38,7 +43,9 @@ const extensaoEscritorio = Prisma.defineExtension({
         if (!model || MODELOS_SEM_ESCRITORIO.has(model)) return query(args);
         if (operation === "createMany" || operation === "createManyAndReturn") {
           const escritorioId = escritorioAtual();
-          const a = args as { data: Record<string, unknown> | Record<string, unknown>[] };
+          const a = args as {
+            data: Record<string, unknown> | Record<string, unknown>[];
+          };
           a.data = Array.isArray(a.data)
             ? a.data.map((d) => ({ ...d, escritorioId }))
             : { ...a.data, escritorioId };
@@ -49,7 +56,10 @@ const extensaoEscritorio = Prisma.defineExtension({
         const campo = CAMPO_DONO[model] ?? "escritorioId";
         const a = args as Record<string, any>;
 
-        if (OPERACOES_LEITURA.has(operation) || OPERACOES_ESCRITA_UNICA.has(operation)) {
+        if (
+          OPERACOES_LEITURA.has(operation) ||
+          OPERACOES_ESCRITA_UNICA.has(operation)
+        ) {
           if (operation !== "create") {
             a.where = { ...(a.where ?? {}), [campo]: escritorioId };
           }
@@ -81,13 +91,13 @@ export type PrismaEscritorio = typeof prisma;
 export async function comEscritorio<T>(
   escritorioId: string,
   fn: (db: PrismaEscritorio) => Promise<T>,
-  ctx: { usuarioId?: string; papel?: string } = {}
+  ctx: { usuarioId?: string; papel?: string } = {},
 ): Promise<T> {
   return comContexto({ escritorioId, ...ctx }, () =>
     prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT set_config('app.escritorio_id', ${escritorioId}, true)`;
       return fn(tx as unknown as PrismaEscritorio);
-    })
+    }),
   );
 }
 
@@ -102,7 +112,7 @@ export async function comEscritorio<T>(
  *   db.cliente.create({ data: semEscritorio({ nome: "Fulano" }) })
  */
 export function semEscritorio<T extends Record<string, unknown>>(
-  dados: T
+  dados: T,
 ): T & { escritorioId: string } {
   return dados as T & { escritorioId: string };
 }
@@ -130,7 +140,7 @@ export function prismaPlataforma(): PrismaClient {
   const url = process.env.DATABASE_URL_PLATAFORMA;
   if (!url) {
     throw new Error(
-      "DATABASE_URL_PLATAFORMA nao definida. O plano de controle precisa do papel birdjud_plataforma (BYPASSRLS)."
+      "DATABASE_URL_PLATAFORMA nao definida. O plano de controle precisa do papel birdjud_plataforma (BYPASSRLS).",
     );
   }
   clientePlataforma ??= new PrismaClient({ datasources: { db: { url } } });

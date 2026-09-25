@@ -13,7 +13,7 @@ export function montarCSP(
    * HTTPS. Emitido em um ambiente servido por HTTP, ele faz o navegador tentar
    * buscar os proprios scripts da pagina em HTTPS e a aplicacao nao carrega.
    */
-  seguro = producao
+  seguro = producao,
 ): string {
   return [
     "default-src 'self'",

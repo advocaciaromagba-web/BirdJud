@@ -23,7 +23,7 @@ export async function GET() {
         where: { inicio: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
         orderBy: { inicio: "asc" },
         take: 200,
-      })
+      }),
     );
     return NextResponse.json({ compromissos });
   } catch (erro) {
@@ -46,7 +46,9 @@ export async function POST(req: Request) {
 
     const compromisso = await comEscritorio(escritorioId, async (db) => {
       if (corpo.data.processoId) {
-        const processo = await db.processo.findFirst({ where: { id: corpo.data.processoId } });
+        const processo = await db.processo.findFirst({
+          where: { id: corpo.data.processoId },
+        });
         if (!processo) return null;
       }
       return db.compromisso.create({
@@ -55,7 +57,10 @@ export async function POST(req: Request) {
     });
 
     if (!compromisso) {
-      return NextResponse.json({ erro: "Processo nao encontrado." }, { status: 400 });
+      return NextResponse.json(
+        { erro: "Processo nao encontrado." },
+        { status: 400 },
+      );
     }
     return NextResponse.json({ compromisso }, { status: 201 });
   } catch (erro) {

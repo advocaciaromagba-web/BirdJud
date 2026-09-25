@@ -26,10 +26,13 @@ export type ResultadoDaCaptura = {
 /** Periodo a consultar para uma OAB, dado quando ela foi capturada por ultimo. */
 export function periodoDaConsulta(
   ultimaCaptura: Date | null,
-  agora = new Date()
+  agora = new Date(),
 ): { de: Date; ate: Date } {
   if (!ultimaCaptura) {
-    return { de: new Date(agora.getTime() - JANELA_INICIAL_DIAS * DIA), ate: agora };
+    return {
+      de: new Date(agora.getTime() - JANELA_INICIAL_DIAS * DIA),
+      ate: agora,
+    };
   }
   // A sobreposicao custa pouco (a deduplicacao descarta o repetido) e evita
   // perder o que o tribunal publicou logo depois da ultima consulta.
@@ -39,10 +42,13 @@ export function periodoDaConsulta(
 
 export async function capturarPublicacoes(
   escritorioId: string,
-  agora = new Date()
+  agora = new Date(),
 ): Promise<ResultadoDaCaptura> {
   const oabs = await comEscritorio(escritorioId, (db) =>
-    db.oabMonitorada.findMany({ where: { ativo: true }, orderBy: { criadoEm: "asc" } })
+    db.oabMonitorada.findMany({
+      where: { ativo: true },
+      orderBy: { criadoEm: "asc" },
+    }),
   );
 
   const resultado: ResultadoDaCaptura = {
@@ -86,13 +92,20 @@ export async function capturarPublicacoes(
 
     // So marca a captura quando a OAB foi consultada sem erro.
     await comEscritorio(escritorioId, (db) =>
-      db.oabMonitorada.update({ where: { id: oab.id }, data: { ultimaCaptura: agora } })
+      db.oabMonitorada.update({
+        where: { id: oab.id },
+        data: { ultimaCaptura: agora },
+      }),
     );
   }
 
   // Medicao do modulo: o custo do DJEN cresce por OAB consultada.
   if (resultado.oabsConsultadas > 0) {
-    await registrarConsumo(escritorioId, "OAB_MONITORADA", resultado.oabsConsultadas);
+    await registrarConsumo(
+      escritorioId,
+      "OAB_MONITORADA",
+      resultado.oabsConsultadas,
+    );
   }
 
   return resultado;
@@ -101,7 +114,7 @@ export async function capturarPublicacoes(
 async function gravarPublicacao(
   escritorioId: string,
   comunicacao: Comunicacao,
-  oab: string
+  oab: string,
 ): Promise<{ nova: boolean; vinculada: boolean }> {
   const numero = normalizarNumeroProcesso(comunicacao.numeroProcesso);
   const triagem = triar(comunicacao.texto);

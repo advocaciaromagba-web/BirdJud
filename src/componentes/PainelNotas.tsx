@@ -50,7 +50,12 @@ export function PainelNotas({
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
 
-  async function chamar(rota: string, metodo: string, corpo: unknown, aoDarCerto: () => void) {
+  async function chamar(
+    rota: string,
+    metodo: string,
+    corpo: unknown,
+    aoDarCerto: () => void,
+  ) {
     setOcupado(true);
     setErro(null);
     const resposta = await fetch(rota, {
@@ -80,7 +85,7 @@ export function PainelNotas({
         descricao: String(dados.get("descricao") ?? ""),
         valor: String(dados.get("valor") ?? ""),
       },
-      () => form.reset()
+      () => form.reset(),
     );
   }
 
@@ -88,13 +93,24 @@ export function PainelNotas({
     evento.preventDefault();
     const dados = new FormData(evento.currentTarget);
     const campos = Object.fromEntries(
-      ["razaoSocial", "cnpj", "inscricaoMunicipal", "codigoMunicipio", "regime",
-       "codigoTributacao", "aliquota", "serie", "ambiente"].map((campo) => [
-        campo,
-        String(dados.get(campo) ?? ""),
-      ])
+      [
+        "razaoSocial",
+        "cnpj",
+        "inscricaoMunicipal",
+        "codigoMunicipio",
+        "regime",
+        "codigoTributacao",
+        "aliquota",
+        "serie",
+        "ambiente",
+      ].map((campo) => [campo, String(dados.get(campo) ?? "")]),
     );
-    void chamar("/api/nfse", "PATCH", { acao: "CADASTRO", dados: campos }, () => {});
+    void chamar(
+      "/api/nfse",
+      "PATCH",
+      { acao: "CADASTRO", dados: campos },
+      () => {},
+    );
   }
 
   return (
@@ -102,32 +118,67 @@ export function PainelNotas({
       {podeConfigurar ? (
         <details className="mt-4" open={!fiscal}>
           <summary className="cursor-pointer text-sm font-semibold text-marca">
-            Cadastro fiscal {fiscal ? "" : "(obrigatorio antes da primeira nota)"}
+            Cadastro fiscal{" "}
+            {fiscal ? "" : "(obrigatorio antes da primeira nota)"}
           </summary>
           <p className="mt-2 text-sm text-neutral-500">
-            Estes dados saem impressos na nota. O codigo do servico e a aliquota vem do
-            contador do escritorio — nao ha padrao que sirva para todo mundo.
+            Estes dados saem impressos na nota. O codigo do servico e a aliquota
+            vem do contador do escritorio — nao ha padrao que sirva para todo
+            mundo.
           </p>
-          <form onSubmit={salvarCadastro} className="mt-3 grid gap-3 rounded border border-neutral-200 p-4 sm:grid-cols-2">
-            <Campo nome="razaoSocial" rotulo="Razao social" valor={fiscal?.razaoSocial} />
+          <form
+            onSubmit={salvarCadastro}
+            className="mt-3 grid gap-3 rounded border border-neutral-200 p-4 sm:grid-cols-2"
+          >
+            <Campo
+              nome="razaoSocial"
+              rotulo="Razao social"
+              valor={fiscal?.razaoSocial}
+            />
             <Campo nome="cnpj" rotulo="CNPJ" valor={fiscal?.cnpj} />
-            <Campo nome="inscricaoMunicipal" rotulo="Inscricao municipal" valor={fiscal?.inscricaoMunicipal} />
-            <Campo nome="codigoMunicipio" rotulo="Codigo IBGE do municipio (7 digitos)" valor={fiscal?.codigoMunicipio} />
+            <Campo
+              nome="inscricaoMunicipal"
+              rotulo="Inscricao municipal"
+              valor={fiscal?.inscricaoMunicipal}
+            />
+            <Campo
+              nome="codigoMunicipio"
+              rotulo="Codigo IBGE do municipio (7 digitos)"
+              valor={fiscal?.codigoMunicipio}
+            />
             <label className="grid gap-1 text-sm">
               Regime
-              <select name="regime" defaultValue={fiscal?.regime ?? "SIMPLES"} className="rounded border border-neutral-300 px-3 py-2">
+              <select
+                name="regime"
+                defaultValue={fiscal?.regime ?? "SIMPLES"}
+                className="rounded border border-neutral-300 px-3 py-2"
+              >
                 <option value="SIMPLES">Simples Nacional</option>
                 <option value="MEI">MEI</option>
                 <option value="NORMAL">Normal</option>
               </select>
             </label>
-            <Campo nome="codigoTributacao" rotulo="Codigo do servico" valor={fiscal?.codigoTributacao} />
-            <Campo nome="aliquota" rotulo="Aliquota do ISS (%)" valor={fiscal?.aliquota} />
+            <Campo
+              nome="codigoTributacao"
+              rotulo="Codigo do servico"
+              valor={fiscal?.codigoTributacao}
+            />
+            <Campo
+              nome="aliquota"
+              rotulo="Aliquota do ISS (%)"
+              valor={fiscal?.aliquota}
+            />
             <Campo nome="serie" rotulo="Serie" valor={fiscal?.serie ?? "1"} />
             <label className="grid gap-1 text-sm">
               Ambiente
-              <select name="ambiente" defaultValue={fiscal?.ambiente ?? "HOMOLOGACAO"} className="rounded border border-neutral-300 px-3 py-2">
-                <option value="HOMOLOGACAO">Homologacao (sem valor fiscal)</option>
+              <select
+                name="ambiente"
+                defaultValue={fiscal?.ambiente ?? "HOMOLOGACAO"}
+                className="rounded border border-neutral-300 px-3 py-2"
+              >
+                <option value="HOMOLOGACAO">
+                  Homologacao (sem valor fiscal)
+                </option>
                 <option value="PRODUCAO">Producao</option>
               </select>
             </label>
@@ -144,26 +195,45 @@ export function PainelNotas({
 
       {fiscal ? (
         <details className="mt-4">
-          <summary className="cursor-pointer text-sm font-semibold text-marca">Emitir nota</summary>
-          <form onSubmit={emitir} className="mt-3 grid gap-3 rounded border border-neutral-200 p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-marca">
+            Emitir nota
+          </summary>
+          <form
+            onSubmit={emitir}
+            className="mt-3 grid gap-3 rounded border border-neutral-200 p-4"
+          >
             <label className="grid gap-1 text-sm">
               Cliente
-              <select name="clienteId" required className="rounded border border-neutral-300 px-3 py-2">
+              <select
+                name="clienteId"
+                required
+                className="rounded border border-neutral-300 px-3 py-2"
+              >
                 <option value="">—</option>
                 {clientes.map((cliente) => (
                   <option key={cliente.id} value={cliente.id}>
-                    {cliente.temDocumento ? cliente.nome : `${cliente.nome} (sem CPF/CNPJ)`}
+                    {cliente.temDocumento
+                      ? cliente.nome
+                      : `${cliente.nome} (sem CPF/CNPJ)`}
                   </option>
                 ))}
               </select>
             </label>
             <label className="grid gap-1 text-sm">
               Descricao do servico
-              <input name="descricao" required className="rounded border border-neutral-300 px-3 py-2" />
+              <input
+                name="descricao"
+                required
+                className="rounded border border-neutral-300 px-3 py-2"
+              />
             </label>
             <label className="grid gap-1 text-sm">
               Valor (R$)
-              <input name="valor" required className="rounded border border-neutral-300 px-3 py-2" />
+              <input
+                name="valor"
+                required
+                className="rounded border border-neutral-300 px-3 py-2"
+              />
             </label>
             <button
               type="submit"
@@ -183,8 +253,13 @@ export function PainelNotas({
       ) : (
         <ul className="mt-6 divide-y divide-neutral-200">
           {notas.map((nota) => (
-            <li key={nota.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3">
-              <span className={`rounded px-2 py-0.5 text-xs font-semibold ${CORES[nota.status] ?? CORES.RASCUNHO}`}>
+            <li
+              key={nota.id}
+              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-3"
+            >
+              <span
+                className={`rounded px-2 py-0.5 text-xs font-semibold ${CORES[nota.status] ?? CORES.RASCUNHO}`}
+              >
                 {nota.status}
               </span>
               <span className="font-semibold">{nota.numero}</span>
@@ -197,7 +272,12 @@ export function PainelNotas({
                   <span className="break-all"> · chave {nota.chaveAcesso}</span>
                 ) : null}
                 {nota.linkPdf ? (
-                  <a href={nota.linkPdf} target="_blank" rel="noreferrer" className="-my-1 ml-2 py-2 text-marca hover:underline">
+                  <a
+                    href={nota.linkPdf}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="-my-1 ml-2 py-2 text-marca hover:underline"
+                  >
                     PDF
                   </a>
                 ) : null}
@@ -207,7 +287,12 @@ export function PainelNotas({
                     disabled={ocupado}
                     onClick={() =>
                       confirm("Cancelar esta nota na prefeitura?") &&
-                      chamar("/api/nfse", "PATCH", { acao: "CANCELAR", id: nota.id }, () => {})
+                      chamar(
+                        "/api/nfse",
+                        "PATCH",
+                        { acao: "CANCELAR", id: nota.id },
+                        () => {},
+                      )
                     }
                     className="-my-1 ml-3 py-2 text-neutral-500 hover:text-rose-700 disabled:opacity-50"
                   >
@@ -216,7 +301,9 @@ export function PainelNotas({
                 ) : null}
               </span>
               {nota.erro ? (
-                <span className="w-full text-sm text-rose-700">{nota.erro}</span>
+                <span className="w-full text-sm text-rose-700">
+                  {nota.erro}
+                </span>
               ) : null}
             </li>
           ))}
@@ -226,7 +313,15 @@ export function PainelNotas({
   );
 }
 
-function Campo({ nome, rotulo, valor }: { nome: string; rotulo: string; valor?: string }) {
+function Campo({
+  nome,
+  rotulo,
+  valor,
+}: {
+  nome: string;
+  rotulo: string;
+  valor?: string;
+}) {
   return (
     <label className="grid gap-1 text-sm">
       {rotulo}

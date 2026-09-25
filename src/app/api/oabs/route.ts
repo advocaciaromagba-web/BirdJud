@@ -7,8 +7,33 @@ import { ehDuplicado, tratarErro } from "@/lib/respostas";
 export const dynamic = "force-dynamic";
 
 const UFS = [
-  "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB",
-  "PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
+  "AC",
+  "AL",
+  "AM",
+  "AP",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MG",
+  "MS",
+  "MT",
+  "PA",
+  "PB",
+  "PE",
+  "PI",
+  "PR",
+  "RJ",
+  "RN",
+  "RO",
+  "RR",
+  "RS",
+  "SC",
+  "SE",
+  "SP",
+  "TO",
 ] as const;
 
 const novaOab = z.object({
@@ -21,7 +46,7 @@ export async function GET() {
   try {
     const { escritorioId } = await exigirSessao("PUBLICACOES_DJEN");
     const oabs = await comEscritorio(escritorioId, (db) =>
-      db.oabMonitorada.findMany({ orderBy: { criadoEm: "asc" } })
+      db.oabMonitorada.findMany({ orderBy: { criadoEm: "asc" } }),
     );
     return NextResponse.json({ oabs });
   } catch (erro) {
@@ -35,7 +60,10 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirAdmin("PUBLICACOES_DJEN");
     const corpo = novaOab.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Numero ou UF invalidos." }, { status: 400 });
+      return NextResponse.json(
+        { erro: "Numero ou UF invalidos." },
+        { status: 400 },
+      );
     }
 
     const oab = await comEscritorio(escritorioId, (db) =>
@@ -46,12 +74,15 @@ export async function POST(req: Request) {
           uf: corpo.data.uf,
           nomeAdvogado: corpo.data.nomeAdvogado,
         }),
-      })
+      }),
     );
     return NextResponse.json({ oab }, { status: 201 });
   } catch (erro) {
     if (ehDuplicado(erro)) {
-      return NextResponse.json({ erro: "Esta OAB ja esta sendo monitorada." }, { status: 409 });
+      return NextResponse.json(
+        { erro: "Esta OAB ja esta sendo monitorada." },
+        { status: 409 },
+      );
     }
     return tratarErro(erro);
   }
