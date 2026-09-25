@@ -15,7 +15,12 @@
 // So constantes e funcoes puras. NAO importar Prisma: este arquivo e usado
 // tambem pela tela de simulacao, no navegador.
 import { MODULOS, type Faixa, type Modulo, LIMITES } from "./catalogo";
-import { PRECO_DA_FAIXA, PRECO_DO_MODULO } from "./precos";
+import {
+  PRECO_DA_FAIXA,
+  PRECO_DO_MODULO,
+  PRECO_DO_PLANO,
+  precoDoModulo,
+} from "./precos";
 
 export const PLANOS = [
   "ESSENCIAL",
@@ -30,8 +35,6 @@ export type DescricaoDoPlano = {
   chamada: string;
   /** Modulos alem do nucleo. O nucleo esta em todo plano. */
   modulos: Modulo[];
-  /** Desconto sobre a soma dos modulos, em pontos percentuais. */
-  descontoPorCento: number;
 };
 
 export const PLANO: Record<Plano, DescricaoDoPlano> = {
@@ -40,14 +43,12 @@ export const PLANO: Record<Plano, DescricaoDoPlano> = {
     chamada:
       "O escritorio organizado: clientes, processos, agenda e prazos. Cadastro preenchido a mao.",
     modulos: [],
-    descontoPorCento: 0,
   },
   PROFISSIONAL: {
     rotulo: "Profissional",
     chamada:
       "O dia a dia do contencioso: publicacoes do DJEN chegando sozinhas, arquivos do escritorio e aviso por e-mail.",
     modulos: ["PUBLICACOES_DJEN", "NUVEM", "EMAIL"],
-    descontoPorCento: 10,
   },
   AVANCADO: {
     rotulo: "Avancado",
@@ -61,7 +62,6 @@ export const PLANO: Record<Plano, DescricaoDoPlano> = {
       "FINANCEIRO",
       "NFSE",
     ],
-    descontoPorCento: 20,
   },
   COMPLETO: {
     rotulo: "Completo",
@@ -78,7 +78,6 @@ export const PLANO: Record<Plano, DescricaoDoPlano> = {
       "WHATSAPP",
       "ASSINATURA",
     ],
-    descontoPorCento: 30,
   },
 };
 
@@ -100,12 +99,11 @@ export type Conta = {
   plano: Plano | null;
 };
 
-function precoDe(modulo: Modulo): number {
-  return PRECO_DO_MODULO[modulo] ?? 0;
-}
-
-function somaDos(modulos: Modulo[]): number {
-  return modulos.reduce((total, modulo) => total + precoDe(modulo), 0);
+function somaDos(modulos: Modulo[], faixa: Faixa): number {
+  return modulos.reduce(
+    (total, modulo) => total + precoDoModulo(modulo, faixa),
+    0,
+  );
 }
 
 /** O conjunto de modulos de um plano, sem repetidos e sem o nucleo. */
@@ -115,21 +113,25 @@ export function modulosDoPlano(plano: Plano): Modulo[] {
 
 export function contaDoPlano(plano: Plano, faixa: Faixa): Conta {
   const modulos = modulosDoPlano(plano);
-  const modulosCentavos = somaDos(modulos);
-  const desconto = Math.round(
-    (modulosCentavos * PLANO[plano].descontoPorCento) / 100,
-  );
+  const modulosCentavos = somaDos(modulos, faixa);
+  const total = PRECO_DO_PLANO[plano][faixa];
 
+  // O preco do pacote e fechado na tabela, e o desconto e o que ele economiza
+  // em relacao a comprar os mesmos modulos avulsos. Nessa ordem, e nao ao
+  // contrario: pacote se anuncia por numero redondo, nao por percentual.
   return {
     faixa,
     faixaCentavos: PRECO_DA_FAIXA[faixa],
     modulos: modulos.map((modulo) => ({
       modulo,
-      valorCentavos: precoDe(modulo),
+      valorCentavos: precoDoModulo(modulo, faixa),
     })),
     modulosCentavos,
-    descontoCentavos: desconto,
-    totalCentavos: PRECO_DA_FAIXA[faixa] + modulosCentavos - desconto,
+    descontoCentavos: Math.max(
+      0,
+      PRECO_DA_FAIXA[faixa] + modulosCentavos - total,
+    ),
+    totalCentavos: total,
     plano,
   };
 }
@@ -162,11 +164,11 @@ export function contaMontada(modulos: Modulo[], faixa: Faixa): Conta {
     faixaCentavos: PRECO_DA_FAIXA[faixa],
     modulos: pedidos.map((modulo) => ({
       modulo,
-      valorCentavos: precoDe(modulo),
+      valorCentavos: precoDoModulo(modulo, faixa),
     })),
-    modulosCentavos: somaDos(pedidos),
+    modulosCentavos: somaDos(pedidos, faixa),
     descontoCentavos: 0,
-    totalCentavos: PRECO_DA_FAIXA[faixa] + somaDos(pedidos),
+    totalCentavos: PRECO_DA_FAIXA[faixa] + somaDos(pedidos, faixa),
     plano: null,
   };
 

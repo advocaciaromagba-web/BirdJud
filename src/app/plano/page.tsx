@@ -4,7 +4,7 @@ import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
 import { emReais } from "@/lib/dinheiro";
 import { dataBR } from "@/lib/datas";
-import { PRECO_DO_MODULO } from "@/lib/precos";
+import { precoDoModulo } from "@/lib/precos";
 import {
   contaMontada,
   MODULOS_COBRAVEIS,
@@ -162,7 +162,7 @@ export default async function PaginaDoPlano() {
               >
                 <span className="font-medium">{ROTULO_DO_MODULO[modulo]}</span>
                 <span className="shrink-0 text-sm text-slate-500">
-                  + {emReais(PRECO_DO_MODULO[modulo] ?? 0)}/mes
+                  + {emReais(precoDoModulo(modulo, uso.faixa))}/mes
                 </span>
               </li>
             ))}

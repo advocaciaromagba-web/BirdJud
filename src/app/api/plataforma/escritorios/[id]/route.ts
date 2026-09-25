@@ -10,6 +10,12 @@ import { aplicarRegua } from "@/lib/cobranca";
 import { FAIXAS } from "@/lib/faixas";
 import { MODULOS } from "@/lib/modulos";
 import { contaMontada, modulosDoPlano, PLANO, PLANOS } from "@/lib/planos";
+import {
+  ajustarFranquias,
+  definirModulo,
+  definirModulos,
+} from "@/lib/contratacao";
+import { ehFaixa, type Faixa } from "@/lib/faixas";
 import type { Modulo } from "@/lib/catalogo";
 
 const acao = z.discriminatedUnion("acao", [
@@ -53,6 +59,12 @@ export async function POST(
       );
     }
 
+    // A faixa gravada manda no preco e na franquia. Valor estranho no banco
+    // nao pode derrubar a acao: cai para a menor, como em faixas.ts.
+    const faixaAtual: Faixa = ehFaixa(escritorio.faixa)
+      ? escritorio.faixa
+      : "ATE_3";
+
     // Toda acao do operador sobre um escritorio fica registrada.
     await registrarAcessoSuporte(
       operador.operadorId,
@@ -65,6 +77,9 @@ export async function POST(
         where: { id: escritorio.id },
         data: { faixa: corpo.data.faixa },
       });
+      // A franquia de cada modulo e da faixa: mudar de faixa sem reescrever
+      // deixaria o escritorio que cresceu pagando excedente do tamanho antigo.
+      await ajustarFranquias(escritorio.id, corpo.data.faixa);
       return NextResponse.json({
         detalhe: `Faixa alterada para ${corpo.data.faixa}.`,
       });
@@ -72,15 +87,7 @@ export async function POST(
 
     if (corpo.data.acao === "modulo") {
       const { modulo, ativo } = corpo.data;
-      await comEscritorio(escritorio.id, (db) =>
-        db.moduloContratado.upsert({
-          where: {
-            escritorioId_modulo: { escritorioId: escritorio.id, modulo },
-          },
-          create: semEscritorio({ modulo, ativo }),
-          update: { ativo },
-        }),
-      );
+      await definirModulo(escritorio.id, modulo, ativo, faixaAtual);
       return NextResponse.json({
         detalhe: `${modulo} ${ativo ? "contratado" : "desligado"}.`,
       });
@@ -88,8 +95,10 @@ export async function POST(
 
     if (corpo.data.acao === "plano") {
       const doPlano = modulosDoPlano(corpo.data.plano);
-      const conta = contaMontada(doPlano, (escritorio.faixa as Parameters<typeof contaMontada>[1]) ?? "ATE_3");
-      const contratados = new Set<Modulo>(conta.modulos.map((linha) => linha.modulo));
+      const conta = contaMontada(doPlano, faixaAtual);
+      const contratados = new Set<Modulo>(
+        conta.modulos.map((linha) => linha.modulo),
+      );
 
       // Aplicar plano e dizer o conjunto inteiro, nao acrescentar: o que nao
       // esta no plano sai. Senao "mudar para o Essencial" deixaria ligado o
@@ -99,7 +108,9 @@ export async function POST(
           if (modulo === "NUCLEO") continue;
           const ativo = contratados.has(modulo);
           await db.moduloContratado.upsert({
-            where: { escritorioId_modulo: { escritorioId: escritorio.id, modulo } },
+            where: {
+              escritorioId_modulo: { escritorioId: escritorio.id, modulo },
+            },
             create: semEscritorio({ modulo, ativo }),
             update: { ativo },
           });

@@ -1,34 +1,94 @@
 // Tabela de precos da plataforma.
 //
-// ATENCAO: os valores abaixo sao PROVISORIOS. O plano de projeto e explicito
-// em que eles so podem ser fechados depois de levantar os custos reais de
-// servidor, IA, mensagens e e-mail, e de conferir os precos dos concorrentes.
-// Trocar aqui nao mexe em contrato ja assinado: o valor combinado com cada
-// escritorio fica gravado em Assinatura.valorCentavos.
+// A referencia de mercado: sistema juridico "completo" no Brasil gira em
+// torno de R$ 299 por mes para escritorio pequeno. O plano Completo daqui
+// fica nesse patamar — e entrega mais, inclusive leitura de documento por IA,
+// que os sistemas dessa faixa nao tem. Cobrar o dobro por ser melhor nao
+// vende: o escritorio compara a primeira linha da tabela, nao a lista de
+// recursos.
+//
+// Os numeros continuam a ser revistos quando houver custo real medido de
+// servidor, IA e mensagens. Trocar aqui nao mexe em contrato ja assinado: o
+// valor combinado com cada escritorio fica gravado em
+// Assinatura.valorCentavos.
 import type { Faixa } from "./faixas";
 import type { Modulo } from "./modulos";
-import type { Metrica } from "./consumo";
+import { MODULO_DA_METRICA, type Metrica } from "./catalogo";
+import type { Plano } from "./planos";
 
-/** Mensalidade da faixa, em centavos. Inclui o nucleo. */
+/**
+ * Mensalidade da faixa, em centavos. Inclui o nucleo — e o plano Essencial.
+ *
+ * O que a faixa cobra e tamanho de escritorio, contado em advogados e em
+ * equipe de apoio ativos.
+ */
 export const PRECO_DA_FAIXA: Record<Faixa, number> = {
-  ATE_3: 29_900,
-  ATE_10: 59_900,
-  ATE_25: 119_900,
-  ATE_50: 199_900,
+  ATE_3: 14_900,
+  ATE_10: 29_900,
+  ATE_25: 54_900,
+  ATE_50: 89_900,
 };
 
-/** Acrescimo mensal por modulo contratado, em centavos. */
-export const PRECO_DO_MODULO: Partial<Record<Modulo, number>> = {
-  PUBLICACOES_DJEN: 9_900,
-  WHATSAPP: 7_900,
-  EMAIL: 2_900,
-  NFSE: 4_900,
-  COBRANCAS: 4_900,
-  FINANCEIRO: 3_900,
-  ASSINATURA: 3_900,
-  IA: 14_900,
-  NUVEM: 1_900,
+/**
+ * Preco fechado de cada plano, por faixa, em centavos.
+ *
+ * Preco de pacote e numero redondo, nao conta de percentual: o escritorio
+ * precisa olhar e entender. O desconto do pacote e o que sobra da soma
+ * avulsa — calculado em planos.ts, mostrado na tela.
+ */
+export const PRECO_DO_PLANO: Record<Plano, Record<Faixa, number>> = {
+  ESSENCIAL: { ATE_3: 14_900, ATE_10: 29_900, ATE_25: 54_900, ATE_50: 89_900 },
+  PROFISSIONAL: {
+    ATE_3: 19_900,
+    ATE_10: 39_900,
+    ATE_25: 69_900,
+    ATE_50: 109_900,
+  },
+  AVANCADO: { ATE_3: 24_900, ATE_10: 49_900, ATE_25: 84_900, ATE_50: 129_900 },
+  COMPLETO: { ATE_3: 29_900, ATE_10: 59_900, ATE_25: 99_900, ATE_50: 149_900 },
 };
+
+/**
+ * Acrescimo mensal por modulo avulso na faixa menor, em centavos.
+ *
+ * Avulso e mais caro por modulo do que dentro do pacote — e isso e proposital
+ * e visivel na tela: quem leva o conjunto paga menos por peca. Use
+ * `precoDoModulo(modulo, faixa)`, nunca este mapa direto: em escritorio maior
+ * o modulo custa mais, pela mesma razao que a faixa custa mais.
+ */
+export const PRECO_DO_MODULO: Partial<Record<Modulo, number>> = {
+  PUBLICACOES_DJEN: 4_900,
+  WHATSAPP: 2_900,
+  EMAIL: 900,
+  NFSE: 2_500,
+  COBRANCAS: 1_900,
+  FINANCEIRO: 1_900,
+  ASSINATURA: 1_900,
+  IA: 5_900,
+  NUVEM: 900,
+};
+
+/**
+ * Quanto o modulo acompanha o tamanho do escritorio.
+ *
+ * Sem isto, o modulo avulso ficaria barato demais no escritorio grande: a
+ * soma avulsa passaria por baixo do plano pronto, e o pacote — que deveria
+ * ser o caminho mais barato — viraria o mais caro. Como `contaMontada` sempre
+ * cobra o menor dos dois, o preco de pacote da tabela deixaria de valer.
+ */
+export const FATOR_DA_FAIXA: Record<Faixa, number> = {
+  ATE_3: 1,
+  ATE_10: 2,
+  ATE_25: 3.5,
+  ATE_50: 5.5,
+};
+
+/** O preco do modulo avulso naquela faixa, arredondado ao real. */
+export function precoDoModulo(modulo: Modulo, faixa: Faixa): number {
+  const base = PRECO_DO_MODULO[modulo];
+  if (!base) return 0;
+  return Math.round((base * FATOR_DA_FAIXA[faixa]) / 100) * 100;
+}
 
 /** Preco unitario do que passar da franquia, em centavos. */
 export const PRECO_DO_EXCEDENTE: Partial<Record<Metrica, number>> = {
@@ -45,6 +105,49 @@ export const PRECO_DO_EXCEDENTE: Partial<Record<Metrica, number>> = {
   // por milhar; este numero, como toda esta tabela, e provisorio.
   IA_MIL_TOKENS: 9,
 };
+
+/**
+ * Franquia mensal de cada metrica, por faixa.
+ *
+ * Isto nao e detalhe de faturamento: sem franquia gravada, `consumoDoMes`
+ * trata o consumo como ilimitado e NADA vira excedente. Com IA a R$ 59, um
+ * escritorio lendo mil documentos por mes custaria a plataforma varias vezes
+ * a mensalidade — e ninguem perceberia.
+ *
+ * Os numeros sao por mes e crescem com a faixa, porque escritorio maior
+ * consome mais do mesmo.
+ */
+export const FRANQUIA: Record<Metrica, Record<Faixa, number> | null> = {
+  // Em milhares de tokens. Uma leitura de documento digitalizado gasta entre
+  // 5 e 20; 150 mil por mes dao algo como dez a trinta leituras por semana.
+  IA_MIL_TOKENS: { ATE_3: 150, ATE_10: 500, ATE_25: 1_200, ATE_50: 2_400 },
+  WHATSAPP_MSG: { ATE_3: 200, ATE_10: 600, ATE_25: 1_500, ATE_50: 3_000 },
+  EMAIL_ENVIADO: { ATE_3: 1_000, ATE_10: 3_000, ATE_25: 8_000, ATE_50: 15_000 },
+  NFSE_EMITIDA: { ATE_3: 20, ATE_10: 60, ATE_25: 150, ATE_50: 300 },
+  COBRANCA_EMITIDA: { ATE_3: 30, ATE_10: 100, ATE_25: 250, ATE_50: 500 },
+  // Uma OAB por advogado da faixa.
+  OAB_MONITORADA: { ATE_3: 3, ATE_10: 10, ATE_25: 25, ATE_50: 50 },
+  // Em MB. 5 GB para o escritorio pequeno.
+  ARMAZENAMENTO_MB: {
+    ATE_3: 5_000,
+    ATE_10: 20_000,
+    ATE_25: 50_000,
+    ATE_50: 100_000,
+  },
+  // Metricas de acompanhamento, sem cobranca por excedente.
+  REGISTROS: null,
+  USUARIOS_ATIVOS: null,
+};
+
+/** A franquia do modulo naquela faixa, ou null quando a metrica nao e cobrada. */
+export function franquiaDoModulo(modulo: Modulo, faixa: Faixa): number | null {
+  const entrada = Object.entries(FRANQUIA).find(
+    ([metrica]) => MODULO_DA_METRICA[metrica as Metrica] === modulo,
+  );
+  if (!entrada) return null;
+  const porFaixa = entrada[1];
+  return porFaixa ? porFaixa[faixa] : null;
+}
 
 export const DIAS_DE_TESTE = 14;
 

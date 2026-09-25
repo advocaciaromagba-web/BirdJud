@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { FAIXAS, LIMITES, type Faixa, type Modulo } from "@/lib/catalogo";
-import { PRECO_DO_MODULO } from "@/lib/precos";
+import { precoDoModulo } from "@/lib/precos";
 import {
   contaDoPlano,
   contaMontada,
@@ -147,8 +147,8 @@ export function SimuladorDePlanos() {
               </p>
               {doPlano.descontoCentavos > 0 ? (
                 <p className="ajuda">
-                  {PLANO[plano].descontoPorCento}% de desconto nos modulos —{" "}
-                  {emReais(doPlano.descontoCentavos)} a menos que avulso.
+                  {emReais(doPlano.descontoCentavos)} por mes a menos do que
+                  levar estes modulos avulsos.
                 </p>
               ) : (
                 <p className="ajuda">So o nucleo do sistema, sem modulo.</p>
@@ -222,7 +222,7 @@ export function SimuladorDePlanos() {
                           {descricao?.rotulo ?? modulo}
                         </span>
                         <span className="text-sm text-slate-500">
-                          + {emReais(PRECO_DO_MODULO[modulo] ?? 0)}/mes
+                          + {emReais(precoDoModulo(modulo, faixa))}/mes
                         </span>
                       </span>
                       <span className="mt-1 block text-sm leading-relaxed text-slate-600">

@@ -5,6 +5,7 @@ import { criarAssinatura } from "@/lib/cobranca";
 import { DIAS_DE_TESTE } from "@/lib/precos";
 import { MODULOS, type Modulo } from "@/lib/catalogo";
 import { contaMontada, modulosDoPlano } from "@/lib/planos";
+import { definirModulos } from "@/lib/contratacao";
 import { gerarHash } from "@/lib/senhas";
 import { slugDoHost } from "@/lib/subdominio";
 import { ipDaRequisicao, registrarAceite } from "@/lib/aceite";
@@ -136,15 +137,9 @@ export async function POST(req: Request) {
       }),
     );
 
-    if (contratados.length > 0) {
-      await comEscritorio(escritorio.id, (db) =>
-        db.moduloContratado.createMany({
-          data: contratados.map((modulo) =>
-            semEscritorio({ modulo, ativo: true }),
-          ),
-        }),
-      );
-    }
+    // definirModulos grava tambem a franquia de cada modulo. Sem ela o
+    // consumo seria ilimitado e nada viraria excedente.
+    await definirModulos(escritorio.id, contratados, "ATE_3");
 
     await registrarAceite(escritorio.id, {
       nome: corpo.data.nome,
