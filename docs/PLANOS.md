@@ -5,12 +5,17 @@ mais do que o plano pronto que ja lhe daria aquilo.**
 
 ## A escada
 
-| plano | o que entra alem do sistema | ate 3 advogados | ate 10 | ate 25 | ate 50 |
-| --- | --- | --- | --- | --- | --- |
-| Essencial | nada — clientes, processos, agenda e prazos, com cadastro digitado a mao | **199** | 399 | 699 | sob consulta |
-| Profissional | publicacoes do DJEN, arquivos, aviso por e-mail | 239 | 459 | 799 | sob consulta |
-| Avancado | + cobrancas, financeiro, nota fiscal de servico | 269 | 529 | 899 | sob consulta |
-| Completo | + inteligencia artificial, aviso por WhatsApp, assinatura eletronica | **299** | 599 | 999 | sob consulta |
+| plano | o que entra alem do sistema | 1 advogado | ate 3 | ate 10 | ate 25 | acima |
+| --- | --- | --- | --- | --- | --- | --- |
+| Essencial | nada — clientes, processos, agenda e prazos, com cadastro digitado a mao | **199** | 279 | 449 | 749 | sob consulta |
+| Profissional | publicacoes do DJEN, arquivos, aviso por e-mail | 239 | 319 | 519 | 849 | sob consulta |
+| Avancado | + cobrancas, financeiro, nota fiscal de servico | 269 | 359 | 579 | 949 | sob consulta |
+| Completo | + inteligencia artificial, aviso por WhatsApp, assinatura eletronica | **299** | 399 | 649 | 1.049 | sob consulta |
+
+O sistema **comeca no advogado sozinho**. E dele que sai o piso de R$ 199, e e
+por essa faixa que todo escritorio novo entra — so sobe quando tiver gente
+para isso. A faixa Solo tem uma vaga de advogado e duas de apoio, porque quem
+advoga sozinho quase nunca trabalha sozinho.
 
 **A faixa de 50 advogados nao tem preco na vitrine.** Escritorio desse tamanho
 no Brasil e escritorio grande: tem sistema, negocia, compara proposta, e o
@@ -23,10 +28,10 @@ continua obedecendo a escada; quem decide o que aparece na tela e
 
 Dois numeros amarram a tabela, e o resto se acomoda entre eles:
 
-- **R$ 199**, o piso: o sistema simples, sem IA. Abaixo disso a conta nao
+- **R$ 199**, o piso: o sistema simples, sem IA, para um advogado. Abaixo disso a conta nao
   fecha, porque o escritorio pequeno usa o mesmo servidor, o mesmo banco
   isolado e o mesmo suporte do grande;
-- **R$ 299**, o Completo para escritorio pequeno: e o que o mercado brasileiro
+- **R$ 299**, o Completo para quem advoga sozinho: e o que o mercado brasileiro
   cobra por sistema "completo" dessa faixa. O BirdJud entrega mais por esse
   preco — leitura de documento por IA, entre outras coisas — e nao cobra mais
   por isso, porque o escritorio compara a primeira linha da tabela, nao a
@@ -95,7 +100,7 @@ notas, 30 cobrancas, 3 OABs e 5 GB. Todas crescem com a faixa.
 
 | arquivo | papel |
 | --- | --- |
-| `src/lib/catalogo.ts` | os modulos e as faixas. So constantes, sem Prisma |
+| `src/lib/catalogo.ts` | os modulos e as faixas (e o rotulo de cada tamanho). So constantes, sem Prisma |
 | `src/lib/precos.ts` | a tabela: faixa, modulo, excedente |
 | `src/lib/planos.ts` | os pacotes e as contas. Funcao pura, usada tambem no navegador |
 | `src/lib/rotulos.ts` | como cada modulo se chama na tela |

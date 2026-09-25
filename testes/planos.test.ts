@@ -5,7 +5,7 @@
 // plano Completo contem mesmo tudo que a plataforma cobra — senao existiria
 // um modulo que nenhum plano entrega e a tabela mentiria.
 import { describe, expect, it } from "vitest";
-import { FAIXAS, MODULOS } from "../src/lib/catalogo";
+import { FAIXAS, LIMITES, MODULOS, rotuloDoTamanho } from "../src/lib/catalogo";
 import {
   FRANQUIA,
   PRECO_DA_FAIXA,
@@ -79,25 +79,25 @@ describe("planos", () => {
     }
   });
 
-  it("a tabela fica presa entre o piso de 199 e o teto de 299", () => {
+  it("a tabela fica presa entre o piso de 199 e o teto de 299 no solo", () => {
     // Os dois numeros que amarram o produto: R$ 199 e o sistema simples, sem
     // IA, e R$ 299 e o Completo — que e o que o mercado brasileiro cobra por
     // sistema "completo" para escritorio pequeno. Este teste nao e sobre
     // codigo: e para a tabela nao andar sozinha, aos poucos, para fora do
     // preco que se pode praticar.
-    expect(contaDoPlano("ESSENCIAL", "ATE_3").totalCentavos).toBe(19_900);
-    expect(contaDoPlano("COMPLETO", "ATE_3").totalCentavos).toBe(29_900);
+    expect(contaDoPlano("ESSENCIAL", "ATE_1").totalCentavos).toBe(19_900);
+    expect(contaDoPlano("COMPLETO", "ATE_1").totalCentavos).toBe(29_900);
 
     // E nenhum plano escapa do intervalo na faixa de entrada.
     for (const plano of PLANOS) {
-      const total = contaDoPlano(plano, "ATE_3").totalCentavos;
+      const total = contaDoPlano(plano, "ATE_1").totalCentavos;
       expect(total, plano).toBeGreaterThanOrEqual(19_900);
       expect(total, plano).toBeLessThanOrEqual(29_900);
     }
   });
 
   it("quem monta o proprio conjunto nunca paga mais que o plano que o cobre", () => {
-    // IA sozinha: avulsa custa 149; o Completo, com desconto, pode sair mais
+    // IA sozinha: avulsa custa 59; o Completo, com desconto, pode sair mais
     // barato — e entao e o Completo que vale, com o resto de brinde.
     for (const faixa of FAIXAS) {
       for (const plano of PLANOS) {
@@ -111,9 +111,11 @@ describe("planos", () => {
   });
 
   it("conjunto que nenhum plano cobre e cobrado avulso", () => {
+    // E pelo preco do modulo NAQUELA faixa, nao pelo preco de tabela da faixa
+    // menor: no escritorio maior o modulo custa mais.
     const conta = contaMontada(["IA"], "ATE_3");
-    expect(conta.totalCentavos).toBeLessThanOrEqual(
-      PRECO_DA_FAIXA.ATE_3 + (PRECO_DO_MODULO.IA ?? 0),
+    expect(conta.totalCentavos).toBe(
+      PRECO_DA_FAIXA.ATE_3 + precoDoModulo("IA", "ATE_3"),
     );
   });
 
@@ -172,5 +174,46 @@ describe("planos", () => {
     // Metrica de acompanhamento nao tem franquia — e nao e cobrada.
     const semCobranca: Metrica[] = ["REGISTROS", "USUARIOS_ATIVOS"];
     for (const metrica of semCobranca) expect(FRANQUIA[metrica]).toBeNull();
+  });
+});
+
+describe("faixa de entrada", () => {
+  it("o sistema comeca no advogado sozinho", () => {
+    // A primeira faixa e de UM advogado, e e dela que sai o piso de R$ 199.
+    // Escritorio novo entra por aqui e so sobe quando tiver gente para isso.
+    const primeira = FAIXAS[0];
+    expect(primeira).toBe("ATE_1");
+    expect(LIMITES[primeira].advogados).toBe(1);
+    expect(rotuloDoTamanho(primeira)).toBe("1 advogado");
+    expect(contaDoPlano("ESSENCIAL", primeira).totalCentavos).toBe(19_900);
+  });
+
+  it("advogado sozinho tem onde por a secretaria", () => {
+    // Quem advoga sozinho quase nunca trabalha sozinho: a vaga de apoio e
+    // separada da de advogado, e sem ela a faixa nao serviria a ninguem.
+    expect(LIMITES.ATE_1.apoio).toBeGreaterThan(0);
+  });
+
+  it("a faixa cresce em advogados e em apoio, sem degrau para tras", () => {
+    for (let i = 1; i < FAIXAS.length; i++) {
+      expect(LIMITES[FAIXAS[i]].advogados).toBeGreaterThan(
+        LIMITES[FAIXAS[i - 1]].advogados,
+      );
+      expect(LIMITES[FAIXAS[i]].apoio).toBeGreaterThanOrEqual(
+        LIMITES[FAIXAS[i - 1]].apoio,
+      );
+    }
+  });
+
+  it("o rotulo da faixa fala de tamanho, nao de plano", () => {
+    // "Essencial" e "Completo" sao nomes de plano. Enquanto a faixa tambem se
+    // chamava assim, a mesma palavra queria dizer duas coisas na mesma tela.
+    const nomesDePlano = new Set(PLANOS.map((p) => PLANO[p].rotulo));
+    for (const faixa of FAIXAS) {
+      expect(
+        nomesDePlano.has(LIMITES[faixa].rotulo),
+        LIMITES[faixa].rotulo,
+      ).toBe(false);
+    }
   });
 });

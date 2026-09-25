@@ -30,9 +30,10 @@ import type { Plano } from "./planos";
  * equipe de apoio ativos.
  */
 export const PRECO_DA_FAIXA: Record<Faixa, number> = {
-  ATE_3: 19_900,
-  ATE_10: 39_900,
-  ATE_25: 69_900,
+  ATE_1: 19_900,
+  ATE_3: 27_900,
+  ATE_10: 44_900,
+  ATE_25: 74_900,
   ATE_50: 109_900,
 };
 
@@ -44,15 +45,34 @@ export const PRECO_DA_FAIXA: Record<Faixa, number> = {
  * avulsa — calculado em planos.ts, mostrado na tela.
  */
 export const PRECO_DO_PLANO: Record<Plano, Record<Faixa, number>> = {
-  ESSENCIAL: { ATE_3: 19_900, ATE_10: 39_900, ATE_25: 69_900, ATE_50: 109_900 },
+  ESSENCIAL: {
+    ATE_1: 19_900,
+    ATE_3: 27_900,
+    ATE_10: 44_900,
+    ATE_25: 74_900,
+    ATE_50: 109_900,
+  },
   PROFISSIONAL: {
-    ATE_3: 23_900,
-    ATE_10: 45_900,
-    ATE_25: 79_900,
+    ATE_1: 23_900,
+    ATE_3: 31_900,
+    ATE_10: 51_900,
+    ATE_25: 84_900,
     ATE_50: 124_900,
   },
-  AVANCADO: { ATE_3: 26_900, ATE_10: 52_900, ATE_25: 89_900, ATE_50: 137_900 },
-  COMPLETO: { ATE_3: 29_900, ATE_10: 59_900, ATE_25: 99_900, ATE_50: 149_900 },
+  AVANCADO: {
+    ATE_1: 26_900,
+    ATE_3: 35_900,
+    ATE_10: 57_900,
+    ATE_25: 94_900,
+    ATE_50: 137_900,
+  },
+  COMPLETO: {
+    ATE_1: 29_900,
+    ATE_3: 39_900,
+    ATE_10: 64_900,
+    ATE_25: 104_900,
+    ATE_50: 149_900,
+  },
 };
 
 /**
@@ -84,10 +104,11 @@ export const PRECO_DO_MODULO: Partial<Record<Modulo, number>> = {
  * cobra o menor dos dois, o preco de pacote da tabela deixaria de valer.
  */
 export const FATOR_DA_FAIXA: Record<Faixa, number> = {
-  ATE_3: 1,
-  ATE_10: 2,
-  ATE_25: 3.5,
-  ATE_50: 5.5,
+  ATE_1: 1,
+  ATE_3: 1.5,
+  ATE_10: 2.6,
+  ATE_25: 4.4,
+  ATE_50: 6.5,
 };
 
 /** O preco do modulo avulso naquela faixa, arredondado ao real. */
@@ -126,16 +147,42 @@ export const PRECO_DO_EXCEDENTE: Partial<Record<Metrica, number>> = {
  */
 export const FRANQUIA: Record<Metrica, Record<Faixa, number> | null> = {
   // Em milhares de tokens. Uma leitura de documento digitalizado gasta entre
-  // 5 e 20; 150 mil por mes dao algo como dez a trinta leituras por semana.
-  IA_MIL_TOKENS: { ATE_3: 150, ATE_10: 500, ATE_25: 1_200, ATE_50: 2_400 },
-  WHATSAPP_MSG: { ATE_3: 200, ATE_10: 600, ATE_25: 1_500, ATE_50: 3_000 },
-  EMAIL_ENVIADO: { ATE_3: 1_000, ATE_10: 3_000, ATE_25: 8_000, ATE_50: 15_000 },
-  NFSE_EMITIDA: { ATE_3: 20, ATE_10: 60, ATE_25: 150, ATE_50: 300 },
-  COBRANCA_EMITIDA: { ATE_3: 30, ATE_10: 100, ATE_25: 250, ATE_50: 500 },
+  // 5 e 20; 60 mil por mes dao algo como tres a doze leituras por semana para
+  // quem advoga sozinho.
+  IA_MIL_TOKENS: {
+    ATE_1: 60,
+    ATE_3: 150,
+    ATE_10: 500,
+    ATE_25: 1_200,
+    ATE_50: 2_400,
+  },
+  WHATSAPP_MSG: {
+    ATE_1: 80,
+    ATE_3: 200,
+    ATE_10: 600,
+    ATE_25: 1_500,
+    ATE_50: 3_000,
+  },
+  EMAIL_ENVIADO: {
+    ATE_1: 400,
+    ATE_3: 1_000,
+    ATE_10: 3_000,
+    ATE_25: 8_000,
+    ATE_50: 15_000,
+  },
+  NFSE_EMITIDA: { ATE_1: 10, ATE_3: 20, ATE_10: 60, ATE_25: 150, ATE_50: 300 },
+  COBRANCA_EMITIDA: {
+    ATE_1: 15,
+    ATE_3: 30,
+    ATE_10: 100,
+    ATE_25: 250,
+    ATE_50: 500,
+  },
   // Uma OAB por advogado da faixa.
-  OAB_MONITORADA: { ATE_3: 3, ATE_10: 10, ATE_25: 25, ATE_50: 50 },
-  // Em MB. 5 GB para o escritorio pequeno.
+  OAB_MONITORADA: { ATE_1: 1, ATE_3: 3, ATE_10: 10, ATE_25: 25, ATE_50: 50 },
+  // Em MB. 2 GB para quem advoga sozinho, 5 GB para o escritorio pequeno.
   ARMAZENAMENTO_MB: {
+    ATE_1: 2_000,
     ATE_3: 5_000,
     ATE_10: 20_000,
     ATE_25: 50_000,

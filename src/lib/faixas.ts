@@ -38,8 +38,11 @@ async function faixaDoEscritorio(escritorioId: string): Promise<Faixa> {
   const escritorio = await comEscritorio(escritorioId, (db) =>
     db.escritorio.findFirst({ select: { faixa: true } }),
   );
-  const faixa = escritorio?.faixa ?? "ATE_3";
-  return ehFaixa(faixa) ? faixa : "ATE_3";
+  // Sem faixa gravada, ou com valor que nao existe mais, vale a menor: errar
+  // para baixo bloqueia cadastro de usuario, errar para cima entrega vaga que
+  // ninguem contratou.
+  const faixa = escritorio?.faixa ?? "ATE_1";
+  return ehFaixa(faixa) ? faixa : "ATE_1";
 }
 
 /** Quantos lugares a faixa da e quantos ja estao ocupados. */

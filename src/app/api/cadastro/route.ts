@@ -6,6 +6,10 @@ import { DIAS_DE_TESTE } from "@/lib/precos";
 import { MODULOS, type Modulo } from "@/lib/catalogo";
 import { contaMontada, modulosDoPlano } from "@/lib/planos";
 import { definirModulos } from "@/lib/contratacao";
+
+// Todo escritorio novo entra como solo. Quem tem mais advogados sobe de faixa
+// na primeira conversa — e ate la nao paga por vaga que nao usa.
+const FAIXA_INICIAL = "ATE_1" as const;
 import { gerarHash } from "@/lib/senhas";
 import { slugDoHost } from "@/lib/subdominio";
 import { ipDaRequisicao, registrarAceite } from "@/lib/aceite";
@@ -111,7 +115,7 @@ export async function POST(req: Request) {
     const escolhidos = (
       corpo.data.modulos ?? modulosDoPlano("COMPLETO")
     ).filter((modulo): modulo is Modulo => modulo !== "NUCLEO");
-    const conta = contaMontada(escolhidos, "ATE_3");
+    const conta = contaMontada(escolhidos, FAIXA_INICIAL);
     // A conta pode ter subido para um plano pronto mais barato que a soma; os
     // modulos contratados sao os desse plano, nao so os que foram marcados.
     const contratados = conta.modulos.map((linha) => linha.modulo);
@@ -121,7 +125,7 @@ export async function POST(req: Request) {
         slug,
         nome: corpo.data.escritorio,
         status: "TESTE",
-        faixa: "ATE_3",
+        faixa: FAIXA_INICIAL,
       },
     });
 
@@ -139,7 +143,7 @@ export async function POST(req: Request) {
 
     // definirModulos grava tambem a franquia de cada modulo. Sem ela o
     // consumo seria ilimitado e nada viraria excedente.
-    await definirModulos(escritorio.id, contratados, "ATE_3");
+    await definirModulos(escritorio.id, contratados, FAIXA_INICIAL);
 
     await registrarAceite(escritorio.id, {
       nome: corpo.data.nome,

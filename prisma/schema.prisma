@@ -22,7 +22,7 @@ model Escritorio {
   nome   String
   cnpj   String?
   status String @default("TESTE") // TESTE | ATIVO | INADIMPLENTE | SUSPENSO | ENCERRADO
-  faixa  String @default("ATE_3") // ATE_3 | ATE_10 | ATE_25 | ATE_50
+  faixa  String @default("ATE_1") // ATE_1 | ATE_3 | ATE_10 | ATE_25 | ATE_50
 
   // marca e dados que, em sistemas de escritorio unico, ficam fixos no codigo
   logoUrl             String?

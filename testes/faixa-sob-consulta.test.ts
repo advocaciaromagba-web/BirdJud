@@ -13,8 +13,8 @@ import {
 import { contaDoPlano, PLANOS } from "../src/lib/planos";
 
 describe("faixa sob consulta", () => {
-  it("a vitrine vai ate 25 advogados", () => {
-    expect(FAIXAS_PUBLICADAS).toEqual(["ATE_3", "ATE_10", "ATE_25"]);
+  it("a vitrine comeca no advogado sozinho e vai ate 25", () => {
+    expect(FAIXAS_PUBLICADAS).toEqual(["ATE_1", "ATE_3", "ATE_10", "ATE_25"]);
     expect(faixaPublicada(FAIXA_SOB_CONSULTA)).toBe(false);
   });
 

@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   FAIXAS_PUBLICADAS,
   LIMITES,
+  rotuloDoTamanho,
   type Faixa,
   type Modulo,
 } from "@/lib/catalogo";
@@ -79,7 +80,8 @@ const DESCRICAO_DO_MODULO: Record<
 };
 
 export function SimuladorDePlanos({ contato }: { contato?: string }) {
-  const [faixa, setFaixa] = useState<Faixa>("ATE_3");
+  // Abre na faixa de entrada: e o preco que a pessoa veio ver primeiro.
+  const [faixa, setFaixa] = useState<Faixa>(FAIXAS_PUBLICADAS[0]);
   // Acima da maior faixa publicada nao ha preco na tela: ha uma conversa.
   const [sobConsulta, setSobConsulta] = useState(false);
   const [escolhidos, setEscolhidos] = useState<Set<Modulo>>(new Set());
@@ -121,7 +123,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                   : "botao-secundario"
               }
             >
-              ate {LIMITES[opcao].advogados} advogados
+              {rotuloDoTamanho(opcao)}
             </button>
           ))}
           <button
@@ -135,7 +137,8 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
         </div>
         <p className="ajuda">
           A faixa vale para advogados e para a equipe de apoio, separadamente: a{" "}
-          {LIMITES[faixa].rotulo} permite {LIMITES[faixa].advogados} advogados e{" "}
+          {LIMITES[faixa].rotulo} permite {LIMITES[faixa].advogados}{" "}
+          {LIMITES[faixa].advogados === 1 ? "advogado" : "advogados"} e{" "}
           {LIMITES[faixa].apoio} pessoas de apoio.
         </p>
       </section>
@@ -313,7 +316,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                 <dl className="mt-3 grid gap-1.5 text-sm">
                   <div className="flex justify-between gap-3">
                     <dt className="text-slate-600">
-                      Sistema, ate {LIMITES[faixa].advogados} advogados
+                      Sistema, {rotuloDoTamanho(faixa)}
                     </dt>
                     <dd className="tabular-nums">
                       {emReais(conta.faixaCentavos)}

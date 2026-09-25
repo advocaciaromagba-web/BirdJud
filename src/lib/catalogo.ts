@@ -27,17 +27,21 @@ export type Modulo = (typeof MODULOS)[number];
 // Faixas de advogados
 // ---------------------------------------------------------------------------
 
-export const FAIXAS = ["ATE_3", "ATE_10", "ATE_25", "ATE_50"] as const;
+export const FAIXAS = ["ATE_1", "ATE_3", "ATE_10", "ATE_25", "ATE_50"] as const;
 export type Faixa = (typeof FAIXAS)[number];
 
 export const LIMITES: Record<
   Faixa,
   { advogados: number; apoio: number; rotulo: string }
 > = {
-  ATE_3: { advogados: 3, apoio: 3, rotulo: "Essencial" },
+  // O rotulo e do TAMANHO, nunca do plano. Enquanto a faixa se chamava
+  // "Essencial" e o plano tambem, a mesma palavra queria dizer duas coisas na
+  // mesma tela.
+  ATE_1: { advogados: 1, apoio: 2, rotulo: "Solo" },
+  ATE_3: { advogados: 3, apoio: 3, rotulo: "Pequeno" },
   ATE_10: { advogados: 10, apoio: 10, rotulo: "Escritorio" },
-  ATE_25: { advogados: 25, apoio: 25, rotulo: "Profissional" },
-  ATE_50: { advogados: 50, apoio: 50, rotulo: "Completo" },
+  ATE_25: { advogados: 25, apoio: 25, rotulo: "Grande" },
+  ATE_50: { advogados: 50, apoio: 50, rotulo: "Corporativo" },
 };
 
 /**
@@ -50,8 +54,19 @@ export const LIMITES: Record<
  * faixa maior continua existindo no sistema, como referencia interna para
  * quem monta a proposta.
  */
-export const FAIXAS_PUBLICADAS: Faixa[] = ["ATE_3", "ATE_10", "ATE_25"];
+export const FAIXAS_PUBLICADAS: Faixa[] = [
+  "ATE_1",
+  "ATE_3",
+  "ATE_10",
+  "ATE_25",
+];
 export const FAIXA_SOB_CONSULTA: Faixa = "ATE_50";
+
+/** Como o tamanho aparece na tela. "ate 1 advogados" nao se escreve. */
+export function rotuloDoTamanho(faixa: Faixa): string {
+  const advogados = LIMITES[faixa].advogados;
+  return advogados === 1 ? "1 advogado" : `ate ${advogados} advogados`;
+}
 
 export function faixaPublicada(faixa: Faixa): boolean {
   return FAIXAS_PUBLICADAS.includes(faixa);

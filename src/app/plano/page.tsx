@@ -13,7 +13,7 @@ import {
 } from "@/lib/planos";
 import { ROTULO_DO_MODULO } from "@/lib/rotulos";
 import { Estrutura } from "@/componentes/Estrutura";
-import type { Modulo } from "@/lib/catalogo";
+import { rotuloDoTamanho, type Modulo } from "@/lib/catalogo";
 
 export default async function PaginaDoPlano() {
   // Plano e contrato: quem ve e quem responde pelo escritorio.
@@ -113,8 +113,8 @@ export default async function PaginaDoPlano() {
                 <td>
                   <span className="font-medium">Sistema</span>
                   <span className="block text-slate-500">
-                    Clientes, processos, agenda e prazos · ate{" "}
-                    {uso.advogados.limite} advogados
+                    Clientes, processos, agenda e prazos ·{" "}
+                    {rotuloDoTamanho(uso.faixa)}
                   </span>
                 </td>
                 <td className="text-right tabular-nums">
