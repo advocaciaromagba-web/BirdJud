@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
+import { arquivosDoCampo } from "@/lib/formulario";
 import { registrarTentativa } from "@/lib/limite";
 import { registrarConsumo } from "@/lib/consumo";
 import {
@@ -68,9 +69,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const arquivos = formulario
-      .getAll("arquivos")
-      .filter((item): item is File => item instanceof File);
+    // Nao usar `instanceof File`: o File global so existe do Node 20 em
+    // diante, e a imagem do provedor pode estar em versao anterior.
+    const arquivos = arquivosDoCampo(formulario, "arquivos");
     if (arquivos.length === 0) {
       return NextResponse.json(
         { erro: "Envie ao menos um documento." },

@@ -2,6 +2,9 @@
   "name": "birdjud",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9"
+  },
   "description": "BirdJud — sistema juridico white label multi-tenant para escritorios de advocacia",
   "scripts": {
     "dev": "next dev",

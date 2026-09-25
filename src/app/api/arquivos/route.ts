@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ehArquivoEnviado } from "@/lib/formulario";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
@@ -44,8 +45,11 @@ export async function POST(req: Request) {
     const { escritorioId, usuarioId } = await exigirSessao("NUVEM");
 
     const formulario = await req.formData().catch(() => null);
+    // Nao usar `instanceof File`: o File global so existe do Node 20 em
+    // diante, e a imagem do provedor pode estar em versao anterior — em
+    // producao isso derrubava a rota com "File is not defined".
     const enviado = formulario?.get("arquivo");
-    if (!formulario || !(enviado instanceof File)) {
+    if (!formulario || !ehArquivoEnviado(enviado)) {
       return NextResponse.json({ erro: "Envie um arquivo." }, { status: 400 });
     }
     // Barra pelo tamanho declarado antes de ler o corpo inteiro na memoria.
