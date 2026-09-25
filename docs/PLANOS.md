@@ -7,9 +7,9 @@ mais do que o plano pronto que ja lhe daria aquilo.**
 
 | plano | o que entra alem do sistema | ate 3 advogados | ate 10 | ate 25 | ate 50 |
 | --- | --- | --- | --- | --- | --- |
-| Essencial | nada — clientes, processos, agenda e prazos, com cadastro digitado a mao | 149 | 299 | 549 | 899 |
-| Profissional | publicacoes do DJEN, arquivos, aviso por e-mail | 199 | 399 | 699 | 1.099 |
-| Avancado | + cobrancas, financeiro, nota fiscal de servico | 249 | 499 | 849 | 1.299 |
+| Essencial | nada — clientes, processos, agenda e prazos, com cadastro digitado a mao | **199** | 399 | 699 | sob consulta |
+| Profissional | publicacoes do DJEN, arquivos, aviso por e-mail | 239 | 459 | 799 | sob consulta |
+| Avancado | + cobrancas, financeiro, nota fiscal de servico | 269 | 529 | 899 | sob consulta |
 | Completo | + inteligencia artificial, aviso por WhatsApp, assinatura eletronica | **299** | 599 | 999 | sob consulta |
 
 **A faixa de 50 advogados nao tem preco na vitrine.** Escritorio desse tamanho
@@ -21,11 +21,21 @@ R$ 299 para escritorio pequeno. O preco continua existindo no sistema
 continua obedecendo a escada; quem decide o que aparece na tela e
 `FAIXAS_PUBLICADAS`, em `catalogo.ts`.
 
-O numero que manda e o R$ 299 do Completo para escritorio pequeno: e o que o
-mercado brasileiro cobra por sistema "completo" dessa faixa. O BirdJud entrega
-mais por esse preco — leitura de documento por IA, entre outras coisas —, e nao
-cobra mais por isso, porque o escritorio compara a primeira linha da tabela,
-nao a lista de recursos. Ha um teste que trava esse teto.
+Dois numeros amarram a tabela, e o resto se acomoda entre eles:
+
+- **R$ 199**, o piso: o sistema simples, sem IA. Abaixo disso a conta nao
+  fecha, porque o escritorio pequeno usa o mesmo servidor, o mesmo banco
+  isolado e o mesmo suporte do grande;
+- **R$ 299**, o Completo para escritorio pequeno: e o que o mercado brasileiro
+  cobra por sistema "completo" dessa faixa. O BirdJud entrega mais por esse
+  preco — leitura de documento por IA, entre outras coisas — e nao cobra mais
+  por isso, porque o escritorio compara a primeira linha da tabela, nao a
+  lista de recursos.
+
+Os cem reais entre um e outro sao curtos de proposito: quem chega pelo piso e
+ve que a IA, a cobranca e a nota fiscal cabem em mais cem, sobe — e e no
+Completo que o produto se defende. Ha um teste que prende os dois numeros e
+exige que todo plano da faixa de entrada caiba entre eles.
 
 Tres invariantes, garantidas por teste em `testes/planos.test.ts`:
 

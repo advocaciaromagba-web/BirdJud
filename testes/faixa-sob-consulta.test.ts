@@ -27,9 +27,9 @@ describe("faixa sob consulta", () => {
   it("a faixa de consulta mantem preco de referencia, acima da ultima publicada", () => {
     const ultima = FAIXAS_PUBLICADAS[FAIXAS_PUBLICADAS.length - 1];
     for (const plano of PLANOS) {
-      expect(contaDoPlano(plano, FAIXA_SOB_CONSULTA).totalCentavos).toBeGreaterThan(
-        contaDoPlano(plano, ultima).totalCentavos
-      );
+      expect(
+        contaDoPlano(plano, FAIXA_SOB_CONSULTA).totalCentavos,
+      ).toBeGreaterThan(contaDoPlano(plano, ultima).totalCentavos);
     }
   });
 });

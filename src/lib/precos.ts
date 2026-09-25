@@ -1,11 +1,18 @@
 // Tabela de precos da plataforma.
 //
-// A referencia de mercado: sistema juridico "completo" no Brasil gira em
-// torno de R$ 299 por mes para escritorio pequeno. O plano Completo daqui
-// fica nesse patamar — e entrega mais, inclusive leitura de documento por IA,
-// que os sistemas dessa faixa nao tem. Cobrar o dobro por ser melhor nao
-// vende: o escritorio compara a primeira linha da tabela, nao a lista de
-// recursos.
+// Dois numeros amarram esta tabela, e o resto se acomoda entre eles:
+//
+//   R$ 199 — o piso: o sistema simples, sem IA. Abaixo disso a conta nao
+//            fecha, porque o escritorio pequeno usa o mesmo servidor, o
+//            mesmo banco isolado e o mesmo suporte do grande;
+//   R$ 299 — o Completo para escritorio pequeno, que e o que o mercado
+//            brasileiro cobra por sistema "completo" nessa faixa. Cobrar o
+//            dobro por ser melhor nao vende: o escritorio compara a primeira
+//            linha da tabela, nao a lista de recursos.
+//
+// Os cem reais entre um e outro sao curtos de proposito. Quem chega pelo piso
+// e ve que a IA, a cobranca e a nota fiscal cabem em mais cem, sobe — e e no
+// Completo que o produto se defende.
 //
 // Os numeros continuam a ser revistos quando houver custo real medido de
 // servidor, IA e mensagens. Trocar aqui nao mexe em contrato ja assinado: o
@@ -23,10 +30,10 @@ import type { Plano } from "./planos";
  * equipe de apoio ativos.
  */
 export const PRECO_DA_FAIXA: Record<Faixa, number> = {
-  ATE_3: 14_900,
-  ATE_10: 29_900,
-  ATE_25: 54_900,
-  ATE_50: 89_900,
+  ATE_3: 19_900,
+  ATE_10: 39_900,
+  ATE_25: 69_900,
+  ATE_50: 109_900,
 };
 
 /**
@@ -37,14 +44,14 @@ export const PRECO_DA_FAIXA: Record<Faixa, number> = {
  * avulsa — calculado em planos.ts, mostrado na tela.
  */
 export const PRECO_DO_PLANO: Record<Plano, Record<Faixa, number>> = {
-  ESSENCIAL: { ATE_3: 14_900, ATE_10: 29_900, ATE_25: 54_900, ATE_50: 89_900 },
+  ESSENCIAL: { ATE_3: 19_900, ATE_10: 39_900, ATE_25: 69_900, ATE_50: 109_900 },
   PROFISSIONAL: {
-    ATE_3: 19_900,
-    ATE_10: 39_900,
-    ATE_25: 69_900,
-    ATE_50: 109_900,
+    ATE_3: 23_900,
+    ATE_10: 45_900,
+    ATE_25: 79_900,
+    ATE_50: 124_900,
   },
-  AVANCADO: { ATE_3: 24_900, ATE_10: 49_900, ATE_25: 84_900, ATE_50: 129_900 },
+  AVANCADO: { ATE_3: 26_900, ATE_10: 52_900, ATE_25: 89_900, ATE_50: 137_900 },
   COMPLETO: { ATE_3: 29_900, ATE_10: 59_900, ATE_25: 99_900, ATE_50: 149_900 },
 };
 

@@ -79,16 +79,21 @@ describe("planos", () => {
     }
   });
 
-  it("o Completo do escritorio pequeno fica na media de mercado", () => {
-    // R$ 299 e o que o mercado brasileiro cobra por sistema "completo" para
-    // escritorio pequeno. Este teste nao e sobre codigo: e para a tabela nao
-    // subir sozinha, aos poucos, ate sair do preco que se pode praticar.
-    expect(contaDoPlano("COMPLETO", "ATE_3").totalCentavos).toBeLessThanOrEqual(
-      29_900,
-    );
-    expect(
-      contaDoPlano("ESSENCIAL", "ATE_3").totalCentavos,
-    ).toBeLessThanOrEqual(14_900);
+  it("a tabela fica presa entre o piso de 199 e o teto de 299", () => {
+    // Os dois numeros que amarram o produto: R$ 199 e o sistema simples, sem
+    // IA, e R$ 299 e o Completo — que e o que o mercado brasileiro cobra por
+    // sistema "completo" para escritorio pequeno. Este teste nao e sobre
+    // codigo: e para a tabela nao andar sozinha, aos poucos, para fora do
+    // preco que se pode praticar.
+    expect(contaDoPlano("ESSENCIAL", "ATE_3").totalCentavos).toBe(19_900);
+    expect(contaDoPlano("COMPLETO", "ATE_3").totalCentavos).toBe(29_900);
+
+    // E nenhum plano escapa do intervalo na faixa de entrada.
+    for (const plano of PLANOS) {
+      const total = contaDoPlano(plano, "ATE_3").totalCentavos;
+      expect(total, plano).toBeGreaterThanOrEqual(19_900);
+      expect(total, plano).toBeLessThanOrEqual(29_900);
+    }
   });
 
   it("quem monta o proprio conjunto nunca paga mais que o plano que o cobre", () => {
