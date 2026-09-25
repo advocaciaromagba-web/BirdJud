@@ -5,17 +5,26 @@
 import { createServer, type Server } from "node:http";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import handler, { conferirConsulta, tokenConfere } from "../rele/api/djen";
-import { buscarPagina, destinoDaConsulta, FalhaNoDjen, releDjen } from "../src/lib/djen";
+import {
+  buscarPagina,
+  destinoDaConsulta,
+  FalhaNoDjen,
+  releDjen,
+} from "../src/lib/djen";
 
 const TOKEN = "token-de-teste-do-rele";
 
-type Chamada = { url: string; cabecalhos: Record<string, string | string[] | undefined> };
+type Chamada = {
+  url: string;
+  cabecalhos: Record<string, string | string[] | undefined>;
+};
 
 /** Sobe um servidor e devolve o endereco. */
 async function subir(servidor: Server): Promise<string> {
   await new Promise<void>((pronto) => servidor.listen(0, "127.0.0.1", pronto));
   const endereco = servidor.address();
-  if (typeof endereco === "string" || endereco === null) throw new Error("sem porta");
+  if (typeof endereco === "string" || endereco === null)
+    throw new Error("sem porta");
   return `http://127.0.0.1:${endereco.port}`;
 }
 
@@ -116,7 +125,8 @@ describe("rele rodando", () => {
     delete process.env.DJEN_RELE_TOKEN;
   });
 
-  const consulta = "numeroOab=12345&ufOab=BA&dataDisponibilizacaoInicio=2026-09-01&dataDisponibilizacaoFim=2026-09-10";
+  const consulta =
+    "numeroOab=12345&ufOab=BA&dataDisponibilizacaoInicio=2026-09-01&dataDisponibilizacaoFim=2026-09-10";
 
   it("sem Authorization responde 401 e nao chama o CNJ", async () => {
     const resposta = await fetch(`${enderecoDoRele}?${consulta}`);
@@ -151,9 +161,12 @@ describe("rele rodando", () => {
   });
 
   it("nao repassa parametro estranho, mesmo com token bom", async () => {
-    const resposta = await fetch(`${enderecoDoRele}?${consulta}&url=http://interno`, {
-      headers: { Authorization: `Bearer ${TOKEN}` },
-    });
+    const resposta = await fetch(
+      `${enderecoDoRele}?${consulta}&url=http://interno`,
+      {
+        headers: { Authorization: `Bearer ${TOKEN}` },
+      },
+    );
     expect(resposta.status).toBe(400);
     expect(chamadas).toHaveLength(0);
   });
@@ -176,7 +189,10 @@ describe("rele rodando", () => {
   });
 
   it("repassa o status de recusa do CNJ", async () => {
-    respostaDoCnj = { status: 403, corpo: JSON.stringify({ erro: "bloqueado" }) };
+    respostaDoCnj = {
+      status: 403,
+      corpo: JSON.stringify({ erro: "bloqueado" }),
+    };
     const resposta = await fetch(`${enderecoDoRele}?${consulta}`, {
       headers: { Authorization: `Bearer ${TOKEN}` },
     });
@@ -187,7 +203,9 @@ describe("rele rodando", () => {
     process.env.DJEN_RELE_URL = `${enderecoDoRele}/`;
     process.env.DJEN_RELE_TOKEN = TOKEN;
 
-    const destino = destinoDaConsulta(new URLSearchParams({ numeroOab: "12345" }));
+    const destino = destinoDaConsulta(
+      new URLSearchParams({ numeroOab: "12345" }),
+    );
     expect(releDjen()).toBe(enderecoDoRele);
     expect(destino.url.startsWith(`${enderecoDoRele}?`)).toBe(true);
     expect(destino.cabecalhos.Authorization).toBe(`Bearer ${TOKEN}`);
@@ -213,13 +231,15 @@ describe("rele rodando", () => {
         ufOab: "BA",
         de: new Date("2026-09-01T00:00:00Z"),
         ate: new Date("2026-09-10T00:00:00Z"),
-      })
+      }),
     ).rejects.toThrow(FalhaNoDjen);
     expect(chamadas).toHaveLength(0);
   });
 
   it("sem rele configurado, vai direto ao CNJ", () => {
-    const destino = destinoDaConsulta(new URLSearchParams({ numeroOab: "12345" }));
+    const destino = destinoDaConsulta(
+      new URLSearchParams({ numeroOab: "12345" }),
+    );
     expect(releDjen()).toBeNull();
     expect(destino.url).toContain("/comunicacao?");
     expect(destino.cabecalhos.Authorization).toBeUndefined();

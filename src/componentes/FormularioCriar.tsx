@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
+import type { Perfil } from "@/lib/leitura-documento";
 
 export type Campo = {
   nome: string;
@@ -28,8 +30,9 @@ export type Campo = {
  * lista depois de gravar.
  *
  * Os campos sao controlados de proposito: e assim que a leitura de documento
- * consegue preencher a tela sem que a pessoa redigite. `leitor` recebe uma
- * funcao que preenche, e devolve o que quiser desenhar acima do formulario.
+ * consegue preencher a tela sem que a pessoa redigite. `leitura` liga o
+ * leitor de documentos acima do formulario — a pagina so o passa quando o
+ * escritorio tem o modulo IA contratado.
  */
 export function FormularioCriar({
   rota,
@@ -37,7 +40,7 @@ export function FormularioCriar({
   textoBotao = "Adicionar",
   recolhivel = false,
   textoAbrir,
-  leitor,
+  leitura,
 }: {
   rota: string;
   campos: Campo[];
@@ -45,9 +48,8 @@ export function FormularioCriar({
   /** Guardado atras de um botao: a lista e que importa na tela, nao o formulario. */
   recolhivel?: boolean;
   textoAbrir?: string;
-  leitor?: (
-    preencher: (valores: Record<string, string>) => void,
-  ) => React.ReactNode;
+  /** Perfil de leitura de documento; ausente, o leitor nao aparece. */
+  leitura?: Perfil;
 }) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
@@ -112,7 +114,11 @@ export function FormularioCriar({
 
   return (
     <div className="cartao">
-      {leitor ? <div className="mb-5">{leitor(preencher)}</div> : null}
+      {leitura ? (
+        <div className="mb-5">
+          <LeitorDeDocumentos perfil={leitura} aoAplicar={preencher} />
+        </div>
+      ) : null}
 
       <form onSubmit={enviar} className="grid gap-4 sm:grid-cols-2">
         {campos.map((campo) => (

@@ -2,7 +2,11 @@
 // segundo fator e cadastro de usuario pelo admin.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { generateSync } from "otplib";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import { conferirSenha, gerarHash } from "../src/lib/senhas";
 import { conferirCodigo, gerarSegredo } from "../src/lib/dois-fatores";
 
@@ -27,14 +31,16 @@ d("conta do usuario", () => {
           papel: "ADMIN",
           advogado: true,
         }),
-      })
+      }),
     );
     usuarioId = usuario.id;
   });
 
   afterAll(async () => {
     if (escritorio) {
-      await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -42,14 +48,21 @@ d("conta do usuario", () => {
   it("troca a senha e a antiga deixa de valer", async () => {
     const novo = await gerarHash("outra-senha-bem-longa");
     await comEscritorio(escritorio, (db) =>
-      db.usuario.update({ where: { id: usuarioId }, data: { senhaHash: novo } })
+      db.usuario.update({
+        where: { id: usuarioId },
+        data: { senhaHash: novo },
+      }),
     );
 
     const usuario = await comEscritorio(escritorio, (db) =>
-      db.usuario.findFirstOrThrow({ where: { id: usuarioId } })
+      db.usuario.findFirstOrThrow({ where: { id: usuarioId } }),
     );
-    await expect(conferirSenha("outra-senha-bem-longa", usuario.senhaHash)).resolves.toBe(true);
-    await expect(conferirSenha("senha-inicial-123", usuario.senhaHash)).resolves.toBe(false);
+    await expect(
+      conferirSenha("outra-senha-bem-longa", usuario.senhaHash),
+    ).resolves.toBe(true);
+    await expect(
+      conferirSenha("senha-inicial-123", usuario.senhaHash),
+    ).resolves.toBe(false);
   });
 
   it("o segredo do 2FA so vale depois de confirmado com um codigo", async () => {
@@ -61,10 +74,13 @@ d("conta do usuario", () => {
     expect(await conferirCodigo(codigo, segredo)).toBe(true);
 
     await comEscritorio(escritorio, (db) =>
-      db.usuario.update({ where: { id: usuarioId }, data: { doisFatores: segredo } })
+      db.usuario.update({
+        where: { id: usuarioId },
+        data: { doisFatores: segredo },
+      }),
     );
     const usuario = await comEscritorio(escritorio, (db) =>
-      db.usuario.findFirstOrThrow({ where: { id: usuarioId } })
+      db.usuario.findFirstOrThrow({ where: { id: usuarioId } }),
     );
     expect(usuario.doisFatores).toBe(segredo);
   });
@@ -79,8 +95,8 @@ d("conta do usuario", () => {
             senhaHash: await gerarHash("mais-uma-senha-123"),
             papel: "USUARIO",
           }),
-        })
-      )
+        }),
+      ),
     ).rejects.toMatchObject({ code: "P2002" });
   });
 
@@ -97,11 +113,13 @@ d("conta do usuario", () => {
             senhaHash: await gerarHash("senha-do-outro-123"),
             papel: "ADMIN",
           }),
-        })
+        }),
       );
       expect(usuario.escritorioId).toBe(outro.id);
     } finally {
-      await prismaPlataforma().escritorio.delete({ where: { id: outro.id } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: outro.id } })
+        .catch(() => {});
     }
   });
 });

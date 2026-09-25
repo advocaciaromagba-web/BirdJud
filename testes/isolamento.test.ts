@@ -34,17 +34,20 @@ d("isolamento entre escritorios", () => {
     beta = b.id;
 
     await comEscritorio(alfa, (db) =>
-      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Alfa" }) })
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Alfa" }) }),
     );
     const c = await comEscritorio(beta, (db) =>
-      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Beta" }) })
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Beta" }) }),
     );
     clienteDeBeta = c.id;
   });
 
   afterAll(async () => {
     for (const id of [alfa, beta]) {
-      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -61,26 +64,29 @@ d("isolamento entre escritorios", () => {
 
   it("busca por id de outro escritorio nao encontra", async () => {
     const achado = await comEscritorio(alfa, (db) =>
-      db.cliente.findFirst({ where: { id: clienteDeBeta } })
+      db.cliente.findFirst({ where: { id: clienteDeBeta } }),
     );
     expect(achado).toBeNull();
   });
 
   it("alteracao de registro de outro escritorio nao afeta nada", async () => {
     const r = await comEscritorio(alfa, (db) =>
-      db.cliente.updateMany({ where: { id: clienteDeBeta }, data: { nome: "invadido" } })
+      db.cliente.updateMany({
+        where: { id: clienteDeBeta },
+        data: { nome: "invadido" },
+      }),
     );
     expect(r.count).toBe(0);
 
     const intacto = await comEscritorio(beta, (db) =>
-      db.cliente.findFirst({ where: { id: clienteDeBeta } })
+      db.cliente.findFirst({ where: { id: clienteDeBeta } }),
     );
     expect(intacto?.nome).toBe("Cliente de Beta");
   });
 
   it("exclusao de registro de outro escritorio nao afeta nada", async () => {
     const r = await comEscritorio(alfa, (db) =>
-      db.cliente.deleteMany({ where: { id: clienteDeBeta } })
+      db.cliente.deleteMany({ where: { id: clienteDeBeta } }),
     );
     expect(r.count).toBe(0);
   });
@@ -88,7 +94,9 @@ d("isolamento entre escritorios", () => {
   it("criacao nao consegue forjar outro escritorio no payload", async () => {
     const criado = await comEscritorio(alfa, (db) =>
       // escritorioId injetado pela extensao sobrepoe o que vier do chamador
-      db.cliente.create({ data: { nome: "Forjado", escritorioId: beta } as never })
+      db.cliente.create({
+        data: { nome: "Forjado", escritorioId: beta } as never,
+      }),
     );
     expect(criado.escritorioId).toBe(alfa);
   });
@@ -107,20 +115,26 @@ d("isolamento entre escritorios", () => {
       prismaSemEscritorio.$executeRaw`
         INSERT INTO "Cliente" ("id", "escritorioId", "nome", "atualizadoEm")
         VALUES ('forjado', ${beta}, 'Forjado', now())
-      `
+      `,
     ).rejects.toThrow();
   });
 
   it("marca do subdominio e legivel antes do login, sem vazar negocio", async () => {
-    const slug = (await prismaPlataforma().escritorio.findUnique({ where: { id: alfa } }))!.slug;
+    const slug = (await prismaPlataforma().escritorio.findUnique({
+      where: { id: alfa },
+    }))!.slug;
     const marca = await escritorioPorSlug(slug);
     expect(marca?.nome).toBe("Escritorio Alfa");
     expect(marca).not.toHaveProperty("cnpj");
   });
 
   it("RLS barra a consulta crua quando app.escritorio_id e de outro escritorio", async () => {
-    const linhas = await comEscritorio(alfa, (db) =>
-      db.$queryRaw<{ id: string }[]>`SELECT id FROM "Cliente" WHERE id = ${clienteDeBeta}`
+    const linhas = await comEscritorio(
+      alfa,
+      (db) =>
+        db.$queryRaw<
+          { id: string }[]
+        >`SELECT id FROM "Cliente" WHERE id = ${clienteDeBeta}`,
     );
     expect(linhas).toHaveLength(0);
   });

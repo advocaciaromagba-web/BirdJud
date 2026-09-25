@@ -1,6 +1,10 @@
 // Fase 4: venda e operacao — teste, fatura, regua de atraso e suspensao.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import {
   aplicarRegua,
   criarAssinatura,
@@ -66,8 +70,12 @@ describe("regra da regua (pura)", () => {
 
 describe("vencimento e atraso", () => {
   it("respeita mes curto", () => {
-    expect(vencimentoDe("2026-02", 31).toISOString().slice(0, 10)).toBe("2026-02-28");
-    expect(vencimentoDe("2026-10", 10).toISOString().slice(0, 10)).toBe("2026-10-10");
+    expect(vencimentoDe("2026-02", 31).toISOString().slice(0, 10)).toBe(
+      "2026-02-28",
+    );
+    expect(vencimentoDe("2026-10", 10).toISOString().slice(0, 10)).toBe(
+      "2026-10-10",
+    );
   });
 
   it("a fatura nunca nasce vencida", () => {
@@ -76,14 +84,16 @@ describe("vencimento e atraso", () => {
     const emissao = new Date("2026-09-17T12:00:00Z");
     const vencimento = vencimentoComPrazo("2026-09", 10, emissao);
     expect(vencimento.getTime()).toBeGreaterThan(emissao.getTime());
-    expect(diasDeAtraso(vencimento, emissao)).toBeLessThanOrEqual(-PRAZO_MINIMO_DIAS);
+    expect(diasDeAtraso(vencimento, emissao)).toBeLessThanOrEqual(
+      -PRAZO_MINIMO_DIAS,
+    );
   });
 
   it("quando ha folga, mantem o dia combinado", () => {
     const emissao = new Date("2026-10-01T12:00:00Z");
-    expect(vencimentoComPrazo("2026-10", 10, emissao).toISOString().slice(0, 10)).toBe(
-      "2026-10-10"
-    );
+    expect(
+      vencimentoComPrazo("2026-10", 10, emissao).toISOString().slice(0, 10),
+    ).toBe("2026-10-10");
   });
 
   it("conta os dias de atraso", () => {
@@ -116,7 +126,12 @@ let escritorio = "";
 d("ciclo comercial", () => {
   beforeAll(async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `f4-${Date.now()}`, nome: "Escritorio F4", status: "TESTE", faixa: "ATE_3" },
+      data: {
+        slug: `f4-${Date.now()}`,
+        nome: "Escritorio F4",
+        status: "TESTE",
+        faixa: "ATE_3",
+      },
     });
     escritorio = e.id;
     await comEscritorio(escritorio, async (db) =>
@@ -128,13 +143,15 @@ d("ciclo comercial", () => {
           papel: "ADMIN",
           advogado: true,
         }),
-      })
+      }),
     );
   });
 
   afterAll(async () => {
     if (escritorio) {
-      await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -169,7 +186,9 @@ d("ciclo comercial", () => {
   it("nao duplica a fatura da mesma competencia", async () => {
     await aplicarRegua(escritorio);
     await aplicarRegua(escritorio);
-    const quantas = await prismaPlataforma().fatura.count({ where: { escritorioId: escritorio } });
+    const quantas = await prismaPlataforma().fatura.count({
+      where: { escritorioId: escritorio },
+    });
     expect(quantas).toBe(1);
   });
 
@@ -180,7 +199,9 @@ d("ciclo comercial", () => {
 
     await prismaPlataforma().fatura.update({
       where: { id: fatura.id },
-      data: { vencimento: new Date(Date.now() - (REGUA.inadimplente + 1) * DIA) },
+      data: {
+        vencimento: new Date(Date.now() - (REGUA.inadimplente + 1) * DIA),
+      },
     });
     expect((await aplicarRegua(escritorio)).statusNovo).toBe("INADIMPLENTE");
 
@@ -198,7 +219,9 @@ d("ciclo comercial", () => {
     const resultado = await registrarPagamento(fatura.id, "pag-123");
     expect(resultado.statusNovo).toBe("ATIVO");
 
-    const paga = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: fatura.id } });
+    const paga = await prismaPlataforma().fatura.findUniqueOrThrow({
+      where: { id: fatura.id },
+    });
     expect(paga.status).toBe("PAGA");
     expect(paga.idExterno).toBe("pag-123");
     expect(paga.pagoEm).not.toBeNull();
@@ -223,7 +246,11 @@ d("webhook de pagamento", () => {
   // conferencia HTTP de ponta a ponta esta no roteiro de fumaca.
   it("o caminho de baixa do webhook e o mesmo do painel", async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `f4w-${Date.now()}`, nome: "Webhook F4", status: "SUSPENSO" },
+      data: {
+        slug: `f4w-${Date.now()}`,
+        nome: "Webhook F4",
+        status: "SUSPENSO",
+      },
     });
     try {
       const fatura = await prismaPlataforma().fatura.create({
@@ -243,7 +270,9 @@ d("webhook de pagamento", () => {
       });
       expect(paga.idExterno).toBe("pay_do_asaas");
     } finally {
-      await prismaPlataforma().escritorio.delete({ where: { id: e.id } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: e.id } })
+        .catch(() => {});
     }
   });
 });

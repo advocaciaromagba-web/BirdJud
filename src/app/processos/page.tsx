@@ -39,6 +39,7 @@ export default async function PaginaProcessos() {
         recolhivel
         textoAbrir="Novo processo"
         textoBotao="Cadastrar processo"
+        leitura={modulos.includes("IA") ? "PROCESSO" : undefined}
         campos={[
           {
             nome: "numero",

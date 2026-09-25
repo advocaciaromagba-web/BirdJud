@@ -1,10 +1,34 @@
 // Fase 2: modulo contratado, limite da faixa, medicao e fila.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
-import { exigirModulo, moduloAtivo, modulosAtivos, ModuloNaoContratado } from "../src/lib/modulos";
-import { exigirVagaNaFaixa, FaixaEsgotada, usoDaFaixa } from "../src/lib/faixas";
-import { competenciaDe, consumoDoMes, definirConsumo, registrarConsumo } from "../src/lib/consumo";
-import { concluir, enfileirar, falhar, reclamar, destravar } from "../src/lib/fila";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
+import {
+  exigirModulo,
+  moduloAtivo,
+  modulosAtivos,
+  ModuloNaoContratado,
+} from "../src/lib/modulos";
+import {
+  exigirVagaNaFaixa,
+  FaixaEsgotada,
+  usoDaFaixa,
+} from "../src/lib/faixas";
+import {
+  competenciaDe,
+  consumoDoMes,
+  definirConsumo,
+  registrarConsumo,
+} from "../src/lib/consumo";
+import {
+  concluir,
+  enfileirar,
+  falhar,
+  reclamar,
+  destravar,
+} from "../src/lib/fila";
 import { espalhar, EXECUTORES } from "../src/lib/trabalhos";
 import { gerarHash } from "../src/lib/senhas";
 import { paraCentavos } from "../src/lib/dinheiro";
@@ -16,7 +40,11 @@ let alfa = "";
 let beta = "";
 const marca = Date.now();
 
-async function criarUsuario(escritorioId: string, email: string, advogado: boolean) {
+async function criarUsuario(
+  escritorioId: string,
+  email: string,
+  advogado: boolean,
+) {
   return comEscritorio(escritorioId, async (db) =>
     db.usuario.create({
       data: semEscritorio({
@@ -26,7 +54,7 @@ async function criarUsuario(escritorioId: string, email: string, advogado: boole
         papel: advogado ? "ADVOGADO" : "USUARIO",
         advogado,
       }),
-    })
+    }),
   );
 }
 
@@ -44,7 +72,10 @@ d("fase 2", () => {
 
   afterAll(async () => {
     for (const id of [alfa, beta]) {
-      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -57,13 +88,19 @@ d("fase 2", () => {
 
     it("modulo nao contratado bloqueia com 403", async () => {
       await expect(moduloAtivo(alfa, "FINANCEIRO")).resolves.toBe(false);
-      await expect(exigirModulo(alfa, "FINANCEIRO")).rejects.toBeInstanceOf(ModuloNaoContratado);
-      await expect(exigirModulo(alfa, "FINANCEIRO")).rejects.toMatchObject({ status: 403 });
+      await expect(exigirModulo(alfa, "FINANCEIRO")).rejects.toBeInstanceOf(
+        ModuloNaoContratado,
+      );
+      await expect(exigirModulo(alfa, "FINANCEIRO")).rejects.toMatchObject({
+        status: 403,
+      });
     });
 
     it("contratar libera so para quem contratou", async () => {
       await comEscritorio(alfa, (db) =>
-        db.moduloContratado.create({ data: semEscritorio({ modulo: "FINANCEIRO" }) })
+        db.moduloContratado.create({
+          data: semEscritorio({ modulo: "FINANCEIRO" }),
+        }),
       );
       await expect(moduloAtivo(alfa, "FINANCEIRO")).resolves.toBe(true);
       await expect(moduloAtivo(beta, "FINANCEIRO")).resolves.toBe(false);
@@ -72,17 +109,21 @@ d("fase 2", () => {
     it("desligar o modulo volta a bloquear", async () => {
       await comEscritorio(alfa, (db) =>
         db.moduloContratado.update({
-          where: { escritorioId_modulo: { escritorioId: alfa, modulo: "FINANCEIRO" } },
+          where: {
+            escritorioId_modulo: { escritorioId: alfa, modulo: "FINANCEIRO" },
+          },
           data: { ativo: false },
-        })
+        }),
       );
       await expect(moduloAtivo(alfa, "FINANCEIRO")).resolves.toBe(false);
 
       await comEscritorio(alfa, (db) =>
         db.moduloContratado.update({
-          where: { escritorioId_modulo: { escritorioId: alfa, modulo: "FINANCEIRO" } },
+          where: {
+            escritorioId_modulo: { escritorioId: alfa, modulo: "FINANCEIRO" },
+          },
           data: { ativo: true },
-        })
+        }),
       );
     });
   });
@@ -99,17 +140,22 @@ d("fase 2", () => {
       expect(uso.faixa).toBe("ATE_3");
       expect(uso.advogados).toEqual({ usados: 3, limite: 3 });
 
-      await expect(exigirVagaNaFaixa(alfa, true)).rejects.toBeInstanceOf(FaixaEsgotada);
+      await expect(exigirVagaNaFaixa(alfa, true)).rejects.toBeInstanceOf(
+        FaixaEsgotada,
+      );
       // O limite de apoio e separado: ainda ha vaga la.
       await expect(exigirVagaNaFaixa(alfa, false)).resolves.toBeUndefined();
     });
 
     it("desativar um usuario devolve a vaga", async () => {
       const usuario = await comEscritorio(alfa, (db) =>
-        db.usuario.findFirstOrThrow({ where: { advogado: true } })
+        db.usuario.findFirstOrThrow({ where: { advogado: true } }),
       );
       await comEscritorio(alfa, (db) =>
-        db.usuario.update({ where: { id: usuario.id }, data: { ativo: false } })
+        db.usuario.update({
+          where: { id: usuario.id },
+          data: { ativo: false },
+        }),
       );
 
       await expect(exigirVagaNaFaixa(alfa, true)).resolves.toBeUndefined();
@@ -139,14 +185,24 @@ d("fase 2", () => {
 
     it("excedente sai da franquia do modulo contratado", async () => {
       await comEscritorio(alfa, (db) =>
-        db.moduloContratado.create({ data: semEscritorio({ modulo: "WHATSAPP", franquia: 40 }) })
+        db.moduloContratado.create({
+          data: semEscritorio({ modulo: "WHATSAPP", franquia: 40 }),
+        }),
       );
 
-      const linha = (await consumoDoMes(alfa)).find((l) => l.metrica === "WHATSAPP_MSG");
-      expect(linha).toMatchObject({ quantidade: 42, franquia: 40, excedente: 2 });
+      const linha = (await consumoDoMes(alfa)).find(
+        (l) => l.metrica === "WHATSAPP_MSG",
+      );
+      expect(linha).toMatchObject({
+        quantidade: 42,
+        franquia: 40,
+        excedente: 2,
+      });
 
       // Metrica do nucleo nao tem franquia, logo nunca tem excedente.
-      const registros = (await consumoDoMes(alfa)).find((l) => l.metrica === "REGISTROS");
+      const registros = (await consumoDoMes(alfa)).find(
+        (l) => l.metrica === "REGISTROS",
+      );
       expect(registros).toMatchObject({ franquia: null, excedente: 0 });
     });
 
@@ -197,13 +253,23 @@ d("fase 2", () => {
       const trabalho = await reclamar();
       expect(trabalho?.id).toBe(id);
 
-      await falhar({ ...trabalho!, tentativas: 1 }, new Error("primeira falha"));
-      let estado = await prismaPlataforma().trabalho.findUniqueOrThrow({ where: { id } });
+      await falhar(
+        { ...trabalho!, tentativas: 1 },
+        new Error("primeira falha"),
+      );
+      let estado = await prismaPlataforma().trabalho.findUniqueOrThrow({
+        where: { id },
+      });
       expect(estado.estado).toBe("PENDENTE");
       expect(estado.erro).toBe("primeira falha");
 
-      await falhar({ ...trabalho!, tentativas: 3, maxTentativas: 3 }, new Error("ultima falha"));
-      estado = await prismaPlataforma().trabalho.findUniqueOrThrow({ where: { id } });
+      await falhar(
+        { ...trabalho!, tentativas: 3, maxTentativas: 3 },
+        new Error("ultima falha"),
+      );
+      estado = await prismaPlataforma().trabalho.findUniqueOrThrow({
+        where: { id },
+      });
       expect(estado.estado).toBe("FALHOU");
     });
 
@@ -212,16 +278,23 @@ d("fase 2", () => {
       await reclamar();
       await prismaPlataforma().trabalho.update({
         where: { id },
-        data: { estado: "EXECUTANDO", iniciadoEm: new Date(Date.now() - 60 * 60_000) },
+        data: {
+          estado: "EXECUTANDO",
+          iniciadoEm: new Date(Date.now() - 60 * 60_000),
+        },
       });
 
       expect(await destravar(15)).toBeGreaterThanOrEqual(1);
-      const estado = await prismaPlataforma().trabalho.findUniqueOrThrow({ where: { id } });
+      const estado = await prismaPlataforma().trabalho.findUniqueOrThrow({
+        where: { id },
+      });
       expect(estado.estado).toBe("PENDENTE");
     });
 
     it("espalhar agenda um trabalho por escritorio que pode receber", async () => {
-      await prismaPlataforma().trabalho.deleteMany({ where: { escritorioId: { in: [alfa, beta] } } });
+      await prismaPlataforma().trabalho.deleteMany({
+        where: { escritorioId: { in: [alfa, beta] } },
+      });
       const agendados = await espalhar("APURAR_CONSUMO");
       expect(agendados).toBeGreaterThanOrEqual(2);
 
@@ -236,13 +309,20 @@ d("fase 2", () => {
         where: { id: beta },
         data: { status: "ENCERRADO" },
       });
-      await prismaPlataforma().trabalho.deleteMany({ where: { escritorioId: beta } });
+      await prismaPlataforma().trabalho.deleteMany({
+        where: { escritorioId: beta },
+      });
 
       await espalhar("APURAR_CONSUMO");
-      const deBeta = await prismaPlataforma().trabalho.count({ where: { escritorioId: beta } });
+      const deBeta = await prismaPlataforma().trabalho.count({
+        where: { escritorioId: beta },
+      });
       expect(deBeta).toBe(0);
 
-      await prismaPlataforma().escritorio.update({ where: { id: beta }, data: { status: "TESTE" } });
+      await prismaPlataforma().escritorio.update({
+        where: { id: beta },
+        data: { status: "TESTE" },
+      });
     });
   });
 

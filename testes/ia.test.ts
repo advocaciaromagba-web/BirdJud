@@ -4,7 +4,11 @@
 // que o sistema MANDA e o que faz com o que volta — sem chave e sem gastar.
 import { createServer, type Server } from "node:http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import {
   EntradaLongaDemais,
   IARecusou,
@@ -88,10 +92,16 @@ describe("unidade de cobranca", () => {
 type Resposta = { status: number; json: unknown };
 
 let servidor: Server;
-let recebido: { corpo: Record<string, unknown>; cabecalhos: Record<string, unknown> } | null = null;
+let recebido: {
+  corpo: Record<string, unknown>;
+  cabecalhos: Record<string, unknown>;
+} | null = null;
 let responder: () => Resposta = () => ({ status: 200, json: {} });
 
-function respostaDoModelo(texto: string, extras: Record<string, unknown> = {}): Resposta {
+function respostaDoModelo(
+  texto: string,
+  extras: Record<string, unknown> = {},
+): Resposta {
   return {
     status: 200,
     json: {
@@ -147,7 +157,7 @@ describe("chamada ao modelo", () => {
     // fallback, o advogado veria o sistema simplesmente falhar.
     expect(recebido?.corpo.fallbacks).toBe("default");
     expect(String(recebido?.cabecalhos["anthropic-beta"])).toContain(
-      "server-side-fallback-2026-07-01"
+      "server-side-fallback-2026-07-01",
     );
   });
 
@@ -160,7 +170,11 @@ describe("chamada ao modelo", () => {
   it("devolve o texto e conta os tokens, somando o que veio do cache", async () => {
     responder = () =>
       respostaDoModelo("RESUMO\nOk.", {
-        usage: { input_tokens: 300, output_tokens: 200, cache_read_input_tokens: 900 },
+        usage: {
+          input_tokens: 300,
+          output_tokens: 200,
+          cache_read_input_tokens: 900,
+        },
       });
 
     const resultado = await pedir(SISTEMA_ANALISE, "Publicacao");
@@ -193,12 +207,16 @@ describe("chamada ao modelo", () => {
       },
     });
 
-    await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toBeInstanceOf(IARecusou);
+    await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toBeInstanceOf(
+      IARecusou,
+    );
   });
 
   it("entrada longa demais e barrada ANTES de virar chamada paga", async () => {
     const gigante = "a".repeat(LIMITE_DE_CARACTERES + 1);
-    await expect(pedir(SISTEMA_ANALISE, gigante)).rejects.toBeInstanceOf(EntradaLongaDemais);
+    await expect(pedir(SISTEMA_ANALISE, gigante)).rejects.toBeInstanceOf(
+      EntradaLongaDemais,
+    );
     expect(recebido).toBeNull();
   });
 });
@@ -209,9 +227,13 @@ describe("sem chave configurada", () => {
     delete process.env.ANTHROPIC_API_KEY;
     recebido = null;
     try {
-      await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toBeInstanceOf(SemChaveDeIA);
+      await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toBeInstanceOf(
+        SemChaveDeIA,
+      );
       // Falta de configuracao da plataforma e 503, nao erro de quem pediu.
-      await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toMatchObject({ status: 503 });
+      await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toMatchObject({
+        status: 503,
+      });
       expect(recebido).toBeNull();
     } finally {
       process.env.ANTHROPIC_API_KEY = chave;
@@ -237,14 +259,16 @@ d("analise gravada e medida", () => {
           senhaHash: "hash",
           papel: "ADMIN",
         }),
-      })
+      }),
     );
     usuarioId = usuario.id;
   });
 
   afterAll(async () => {
     if (escritorio) {
-      await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -265,7 +289,7 @@ d("analise gravada e medida", () => {
     expect(analise.texto).toContain("RESUMO");
 
     const gravada = await comEscritorio(escritorio, (db) =>
-      db.analiseIA.findFirstOrThrow({ where: { id: analise.id } })
+      db.analiseIA.findFirstOrThrow({ where: { id: analise.id } }),
     );
     expect(gravada).toMatchObject({
       tipo: "ANALISE_PUBLICACAO",
@@ -303,9 +327,13 @@ d("analise gravada e medida", () => {
       data: { slug: `ia-b-${marca}`, nome: "Outro" },
     });
     try {
-      await expect(comEscritorio(outro.id, (db) => db.analiseIA.count())).resolves.toBe(0);
+      await expect(
+        comEscritorio(outro.id, (db) => db.analiseIA.count()),
+      ).resolves.toBe(0);
     } finally {
-      await prismaPlataforma().escritorio.delete({ where: { id: outro.id } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: outro.id } })
+        .catch(() => {});
     }
   });
 });

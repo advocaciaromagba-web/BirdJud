@@ -7,7 +7,11 @@ import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import { consumoDoMes } from "../src/lib/consumo";
 import { purgarEncerrados } from "../src/lib/encerramento";
 import { caminhoDo, existe, raiz } from "../src/lib/armazenamento";
@@ -79,7 +83,9 @@ const pdf = (texto: string) => Buffer.from(`%PDF-1.4\n${texto}`);
 d("arquivos por escritorio", () => {
   beforeAll(async () => {
     // Disco de teste proprio: nada escrito fora dele.
-    process.env.RAIZ_ARQUIVOS = await mkdtemp(join(tmpdir(), "birdjud-arquivos-"));
+    process.env.RAIZ_ARQUIVOS = await mkdtemp(
+      join(tmpdir(), "birdjud-arquivos-"),
+    );
 
     const a = await prismaPlataforma().escritorio.create({
       data: { slug: `arq-a-${marca}`, nome: "Alfa Nuvem" },
@@ -94,7 +100,7 @@ d("arquivos por escritorio", () => {
       await comEscritorio(id, (db) =>
         db.moduloContratado.create({
           data: semEscritorio({ modulo: "NUVEM", ativo: true, franquia: 10 }),
-        })
+        }),
       );
     }
 
@@ -108,21 +114,26 @@ d("arquivos por escritorio", () => {
               senhaHash: "x",
               papel: "ADMIN",
             }),
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
     usuarioAlfa = donos[0].id;
     usuarioBeta = donos[1].id;
     const processo = await comEscritorio(alfa, (db) =>
-      db.processo.create({ data: semEscritorio({ numero: "00012345620268260100" }) })
+      db.processo.create({
+        data: semEscritorio({ numero: "00012345620268260100" }),
+      }),
     );
     processoAlfa = processo.id;
   });
 
   afterAll(async () => {
     for (const id of [alfa, beta]) {
-      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
     delete process.env.RAIZ_ARQUIVOS;
@@ -142,7 +153,9 @@ d("arquivos por escritorio", () => {
     expect(lido.conteudo.equals(conteudo)).toBe(true);
     expect(lido.nome).toBe("inicial.pdf");
 
-    const linha = await comEscritorio(alfa, (db) => db.arquivo.findUnique({ where: { id } }));
+    const linha = await comEscritorio(alfa, (db) =>
+      db.arquivo.findUnique({ where: { id } }),
+    );
     expect(linha?.processoId).toBe(processoAlfa);
     expect(linha?.tamanhoBytes).toBe(conteudo.byteLength);
     expect(linha?.hash).toMatch(/^[a-f0-9]{64}$/);
@@ -161,7 +174,9 @@ d("arquivos por escritorio", () => {
     expect(naPasta).toContain(id);
     expect(naPasta.some((n) => n.includes("fuga"))).toBe(false);
 
-    const linha = await comEscritorio(alfa, (db) => db.arquivo.findUnique({ where: { id } }));
+    const linha = await comEscritorio(alfa, (db) =>
+      db.arquivo.findUnique({ where: { id } }),
+    );
     expect(linha?.nome).toBe("fuga.pdf");
   });
 
@@ -174,7 +189,7 @@ d("arquivos por escritorio", () => {
         tipo: "text/html",
         conteudo: Buffer.from("<script>alert(1)</script>"),
         usuarioId: usuarioAlfa,
-      })
+      }),
     ).rejects.toBeInstanceOf(ArquivoRecusado);
 
     await expect(
@@ -183,7 +198,7 @@ d("arquivos por escritorio", () => {
         tipo: "application/pdf",
         conteudo: Buffer.alloc(0),
         usuarioId: usuarioAlfa,
-      })
+      }),
     ).rejects.toBeInstanceOf(ArquivoRecusado);
 
     expect(await comEscritorio(alfa, (db) => db.arquivo.count())).toBe(antes);
@@ -197,7 +212,7 @@ d("arquivos por escritorio", () => {
         tipo: "application/pdf",
         conteudo: grande,
         usuarioId: usuarioAlfa,
-      })
+      }),
     ).rejects.toMatchObject({ status: 413 });
   });
 
@@ -209,7 +224,9 @@ d("arquivos por escritorio", () => {
       usuarioId: usuarioAlfa,
     });
 
-    const linha = (await consumoDoMes(alfa)).find((l) => l.metrica === "ARMAZENAMENTO_MB");
+    const linha = (await consumoDoMes(alfa)).find(
+      (l) => l.metrica === "ARMAZENAMENTO_MB",
+    );
     const espaco = await espacoDoEscritorio(alfa);
     // Retrato, nao acumulo: o consumo e o espaco de agora, nao a soma do que
     // ja passou por aqui.
@@ -229,7 +246,9 @@ d("arquivos por escritorio", () => {
     await apagarArquivo(alfa, id);
 
     expect(await existe(alfa, id)).toBe(false);
-    await expect(lerArquivo(alfa, id)).rejects.toBeInstanceOf(ArquivoNaoEncontrado);
+    await expect(lerArquivo(alfa, id)).rejects.toBeInstanceOf(
+      ArquivoNaoEncontrado,
+    );
   });
 
   it("barra no teto, e o teto e maior que a franquia", async () => {
@@ -265,10 +284,16 @@ d("arquivos por escritorio", () => {
       usuarioId: usuarioAlfa,
     });
 
-    await expect(lerArquivo(beta, id)).rejects.toBeInstanceOf(ArquivoNaoEncontrado);
-    await expect(apagarArquivo(beta, id)).rejects.toBeInstanceOf(ArquivoNaoEncontrado);
+    await expect(lerArquivo(beta, id)).rejects.toBeInstanceOf(
+      ArquivoNaoEncontrado,
+    );
+    await expect(apagarArquivo(beta, id)).rejects.toBeInstanceOf(
+      ArquivoNaoEncontrado,
+    );
     // E continua inteiro para o dono.
-    expect((await lerArquivo(alfa, id)).conteudo.toString()).toContain("segredo do alfa");
+    expect((await lerArquivo(alfa, id)).conteudo.toString()).toContain(
+      "segredo do alfa",
+    );
   });
 
   it("linha sem byte no disco responde como nao encontrado", async () => {
@@ -280,15 +305,19 @@ d("arquivos por escritorio", () => {
           tipo: "application/pdf",
           tamanhoBytes: 10,
         }),
-      })
+      }),
     );
-    await expect(lerArquivo(alfa, orfao.id)).rejects.toBeInstanceOf(ArquivoNaoEncontrado);
+    await expect(lerArquivo(alfa, orfao.id)).rejects.toBeInstanceOf(
+      ArquivoNaoEncontrado,
+    );
   });
 });
 
 d("purga leva os arquivos junto", () => {
   it("escritorio purgado nao deixa linha nem byte", async () => {
-    process.env.RAIZ_ARQUIVOS ??= await mkdtemp(join(tmpdir(), "birdjud-purga-"));
+    process.env.RAIZ_ARQUIVOS ??= await mkdtemp(
+      join(tmpdir(), "birdjud-purga-"),
+    );
 
     const alvo = await prismaPlataforma().escritorio.create({
       data: { slug: `arq-purga-${marca}`, nome: "Vai ser purgado" },
@@ -303,7 +332,7 @@ d("purga leva os arquivos junto", () => {
             senhaHash: "x",
             papel: "ADMIN",
           }),
-        })
+        }),
       );
       const { id } = await guardarArquivo(alvo.id, {
         nome: "some.pdf",
@@ -334,7 +363,10 @@ d("purga leva os arquivos junto", () => {
 
       await prismaPlataforma().escritorio.update({
         where: { id: alvo.id },
-        data: { status: "ENCERRADO", encerradoEm: new Date(Date.now() - 400 * DIA) },
+        data: {
+          status: "ENCERRADO",
+          encerradoEm: new Date(Date.now() - 400 * DIA),
+        },
       });
 
       const resultado = await purgarEncerrados();
@@ -348,7 +380,9 @@ d("purga leva os arquivos junto", () => {
       }));
       expect(sobrou).toEqual({ arquivos: 0, publicacoes: 0, analises: 0 });
     } finally {
-      await prismaPlataforma().escritorio.delete({ where: { id: alvo.id } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: alvo.id } })
+        .catch(() => {});
     }
   });
 });

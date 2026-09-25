@@ -1,10 +1,26 @@
 // Fase 5: aceite dos documentos, backup com restauracao testada de verdade,
 // encerramento e purga depois do prazo de retencao.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
-import { gerarBackup, restaurarBackup, FORMATO_DO_BACKUP } from "../src/lib/backup";
-import { documentosPendentes, ipDaRequisicao, registrarAceite } from "../src/lib/aceite";
-import { DOCUMENTOS, PRAZO_DE_RETENCAO_DIAS, VERSAO_DOS_DOCUMENTOS } from "../src/lib/juridico";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
+import {
+  gerarBackup,
+  restaurarBackup,
+  FORMATO_DO_BACKUP,
+} from "../src/lib/backup";
+import {
+  documentosPendentes,
+  ipDaRequisicao,
+  registrarAceite,
+} from "../src/lib/aceite";
+import {
+  DOCUMENTOS,
+  PRAZO_DE_RETENCAO_DIAS,
+  VERSAO_DOS_DOCUMENTOS,
+} from "../src/lib/juridico";
 import {
   encerrarEscritorio,
   podePurgar,
@@ -27,7 +43,9 @@ describe("prazo de retencao (puro)", () => {
   it("so purga depois do prazo, e so uma vez", () => {
     const agora = new Date("2026-12-01T12:00:00Z");
     const recem = new Date("2026-11-30T12:00:00Z");
-    const antigo = new Date(agora.getTime() - (PRAZO_DE_RETENCAO_DIAS + 1) * DIA);
+    const antigo = new Date(
+      agora.getTime() - (PRAZO_DE_RETENCAO_DIAS + 1) * DIA,
+    );
 
     expect(podePurgar(null, null, agora)).toBe(false);
     expect(podePurgar(recem, null, agora)).toBe(false);
@@ -81,7 +99,7 @@ d("limite de tentativas", () => {
     await zerarLimites();
     // Dez requisicoes ao mesmo tempo, limite 4: exatamente 4 passam.
     const resultados = await Promise.all(
-      Array.from({ length: 10 }, () => registrarTentativa("ip:d", 4, 60))
+      Array.from({ length: 10 }, () => registrarTentativa("ip:d", 4, 60)),
     );
     expect(resultados.filter((r) => r.permitido)).toHaveLength(4);
   });
@@ -123,7 +141,11 @@ d("backup e restauracao", () => {
         data: semEscritorio({ nome: "Cliente F5", documento: "12345678900" }),
       });
       const processo = await db.processo.create({
-        data: semEscritorio({ numero: `0001-${marca}`, clienteId: cliente.id, tribunal: "TJSP" }),
+        data: semEscritorio({
+          numero: `0001-${marca}`,
+          clienteId: cliente.id,
+          tribunal: "TJSP",
+        }),
       });
       await db.compromisso.create({
         data: semEscritorio({
@@ -140,15 +162,25 @@ d("backup e restauracao", () => {
           competencia: "2026-09",
         }),
       });
-      await db.moduloContratado.create({ data: semEscritorio({ modulo: "FINANCEIRO" }) });
+      await db.moduloContratado.create({
+        data: semEscritorio({ modulo: "FINANCEIRO" }),
+      });
     });
 
-    await salvarIntegracao(original, "ASAAS", { chave: "chave-secreta-do-asaas" }, "OK");
+    await salvarIntegracao(
+      original,
+      "ASAAS",
+      { chave: "chave-secreta-do-asaas" },
+      "OK",
+    );
   });
 
   afterAll(async () => {
     for (const id of [original, restaurado]) {
-      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -214,7 +246,7 @@ d("backup e restauracao", () => {
   it("recusa backup de formato desconhecido", async () => {
     const backup = await gerarBackup(original);
     await expect(
-      restaurarBackup({ ...backup, formato: 99 }, "nao-vai-existir")
+      restaurarBackup({ ...backup, formato: 99 }, "nao-vai-existir"),
     ).rejects.toThrow(/Formato de backup/);
   });
 });
@@ -231,12 +263,16 @@ d("aceite dos documentos", () => {
 
   afterAll(async () => {
     if (escritorio) {
-      await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
     }
   });
 
   it("antes de aceitar, todos os documentos estao pendentes", async () => {
-    await expect(documentosPendentes(escritorio)).resolves.toHaveLength(DOCUMENTOS.length);
+    await expect(documentosPendentes(escritorio)).resolves.toHaveLength(
+      DOCUMENTOS.length,
+    );
   });
 
   it("grava um aceite por documento, com versao e rastro", async () => {
@@ -248,7 +284,9 @@ d("aceite dos documentos", () => {
     });
     expect(quantos).toBe(DOCUMENTOS.length);
 
-    const aceites = await comEscritorio(escritorio, (db) => db.aceiteDeTermos.findMany());
+    const aceites = await comEscritorio(escritorio, (db) =>
+      db.aceiteDeTermos.findMany(),
+    );
     expect(aceites.every((a) => a.versao === VERSAO_DOS_DOCUMENTOS)).toBe(true);
     expect(aceites[0]?.usuarioEmail).toBe("fulana@exemplo.adv.br");
     expect(aceites[0]?.ip).toBe("203.0.113.9");
@@ -266,7 +304,9 @@ d("encerramento e purga", () => {
     });
     escritorio = e.id;
     await comEscritorio(escritorio, (db) =>
-      db.cliente.create({ data: semEscritorio({ nome: "Cliente que sera apagado" }) })
+      db.cliente.create({
+        data: semEscritorio({ nome: "Cliente que sera apagado" }),
+      }),
     );
     // Fatura e aceite existem para a purga ter o que NAO apagar.
     await prismaPlataforma().fatura.create({
@@ -289,7 +329,9 @@ d("encerramento e purga", () => {
 
   afterAll(async () => {
     if (escritorio) {
-      await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
     }
   });
 
@@ -340,10 +382,12 @@ d("encerramento e purga", () => {
     // A purga ja rodou no caso anterior. Registro fiscal e prova de contrato
     // ficam; e o que o acordo de LGPD promete.
     await expect(
-      prismaPlataforma().fatura.count({ where: { escritorioId: escritorio } })
+      prismaPlataforma().fatura.count({ where: { escritorioId: escritorio } }),
     ).resolves.toBe(1);
     await expect(
-      prismaPlataforma().aceiteDeTermos.count({ where: { escritorioId: escritorio } })
+      prismaPlataforma().aceiteDeTermos.count({
+        where: { escritorioId: escritorio },
+      }),
     ).resolves.toBe(DOCUMENTOS.length);
   });
 
@@ -351,8 +395,12 @@ d("encerramento e purga", () => {
     const sobrou = await prismaPlataforma().$transaction([
       prismaPlataforma().cliente.count({ where: { escritorioId: escritorio } }),
       prismaPlataforma().usuario.count({ where: { escritorioId: escritorio } }),
-      prismaPlataforma().integracao.count({ where: { escritorioId: escritorio } }),
-      prismaPlataforma().moduloContratado.count({ where: { escritorioId: escritorio } }),
+      prismaPlataforma().integracao.count({
+        where: { escritorioId: escritorio },
+      }),
+      prismaPlataforma().moduloContratado.count({
+        where: { escritorioId: escritorio },
+      }),
     ]);
     expect(sobrou).toEqual([0, 0, 0, 0]);
   });

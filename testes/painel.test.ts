@@ -4,13 +4,22 @@
 // contratado; a busca acha pelo numero com e sem mascara, cobre os quatro
 // tipos e nao atravessa escritorio.
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import { salvarIntegracao } from "../src/lib/integracao";
 import { montarPainel, pendenciasVisiveis } from "../src/lib/painel";
 import { buscar, MINIMO_DE_LETRAS, termoUtil } from "../src/lib/busca";
 import { fichaDoProcesso } from "../src/lib/processo";
 import { numeroParaGravar } from "../src/lib/leitura-publicacao";
-import { dataBR, diaEmBrasilia, ehMesmoDiaEmBrasilia, horaBR } from "../src/lib/datas";
+import {
+  dataBR,
+  diaEmBrasilia,
+  ehMesmoDiaEmBrasilia,
+  horaBR,
+} from "../src/lib/datas";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -29,8 +38,18 @@ describe("termo de busca", () => {
 describe("pendencia por papel", () => {
   it("o que so admin resolve nao aparece para os outros", () => {
     const pendencias = [
-      { tipo: "SEM_OAB" as const, texto: "x", destino: "/publicacoes", soAdmin: true },
-      { tipo: "AVISOS_FALHADOS" as const, texto: "y", destino: "/integracoes", soAdmin: false },
+      {
+        tipo: "SEM_OAB" as const,
+        texto: "x",
+        destino: "/publicacoes",
+        soAdmin: true,
+      },
+      {
+        tipo: "AVISOS_FALHADOS" as const,
+        texto: "y",
+        destino: "/integracoes",
+        soAdmin: false,
+      },
     ];
     expect(pendenciasVisiveis(pendencias, "ADMIN")).toHaveLength(2);
     expect(pendenciasVisiveis(pendencias, "USUARIO")).toHaveLength(1);
@@ -67,11 +86,21 @@ d("painel e busca por escritorio", () => {
     beta = b.id;
 
     await comEscritorio(alfa, async (db) => {
-      for (const modulo of ["PUBLICACOES_DJEN", "EMAIL", "COBRANCAS", "NUVEM"]) {
-        await db.moduloContratado.create({ data: semEscritorio({ modulo, ativo: true }) });
+      for (const modulo of [
+        "PUBLICACOES_DJEN",
+        "EMAIL",
+        "COBRANCAS",
+        "NUVEM",
+      ]) {
+        await db.moduloContratado.create({
+          data: semEscritorio({ modulo, ativo: true }),
+        });
       }
       const cliente = await db.cliente.create({
-        data: semEscritorio({ nome: "Souza e Filhos Ltda", documento: "11222333000181" }),
+        data: semEscritorio({
+          nome: "Souza e Filhos Ltda",
+          documento: "11222333000181",
+        }),
       });
       const processo = await db.processo.create({
         data: semEscritorio({
@@ -100,14 +129,17 @@ d("painel e busca por escritorio", () => {
       await db.publicacao.create({
         data: semEscritorio({
           idExterno: `pnl-${marca}`,
-          texto: "Fica intimado para, no prazo de 5 dias, manifestar-se sobre a pericia.",
+          texto:
+            "Fica intimado para, no prazo de 5 dias, manifestar-se sobre a pericia.",
           dataDisponibilizacao: new Date(),
           numeroProcesso: numeroParaGravar("0001234-56.2026.8.26.0100"),
           urgente: true,
           prazoDias: 5,
         }),
       });
-      await db.oabMonitorada.create({ data: semEscritorio({ numero: "123456", uf: "BA" }) });
+      await db.oabMonitorada.create({
+        data: semEscritorio({ numero: "123456", uf: "BA" }),
+      });
       await db.cobranca.create({
         data: semEscritorio({
           clienteId: cliente.id,
@@ -131,14 +163,17 @@ d("painel e busca por escritorio", () => {
 
     // O Beta nao contratou nada alem do nucleo.
     await comEscritorio(beta, (db) =>
-      db.cliente.create({ data: semEscritorio({ nome: "Cliente do Beta" }) })
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente do Beta" }) }),
     );
   });
 
   afterAll(async () => {
     vi.useRealTimers();
     for (const id of [alfa, beta]) {
-      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -155,18 +190,33 @@ d("painel e busca por escritorio", () => {
     expect(painel.naoLidas).toBe(1);
     expect(painel.publicacoes[0].urgente).toBe(true);
     expect(painel.publicacoes[0].prazoDias).toBe(5);
-    expect(painel.cobrancasVencidas).toEqual({ quantidade: 1, totalCentavos: 250_000 });
+    expect(painel.cobrancasVencidas).toEqual({
+      quantidade: 1,
+      totalCentavos: 250_000,
+    });
   });
 
   it("aponta a integracao que falta e a que esta com erro", async () => {
     const semEmail = await montarPainel(alfa);
     // O modulo de e-mail esta contratado e o SMTP nao foi conectado.
-    expect(semEmail.pendencias.map((p) => p.tipo)).toContain("SEM_INTEGRACAO_EMAIL");
+    expect(semEmail.pendencias.map((p) => p.tipo)).toContain(
+      "SEM_INTEGRACAO_EMAIL",
+    );
 
-    await salvarIntegracao(alfa, "SMTP", { host: "x", porta: "587" }, "ERRO", "recusado");
+    await salvarIntegracao(
+      alfa,
+      "SMTP",
+      { host: "x", porta: "587" },
+      "ERRO",
+      "recusado",
+    );
     const comErro = await montarPainel(alfa);
-    expect(comErro.pendencias.map((p) => p.tipo)).not.toContain("SEM_INTEGRACAO_EMAIL");
-    expect(comErro.pendencias.map((p) => p.tipo)).toContain("INTEGRACAO_COM_ERRO");
+    expect(comErro.pendencias.map((p) => p.tipo)).not.toContain(
+      "SEM_INTEGRACAO_EMAIL",
+    );
+    expect(comErro.pendencias.map((p) => p.tipo)).toContain(
+      "INTEGRACAO_COM_ERRO",
+    );
   });
 
   it("escritorio sem os modulos nao ve bloco nenhum deles, nem vazio", async () => {
@@ -176,7 +226,9 @@ d("painel e busca por escritorio", () => {
     expect(painel.cobrancasVencidas.quantidade).toBe(0);
     // E nao pede OAB nem e-mail de quem nao contratou esses modulos.
     expect(painel.pendencias.map((p) => p.tipo)).not.toContain("SEM_OAB");
-    expect(painel.pendencias.map((p) => p.tipo)).not.toContain("SEM_INTEGRACAO_EMAIL");
+    expect(painel.pendencias.map((p) => p.tipo)).not.toContain(
+      "SEM_INTEGRACAO_EMAIL",
+    );
   });
 
   it("acha o processo com e sem mascara", async () => {
@@ -220,45 +272,58 @@ d("painel e busca por escritorio", () => {
     expect(achados).toHaveLength(0);
   });
 
-    it("junta publicacao, agenda, documento e cobranca do mesmo caso", async () => {
-      const processo = await comEscritorio(alfa, (db) =>
-        db.processo.findFirstOrThrow({
-          where: { numero: numeroParaGravar("0001234-56.2026.8.26.0100") },
-        })
-      );
-      // Amarra ao processo o que o escritorio do teste ja tem: a publicacao, o
-      // arquivo e a cobranca. E o caso completo que a tela precisa mostrar.
-      await comEscritorio(alfa, async (db) => {
-        await db.publicacao.updateMany({ where: {}, data: { processoId: processo.id } });
-        await db.arquivo.updateMany({ where: {}, data: { processoId: processo.id } });
-        await db.cobranca.updateMany({ where: {}, data: { processoId: processo.id } });
+  it("junta publicacao, agenda, documento e cobranca do mesmo caso", async () => {
+    const processo = await comEscritorio(alfa, (db) =>
+      db.processo.findFirstOrThrow({
+        where: { numero: numeroParaGravar("0001234-56.2026.8.26.0100") },
+      }),
+    );
+    // Amarra ao processo o que o escritorio do teste ja tem: a publicacao, o
+    // arquivo e a cobranca. E o caso completo que a tela precisa mostrar.
+    await comEscritorio(alfa, async (db) => {
+      await db.publicacao.updateMany({
+        where: {},
+        data: { processoId: processo.id },
       });
-
-      const ficha = await fichaDoProcesso(alfa, processo.id);
-      expect(ficha).not.toBeNull();
-      expect(ficha!.processo.cliente?.nome).toBe("Souza e Filhos Ltda");
-      expect(ficha!.publicacoes.length).toBeGreaterThan(0);
-      expect(ficha!.compromissos.length).toBeGreaterThan(0);
-      expect(ficha!.arquivos.length).toBeGreaterThan(0);
-      expect(ficha!.cobrancas.length).toBeGreaterThan(0);
+      await db.arquivo.updateMany({
+        where: {},
+        data: { processoId: processo.id },
+      });
+      await db.cobranca.updateMany({
+        where: {},
+        data: { processoId: processo.id },
+      });
     });
 
-    it("processo de outro escritorio nao abre, nem com o id na mao", async () => {
-      const processo = await comEscritorio(alfa, (db) => db.processo.findFirstOrThrow());
-      expect(await fichaDoProcesso(beta, processo.id)).toBeNull();
-    });
+    const ficha = await fichaDoProcesso(alfa, processo.id);
+    expect(ficha).not.toBeNull();
+    expect(ficha!.processo.cliente?.nome).toBe("Souza e Filhos Ltda");
+    expect(ficha!.publicacoes.length).toBeGreaterThan(0);
+    expect(ficha!.compromissos.length).toBeGreaterThan(0);
+    expect(ficha!.arquivos.length).toBeGreaterThan(0);
+    expect(ficha!.cobrancas.length).toBeGreaterThan(0);
+  });
 
-    it("sem o modulo, o bloco daquele modulo nem vem vazio", async () => {
-      const doBeta = await comEscritorio(beta, (db) =>
-        db.processo.create({
-          data: semEscritorio({ numero: numeroParaGravar("0009999-11.2026.8.05.0001") }),
-        })
-      );
-      const ficha = await fichaDoProcesso(beta, doBeta.id);
-      expect(ficha!.publicacoes).toHaveLength(0);
-      expect(ficha!.arquivos).toHaveLength(0);
-      expect(ficha!.cobrancas).toHaveLength(0);
-    });
+  it("processo de outro escritorio nao abre, nem com o id na mao", async () => {
+    const processo = await comEscritorio(alfa, (db) =>
+      db.processo.findFirstOrThrow(),
+    );
+    expect(await fichaDoProcesso(beta, processo.id)).toBeNull();
+  });
+
+  it("sem o modulo, o bloco daquele modulo nem vem vazio", async () => {
+    const doBeta = await comEscritorio(beta, (db) =>
+      db.processo.create({
+        data: semEscritorio({
+          numero: numeroParaGravar("0009999-11.2026.8.05.0001"),
+        }),
+      }),
+    );
+    const ficha = await fichaDoProcesso(beta, doBeta.id);
+    expect(ficha!.publicacoes).toHaveLength(0);
+    expect(ficha!.arquivos).toHaveLength(0);
+    expect(ficha!.cobrancas).toHaveLength(0);
+  });
 });
 
 describe("fuso de Brasilia", () => {

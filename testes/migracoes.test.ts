@@ -27,7 +27,7 @@ describe("ordem das migracoes", () => {
   it("a ordem alfabetica e a ordem numerica sao a mesma", () => {
     const nomes = migracoes();
     const porNumero = [...nomes].sort(
-      (a, b) => Number(a.slice(0, 2)) - Number(b.slice(0, 2))
+      (a, b) => Number(a.slice(0, 2)) - Number(b.slice(0, 2)),
     );
     const porAlfabeto = [...nomes].sort();
     expect(porAlfabeto).toEqual(porNumero);

@@ -4,7 +4,11 @@
 // recusa clara), nao o formato da API de terceiro.
 import { createServer, type Server } from "node:http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import { salvarIntegracao } from "../src/lib/integracao";
 import { consumoDoMes } from "../src/lib/consumo";
 import {
@@ -63,7 +67,11 @@ describe("conversoes do modulo", () => {
 // Asaas servido localmente
 // ---------------------------------------------------------------------------
 
-type Chamada = { metodo: string; caminho: string; corpo: Record<string, unknown> | null };
+type Chamada = {
+  metodo: string;
+  caminho: string;
+  corpo: Record<string, unknown> | null;
+};
 
 let servidor: Server;
 let chamadas: Chamada[] = [];
@@ -128,14 +136,23 @@ function asaasNormal(): (c: Chamada) => { status: number; json: unknown } {
       const pagamento = pagamentos[id];
       return pagamento
         ? { status: 200, json: pagamento }
-        : { status: 404, json: { errors: [{ description: "Cobranca nao encontrada." }] } };
+        : {
+            status: 404,
+            json: { errors: [{ description: "Cobranca nao encontrada." }] },
+          };
     }
-    if (chamada.metodo === "DELETE" && chamada.caminho.startsWith("/payments/")) {
+    if (
+      chamada.metodo === "DELETE" &&
+      chamada.caminho.startsWith("/payments/")
+    ) {
       const id = chamada.caminho.split("/").pop() ?? "";
       if (pagamentos[id]) pagamentos[id].status = "DELETED";
       return { status: 200, json: { deleted: true } };
     }
-    return { status: 404, json: { errors: [{ description: "rota desconhecida" }] } };
+    return {
+      status: 404,
+      json: { errors: [{ description: "rota desconhecida" }] },
+    };
   };
 }
 
@@ -169,7 +186,10 @@ d("cobrancas por escritorio", () => {
         data: semEscritorio({ modulo: "FINANCEIRO", ativo: true }),
       });
       const cliente = await db.cliente.create({
-        data: semEscritorio({ nome: "Cliente com CPF", documento: "529.982.247-25" }),
+        data: semEscritorio({
+          nome: "Cliente com CPF",
+          documento: "529.982.247-25",
+        }),
       });
       const sem = await db.cliente.create({
         data: semEscritorio({ nome: "Cliente sem CPF" }),
@@ -185,7 +205,10 @@ d("cobrancas por escritorio", () => {
         data: semEscritorio({ modulo: "COBRANCAS", ativo: true }),
       });
       const cliente = await db.cliente.create({
-        data: semEscritorio({ nome: "Cliente do Beta", documento: "11222333000181" }),
+        data: semEscritorio({
+          nome: "Cliente do Beta",
+          documento: "11222333000181",
+        }),
       });
       clienteBeta = cliente.id;
     });
@@ -196,7 +219,10 @@ d("cobrancas por escritorio", () => {
 
   afterAll(async () => {
     for (const id of [alfa, beta]) {
-      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -223,7 +249,7 @@ d("cobrancas por escritorio", () => {
     expect(pedido?.corpo?.value).toBe(1500); // reais, nao centavos
 
     const cobranca = await comEscritorio(alfa, (db) =>
-      db.cobranca.findUnique({ where: { id } })
+      db.cobranca.findUnique({ where: { id } }),
     );
     expect(cobranca?.status).toBe("ABERTA");
     expect(cobranca?.valorCentavos).toBe(150_000);
@@ -232,7 +258,9 @@ d("cobrancas por escritorio", () => {
   });
 
   it("mede uma cobranca emitida no consumo do mes", async () => {
-    const antes = (await consumoDoMes(alfa)).find((l) => l.metrica === "COBRANCA_EMITIDA");
+    const antes = (await consumoDoMes(alfa)).find(
+      (l) => l.metrica === "COBRANCA_EMITIDA",
+    );
     await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
       descricao: "Medicao",
@@ -240,7 +268,9 @@ d("cobrancas por escritorio", () => {
       vencimento: amanha(),
       forma: "BOLETO",
     });
-    const depois = (await consumoDoMes(alfa)).find((l) => l.metrica === "COBRANCA_EMITIDA");
+    const depois = (await consumoDoMes(alfa)).find(
+      (l) => l.metrica === "COBRANCA_EMITIDA",
+    );
     expect(depois?.quantidade).toBe((antes?.quantidade ?? 0) + 1);
   });
 
@@ -274,7 +304,7 @@ d("cobrancas por escritorio", () => {
         valorCentavos: 5_000,
         vencimento: amanha(),
         forma: "BOLETO",
-      })
+      }),
     ).rejects.toBeInstanceOf(ClienteSemDocumento);
 
     expect(chamadas.filter((c) => c.caminho === "/payments")).toHaveLength(0);
@@ -288,7 +318,7 @@ d("cobrancas por escritorio", () => {
         valorCentavos: 0,
         vencimento: amanha(),
         forma: "BOLETO",
-      })
+      }),
     ).rejects.toBeInstanceOf(PedidoInvalido);
 
     await expect(
@@ -298,7 +328,7 @@ d("cobrancas por escritorio", () => {
         valorCentavos: 1_000,
         vencimento: new Date(Date.now() - 2 * DIA),
         forma: "BOLETO",
-      })
+      }),
     ).rejects.toBeInstanceOf(PedidoInvalido);
 
     expect(chamadas).toHaveLength(0);
@@ -308,7 +338,10 @@ d("cobrancas por escritorio", () => {
     const normal = asaasNormal();
     responder = (chamada) =>
       chamada.caminho === "/payments"
-        ? { status: 400, json: { errors: [{ description: "Valor acima do permitido." }] } }
+        ? {
+            status: 400,
+            json: { errors: [{ description: "Valor acima do permitido." }] },
+          }
         : normal(chamada);
 
     const antes = await comEscritorio(alfa, (db) => db.cobranca.count());
@@ -319,7 +352,7 @@ d("cobrancas por escritorio", () => {
         valorCentavos: 900_000_00,
         vencimento: amanha(),
         forma: "BOLETO",
-      })
+      }),
     ).rejects.toThrow(/Valor acima do permitido/);
 
     const depois = await comEscritorio(alfa, (db) => db.cobranca.count());
@@ -332,7 +365,9 @@ d("cobrancas por escritorio", () => {
     });
     try {
       const cliente = await comEscritorio(semConta.id, (db) =>
-        db.cliente.create({ data: semEscritorio({ nome: "Alguem", documento: "52998224725" }) })
+        db.cliente.create({
+          data: semEscritorio({ nome: "Alguem", documento: "52998224725" }),
+        }),
       );
       await expect(
         emitirCobranca(semConta.id, {
@@ -341,11 +376,13 @@ d("cobrancas por escritorio", () => {
           valorCentavos: 1_000,
           vencimento: amanha(),
           forma: "BOLETO",
-        })
+        }),
       ).rejects.toBeInstanceOf(SemContaDeCobranca);
       expect(chamadas).toHaveLength(0);
     } finally {
-      await prismaPlataforma().escritorio.delete({ where: { id: semConta.id } });
+      await prismaPlataforma().escritorio.delete({
+        where: { id: semConta.id },
+      });
     }
   });
 
@@ -357,7 +394,9 @@ d("cobrancas por escritorio", () => {
       vencimento: amanha(),
       forma: "PIX",
     });
-    const cobranca = await comEscritorio(alfa, (db) => db.cobranca.findUnique({ where: { id } }));
+    const cobranca = await comEscritorio(alfa, (db) =>
+      db.cobranca.findUnique({ where: { id } }),
+    );
     pagamentos[cobranca!.idNoAsaas] = {
       ...pagamentos[cobranca!.idNoAsaas],
       status: "RECEIVED",
@@ -365,11 +404,15 @@ d("cobrancas por escritorio", () => {
       value: 800,
     };
 
-    const lancamentosAntes = await comEscritorio(alfa, (db) => db.lancamento.count());
+    const lancamentosAntes = await comEscritorio(alfa, (db) =>
+      db.lancamento.count(),
+    );
     const primeira = await sincronizarCobrancas(alfa);
     expect(primeira.pagas).toBe(1);
 
-    const depois = await comEscritorio(alfa, (db) => db.cobranca.findUnique({ where: { id } }));
+    const depois = await comEscritorio(alfa, (db) =>
+      db.cobranca.findUnique({ where: { id } }),
+    );
     expect(depois?.status).toBe("PAGA");
     expect(depois?.valorPagoCentavos).toBe(80_000);
     expect(depois?.pagoEm).not.toBeNull();
@@ -377,11 +420,13 @@ d("cobrancas por escritorio", () => {
 
     const segunda = await sincronizarCobrancas(alfa);
     expect(segunda.pagas).toBe(0);
-    const lancamentosDepois = await comEscritorio(alfa, (db) => db.lancamento.count());
+    const lancamentosDepois = await comEscritorio(alfa, (db) =>
+      db.lancamento.count(),
+    );
     expect(lancamentosDepois).toBe(lancamentosAntes + 1);
 
     const lancamento = await comEscritorio(alfa, (db) =>
-      db.lancamento.findUnique({ where: { id: depois!.lancamentoId! } })
+      db.lancamento.findUnique({ where: { id: depois!.lancamentoId! } }),
     );
     expect(lancamento?.tipo).toBe("RECEITA");
     expect(lancamento?.valorCentavos).toBe(80_000);
@@ -395,7 +440,9 @@ d("cobrancas por escritorio", () => {
       vencimento: amanha(),
       forma: "BOLETO",
     });
-    const cobranca = await comEscritorio(beta, (db) => db.cobranca.findUnique({ where: { id } }));
+    const cobranca = await comEscritorio(beta, (db) =>
+      db.cobranca.findUnique({ where: { id } }),
+    );
     pagamentos[cobranca!.idNoAsaas] = {
       ...pagamentos[cobranca!.idNoAsaas],
       status: "CONFIRMED",
@@ -405,7 +452,9 @@ d("cobrancas por escritorio", () => {
 
     await sincronizarCobrancas(beta);
 
-    const depois = await comEscritorio(beta, (db) => db.cobranca.findUnique({ where: { id } }));
+    const depois = await comEscritorio(beta, (db) =>
+      db.cobranca.findUnique({ where: { id } }),
+    );
     expect(depois?.status).toBe("PAGA");
     expect(depois?.lancamentoId).toBeNull();
     expect(await comEscritorio(beta, (db) => db.lancamento.count())).toBe(0);
@@ -428,19 +477,24 @@ d("cobrancas por escritorio", () => {
     });
 
     const ids = await comEscritorio(alfa, (db) =>
-      db.cobranca.findMany({ where: { id: { in: [vencida.id, estranha.id] } } })
+      db.cobranca.findMany({
+        where: { id: { in: [vencida.id, estranha.id] } },
+      }),
     );
     for (const cobranca of ids) {
       pagamentos[cobranca.idNoAsaas] = {
         ...pagamentos[cobranca.idNoAsaas],
-        status: cobranca.id === vencida.id ? "OVERDUE" : "ALGO_QUE_NAO_CONHECEMOS",
+        status:
+          cobranca.id === vencida.id ? "OVERDUE" : "ALGO_QUE_NAO_CONHECEMOS",
       };
     }
 
     await sincronizarCobrancas(alfa);
 
     const depois = await comEscritorio(alfa, (db) =>
-      db.cobranca.findMany({ where: { id: { in: [vencida.id, estranha.id] } } })
+      db.cobranca.findMany({
+        where: { id: { in: [vencida.id, estranha.id] } },
+      }),
     );
     expect(depois.find((c) => c.id === vencida.id)?.status).toBe("VENCIDA");
     expect(depois.find((c) => c.id === estranha.id)?.status).toBe("ABERTA");
@@ -463,11 +517,15 @@ d("cobrancas por escritorio", () => {
     });
 
     const registros = await comEscritorio(alfa, (db) =>
-      db.cobranca.findMany({ where: { id: { in: [boa.id, ruim.id] } } })
+      db.cobranca.findMany({ where: { id: { in: [boa.id, ruim.id] } } }),
     );
     const idDaBoa = registros.find((c) => c.id === boa.id)!.idNoAsaas;
     const idDaRuim = registros.find((c) => c.id === ruim.id)!.idNoAsaas;
-    pagamentos[idDaBoa] = { ...pagamentos[idDaBoa], status: "RECEIVED", value: 10 };
+    pagamentos[idDaBoa] = {
+      ...pagamentos[idDaBoa],
+      status: "RECEIVED",
+      value: 10,
+    };
     delete pagamentos[idDaRuim]; // o Asaas responde 404 para ela
 
     const resultado = await sincronizarCobrancas(alfa);
@@ -475,7 +533,7 @@ d("cobrancas por escritorio", () => {
     expect(resultado.falhas.some((f) => f.cobranca === ruim.id)).toBe(true);
 
     const depois = await comEscritorio(alfa, (db) =>
-      db.cobranca.findUnique({ where: { id: boa.id } })
+      db.cobranca.findUnique({ where: { id: boa.id } }),
     );
     expect(depois?.status).toBe("PAGA");
   });
@@ -491,7 +549,9 @@ d("cobrancas por escritorio", () => {
 
     await cancelarCobranca(alfa, id);
     expect(chamadas.some((c) => c.metodo === "DELETE")).toBe(true);
-    const cancelada = await comEscritorio(alfa, (db) => db.cobranca.findUnique({ where: { id } }));
+    const cancelada = await comEscritorio(alfa, (db) =>
+      db.cobranca.findUnique({ where: { id } }),
+    );
     expect(cancelada?.status).toBe("CANCELADA");
 
     const paga = await emitirCobranca(alfa, {
@@ -502,7 +562,7 @@ d("cobrancas por escritorio", () => {
       forma: "BOLETO",
     });
     const registro = await comEscritorio(alfa, (db) =>
-      db.cobranca.findUnique({ where: { id: paga.id } })
+      db.cobranca.findUnique({ where: { id: paga.id } }),
     );
     pagamentos[registro!.idNoAsaas] = {
       ...pagamentos[registro!.idNoAsaas],
@@ -511,7 +571,9 @@ d("cobrancas por escritorio", () => {
     };
     await sincronizarCobrancas(alfa);
 
-    await expect(cancelarCobranca(alfa, paga.id)).rejects.toThrow(/painel do Asaas/);
+    await expect(cancelarCobranca(alfa, paga.id)).rejects.toThrow(
+      /painel do Asaas/,
+    );
   });
 
   it("cobranca de um escritorio nao aparece nem sincroniza no outro", async () => {
@@ -524,11 +586,13 @@ d("cobrancas por escritorio", () => {
     });
 
     const vistaPeloBeta = await comEscritorio(beta, (db) =>
-      db.cobranca.findUnique({ where: { id } })
+      db.cobranca.findUnique({ where: { id } }),
     );
     expect(vistaPeloBeta).toBeNull();
 
-    await expect(cancelarCobranca(beta, id)).rejects.toBeInstanceOf(PedidoInvalido);
+    await expect(cancelarCobranca(beta, id)).rejects.toBeInstanceOf(
+      PedidoInvalido,
+    );
   });
 
   it("chave recusada pelo Asaas vira mensagem propria", async () => {
@@ -540,7 +604,7 @@ d("cobrancas por escritorio", () => {
         valorCentavos: 1_000,
         vencimento: amanha(),
         forma: "BOLETO",
-      })
+      }),
     ).rejects.toBeInstanceOf(FalhaNoAsaas);
   });
 });

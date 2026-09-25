@@ -170,3 +170,119 @@ export async function pedirEGravar(opcoes: {
 
   return { id: registro.id, texto: resultado.texto, modelo: resultado.modelo };
 }
+
+/** Tipos que o modelo consegue olhar. Nao e a lista do modulo Nuvem: e a da leitura. */
+export const TIPOS_QUE_A_IA_LE: Record<string, "document" | "image"> = {
+  "application/pdf": "document",
+  "image/jpeg": "image",
+  "image/png": "image",
+  "image/webp": "image",
+};
+
+/** Teto por chamada de leitura. Papel de cadastro nao chega perto disso. */
+export const MAXIMO_DE_ANEXOS = 5;
+export const MAXIMO_DE_BYTES = 12 * 1024 * 1024;
+
+export type Anexo = { nome: string; tipo: string; dados: Buffer };
+
+export class AnexoRecusado extends Error {
+  readonly status = 415;
+  constructor(motivo: string) {
+    super(motivo);
+    this.name = "AnexoRecusado";
+  }
+}
+
+/**
+ * Uma chamada com documentos anexados — foto de RG, PDF da inicial.
+ *
+ * Separada de `pedir` de proposito: aqui a entrada e binaria, o limite e de
+ * bytes e nao de caracteres, e a recusa por tipo de arquivo acontece antes de
+ * virar chamada paga.
+ */
+export async function pedirSobreDocumentos(
+  sistema: string,
+  anexos: Anexo[],
+  instrucao: string,
+  esforco: "low" | "medium" | "high" = "medium",
+): Promise<Resultado> {
+  if (anexos.length === 0)
+    throw new AnexoRecusado("Envie ao menos um documento.");
+  if (anexos.length > MAXIMO_DE_ANEXOS)
+    throw new AnexoRecusado(
+      `Envie no maximo ${MAXIMO_DE_ANEXOS} documentos por leitura.`,
+    );
+
+  const total = anexos.reduce((soma, anexo) => soma + anexo.dados.length, 0);
+  if (total > MAXIMO_DE_BYTES)
+    throw new AnexoRecusado(
+      `Os documentos somam mais de ${Math.round(MAXIMO_DE_BYTES / (1024 * 1024))} MB.`,
+    );
+
+  const blocos: Anthropic.Beta.BetaContentBlockParam[] = [];
+  for (const anexo of anexos) {
+    const familia = TIPOS_QUE_A_IA_LE[anexo.tipo];
+    if (!familia)
+      throw new AnexoRecusado(`${anexo.nome}: envie PDF, JPG, PNG ou WebP.`);
+
+    // O nome do arquivo vai junto: e o que permite a IA dizer de qual
+    // documento saiu cada campo, e a pessoa conferir sem adivinhar.
+    blocos.push({ type: "text", text: `Documento: ${anexo.nome}` });
+    blocos.push(
+      familia === "document"
+        ? {
+            type: "document",
+            source: {
+              type: "base64",
+              media_type: "application/pdf",
+              data: anexo.dados.toString("base64"),
+            },
+          }
+        : {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: anexo.tipo as
+                | "image/jpeg"
+                | "image/png"
+                | "image/webp",
+              data: anexo.dados.toString("base64"),
+            },
+          },
+    );
+  }
+  blocos.push({ type: "text", text: instrucao });
+
+  const resposta = await obterCliente().beta.messages.create({
+    model: MODELO,
+    max_tokens: MAX_TOKENS,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    system: [
+      { type: "text", text: sistema, cache_control: { type: "ephemeral" } },
+    ],
+    output_config: { effort: esforco },
+    messages: [{ role: "user", content: blocos }],
+  });
+
+  if (resposta.stop_reason === "refusal") {
+    throw new IARecusou(resposta.stop_details?.category ?? null);
+  }
+
+  const texto = resposta.content
+    .filter(
+      (bloco): bloco is Anthropic.Beta.BetaTextBlock => bloco.type === "text",
+    )
+    .map((bloco) => bloco.text)
+    .join("\n")
+    .trim();
+
+  return {
+    texto,
+    tokensEntrada:
+      resposta.usage.input_tokens +
+      (resposta.usage.cache_read_input_tokens ?? 0),
+    tokensSaida: resposta.usage.output_tokens,
+    modelo: resposta.model,
+  };
+}

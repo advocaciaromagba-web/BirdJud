@@ -21,7 +21,11 @@ import {
   lerCertificado,
 } from "../src/lib/conectores/certificado";
 import { conectorMicrosoft } from "../src/lib/conectores/pendentes";
-import { CONECTORES, ehTipoDeIntegracao, mascarar } from "../src/lib/conectores";
+import {
+  CONECTORES,
+  ehTipoDeIntegracao,
+  mascarar,
+} from "../src/lib/conectores";
 import { montarCSP } from "../src/lib/csp";
 
 // ---------------------------------------------------------------------------
@@ -36,7 +40,10 @@ beforeAll(async () => {
     authOptional: false,
     disabledCommands: ["STARTTLS"],
     onAuth(credenciais, _sessao, pronto) {
-      if (credenciais.username === "advogado" && credenciais.password === "segredo") {
+      if (
+        credenciais.username === "advogado" &&
+        credenciais.password === "segredo"
+      ) {
         pronto(null, { user: credenciais.username });
         return;
       }
@@ -102,7 +109,11 @@ describe("conector de e-mail", () => {
 // HTTP local no lugar de Asaas / Autentique / Meta
 // ---------------------------------------------------------------------------
 
-type Rota = (url: URL, cabecalhos: Record<string, unknown>, corpo: string) =>
+type Rota = (
+  url: URL,
+  cabecalhos: Record<string, unknown>,
+  corpo: string,
+) =>
   | { status: number; json: unknown }
   | Promise<{ status: number; json: unknown }>;
 
@@ -139,7 +150,10 @@ describe("conector Asaas", () => {
     rota = (url, cabecalhos) => {
       expect(url.pathname).toBe("/myAccount");
       chaveRecebida = cabecalhos["access_token"];
-      return { status: 200, json: { name: "Escritorio Alfa", email: "fin@alfa.adv.br" } };
+      return {
+        status: 200,
+        json: { name: "Escritorio Alfa", email: "fin@alfa.adv.br" },
+      };
     };
 
     const resultado = await conectorAsaas.testar({ chave: "chave-de-teste" });
@@ -148,9 +162,15 @@ describe("conector Asaas", () => {
   });
 
   it("traduz 401 em recusa da chave", async () => {
-    rota = () => ({ status: 401, json: { errors: [{ description: "invalid" }] } });
+    rota = () => ({
+      status: 401,
+      json: { errors: [{ description: "invalid" }] },
+    });
     const resultado = await conectorAsaas.testar({ chave: "errada" });
-    expect(resultado).toEqual({ ok: false, detalhe: "Chave recusada pelo Asaas." });
+    expect(resultado).toEqual({
+      ok: false,
+      detalhe: "Chave recusada pelo Asaas.",
+    });
   });
 
   it("reporta outros codigos sem inventar sucesso", async () => {
@@ -168,7 +188,10 @@ describe("conector Autentique", () => {
       expect(url.pathname).toBe("/graphql");
       autorizacao = cabecalhos["authorization"];
       expect(corpo).toContain("me");
-      return { status: 200, json: { data: { me: { id: "1", email: "adv@alfa.adv.br" } } } };
+      return {
+        status: 200,
+        json: { data: { me: { id: "1", email: "adv@alfa.adv.br" } } },
+      };
     };
 
     const resultado = await conectorAutentique.testar({ token: "tok-123" });
@@ -177,7 +200,10 @@ describe("conector Autentique", () => {
   });
 
   it("GraphQL com erro responde 200: o corpo e que decide", async () => {
-    rota = () => ({ status: 200, json: { errors: [{ message: "Unauthenticated." }] } });
+    rota = () => ({
+      status: 200,
+      json: { errors: [{ message: "Unauthenticated." }] },
+    });
     const resultado = await conectorAutentique.testar({ token: "ruim" });
     expect(resultado).toEqual({ ok: false, detalhe: "Unauthenticated." });
   });
@@ -188,11 +214,20 @@ describe("conector WhatsApp", () => {
     rota = (url, cabecalhos) => {
       expect(url.pathname).toBe("/1234567890");
       expect(cabecalhos["authorization"]).toBe("Bearer tok-meta");
-      return { status: 200, json: { verified_name: "Alfa Advogados", quality_rating: "GREEN" } };
+      return {
+        status: 200,
+        json: { verified_name: "Alfa Advogados", quality_rating: "GREEN" },
+      };
     };
 
-    const resultado = await conectorWhatsapp.testar({ numeroId: "1234567890", token: "tok-meta" });
-    expect(resultado).toEqual({ ok: true, detalhe: "Alfa Advogados · qualidade GREEN." });
+    const resultado = await conectorWhatsapp.testar({
+      numeroId: "1234567890",
+      token: "tok-meta",
+    });
+    expect(resultado).toEqual({
+      ok: true,
+      detalhe: "Alfa Advogados · qualidade GREEN.",
+    });
   });
 
   it("repassa a mensagem de erro da Meta", async () => {
@@ -200,8 +235,14 @@ describe("conector WhatsApp", () => {
       status: 400,
       json: { error: { message: "Unsupported get request." } },
     });
-    const resultado = await conectorWhatsapp.testar({ numeroId: "9", token: "ruim" });
-    expect(resultado).toEqual({ ok: false, detalhe: "Unsupported get request." });
+    const resultado = await conectorWhatsapp.testar({
+      numeroId: "9",
+      token: "ruim",
+    });
+    expect(resultado).toEqual({
+      ok: false,
+      detalhe: "Unsupported get request.",
+    });
   });
 });
 
@@ -215,18 +256,42 @@ function gerarPfx(dias: number, senha: string, nome: string): string {
   const cert = join(pasta, "cert.pem");
   const pfx = join(pasta, "cert.pfx");
 
-  execFileSync("openssl", [
-    "req", "-x509", "-newkey", "rsa:2048", "-nodes",
-    "-keyout", chave, "-out", cert,
-    "-days", String(Math.abs(dias)),
-    "-subj", `/CN=${nome}`,
-  ], { stdio: "ignore" });
+  execFileSync(
+    "openssl",
+    [
+      "req",
+      "-x509",
+      "-newkey",
+      "rsa:2048",
+      "-nodes",
+      "-keyout",
+      chave,
+      "-out",
+      cert,
+      "-days",
+      String(Math.abs(dias)),
+      "-subj",
+      `/CN=${nome}`,
+    ],
+    { stdio: "ignore" },
+  );
 
-  execFileSync("openssl", [
-    "pkcs12", "-export", "-out", pfx,
-    "-inkey", chave, "-in", cert,
-    "-passout", `pass:${senha}`,
-  ], { stdio: "ignore" });
+  execFileSync(
+    "openssl",
+    [
+      "pkcs12",
+      "-export",
+      "-out",
+      pfx,
+      "-inkey",
+      chave,
+      "-in",
+      cert,
+      "-passout",
+      `pass:${senha}`,
+    ],
+    { stdio: "ignore" },
+  );
 
   return readFileSync(pfx).toString("base64");
 }
@@ -234,15 +299,24 @@ function gerarPfx(dias: number, senha: string, nome: string): string {
 describe("conector de certificado", () => {
   it("abre o certificado, le o titular e aceita o que esta valido", async () => {
     const pfx = gerarPfx(365, "senha-do-cert", "ESCRITORIO ALFA LTDA");
-    const resultado = await conectorCertificado.testar({ arquivo: pfx, senha: "senha-do-cert" });
+    const resultado = await conectorCertificado.testar({
+      arquivo: pfx,
+      senha: "senha-do-cert",
+    });
     expect(resultado.ok).toBe(true);
     expect(resultado.detalhe).toContain("ESCRITORIO ALFA LTDA");
   });
 
   it("recusa senha errada com mensagem propria", async () => {
     const pfx = gerarPfx(365, "senha-do-cert", "ALFA");
-    const resultado = await conectorCertificado.testar({ arquivo: pfx, senha: "errada" });
-    expect(resultado).toEqual({ ok: false, detalhe: "Senha do certificado incorreta." });
+    const resultado = await conectorCertificado.testar({
+      arquivo: pfx,
+      senha: "errada",
+    });
+    expect(resultado).toEqual({
+      ok: false,
+      detalhe: "Senha do certificado incorreta.",
+    });
   });
 
   it("recusa arquivo que nao e certificado", async () => {
@@ -278,21 +352,32 @@ describe("conector de certificado", () => {
       ate: new Date("2028-01-01"),
     };
     const resultado = avaliarValidade(leitura, new Date("2026-09-17"));
-    expect(resultado).toEqual({ ok: false, detalhe: "Certificado ainda nao esta valido." });
+    expect(resultado).toEqual({
+      ok: false,
+      detalhe: "Certificado ainda nao esta valido.",
+    });
   });
 
   it("avisa perto do vencimento e nao avisa longe dele", () => {
     const base = new Date("2026-09-17T12:00:00Z");
     const perto = avaliarValidade(
-      { titular: "ALFA", de: new Date("2026-01-01"), ate: new Date("2026-10-01T12:00:00Z") },
-      base
+      {
+        titular: "ALFA",
+        de: new Date("2026-01-01"),
+        ate: new Date("2026-10-01T12:00:00Z"),
+      },
+      base,
     );
     expect(perto.ok).toBe(true);
     expect(perto.detalhe).toContain("Atencao: vence em 14 dia(s)");
 
     const longe = avaliarValidade(
-      { titular: "ALFA", de: new Date("2026-01-01"), ate: new Date("2027-09-01T12:00:00Z") },
-      base
+      {
+        titular: "ALFA",
+        de: new Date("2026-01-01"),
+        ate: new Date("2027-09-01T12:00:00Z"),
+      },
+      base,
     );
     expect(longe.ok).toBe(true);
     expect(longe.detalhe).not.toContain("Atencao");
@@ -300,7 +385,10 @@ describe("conector de certificado", () => {
 
   it("avisa quando esta perto de vencer", async () => {
     const pfx = gerarPfx(10, "s", "ALFA");
-    const resultado = await conectorCertificado.testar({ arquivo: pfx, senha: "s" });
+    const resultado = await conectorCertificado.testar({
+      arquivo: pfx,
+      senha: "s",
+    });
     expect(resultado.ok).toBe(true);
     expect(resultado.detalhe).toContain("vence em");
   });
@@ -361,7 +449,9 @@ describe("politica de seguranca de conteudo", () => {
     // Emitido em ambiente HTTP, upgrade-insecure-requests faz o navegador
     // buscar os proprios scripts da pagina em HTTPS — e nada carrega.
     expect(montarCSP("n", true, true)).toContain("upgrade-insecure-requests");
-    expect(montarCSP("n", true, false)).not.toContain("upgrade-insecure-requests");
+    expect(montarCSP("n", true, false)).not.toContain(
+      "upgrade-insecure-requests",
+    );
   });
 
   it("fecha frame, objeto e base", () => {

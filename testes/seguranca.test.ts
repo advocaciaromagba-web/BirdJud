@@ -5,10 +5,18 @@
 // falhar, o ataque voltou.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { generateSync } from "otplib";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import { gerarHash } from "../src/lib/senhas";
 import { gerarSegredo } from "../src/lib/dois-fatores";
-import { opcoesAuth, TENTATIVAS_ATE_BLOQUEIO, TENTATIVAS_DO_OPERADOR } from "../src/lib/auth";
+import {
+  opcoesAuth,
+  TENTATIVAS_ATE_BLOQUEIO,
+  TENTATIVAS_DO_OPERADOR,
+} from "../src/lib/auth";
 import { PROVEDOR, PROVEDOR_OPERADOR } from "../src/lib/auth-comum";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
@@ -30,15 +38,19 @@ type ProvedorDeCredenciais = {
     id?: string;
     authorize?: (
       c: Credenciais,
-      req: { headers: Record<string, string> }
+      req: { headers: Record<string, string> },
     ) => Promise<unknown>;
   };
 };
 
-function entrar(provedor: string, credenciais: Credenciais, cabecalhos: Record<string, string>) {
-  const definicao = (opcoesAuth.providers as unknown as ProvedorDeCredenciais[]).find(
-    (p) => p.options?.id === provedor
-  );
+function entrar(
+  provedor: string,
+  credenciais: Credenciais,
+  cabecalhos: Record<string, string>,
+) {
+  const definicao = (
+    opcoesAuth.providers as unknown as ProvedorDeCredenciais[]
+  ).find((p) => p.options?.id === provedor);
   const authorize = definicao?.options?.authorize;
   if (!authorize) throw new Error(`Provedor ${provedor} nao encontrado.`);
   return authorize(credenciais, { headers: cabecalhos });
@@ -87,7 +99,9 @@ d("forca bruta no login", () => {
 
   afterAll(async () => {
     if (escritorioId) {
-      await prismaPlataforma().escritorio.delete({ where: { id: escritorioId } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorioId } })
+        .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -96,7 +110,7 @@ d("forca bruta no login", () => {
     const sessao = await entrar(
       PROVEDOR,
       { email: "simples@teste.br", senha: SENHA },
-      { host: HOST, "x-forwarded-for": `10.0.0.${marca % 200}` }
+      { host: HOST, "x-forwarded-for": `10.0.0.${marca % 200}` },
     );
     expect(sessao).toMatchObject({ escritorioId, papel: "ADMIN" });
   });
@@ -110,23 +124,29 @@ d("forca bruta no login", () => {
       const sessao = await entrar(
         PROVEDOR,
         { email: "comfator@teste.br", senha: SENHA, codigo: "000000" },
-        cabecalhos
+        cabecalhos,
       );
       expect(sessao).toBeNull();
     }
 
     const usuario = await comEscritorio(escritorioId, (db) =>
-      db.usuario.findUnique({ where: { id: comSegundoFator } })
+      db.usuario.findUnique({ where: { id: comSegundoFator } }),
     );
-    expect(usuario?.tentativasFalhas).toBeGreaterThanOrEqual(TENTATIVAS_ATE_BLOQUEIO);
+    expect(usuario?.tentativasFalhas).toBeGreaterThanOrEqual(
+      TENTATIVAS_ATE_BLOQUEIO,
+    );
     expect(usuario?.bloqueadoAte).not.toBeNull();
     expect(usuario!.bloqueadoAte!.getTime()).toBeGreaterThan(Date.now());
 
     // E, bloqueado, nem o codigo certo entra enquanto o bloqueio durar.
     const comCodigoCerto = await entrar(
       PROVEDOR,
-      { email: "comfator@teste.br", senha: SENHA, codigo: generateSync({ secret: segredo }) },
-      cabecalhos
+      {
+        email: "comfator@teste.br",
+        senha: SENHA,
+        codigo: generateSync({ secret: segredo }),
+      },
+      cabecalhos,
     );
     expect(comCodigoCerto).toBeNull();
   });
@@ -136,13 +156,17 @@ d("forca bruta no login", () => {
       db.usuario.update({
         where: { id: comSegundoFator },
         data: { tentativasFalhas: 0, bloqueadoAte: null },
-      })
+      }),
     );
 
     const sessao = await entrar(
       PROVEDOR,
-      { email: "comfator@teste.br", senha: SENHA, codigo: generateSync({ secret: segredo }) },
-      { host: HOST, "x-forwarded-for": "10.0.1.2" }
+      {
+        email: "comfator@teste.br",
+        senha: SENHA,
+        codigo: generateSync({ secret: segredo }),
+      },
+      { host: HOST, "x-forwarded-for": "10.0.1.2" },
     );
     expect(sessao).toMatchObject({ escritorioId });
   });
@@ -157,7 +181,7 @@ d("forca bruta no login", () => {
       await entrar(
         PROVEDOR,
         { email: `vitima-${i}@teste.br`, senha: "chute" },
-        cabecalhos
+        cabecalhos,
       );
     }
 
@@ -165,7 +189,7 @@ d("forca bruta no login", () => {
     const sessao = await entrar(
       PROVEDOR,
       { email: "simples@teste.br", senha: SENHA },
-      cabecalhos
+      cabecalhos,
     );
     expect(sessao).toBeNull();
 
@@ -173,7 +197,7 @@ d("forca bruta no login", () => {
     const deOutroLugar = await entrar(
       PROVEDOR,
       { email: "simples@teste.br", senha: SENHA },
-      { host: HOST, "x-forwarded-for": `10.0.3.${marca % 200}` }
+      { host: HOST, "x-forwarded-for": `10.0.3.${marca % 200}` },
     );
     expect(deOutroLugar).toMatchObject({ escritorioId });
   });
@@ -189,7 +213,9 @@ d("forca bruta no login do operador", () => {
   });
 
   afterAll(async () => {
-    await prismaPlataforma().operadorPlataforma.deleteMany({ where: { email } });
+    await prismaPlataforma().operadorPlataforma.deleteMany({
+      where: { email },
+    });
     await prismaPlataforma().$disconnect();
   });
 
@@ -197,14 +223,25 @@ d("forca bruta no login do operador", () => {
     // O operador nao tem coluna de bloqueio como o usuario de escritorio;
     // antes da correcao, eram tentativas infinitas contra a senha mais
     // importante do sistema.
-    const cabecalhos = { host: "birdjud.com.br", "x-forwarded-for": `10.1.0.${marca % 200}` };
+    const cabecalhos = {
+      host: "birdjud.com.br",
+      "x-forwarded-for": `10.1.0.${marca % 200}`,
+    };
 
     for (let i = 0; i < TENTATIVAS_DO_OPERADOR + 1; i += 1) {
-      const sessao = await entrar(PROVEDOR_OPERADOR, { email, senha: "chute" }, cabecalhos);
+      const sessao = await entrar(
+        PROVEDOR_OPERADOR,
+        { email, senha: "chute" },
+        cabecalhos,
+      );
       expect(sessao).toBeNull();
     }
 
-    const comSenhaCerta = await entrar(PROVEDOR_OPERADOR, { email, senha: SENHA }, cabecalhos);
+    const comSenhaCerta = await entrar(
+      PROVEDOR_OPERADOR,
+      { email, senha: SENHA },
+      cabecalhos,
+    );
     expect(comSenhaCerta).toBeNull();
   });
 
@@ -212,7 +249,7 @@ d("forca bruta no login do operador", () => {
     const sessao = await entrar(
       PROVEDOR_OPERADOR,
       { email, senha: SENHA },
-      { host: HOST, "x-forwarded-for": "10.1.1.1" }
+      { host: HOST, "x-forwarded-for": "10.1.1.1" },
     );
     expect(sessao).toBeNull();
   });

@@ -31,6 +31,7 @@ export default async function PaginaClientes() {
         recolhivel
         textoAbrir="Novo cliente"
         textoBotao="Cadastrar cliente"
+        leitura={modulos.includes("IA") ? "CLIENTE" : undefined}
         campos={[
           { nome: "nome", rotulo: "Nome", obrigatorio: true, largo: true },
           { nome: "documento", rotulo: "CPF / CNPJ" },

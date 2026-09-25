@@ -1,7 +1,11 @@
 // Fase 1: senha, segundo fator e a regra que amarra a sessao ao endereco.
 import { describe, expect, it } from "vitest";
 import { conferirSenha, gerarHash } from "../src/lib/senhas";
-import { conferirCodigo, gerarSegredo, urlDeCadastro } from "../src/lib/dois-fatores";
+import {
+  conferirCodigo,
+  gerarSegredo,
+  urlDeCadastro,
+} from "../src/lib/dois-fatores";
 import { motivoParaRecusar, sessaoRevogada } from "../src/lib/sessao";
 import { slugDoHost } from "../src/lib/subdominio";
 import { generateSync } from "otplib";
@@ -29,7 +33,11 @@ describe("segundo fator", () => {
   });
 
   it("o QR Code sai com o nome do escritorio, nao com o da plataforma", () => {
-    const uri = urlDeCadastro("Escritorio Alfa", "advogado@alfa.adv.br", gerarSegredo());
+    const uri = urlDeCadastro(
+      "Escritorio Alfa",
+      "advogado@alfa.adv.br",
+      gerarSegredo(),
+    );
     expect(uri).toContain(encodeURIComponent("Escritorio Alfa"));
     expect(uri).not.toContain("BirdJud");
   });
@@ -44,33 +52,39 @@ describe("sessao amarrada ao endereco", () => {
 
   it("recusa cookie de outro escritorio no subdominio deste", () => {
     expect(motivoParaRecusar(alfa, { escritorioId: "esc_beta" })).toBe(
-      "Sessao de outro escritorio."
+      "Sessao de outro escritorio.",
     );
   });
 
   it("recusa endereco que nao corresponde a escritorio nenhum", () => {
     expect(motivoParaRecusar(null, { escritorioId: "esc_alfa" })).toBe(
-      "Endereco sem escritorio."
+      "Endereco sem escritorio.",
     );
   });
 
   it("recusa escritorio suspenso ou encerrado, mesmo com sessao valida", () => {
     for (const status of ["SUSPENSO", "ENCERRADO"]) {
-      expect(motivoParaRecusar({ id: "esc_alfa", status }, { escritorioId: "esc_alfa" })).toBe(
-        "Escritorio suspenso ou encerrado."
-      );
+      expect(
+        motivoParaRecusar(
+          { id: "esc_alfa", status },
+          { escritorioId: "esc_alfa" },
+        ),
+      ).toBe("Escritorio suspenso ou encerrado.");
     }
   });
 
   it("deixa entrar escritorio inadimplente (cobranca nao e bloqueio imediato)", () => {
     expect(
-      motivoParaRecusar({ id: "esc_alfa", status: "INADIMPLENTE" }, { escritorioId: "esc_alfa" })
+      motivoParaRecusar(
+        { id: "esc_alfa", status: "INADIMPLENTE" },
+        { escritorioId: "esc_alfa" },
+      ),
     ).toBeNull();
   });
 
   it("recusa quando nao ha sessao", () => {
     expect(motivoParaRecusar(alfa, null)).toBe(
-      "Sessao ausente ou invalida para este endereco."
+      "Sessao ausente ou invalida para este endereco.",
     );
   });
 });
@@ -83,11 +97,15 @@ describe("revogacao de sessao", () => {
   });
 
   it("sessao emitida ANTES da revogacao cai", () => {
-    expect(sessaoRevogada(emissao, new Date("2026-09-18T12:00:01Z"))).toBe(true);
+    expect(sessaoRevogada(emissao, new Date("2026-09-18T12:00:01Z"))).toBe(
+      true,
+    );
   });
 
   it("sessao emitida DEPOIS da revogacao continua valendo", () => {
-    expect(sessaoRevogada(emissao, new Date("2026-09-18T11:59:59Z"))).toBe(false);
+    expect(sessaoRevogada(emissao, new Date("2026-09-18T11:59:59Z"))).toBe(
+      false,
+    );
   });
 
   it("sessao sem marca de emissao e tratada como antiga", () => {

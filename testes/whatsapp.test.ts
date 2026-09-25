@@ -6,8 +6,20 @@
 // tres tentativas, o mesmo aviso nao sai duas vezes, e um canal nao atrapalha
 // o outro.
 import { createServer, type Server } from "node:http";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import { salvarIntegracao } from "../src/lib/integracao";
 import { consumoDoMes } from "../src/lib/consumo";
 import { enviarAvisosNoWhatsapp, gerarAvisos } from "../src/lib/avisos";
@@ -18,7 +30,11 @@ import {
   paraE164BR,
   SemNumeroDeWhatsapp,
 } from "../src/lib/whatsapp";
-import { limparParametro, MODELOS, modeloDoTipo } from "../src/lib/modelos-whatsapp";
+import {
+  limparParametro,
+  MODELOS,
+  modeloDoTipo,
+} from "../src/lib/modelos-whatsapp";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -43,7 +59,9 @@ describe("telefone e parametro, antes de falar com a Meta", () => {
 
   it("parametro de modelo sai em uma linha e nunca vazio", () => {
     // A Meta recusa a mensagem inteira quando o parametro tem quebra de linha.
-    expect(limparParametro("Audiencia\nde instrucao")).toBe("Audiencia de instrucao");
+    expect(limparParametro("Audiencia\nde instrucao")).toBe(
+      "Audiencia de instrucao",
+    );
     expect(limparParametro("  dois   espacos  ")).toBe("dois espacos");
     expect(limparParametro(null)).toBe("—");
     expect(limparParametro("")).toBe("—");
@@ -53,7 +71,9 @@ describe("telefone e parametro, antes de falar com a Meta", () => {
   it("cada tipo de aviso tem modelo, e o texto casa com os parametros", () => {
     for (const [tipo, modelo] of Object.entries(MODELOS)) {
       expect(modeloDoTipo(tipo)).toBe(modelo);
-      const usados = [...modelo.texto.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
+      const usados = [...modelo.texto.matchAll(/\{\{(\d+)\}\}/g)].map((m) =>
+        Number(m[1]),
+      );
       // Todo {{n}} do texto aprovado precisa ter significado declarado aqui,
       // porque a ordem e o contrato com a Meta.
       expect(Math.max(...usados)).toBe(modelo.parametros.length);
@@ -176,24 +196,37 @@ d("avisos pelo WhatsApp", () => {
       });
     });
 
-    await salvarIntegracao(alfa, "WHATSAPP_META", { numeroId: "111", token: "tok" }, "OK");
+    await salvarIntegracao(
+      alfa,
+      "WHATSAPP_META",
+      { numeroId: "111", token: "tok" },
+      "OK",
+    );
   });
 
   afterAll(async () => {
     for (const id of [alfa, semModulo]) {
-      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
 
   beforeEach(() => {
     chamadas = [];
-    responder = () => ({ status: 200, json: { messages: [{ id: `wamid.${Date.now()}` }] } });
+    responder = () => ({
+      status: 200,
+      json: { messages: [{ id: `wamid.${Date.now()}` }] },
+    });
   });
 
   afterEach(async () => {
     // Cada teste comeca sem aviso pendente de WhatsApp do anterior.
-    await comEscritorio(alfa, (db) => db.aviso.deleteMany({ where: { canal: "WHATSAPP" } }));
+    await comEscritorio(alfa, (db) =>
+      db.aviso.deleteMany({ where: { canal: "WHATSAPP" } }),
+    );
   });
 
   it("manda modelo aprovado, nunca texto livre", async () => {
@@ -210,11 +243,9 @@ d("avisos pelo WhatsApp", () => {
     expect(corpo.text).toBeUndefined();
     expect(corpo.template.name).toBe("birdjud_resumo_publicacoes");
     expect(corpo.template.language.code).toBe("pt_BR");
-    expect(corpo.template.components[0].parameters.map((p: any) => p.text)).toEqual([
-      "Alfa Zap",
-      "3",
-      "1",
-    ]);
+    expect(
+      corpo.template.components[0].parameters.map((p: any) => p.text),
+    ).toEqual(["Alfa Zap", "3", "1"]);
   });
 
   it("gera o aviso nos dois canais, sem duplicar quando roda de novo", async () => {
@@ -225,7 +256,7 @@ d("avisos pelo WhatsApp", () => {
     expect(segunda.resumos).toBe(0);
 
     const avisos = await comEscritorio(alfa, (db) =>
-      db.aviso.findMany({ where: { tipo: "RESUMO_PUBLICACOES" } })
+      db.aviso.findMany({ where: { tipo: "RESUMO_PUBLICACOES" } }),
     );
     const zap = avisos.find((a) => a.canal === "WHATSAPP");
     expect(zap?.destino).toBe("5571999998888");
@@ -236,24 +267,28 @@ d("avisos pelo WhatsApp", () => {
   it("sem o modulo contratado, nao ha aviso de WhatsApp — mesmo com o usuario querendo", async () => {
     await gerarAvisos(semModulo);
     const zap = await comEscritorio(semModulo, (db) =>
-      db.aviso.count({ where: { canal: "WHATSAPP" } })
+      db.aviso.count({ where: { canal: "WHATSAPP" } }),
     );
     expect(zap).toBe(0);
   });
 
   it("envia os pendentes e mede o consumo", async () => {
     await gerarAvisos(alfa);
-    const antes = (await consumoDoMes(alfa)).find((l) => l.metrica === "WHATSAPP_MSG");
+    const antes = (await consumoDoMes(alfa)).find(
+      (l) => l.metrica === "WHATSAPP_MSG",
+    );
 
     const resultado = await enviarAvisosNoWhatsapp(alfa);
     expect(resultado.enviados).toBe(1);
     expect(resultado.falhas).toBe(0);
 
-    const depois = (await consumoDoMes(alfa)).find((l) => l.metrica === "WHATSAPP_MSG");
+    const depois = (await consumoDoMes(alfa)).find(
+      (l) => l.metrica === "WHATSAPP_MSG",
+    );
     expect(depois?.quantidade).toBe((antes?.quantidade ?? 0) + 1);
 
     const zap = await comEscritorio(alfa, (db) =>
-      db.aviso.findFirst({ where: { canal: "WHATSAPP" } })
+      db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
     );
     expect(zap?.estado).toBe("ENVIADO");
     expect(zap?.enviadoEm).not.toBeNull();
@@ -269,7 +304,9 @@ d("avisos pelo WhatsApp", () => {
     await gerarAvisos(alfa);
     responder = () => ({
       status: 400,
-      json: { error: { code: 132001, message: "Template name does not exist" } },
+      json: {
+        error: { code: 132001, message: "Template name does not exist" },
+      },
     });
 
     const resultado = await enviarAvisosNoWhatsapp(alfa);
@@ -277,7 +314,7 @@ d("avisos pelo WhatsApp", () => {
     expect(chamadas).toHaveLength(1);
 
     const zap = await comEscritorio(alfa, (db) =>
-      db.aviso.findFirst({ where: { canal: "WHATSAPP" } })
+      db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
     );
     expect(zap?.estado).toBe("FALHOU");
     expect(zap?.erro).toMatch(/aprovado/);
@@ -285,12 +322,15 @@ d("avisos pelo WhatsApp", () => {
 
   it("erro passageiro conta tentativa e continua pendente", async () => {
     await gerarAvisos(alfa);
-    responder = () => ({ status: 429, json: { error: { code: 130429, message: "Rate limit" } } });
+    responder = () => ({
+      status: 429,
+      json: { error: { code: 130429, message: "Rate limit" } },
+    });
 
     await enviarAvisosNoWhatsapp(alfa);
 
     const zap = await comEscritorio(alfa, (db) =>
-      db.aviso.findFirst({ where: { canal: "WHATSAPP" } })
+      db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
     );
     expect(zap?.estado).toBe("PENDENTE");
     expect(zap?.tentativas).toBe(1);
@@ -330,22 +370,31 @@ d("avisos pelo WhatsApp", () => {
       expect(resultado.semNumero).toBe(true);
       expect(chamadas).toHaveLength(0);
       const zap = await comEscritorio(semNumero.id, (db) =>
-        db.aviso.findFirst({ where: { canal: "WHATSAPP" } })
+        db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
       );
       expect(zap?.estado).toBe("PENDENTE");
       expect(zap?.tentativas).toBe(0);
 
       await expect(
-        enviarModelo(semNumero.id, { para: "5571999990000", modelo: "x", parametros: ["y"] })
+        enviarModelo(semNumero.id, {
+          para: "5571999990000",
+          modelo: "x",
+          parametros: ["y"],
+        }),
       ).rejects.toBeInstanceOf(SemNumeroDeWhatsapp);
     } finally {
-      await prismaPlataforma().escritorio.delete({ where: { id: semNumero.id } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: semNumero.id } })
+        .catch(() => {});
     }
   });
 
   it("quem nao quer WhatsApp continua so no e-mail", async () => {
     await comEscritorio(alfa, (db) =>
-      db.usuario.update({ where: { id: usuarioAlfa }, data: { recebeWhatsapp: false } })
+      db.usuario.update({
+        where: { id: usuarioAlfa },
+        data: { recebeWhatsapp: false },
+      }),
     );
     try {
       await comEscritorio(alfa, (db) => db.aviso.deleteMany({}));
@@ -353,31 +402,40 @@ d("avisos pelo WhatsApp", () => {
       expect(resultado.resumos).toBe(1);
 
       const canais = await comEscritorio(alfa, (db) =>
-        db.aviso.findMany({ select: { canal: true } })
+        db.aviso.findMany({ select: { canal: true } }),
       );
       expect(canais.every((a) => a.canal === "EMAIL")).toBe(true);
     } finally {
       await comEscritorio(alfa, (db) =>
-        db.usuario.update({ where: { id: usuarioAlfa }, data: { recebeWhatsapp: true } })
+        db.usuario.update({
+          where: { id: usuarioAlfa },
+          data: { recebeWhatsapp: true },
+        }),
       );
     }
   });
 
   it("telefone ilegivel nao vira aviso de WhatsApp", async () => {
     await comEscritorio(alfa, (db) =>
-      db.usuario.update({ where: { id: usuarioAlfa }, data: { telefone: "99999-8888" } })
+      db.usuario.update({
+        where: { id: usuarioAlfa },
+        data: { telefone: "99999-8888" },
+      }),
     );
     try {
       await comEscritorio(alfa, (db) => db.aviso.deleteMany({}));
       await gerarAvisos(alfa);
       const zap = await comEscritorio(alfa, (db) =>
-        db.aviso.count({ where: { canal: "WHATSAPP" } })
+        db.aviso.count({ where: { canal: "WHATSAPP" } }),
       );
       // Melhor nao existir do que existir apontando para numero adivinhado.
       expect(zap).toBe(0);
     } finally {
       await comEscritorio(alfa, (db) =>
-        db.usuario.update({ where: { id: usuarioAlfa }, data: { telefone: "(71) 99999-8888" } })
+        db.usuario.update({
+          where: { id: usuarioAlfa },
+          data: { telefone: "(71) 99999-8888" },
+        }),
       );
     }
   });
@@ -388,10 +446,13 @@ d("avisos pelo WhatsApp", () => {
         para: "5571999998888",
         modelo: "birdjud_resumo_publicacoes",
         parametros: ["a", "b", "c"],
-      }).then(() => null)
+      }).then(() => null),
     ).resolves.toBeNull();
 
-    responder = () => ({ status: 500, json: { error: { message: "Internal" } } });
+    responder = () => ({
+      status: 500,
+      json: { error: { message: "Internal" } },
+    });
     const erro = await enviarModelo(alfa, {
       para: "5571999998888",
       modelo: "birdjud_resumo_publicacoes",

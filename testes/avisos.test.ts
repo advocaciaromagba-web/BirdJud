@@ -4,10 +4,20 @@
 // conferem a mensagem que sairia — nao apenas que a funcao devolveu ok.
 import { SMTPServer } from "smtp-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
+import {
+  comEscritorio,
+  prismaPlataforma,
+  semEscritorio,
+} from "../src/lib/prisma";
 import { salvarIntegracao } from "../src/lib/integracao";
 import { gerarHash } from "../src/lib/senhas";
-import { ANTECEDENCIA_HORAS, diaDaChave, enviarAvisosPendentes, gerarAvisos, MAX_TENTATIVAS } from "../src/lib/avisos";
+import {
+  ANTECEDENCIA_HORAS,
+  diaDaChave,
+  enviarAvisosPendentes,
+  gerarAvisos,
+  MAX_TENTATIVAS,
+} from "../src/lib/avisos";
 import { SemRemetente } from "../src/lib/email";
 import { consumoDoMes } from "../src/lib/consumo";
 import {
@@ -48,7 +58,7 @@ describe("textos do aviso", () => {
           texto: "Juntada de peticao.",
         },
       ],
-      "https://alfa.birdjud.com.br"
+      "https://alfa.birdjud.com.br",
     );
 
     expect(corpo).toContain("URGENTE (1)");
@@ -69,7 +79,11 @@ describe("textos do aviso", () => {
       numeroProcesso: "00012345620268260100",
     };
     expect(assuntoDoLembrete(compromisso)).toContain("Audiencia de instrucao");
-    const corpo = corpoDoLembrete("Escritorio Alfa", compromisso, "https://alfa.birdjud.com.br");
+    const corpo = corpoDoLembrete(
+      "Escritorio Alfa",
+      compromisso,
+      "https://alfa.birdjud.com.br",
+    );
     expect(corpo).toContain("Forum Central");
     expect(corpo).toContain("0001234-56.2026.8.26.0100");
   });
@@ -98,7 +112,10 @@ beforeAll(async () => {
     authOptional: false,
     disabledCommands: ["STARTTLS"],
     onAuth(credenciais, _s, pronto) {
-      if (credenciais.username === "escritorio" && credenciais.password === "segredo") {
+      if (
+        credenciais.username === "escritorio" &&
+        credenciais.password === "segredo"
+      ) {
         pronto(null, { user: credenciais.username });
         return;
       }
@@ -153,14 +170,16 @@ d("avisos do escritorio", () => {
           papel: "ADMIN",
           advogado: true,
         }),
-      })
+      }),
     );
     usuarioId = usuario.id;
   });
 
   afterAll(async () => {
     if (escritorio) {
-      await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
@@ -181,14 +200,14 @@ d("avisos do escritorio", () => {
           urgente: true,
           prazoDias: 5,
         }),
-      })
+      }),
     );
 
     const resultado = await gerarAvisos(escritorio);
     expect(resultado.resumos).toBe(1);
 
     const aviso = await comEscritorio(escritorio, (db) =>
-      db.aviso.findFirstOrThrow({ where: { tipo: "RESUMO_PUBLICACOES" } })
+      db.aviso.findFirstOrThrow({ where: { tipo: "RESUMO_PUBLICACOES" } }),
     );
     expect(aviso.destino).toBe("dra@avisos.adv.br");
     expect(aviso.assunto).toContain("[URGENTE]");
@@ -199,19 +218,27 @@ d("avisos do escritorio", () => {
     const resultado = await gerarAvisos(escritorio);
     expect(resultado.resumos).toBe(0);
     await expect(
-      comEscritorio(escritorio, (db) => db.aviso.count({ where: { tipo: "RESUMO_PUBLICACOES" } }))
+      comEscritorio(escritorio, (db) =>
+        db.aviso.count({ where: { tipo: "RESUMO_PUBLICACOES" } }),
+      ),
     ).resolves.toBe(1);
   });
 
   it("quem desligou o resumo nao recebe", async () => {
     await comEscritorio(escritorio, (db) =>
-      db.usuario.update({ where: { id: usuarioId }, data: { recebeResumo: false } })
+      db.usuario.update({
+        where: { id: usuarioId },
+        data: { recebeResumo: false },
+      }),
     );
     const amanha = new Date(Date.now() + 24 * HORA);
     expect((await gerarAvisos(escritorio, amanha)).resumos).toBe(0);
 
     await comEscritorio(escritorio, (db) =>
-      db.usuario.update({ where: { id: usuarioId }, data: { recebeResumo: true } })
+      db.usuario.update({
+        where: { id: usuarioId },
+        data: { recebeResumo: true },
+      }),
     );
   });
 
@@ -239,7 +266,7 @@ d("avisos do escritorio", () => {
     expect(resultado.lembretes).toBe(1);
 
     const aviso = await comEscritorio(escritorio, (db) =>
-      db.aviso.findFirstOrThrow({ where: { tipo: "LEMBRETE_COMPROMISSO" } })
+      db.aviso.findFirstOrThrow({ where: { tipo: "LEMBRETE_COMPROMISSO" } }),
     );
     expect(aviso.assunto).toContain("Audiencia de instrucao");
   });
@@ -250,7 +277,7 @@ d("avisos do escritorio", () => {
 
     // Nada foi marcado como falha: falta configuracao, nao houve erro de envio.
     const pendentes = await comEscritorio(escritorio, (db) =>
-      db.aviso.count({ where: { estado: "PENDENTE" } })
+      db.aviso.count({ where: { estado: "PENDENTE" } }),
     );
     expect(pendentes).toBe(2);
   });
@@ -267,7 +294,7 @@ d("avisos do escritorio", () => {
         senha: "segredo",
         remetente: "contato@avisos.adv.br",
       },
-      "OK"
+      "OK",
     );
 
     const resultado = await enviarAvisosPendentes(escritorio);
@@ -306,7 +333,7 @@ d("avisos do escritorio", () => {
             assunto: "Teste",
             corpo: "Teste",
           }),
-        })
+        }),
       );
 
       for (let i = 0; i < MAX_TENTATIVAS; i += 1) {
@@ -314,7 +341,7 @@ d("avisos do escritorio", () => {
       }
 
       const aviso = await comEscritorio(escritorio, (db) =>
-        db.aviso.findFirstOrThrow({ where: { chave: `teste-falha-${marca}` } })
+        db.aviso.findFirstOrThrow({ where: { chave: `teste-falha-${marca}` } }),
       );
       expect(aviso.estado).toBe("FALHOU");
       expect(aviso.tentativas).toBe(MAX_TENTATIVAS);
@@ -340,21 +367,29 @@ d("avisos do escritorio", () => {
             assunto: "Teste",
             corpo: "Teste",
           }),
-        })
+        }),
       );
 
       const resultado = await enviarAvisosPendentes(outro.id);
-      expect(resultado).toMatchObject({ semRemetente: true, enviados: 0, falhas: 0 });
+      expect(resultado).toMatchObject({
+        semRemetente: true,
+        enviados: 0,
+        falhas: 0,
+      });
 
       // O aviso continua pendente e sem tentativa gasta: quando o escritorio
       // conectar o e-mail, ele sai. Marcar como falha aqui o perderia.
       const aviso = await comEscritorio(outro.id, (db) =>
-        db.aviso.findFirstOrThrow({ where: { chave: `sem-remetente-${marca}` } })
+        db.aviso.findFirstOrThrow({
+          where: { chave: `sem-remetente-${marca}` },
+        }),
       );
       expect(aviso.estado).toBe("PENDENTE");
       expect(aviso.tentativas).toBe(0);
     } finally {
-      await prismaPlataforma().escritorio.delete({ where: { id: outro.id } }).catch(() => {});
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: outro.id } })
+        .catch(() => {});
     }
   });
 });
