@@ -35,12 +35,17 @@ e **sem uma linha de dado** — um backup que so mostra o que e no dia da
 restauracao. Por isso o dump roda com `DATABASE_URL_PLATAFORMA`, o papel que
 tem `BYPASSRLS` para as tarefas do plano de controle.
 
-### 2. Tamanho nao prova nada
+### 2. Tamanho nao prova nada — nem para mais, nem para menos
 
 Depois de gravar, o script abre o arquivo e confere tres coisas: que existe a
 marca de fim do `pg_dump`, que ha mais de 20 `CREATE TABLE` e que ha **pelo
 menos uma linha de dado**. Falhando qualquer uma, apaga o arquivo e sai com
 erro — em vez de guardar um arquivo que parece backup.
+
+O piso de bytes ficou baixo de proposito (1 KB), so para pegar arquivo vazio
+ou truncado. A primeira execucao em producao foi recusada por um piso de 10 KB:
+o banco, com um escritorio de teste, cabe em 9 KB comprimido. Alarme falso em
+backup e pior que silencio, porque ensina a ignorar o alarme.
 
 ## Restaurar
 

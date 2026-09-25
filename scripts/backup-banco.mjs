@@ -19,8 +19,17 @@ import { createInterface } from "node:readline";
 
 const DESTINO = process.env.RAIZ_BACKUP ?? "/backups";
 const DIAS = Number(process.env.BACKUP_DIAS ?? 14);
-// Dump menor que isto quase certamente e erro disfarcado de sucesso.
-const MINIMO_BYTES = Number(process.env.BACKUP_MINIMO_BYTES ?? 10_000);
+/*
+ * Piso de tamanho so para pegar arquivo vazio ou truncado.
+ *
+ * Nao serve para dizer "este backup parece completo": um banco com um
+ * escritorio de teste cabe em 9 KB comprimido, e a primeira execucao em
+ * producao foi recusada por isso — alarme falso, e alarme falso em backup e
+ * pior que silencio, porque ensina a ignorar. Quem julga se o dump presta e a
+ * conferencia de conteudo mais abaixo: marca de fim, numero de tabelas e
+ * existencia de linha de dado.
+ */
+const MINIMO_BYTES = Number(process.env.BACKUP_MINIMO_BYTES ?? 1_000);
 
 function agora() {
   return new Date().toISOString().replace(/[:.]/g, "-").slice(0, 16);
