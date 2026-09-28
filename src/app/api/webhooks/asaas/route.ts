@@ -31,6 +31,22 @@ function tokenConfere(recebido: string | null, esperado: string): boolean {
 }
 
 /**
+ * Uma linha por chamada, sempre.
+ *
+ * POR QUE: este webhook libera escritorio suspenso. Ate aqui ele so falava
+ * quando dava errado, e chamada que deu certo nao deixava rastro nenhum — nao
+ * havia como responder "o Asaas chamou?" nem depois de um pagamento sumir.
+ *
+ * Nada de segredo entra aqui: nem o token, nem valor, nem dado do pagador. So
+ * o que permite reconstruir o que aconteceu.
+ */
+function anotar(desfecho: string, detalhe: Record<string, unknown> = {}): void {
+  console.log(
+    `webhook asaas: ${desfecho} ${JSON.stringify(detalhe)}`.slice(0, 500),
+  );
+}
+
+/**
  * Webhook do Asaas: a baixa automatica da fatura da plataforma.
  *
  * O caminho de baixa e o MESMO do painel do operador (registrarPagamento), de
@@ -48,22 +64,28 @@ export async function POST(req: Request) {
   }
 
   if (!tokenConfere(req.headers.get("asaas-access-token"), esperado)) {
+    // Sem o token recebido no log: quem esta tentando adivinhar nao ganha
+    // confirmacao de quanto chegou perto.
+    anotar("token invalido");
     return NextResponse.json({ erro: "Token invalido." }, { status: 401 });
   }
 
   const corpo = evento.safeParse(await req.json().catch(() => null));
   if (!corpo.success) {
+    anotar("corpo invalido");
     return NextResponse.json({ erro: "Evento invalido." }, { status: 400 });
   }
 
   // Evento que nao e de baixa e reconhecido com 200: o provedor nao precisa
   // reenviar o que nao nos interessa.
   if (!EVENTOS_DE_BAIXA.has(corpo.data.event)) {
+    anotar("evento ignorado", { evento: corpo.data.event });
     return NextResponse.json({ ok: true, ignorado: corpo.data.event });
   }
 
   const faturaId = corpo.data.payment?.externalReference;
   if (!faturaId) {
+    anotar("sem referencia da fatura", { evento: corpo.data.event });
     return NextResponse.json(
       { erro: "Evento sem referencia da fatura." },
       { status: 400 },
@@ -75,6 +97,7 @@ export async function POST(req: Request) {
     select: { id: true, status: true },
   });
   if (!fatura) {
+    anotar("fatura nao encontrada", { faturaId });
     return NextResponse.json(
       { erro: "Fatura nao encontrada." },
       { status: 404 },
@@ -84,6 +107,7 @@ export async function POST(req: Request) {
   // Provedor reenvia evento quando nao recebe 200. Fatura ja paga responde ok
   // sem mexer em nada — senao um reenvio reabriria a conversa.
   if (fatura.status !== "ABERTA") {
+    anotar("fatura ja processada", { faturaId, status: fatura.status });
     return NextResponse.json({ ok: true, jaProcessada: true });
   }
 
@@ -91,5 +115,11 @@ export async function POST(req: Request) {
     fatura.id,
     corpo.data.payment?.id ?? null,
   );
+  anotar("baixa registrada", {
+    faturaId,
+    evento: corpo.data.event,
+    escritorioId: resultado.escritorioId,
+    statusNovo: resultado.statusNovo,
+  });
   return NextResponse.json({ ok: true, status: resultado.statusNovo });
 }
