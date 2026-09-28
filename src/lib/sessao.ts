@@ -3,7 +3,7 @@
 // A checagem que mais importa e a terceira: uma sessao aberta no escritorio A
 // nao vale no subdominio do escritorio B. Sem ela, bastaria trocar o endereco
 // no navegador levando o cookie junto.
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { comEscritorio } from "./prisma";
 import { getServerSession } from "next-auth";
 import { opcoesAuth } from "./auth";
@@ -12,6 +12,14 @@ import { escritorioPorSlug, type Marca } from "./escritorio";
 import { exigirModulo, type Modulo } from "./modulos";
 import { SemPermissao } from "./papeis";
 import { CABECALHO_SLUG } from "./subdominio";
+import {
+  COOKIE as COOKIE_ADM,
+  SemDestravar,
+  SemSenhaDeAdministracao,
+  conferirDestravamento,
+  marcaDaSenha,
+  segredoDoDestravamento,
+} from "./administracao";
 
 export class SemSessao extends Error {
   readonly status = 401;
@@ -113,5 +121,40 @@ export function motivoParaRecusar(
 export async function exigirAdmin(modulo?: Modulo): Promise<ContextoRota> {
   const contexto = await exigirSessao(modulo);
   if (contexto.papel !== "ADMIN") throw new SemPermissao();
+  return contexto;
+}
+
+/**
+ * Exige sessao, papel ADMIN e a senha de administracao ja digitada.
+ *
+ * As tres coisas, nao duas: o papel diz quem pode, a senha diz que e a pessoa
+ * mesma, agora. Financeiro e acoes destrutivas passam por aqui.
+ */
+export async function exigirAdministracao(
+  modulo?: Modulo,
+): Promise<ContextoRota> {
+  const contexto = await exigirAdmin(modulo);
+
+  const escritorio = await comEscritorio(contexto.escritorioId, (db) =>
+    db.escritorio.findFirst({
+      where: { id: contexto.escritorioId },
+      select: { senhaAdminHash: true },
+    }),
+  );
+  // Sem senha definida nao ha "passa direto": a area pede para definir.
+  if (!escritorio?.senhaAdminHash) throw new SemSenhaDeAdministracao();
+
+  const cookie = (await cookies()).get(COOKIE_ADM)?.value;
+  const motivo = conferirDestravamento(
+    cookie,
+    {
+      escritorioId: contexto.escritorioId,
+      usuarioId: contexto.usuarioId,
+      marca: marcaDaSenha(escritorio.senhaAdminHash),
+    },
+    segredoDoDestravamento(),
+  );
+  if (motivo) throw new SemDestravar(`Area protegida: ${motivo}.`);
+
   return contexto;
 }

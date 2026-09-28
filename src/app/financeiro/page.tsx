@@ -1,10 +1,12 @@
 import { comEscritorio } from "@/lib/prisma";
-import { contextoDaPagina } from "@/lib/pagina";
+import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
 import { ModuloNaoContratado } from "@/lib/modulos";
 import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { emReais } from "@/lib/dinheiro";
+import { PortaDeAdministracao } from "@/componentes/PortaDeAdministracao";
+import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
 
 const TIPOS = [
   { valor: "RECEITA", rotulo: "Receita" },
@@ -12,9 +14,11 @@ const TIPOS = [
 ];
 
 export default async function PaginaFinanceiro() {
-  let contexto;
+  // O financeiro e do administrador, e pede a segunda senha. As duas coisas:
+  // o dinheiro do escritorio nao e assunto de quem tem so uma sessao aberta.
+  let porta;
   try {
-    contexto = await contextoDaPagina("FINANCEIRO");
+    porta = await contextoProtegido("FINANCEIRO");
   } catch (erro) {
     if (erro instanceof ModuloNaoContratado) {
       return (
@@ -28,6 +32,28 @@ export default async function PaginaFinanceiro() {
     }
     throw erro;
   }
+
+  if (porta.tranca) {
+    const base = await contextoDaPagina();
+    const ativos = await modulosAtivos(base.escritorioId);
+    return (
+      <Estrutura
+        nomeEscritorio={base.marca.nome}
+        logoUrl={base.marca.logoUrl}
+        papel={base.papel}
+        modulos={ativos}
+        titulo="Financeiro"
+      >
+        <PortaDeAdministracao
+          tranca={porta.tranca}
+          area="O financeiro"
+          minutos={MINUTOS_DESTRAVADO}
+        />
+      </Estrutura>
+    );
+  }
+
+  const contexto = porta.contexto;
 
   const [modulos, lancamentos] = await Promise.all([
     modulosAtivos(contexto.escritorioId),

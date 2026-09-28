@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
-import { exigirSessao } from "@/lib/sessao";
+import { exigirAdministracao } from "@/lib/sessao";
 import { competenciaDe } from "@/lib/consumo";
 import { paraCentavos } from "@/lib/dinheiro";
 import { tratarErro } from "@/lib/respostas";
@@ -19,7 +19,7 @@ const novoLancamento = z.object({
 export async function GET() {
   try {
     // O modulo FINANCEIRO precisa estar contratado: sem ele, 403.
-    const { escritorioId } = await exigirSessao("FINANCEIRO");
+    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const lancamentos = await comEscritorio(escritorioId, (db) =>
       db.lancamento.findMany({ orderBy: { criadoEm: "desc" }, take: 200 }),
     );
@@ -31,7 +31,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirSessao("FINANCEIRO");
+    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const corpo = novoLancamento.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });

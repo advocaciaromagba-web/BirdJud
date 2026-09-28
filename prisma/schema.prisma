@@ -24,6 +24,12 @@ model Escritorio {
   status String @default("TESTE") // TESTE | ATIVO | INADIMPLENTE | SUSPENSO | ENCERRADO
   faixa  String @default("ATE_1") // ATE_1 | ATE_3 | ATE_10 | ATE_25 | ATE_50
 
+  // A segunda senha: destrava o financeiro e a area de administracao. Do
+  // escritorio, nao da pessoa. Nula ate ser definida — e enquanto for nula, a
+  // area pede para definir, nunca deixa passar. Ver src/lib/administracao.ts.
+  senhaAdminHash String?
+  senhaAdminEm   DateTime?
+
   // marca e dados que, em sistemas de escritorio unico, ficam fixos no codigo
   logoUrl             String?
   corPrimaria         String?

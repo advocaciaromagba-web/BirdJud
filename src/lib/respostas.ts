@@ -3,12 +3,15 @@ import { NextResponse } from "next/server";
 import { SemSessao } from "./sessao";
 import { SemPermissao } from "./papeis";
 import { ModuloNaoContratado } from "./modulos";
+import { SemDestravar, SemSenhaDeAdministracao } from "./administracao";
 
 export function tratarErro(erro: unknown): NextResponse {
   if (
     erro instanceof SemSessao ||
     erro instanceof SemPermissao ||
-    erro instanceof ModuloNaoContratado
+    erro instanceof ModuloNaoContratado ||
+    erro instanceof SemDestravar ||
+    erro instanceof SemSenhaDeAdministracao
   ) {
     return NextResponse.json({ erro: erro.message }, { status: erro.status });
   }
