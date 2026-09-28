@@ -226,6 +226,40 @@ describe("cliente do DJEN", () => {
     expect(vistos.dataDisponibilizacaoFim).toBe("2026-09-17");
   });
 
+  // A abrangencia e nacional: ufOab e o estado de inscricao da OAB, nao um
+  // filtro de tribunal. Conferido contra o CNJ — ufOab=BA devolveu TJBA, TJSP
+  // e TRF1 juntos. Este teste existe para que ninguem acrescente um filtro
+  // achando que falta, e estreite o que o escritorio recebe.
+  it("nao manda filtro de tribunal, e guarda o que vem de qualquer um", async () => {
+    let vistos: Record<string, string> = {};
+    responder = (url) => {
+      vistos = Object.fromEntries(url.searchParams);
+      return {
+        status: 200,
+        json: {
+          count: 3,
+          items: [
+            { ...comunicacao(1, "Intimacao"), siglaTribunal: "TJBA" },
+            { ...comunicacao(2, "Intimacao"), siglaTribunal: "TJSP" },
+            { ...comunicacao(3, "Intimacao"), siglaTribunal: "TRF1" },
+          ],
+        },
+      };
+    };
+
+    const achadas = await buscarPeriodo({
+      numeroOab: "123456",
+      ufOab: "BA",
+      de: new Date("2026-09-10T00:00:00Z"),
+      ate: new Date("2026-09-17T00:00:00Z"),
+    });
+
+    for (const proibido of ["siglaTribunal", "tribunal", "orgao", "nomeOrgao"]) {
+      expect(vistos[proibido]).toBeUndefined();
+    }
+    expect(achadas.map((c) => c.tribunal)).toEqual(["TJBA", "TJSP", "TRF1"]);
+  });
+
   it("explica o 403 como bloqueio por pais", async () => {
     responder = () => ({ status: 403, json: {} });
     await expect(

@@ -5,11 +5,20 @@
 // Com DJEN_RELE_URL configurado, toda consulta sai por ele e a aplicacao pode
 // rodar onde quiser; sem ele, a consulta vai direto e so funciona do Brasil.
 //
-// AINDA PRECISA DE CONFERENCIA ANTES DO PILOTO: o mapeamento de campos abaixo
-// foi escrito a partir da documentacao, sem bater contra uma resposta real.
-// Rode `npm run conferir-djen -- <oab> <uf>` — ele sai pelo rele, entao da para
-// conferir de qualquer lugar assim que o rele estiver no ar. Campo que sair
-// vazio e mapeamento errado, e o lugar de corrigir e este arquivo.
+// A ABRANGENCIA E NACIONAL, e isto precisa ficar dito porque o nome do
+// parametro engana: `ufOab` e o estado de INSCRICAO da OAB, nao um filtro de
+// tribunal. Conferido contra o CNJ em 28/09/2026 — uma consulta com
+// ufOab=BA devolveu TJBA, TJSP e TRF1 na mesma resposta.
+//
+// Por isso NAO ha filtro de tribunal em lugar nenhum daqui, e acrescentar um
+// seria estreitar o que o escritorio recebe. Advogado com inscricao
+// suplementar em mais de um estado tem uma OabMonitorada por inscricao, e
+// cada uma ja traz o pais inteiro.
+//
+// O mapeamento de campos abaixo foi conferido contra resposta real do CNJ na
+// mesma data (`npm run conferir-djen -- <oab> <uf>`, que sai pelo rele e por
+// isso roda de qualquer lugar). Campo que sair vazio e mapeamento errado, e o
+// lugar de corrigir e este arquivo.
 //
 // Todo o resto do modulo depende so do tipo `Comunicacao`, entao um ajuste de
 // mapeamento fica contido aqui.
