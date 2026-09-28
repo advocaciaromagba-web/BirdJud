@@ -177,10 +177,14 @@ export default async function handler(
   }
 
   try {
+    // A porta e configuravel porque, quando o Gmail recusa, a mensagem de erro
+    // da 587 costuma ser mais especifica que a da 465 — e isso e a diferenca
+    // entre saber o motivo e adivinhar.
+    const porta = Number(process.env.GMAIL_PORTA ?? 465);
     const transporte = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
+      host: process.env.GMAIL_HOST ?? "smtp.gmail.com",
+      port: porta,
+      secure: porta === 465,
       auth: { user: usuario, pass: senha },
       connectionTimeout: 15_000,
       greetingTimeout: 15_000,
