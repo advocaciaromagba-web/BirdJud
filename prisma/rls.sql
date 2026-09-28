@@ -23,6 +23,7 @@ DECLARE
     'Processo',
     'Compromisso',
     'Lancamento',
+    'DespesaFixa',
     'AnaliseIA',
     'Cobranca',
     'Arquivo',

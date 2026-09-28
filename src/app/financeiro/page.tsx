@@ -1,21 +1,58 @@
+import Link from "next/link";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
-import { modulosAtivos } from "@/lib/modulos";
-import { ModuloNaoContratado } from "@/lib/modulos";
+import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
-import { emReais } from "@/lib/dinheiro";
 import { PortaDeAdministracao } from "@/componentes/PortaDeAdministracao";
+import { GraficoDePizza } from "@/componentes/GraficoDePizza";
+import { ListaFinanceira } from "@/componentes/ListaFinanceira";
+import { DespesasFixas } from "@/componentes/DespesasFixas";
+import { emReais } from "@/lib/dinheiro";
 import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
+import {
+  CATEGORIAS_DE_DESPESA,
+  CATEGORIAS_DE_RECEITA,
+  competenciaDaData,
+  resumoDoMes,
+  rotuloDaCategoria,
+} from "@/lib/financeiro";
+
+export const dynamic = "force-dynamic";
 
 const TIPOS = [
-  { valor: "RECEITA", rotulo: "Receita" },
   { valor: "DESPESA", rotulo: "Despesa" },
+  { valor: "RECEITA", rotulo: "Receita" },
 ];
 
-export default async function PaginaFinanceiro() {
-  // O financeiro e do administrador, e pede a segunda senha. As duas coisas:
-  // o dinheiro do escritorio nao e assunto de quem tem so uma sessao aberta.
+const SIM_NAO = [
+  { valor: "nao", rotulo: "Em aberto" },
+  { valor: "sim", rotulo: "Ja pago / recebido" },
+];
+
+const mesPorExtenso = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  year: "numeric",
+  timeZone: "America/Sao_Paulo",
+});
+
+function nomeDaCompetencia(competencia: string): string {
+  const [ano, mes] = competencia.split("-").map(Number);
+  return mesPorExtenso.format(new Date(Date.UTC(ano, mes - 1, 15)));
+}
+
+function vizinha(competencia: string, passos: number): string {
+  const [ano, mes] = competencia.split("-").map(Number);
+  const data = new Date(Date.UTC(ano, mes - 1 + passos, 15));
+  const m = String(data.getUTCMonth() + 1).padStart(2, "0");
+  return `${data.getUTCFullYear()}-${m}`;
+}
+
+export default async function PaginaFinanceiro({
+  searchParams,
+}: {
+  searchParams: Promise<{ competencia?: string }>;
+}) {
   let porta;
   try {
     porta = await contextoProtegido("FINANCEIRO");
@@ -24,7 +61,7 @@ export default async function PaginaFinanceiro() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-slate-600">
+          <p className="mt-3 leitura text-slate-600">
             O modulo Financeiro nao faz parte do plano deste escritorio.
           </p>
         </main>
@@ -54,19 +91,27 @@ export default async function PaginaFinanceiro() {
   }
 
   const contexto = porta.contexto;
+  const parametros = await searchParams;
+  const competencia = /^\d{4}-\d{2}$/.test(parametros.competencia ?? "")
+    ? parametros.competencia!
+    : competenciaDaData(new Date());
 
-  const [modulos, lancamentos] = await Promise.all([
-    modulosAtivos(contexto.escritorioId),
-    comEscritorio(contexto.escritorioId, (db) =>
-      db.lancamento.findMany({ orderBy: { criadoEm: "desc" }, take: 200 }),
-    ),
-  ]);
-
-  const saldo = lancamentos.reduce(
-    (total, l) =>
-      total + (l.tipo === "RECEITA" ? l.valorCentavos : -l.valorCentavos),
-    0,
+  const modulos = await modulosAtivos(contexto.escritorioId);
+  const { lancamentos, fixas } = await comEscritorio(
+    contexto.escritorioId,
+    async (db) => ({
+      lancamentos: await db.lancamento.findMany({
+        where: { competencia },
+        orderBy: [{ vencimento: "asc" }, { criadoEm: "desc" }],
+        take: 500,
+      }),
+      fixas: await db.despesaFixa.findMany({
+        orderBy: { diaDoVencimento: "asc" },
+      }),
+    }),
   );
+
+  const resumo = resumoDoMes(lancamentos, competencia);
 
   return (
     <Estrutura
@@ -75,53 +120,138 @@ export default async function PaginaFinanceiro() {
       papel={contexto.papel}
       modulos={modulos}
       titulo="Financeiro"
+      chamada={`Competencia de ${nomeDaCompetencia(competencia)}.`}
     >
-      <p className="mt-1 text-sm text-slate-500">
-        Saldo dos lancamentos listados: {emReais(saldo)}
-      </p>
+      <nav className="mt-1 flex items-center gap-3 text-sm">
+        <Link className="botao-discreto" href={`/financeiro?competencia=${vizinha(competencia, -1)}`}>
+          ← {nomeDaCompetencia(vizinha(competencia, -1))}
+        </Link>
+        <Link className="botao-discreto" href={`/financeiro?competencia=${vizinha(competencia, 1)}`}>
+          {nomeDaCompetencia(vizinha(competencia, 1))} →
+        </Link>
+      </nav>
 
-      <FormularioCriar
-        rota="/api/lancamentos"
-        campos={[
-          { nome: "descricao", rotulo: "Descricao", obrigatorio: true },
-          { nome: "valor", rotulo: "Valor (R$)", obrigatorio: true },
-          {
-            nome: "tipo",
-            rotulo: "Tipo",
-            tipo: "select",
-            opcoes: TIPOS,
-            obrigatorio: true,
-          },
-        ]}
-        textoBotao="Lancar"
-      />
+      {/* Realizado e previsto separados: um mes com R$ 40 mil lancados e R$ 38
+          mil ainda por receber nao e um mes bom, e um total unico esconderia
+          isso. */}
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="cartao">
+          <p className="sobretitulo">Recebido</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-700">
+            {emReais(resumo.receitas)}
+          </p>
+          <p className="mt-1 text-sm text-slate-500 esquerda">
+            a receber: {emReais(resumo.aReceber)}
+          </p>
+        </div>
+        <div className="cartao">
+          <p className="sobretitulo">Pago</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">
+            {emReais(resumo.despesas)}
+          </p>
+          <p className="mt-1 text-sm text-slate-500 esquerda">
+            a pagar: {emReais(resumo.aPagar)}
+          </p>
+        </div>
+        <div className="cartao">
+          <p className="sobretitulo">Saldo realizado</p>
+          <p
+            className={`mt-1 text-2xl font-bold tabular-nums ${
+              resumo.saldo < 0 ? "text-red-700" : "text-slate-900"
+            }`}
+          >
+            {emReais(resumo.saldo)}
+          </p>
+          <p className="mt-1 text-sm text-slate-500 esquerda">
+            entradas menos saidas ja liquidadas
+          </p>
+        </div>
+        <div className="cartao">
+          <p className="sobretitulo">Previsto no mes</p>
+          <p
+            className={`mt-1 text-2xl font-bold tabular-nums ${
+              resumo.saldo + resumo.aReceber - resumo.aPagar < 0
+                ? "text-red-700"
+                : "text-slate-900"
+            }`}
+          >
+            {emReais(resumo.saldo + resumo.aReceber - resumo.aPagar)}
+          </p>
+          <p className="mt-1 text-sm text-slate-500 esquerda">
+            se tudo em aberto for liquidado
+          </p>
+        </div>
+      </div>
 
-      {lancamentos.length === 0 ? (
-        <p className="mt-6 text-slate-600">Nenhum lancamento.</p>
-      ) : (
-        <ul className="mt-6 divide-y divide-slate-200">
-          {lancamentos.map((lancamento) => (
-            <li key={lancamento.id} className="flex justify-between gap-4 py-3">
-              <span>
-                <span className="font-semibold">{lancamento.descricao}</span>
-                <span className="block text-sm text-slate-500">
-                  {lancamento.competencia}
-                </span>
-              </span>
-              <span
-                className={`tabular-nums font-semibold ${
-                  lancamento.tipo === "RECEITA"
-                    ? "text-green-700"
-                    : "text-red-700"
-                }`}
-              >
-                {lancamento.tipo === "RECEITA" ? "+" : "−"}
-                {emReais(lancamento.valorCentavos)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <section className="cartao mt-5">
+        <p className="sobretitulo">Para onde vai o dinheiro</p>
+        <h2 className="mt-1 text-lg font-bold">
+          Despesas por categoria em {nomeDaCompetencia(competencia)}
+        </h2>
+        <div className="mt-4">
+          <GraficoDePizza porCategoria={resumo.porCategoria} />
+        </div>
+      </section>
+
+      <div className="mt-5">
+        <FormularioCriar
+          rota="/api/lancamentos"
+          recolhivel
+          textoAbrir="Novo lancamento"
+          textoBotao="Lancar"
+          leitura={modulos.includes("IA") ? "CONTA" : undefined}
+          campos={[
+            { nome: "descricao", rotulo: "Descricao", obrigatorio: true, largo: true },
+            { nome: "valor", rotulo: "Valor (R$)", obrigatorio: true },
+            { nome: "tipo", rotulo: "Tipo", tipo: "select", opcoes: TIPOS, obrigatorio: true },
+            {
+              nome: "categoria",
+              rotulo: "Categoria",
+              tipo: "select",
+              opcoes: [...CATEGORIAS_DE_DESPESA, ...CATEGORIAS_DE_RECEITA].map((c) => ({
+                valor: c,
+                rotulo: rotuloDaCategoria(c),
+              })),
+              ajuda: "Precisa combinar com o tipo: aluguel e despesa, honorarios e receita.",
+            },
+            { nome: "fornecedor", rotulo: "Fornecedor / quem emitiu" },
+            { nome: "vencimento", rotulo: "Vencimento", tipo: "date" },
+            { nome: "pago", rotulo: "Situacao", tipo: "select", opcoes: SIM_NAO },
+            { nome: "observacoes", rotulo: "Observacoes", tipo: "textarea" },
+          ]}
+        />
+      </div>
+
+      <section className="mt-5">
+        <h2 className="text-lg font-bold">
+          Lancamentos de {nomeDaCompetencia(competencia)}
+        </h2>
+        <div className="mt-3">
+          <ListaFinanceira
+            lancamentos={lancamentos.map((l) => ({
+              ...l,
+              vencimento: l.vencimento?.toISOString() ?? null,
+              pagoEm: l.pagoEm?.toISOString() ?? null,
+            }))}
+          />
+        </div>
+      </section>
+
+      <div className="mt-6">
+        <DespesasFixas
+          despesas={fixas.map((f) => ({
+            id: f.id,
+            descricao: f.descricao,
+            categoria: f.categoria,
+            fornecedor: f.fornecedor,
+            valorCentavos: f.valorCentavos,
+            diaDoVencimento: f.diaDoVencimento,
+            ativo: f.ativo,
+          }))}
+          competencia={competencia}
+          nomeDaCompetencia={nomeDaCompetencia(competencia)}
+        />
+      </div>
     </Estrutura>
   );
 }

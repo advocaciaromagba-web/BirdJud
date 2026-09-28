@@ -12,6 +12,7 @@ import { comEscritorio, semEscritorio } from "./prisma";
 import { obterIntegracao, IntegracaoAusente } from "./integracao";
 import { buscarComLimite, descreverFalha } from "./conectores/tipos";
 import { registrarConsumo, competenciaDe } from "./consumo";
+import { ehDuplicado } from "./respostas";
 import { moduloAtivo } from "./modulos";
 import { randomUUID } from "node:crypto";
 
@@ -414,18 +415,36 @@ async function darBaixa(
   if (cobranca.lancamentoId) return cobranca.lancamentoId;
   if (!(await moduloAtivo(escritorioId, "FINANCEIRO"))) return null;
 
-  const lancamento = await comEscritorio(escritorioId, (db) =>
-    db.lancamento.create({
-      data: semEscritorio({
-        descricao: `Recebimento: ${cobranca.descricao}`,
-        tipo: "RECEITA",
-        competencia: competenciaDe(quando),
-        valorCentavos,
-        pagoEm: quando,
+  // cobrancaId tem indice unico por escritorio: se duas sincronizacoes
+  // correrem juntas, a segunda esbarra no banco em vez de criar a receita
+  // duas vezes. A guarda por lancamentoId acima resolve o caso comum; esta
+  // resolve a corrida.
+  try {
+    const lancamento = await comEscritorio(escritorioId, (db) =>
+      db.lancamento.create({
+        data: semEscritorio({
+          descricao: `Recebimento: ${cobranca.descricao}`,
+          tipo: "RECEITA",
+          categoria: "HONORARIOS",
+          competencia: competenciaDe(quando),
+          valorCentavos,
+          pagoEm: quando,
+          cobrancaId: cobranca.id,
+        }),
       }),
-    }),
-  );
-  return lancamento.id;
+    );
+    return lancamento.id;
+  } catch (erro) {
+    if (!ehDuplicado(erro)) throw erro;
+    // Alguem chegou antes. O lancamento certo e o que ja existe.
+    const existente = await comEscritorio(escritorioId, (db) =>
+      db.lancamento.findFirst({
+        where: { cobrancaId: cobranca.id },
+        select: { id: true },
+      }),
+    );
+    return existente?.id ?? null;
+  }
 }
 
 export type ResultadoDaSincronizacao = {

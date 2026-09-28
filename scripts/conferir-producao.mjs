@@ -87,6 +87,7 @@ const TABELAS_COM_RLS = [
   "Processo",
   "Compromisso",
   "Lancamento",
+  "DespesaFixa",
   "Publicacao",
   "Aviso",
   "AnaliseIA",

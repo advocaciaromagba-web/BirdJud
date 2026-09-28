@@ -209,3 +209,85 @@ describe("leitura para a agenda", () => {
     expect(leitura.campos.documento).toBeUndefined();
   });
 });
+
+// Perfil CONTA: conta de agua, energia, internet. O risco aqui e contabil —
+// valor que nao vira dinheiro e categoria inventada fecham o mes errado sem
+// ninguem perceber.
+describe("leitura de conta de consumo", () => {
+  it("le fornecedor, valor, vencimento e categoria", () => {
+    const leitura = interpretar(
+      "CONTA",
+      JSON.stringify({
+        campos: {
+          fornecedor: { valor: "EMBASA", confianca: "ALTA" },
+          descricao: { valor: "Conta de agua - setembro", confianca: "ALTA" },
+          valor: { valor: "189,47", confianca: "ALTA" },
+          vencimento: { valor: "10/10/2026", confianca: "ALTA" },
+          categoria: { valor: "AGUA", confianca: "ALTA" },
+        },
+        observacoes: [],
+      }),
+    );
+    expect(leitura.campos.fornecedor.valor).toBe("EMBASA");
+    expect(leitura.campos.valor.valor).toBe("189,47");
+    expect(leitura.campos.vencimento.valor).toBe("2026-10-10");
+    expect(leitura.campos.categoria.valor).toBe("AGUA");
+  });
+
+  it("aceita o rotulo em minuscula e com espaco, e normaliza", () => {
+    const leitura = interpretar(
+      "CONTA",
+      JSON.stringify({
+        campos: { categoria: { valor: "pro labore", confianca: "ALTA" } },
+        observacoes: [],
+      }),
+    );
+    expect(leitura.campos.categoria.valor).toBe("PRO_LABORE");
+  });
+
+  // Categoria inventada quebra o grafico e o comparativo entre meses.
+  it("descarta categoria que nao existe no catalogo, e explica", () => {
+    const leitura = interpretar(
+      "CONTA",
+      JSON.stringify({
+        campos: { categoria: { valor: "cafezinho", confianca: "ALTA" } },
+        observacoes: [],
+      }),
+    );
+    expect(leitura.campos.categoria).toBeUndefined();
+    expect(leitura.observacoes.join(" ")).toContain("nao existe no catalogo");
+  });
+
+  it("descarta valor que nao vira dinheiro, e explica", () => {
+    const leitura = interpretar(
+      "CONTA",
+      JSON.stringify({
+        campos: {
+          valor: { valor: "ver verso", confianca: "ALTA" },
+          fornecedor: { valor: "COELBA", confianca: "ALTA" },
+        },
+        observacoes: [],
+      }),
+    );
+    expect(leitura.campos.valor).toBeUndefined();
+    expect(leitura.campos.fornecedor.valor).toBe("COELBA");
+    expect(leitura.observacoes.join(" ")).toContain("como dinheiro");
+  });
+
+  it("descarta vencimento impossivel", () => {
+    const leitura = interpretar(
+      "CONTA",
+      JSON.stringify({
+        campos: { vencimento: { valor: "31/02/2026", confianca: "ALTA" } },
+        observacoes: [],
+      }),
+    );
+    expect(leitura.campos.vencimento).toBeUndefined();
+  });
+
+  it("a instrucao lista as categorias validas", () => {
+    const instrucao = montarInstrucao("CONTA");
+    expect(instrucao).toContain("ENERGIA");
+    expect(instrucao).toContain("TOTAL A PAGAR");
+  });
+});

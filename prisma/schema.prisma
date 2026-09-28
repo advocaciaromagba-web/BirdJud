@@ -58,6 +58,7 @@ model Escritorio {
   assinatura   Assinatura?
   faturas      Fatura[]
   lancamentos  Lancamento[]
+  despesasFixas DespesaFixa[]
   cobrancas    Cobranca[]
   arquivos     Arquivo[]
   notas        NotaFiscal[]
@@ -298,20 +299,55 @@ model AcessoSuporte {
 // Modulo FINANCEIRO — existe para o gate de modulo ter o que proteger
 // ---------------------------------------------------------------------------
 
+/// O que se repete todo mes e ninguem quer redigitar: aluguel, contabilidade,
+/// internet. O valor e PREVISTO — conta de agua muda todo mes —, entao o
+/// lancamento gerado entra como previsao e e corrigido quando a conta chega.
+model DespesaFixa {
+  id              String   @id @default(cuid())
+  escritorioId    String
+  descricao       String
+  categoria       String
+  fornecedor      String?
+  valorCentavos   Int
+  diaDoVencimento Int
+  ativo           Boolean  @default(true)
+  criadoEm        DateTime @default(now())
+
+  escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  lancamentos Lancamento[]
+
+  @@index([escritorioId])
+}
+
 model Lancamento {
   id            String    @id @default(cuid())
   escritorioId  String
   descricao     String
   valorCentavos Int // em centavos: dinheiro nunca em ponto flutuante
   tipo          String // RECEITA | DESPESA
+  // Categoria fechada (src/lib/financeiro.ts). Campo livre viraria "agua",
+  // "Agua" e "AGUA" na mesma base, e nenhum grafico fecharia depois.
+  categoria     String?
+  fornecedor    String?
   competencia   String // "2026-09"
+  vencimento    DateTime?
   pagoEm        DateTime?
+  observacoes   String?
+  // De qual cobranca do Asaas veio. Unico por escritorio: webhook chega em
+  // duplicata, e a mesma cobranca nao pode virar dois lancamentos.
+  cobrancaId    String?
+  despesaFixaId String?
+  arquivoId     String?
   criadoEm      DateTime  @default(now())
 
-  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  despesaFixa DespesaFixa? @relation(fields: [despesaFixaId], references: [id], onDelete: SetNull)
+  arquivo     Arquivo?     @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
 
   @@index([escritorioId])
   @@index([escritorioId, competencia])
+  @@index([escritorioId, categoria])
+  @@index([escritorioId, vencimento])
 }
 
 // ---------------------------------------------------------------------------
@@ -389,10 +425,11 @@ model Arquivo {
   hash         String? // sha256 do conteudo, para conferir integridade
   criadoEm     DateTime @default(now())
 
-  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
-  cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
-  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
-  usuario    Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente     Cliente?     @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  processo    Processo?    @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  usuario     Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  lancamentos Lancamento[]
 
   @@index([escritorioId, criadoEm])
   @@index([escritorioId, processoId])

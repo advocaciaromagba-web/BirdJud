@@ -17,8 +17,10 @@
 import { z } from "zod";
 import { digitosDe, documentoValido, formatarDocumento } from "./documentos";
 import { normalizarNumeroProcesso } from "./leitura-publicacao";
+import { CATEGORIAS_DE_DESPESA, ehCategoria } from "./financeiro";
+import { paraCentavos } from "./dinheiro";
 
-export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA"] as const;
+export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA", "CONTA"] as const;
 export type Perfil = (typeof PERFIS)[number];
 
 export type Confianca = "ALTA" | "MEDIA" | "BAIXA";
@@ -58,6 +60,15 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
     local: "Local",
     observacoes: "Observacoes",
   },
+  // Conta de consumo e boleto. O escritorio recebe estas contas todo mes e
+  // digita as mesmas quatro coisas; a IA le e ja classifica.
+  CONTA: {
+    fornecedor: "Quem emitiu",
+    descricao: "Do que se trata",
+    valor: "Valor",
+    vencimento: "Vencimento",
+    categoria: "Categoria",
+  },
 };
 
 const AJUDA_DO_PERFIL: Record<Perfil, string> = {
@@ -67,6 +78,8 @@ const AJUDA_DO_PERFIL: Record<Perfil, string> = {
     "Peticao inicial, capa dos autos, despacho, sentenca ou print do andamento.",
   AGENDA:
     "Intimacao de audiencia, mandado, carta precatoria, e-mail de reuniao ou print do despacho que marcou a data.",
+  CONTA:
+    "Conta de agua, energia, internet, telefone, boleto do aluguel, guia de imposto ou nota do fornecedor.",
 };
 
 export function camposDoPerfil(perfil: Perfil): Record<string, string> {
@@ -102,6 +115,15 @@ export function montarInstrucao(perfil: Perfil): string {
     "- documento (CPF/CNPJ) e numero de processo: devolva os digitos como estao no papel, sem corrigir o que parece errado;",
     "- se dois documentos discordarem, use o mais recente, marque MEDIA e explique em observacoes;",
     "- observacoes sao para o que o advogado precisa saber: divergencia entre documentos, documento vencido, pagina faltando.",
+    ...(perfil === "CONTA"
+      ? [
+          '- "valor" e o TOTAL A PAGAR do documento, em reais, so numeros e virgula ("189,47"). Nao e o consumo, nao e a leitura do medidor, nao e o valor de outro mes que aparece no historico;',
+          '- "vencimento" sai no formato aaaa-mm-dd;',
+          `- "categoria" e exatamente uma destas: ${CATEGORIAS_DE_DESPESA.join(", ")}. Se nenhuma servir, nao devolva o campo;`,
+          '- "descricao" e curta ("Conta de energia - setembro"), nao o texto do documento;',
+          "- conta com valores de varios meses no historico: use o do mes corrente, e diga em observacoes qual mes voce usou.",
+        ]
+      : []),
     ...(perfil === "AGENDA"
       ? [
           '- "inicio" sai no formato aaaa-mm-ddThh:mm, horario de Brasilia. Sem hora no documento, use 09:00 e marque MEDIA dizendo isso na origem;',
@@ -173,6 +195,12 @@ function valida(
   if (data.getUTCMonth() !== mes - 1 || data.getUTCDate() !== dia) return null;
   const dois = (n: number) => String(n).padStart(2, "0");
   return `${ano}-${dois(mes)}-${dois(dia)}T${dois(hora)}:${dois(minuto)}`;
+}
+
+/** Para aaaa-mm-dd. Aceita ISO e o formato brasileiro. */
+export function normalizarData(bruto: string): string | null {
+  const comHora = normalizarDataHora(bruto);
+  return comHora ? comHora.slice(0, 10) : null;
 }
 
 function menorConfianca(atual: Confianca, teto: Confianca): Confianca {
@@ -255,6 +283,46 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
         );
         continue;
       }
+    }
+
+    if (chave === "valor") {
+      // Valor que nao vira centavos e pior que valor ausente: entra no
+      // formulario, alguem grava, e o mes fecha errado.
+      const centavos = paraCentavos(valor);
+      if (centavos === null || centavos === 0) {
+        confianca = "BAIXA";
+        observacoes.push(
+          `O valor lido ("${valor}") nao pode ser entendido como dinheiro. Preencha a mao.`,
+        );
+        continue;
+      }
+    }
+
+    if (chave === "vencimento") {
+      const data = normalizarData(valor);
+      if (data) {
+        valor = data;
+      } else {
+        confianca = "BAIXA";
+        observacoes.push(
+          `A data de vencimento lida ("${valor}") nao pode ser entendida. Preencha a mao.`,
+        );
+        continue;
+      }
+    }
+
+    if (chave === "categoria") {
+      // O modelo as vezes devolve o rotulo em vez da chave. Chave que nao
+      // existe no catalogo e descartada: categoria inventada quebra o
+      // grafico e o comparativo entre meses.
+      const emMaiuscula = valor.toUpperCase().replace(/[\s-]+/g, "_");
+      if (!ehCategoria(emMaiuscula)) {
+        observacoes.push(
+          `A categoria sugerida ("${valor}") nao existe no catalogo. Escolha uma na tela.`,
+        );
+        continue;
+      }
+      valor = emMaiuscula;
     }
 
     if (chave === "numero") {
