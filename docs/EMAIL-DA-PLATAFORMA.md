@@ -6,14 +6,71 @@ e um erro caro:
 | quem manda | de onde sai | para que serve |
 | --- | --- | --- |
 | **o escritorio** | SMTP que ele conectou em Integracoes | aviso de prazo, resumo do dia, mensagem para o cliente dele |
-| **a plataforma** | `PLATAFORMA_SMTP_*` | recuperacao de senha e convite de usuario novo |
+| **a plataforma** | rele de e-mail na Vercel (`EMAIL_RELE_*`) | recuperacao de senha, convite de usuario novo, aviso do vigia |
 
 O cliente do escritorio tem de receber do advogado, nao de nos — por isso o
 primeiro existe. E a recuperacao de senha nao pode depender de o escritorio
 ter configurado e-mail (quem esqueceu a senha pode ser justamente quem ia
 configurar) — por isso o segundo.
 
+## O bloqueio de SMTP, e por que existe um rele
+
+O Railway **bloqueia saida SMTP**. Medido, nao suposto:
+
+```
+smtp.gmail.com:587 -> ETIMEDOUT em ~250 ms
+smtp.gmail.com:465 -> ETIMEDOUT em ~250 ms
+smtp.gmail.com:25  -> ETIMEDOUT em ~250 ms
+api.resend.com:443 -> abriu em 8 ms
+```
+
+Provedor de nuvem faz isso para conter spam. O sintoma — "connection timeout" —
+e identico ao de senha errada, e isso custou uma troca de senha de aplicativo e
+uma troca de porta antes de alguem medir. **Nenhuma senha do Google resolve
+isso**: a conexao nao chega ao Google.
+
+A decisao foi manter o Gmail, e nao trocar por servico de envio. Entao quem
+fala SMTP com o Gmail e o rele na Vercel (`rele/api/email.ts`, regiao gru1), que
+a aplicacao chama por HTTPS — porta 443, que o Railway libera. O mesmo projeto
+da Vercel que ja hospeda o rele do DJEN, com **token proprio**: quem
+comprometer o envio de e-mail nao leva junto o token do DJEN.
+
+```
+aplicacao (Railway)  --HTTPS-->  rele (Vercel, gru1)  --SMTP 465-->  Gmail
+```
+
+O rele fixa o remetente pelo ambiente **dele**: quem chama nao escolhe de quem
+o e-mail parece vir, e cada chamada leva um destinatario so.
+
 ## As variaveis
+
+### Caminho escolhido: rele de e-mail
+
+No Railway (aplicacao e servicos que mandam e-mail):
+
+```
+EMAIL_RELE_URL=https://birdjud-rele.vercel.app/api/email
+EMAIL_RELE_TOKEN=<o mesmo valor de EMAIL_TOKEN na Vercel>
+```
+
+Na Vercel, projeto `birdjud-rele`:
+
+```
+EMAIL_TOKEN=<segredo compartilhado com o Railway>
+GMAIL_USUARIO=blackbirdnotifica@gmail.com
+GMAIL_SENHA=<senha de aplicativo de 16 letras, sem espacos>
+GMAIL_REMETENTE=BirdJud <blackbirdnotifica@gmail.com>
+GMAIL_RESPONDER_PARA=blackbirdnotifica@gmail.com
+```
+
+Para conferir se a Vercel alcanca o Gmail, sem enviar nada:
+
+```
+curl -H "Authorization: Bearer $EMAIL_TOKEN" \
+  "https://birdjud-rele.vercel.app/api/email?diagnostico=1"
+```
+
+### Caminhos alternativos (em ordem de preferencia do codigo)
 
 ```
 PLATAFORMA_SMTP_HOST=
@@ -28,6 +85,10 @@ Faltando qualquer uma das quatro primeiras, ou o remetente, a tela de
 recuperacao diz que a recuperacao automatica nao esta disponivel — em vez de
 fingir que o e-mail saiu e deixar a pessoa esperando por um link que nunca
 chega.
+
+Com `EMAIL_RELE_*` configurado, nada abaixo e usado. `RESEND_API_KEY` vem
+depois dele, e o SMTP direto por ultimo — este so funciona em servidor proprio,
+por causa do bloqueio descrito acima.
 
 ## Caminho 1: conta do Google com senha de aplicativo
 

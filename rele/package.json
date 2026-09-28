@@ -2,10 +2,14 @@
   "name": "birdjud-rele",
   "version": "0.1.0",
   "private": true,
-  "description": "Rele do DJEN em solo brasileiro (Vercel, regiao gru1). Sem dependencias de execucao de proposito: os tipos abaixo sao so de desenvolvimento e nao vao para a funcao. Sem eles, a Vercel compila com erro de tipo, publica a funcao quebrada e ainda marca o build como concluido.",
+  "description": "Rele do BirdJud na Vercel, regiao gru1: DJEN (api/djen.ts, que bloqueia por pais) e e-mail da plataforma (api/email.ts, porque o Railway bloqueia saida SMTP). Cada funcao tem o seu proprio token.",
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/nodemailer": "^8.0.2"
+  },
+  "dependencies": {
+    "nodemailer": "^10.0.10"
   }
 }
