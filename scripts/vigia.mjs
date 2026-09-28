@@ -18,10 +18,12 @@
 // Ele pega o caso comum — a aplicacao fora do ar com a plataforma de pe. As
 // duas lacunas acima sao exatamente o que um monitor de fora cobre, e por
 // isso o monitor externo continua valendo a pena.
+import { connect as conectarTls } from "node:tls";
 import {
   enviarPelaPlataforma,
   temRemetenteDaPlataforma,
 } from "../src/lib/email-plataforma.ts";
+import { julgar } from "../src/lib/certificado.ts";
 
 const ENDERECO =
   process.env.VIGIA_ENDERECO ?? "https://app.birdjud.com.br/api/saude";
@@ -29,6 +31,92 @@ const DESTINO = process.env.VIGIA_AVISAR ?? process.env.CONTATO_COMERCIAL;
 const TENTATIVAS = Number(process.env.VIGIA_TENTATIVAS ?? 3);
 const ESPERA_MS = Number(process.env.VIGIA_ESPERA_MS ?? 5_000);
 const LIMITE_MS = Number(process.env.VIGIA_LIMITE_MS ?? 15_000);
+
+/**
+ * Dominios proprios cuja borda precisa apresentar certificado valido.
+ * Um por linha do healthcheck nao serve: o que interessa aqui e o nome que a
+ * borda apresenta, e ele vale para o subdominio inteiro.
+ */
+const CERTIFICADOS = (
+  process.env.VIGIA_CERTIFICADOS ??
+  `app.${process.env.DOMINIO_PLATAFORMA?.trim() || "birdjud.com.br"}`
+)
+  .split(",")
+  .map((nome) => nome.trim())
+  .filter(Boolean);
+
+/**
+ * Abre o TLS e devolve o certificado que a borda apresentou.
+ *
+ * rejectUnauthorized: false de proposito — queremos OLHAR o certificado
+ * errado, nao levar um erro e ficar sem saber qual era. O julgamento e do
+ * modulo certificado.ts, que e testado.
+ */
+function certificadoDaBorda(host) {
+  return new Promise((pronto) => {
+    const tomada = conectarTls({
+      host,
+      port: 443,
+      servername: host,
+      rejectUnauthorized: false,
+      timeout: LIMITE_MS,
+    });
+    tomada.on("secureConnect", () => {
+      const certificado = tomada.getPeerCertificate();
+      tomada.destroy();
+      pronto({ certificado });
+    });
+    tomada.on("timeout", () => {
+      tomada.destroy();
+      pronto({ erro: `sem handshake em ${LIMITE_MS} ms` });
+    });
+    tomada.on("error", (erro) => pronto({ erro: erro.code ?? erro.message }));
+  });
+}
+
+/** Confere todos os dominios e devolve so o que e falha certa. */
+async function conferirCertificados() {
+  const falhas = [];
+  for (const host of CERTIFICADOS) {
+    const { certificado, erro } = await certificadoDaBorda(host);
+    if (erro) {
+      // Nao alcancar o host pode ser a rede deste container. Registra e cala.
+      console.log(`vigia: certificado de ${host} inconclusivo — ${erro}`);
+      continue;
+    }
+    const veredito = julgar(host, certificado, new Date());
+    if (veredito.situacao === "ok") {
+      console.log(
+        `vigia: certificado de ${host} ok (${veredito.nomes.join(", ")}), ${veredito.expiraEm} dia(s)`,
+      );
+    } else if (veredito.situacao === "inconclusivo") {
+      console.log(`vigia: certificado de ${host} inconclusivo — ${veredito.motivo}`);
+    } else {
+      console.error(`vigia: ${veredito.motivo}`);
+      falhas.push(veredito.motivo);
+    }
+  }
+  return falhas;
+}
+
+/**
+ * Manda o aviso, e nunca deixa a falha do e-mail apagar a falha original: o
+ * codigo de saida do vigia continua sendo o do problema que ele achou.
+ */
+async function avisar(assunto, texto) {
+  if (!DESTINO || !temRemetenteDaPlataforma()) {
+    console.error(
+      "vigia: sem VIGIA_AVISAR/CONTATO_COMERCIAL ou sem remetente — o aviso nao saiu por e-mail",
+    );
+    return;
+  }
+  try {
+    await enviarPelaPlataforma({ para: DESTINO, assunto, texto });
+    console.error(`vigia: aviso enviado para ${DESTINO}`);
+  } catch (erro) {
+    console.error(`vigia: o aviso nao pode ser enviado — ${erro.message}`);
+  }
+}
 
 /** Uma batida: ok quando responde 200 com {"ok":true}. */
 async function bater() {
@@ -126,19 +214,47 @@ if (process.env.VIGIA_DIAGNOSTICO === "1") {
   process.exit(0);
 }
 
+// O certificado primeiro: healthcheck verde com certificado invalido e
+// justamente o caso em que o sistema esta fora do ar para quem usa.
+const problemasDeCertificado = await conferirCertificados();
+
 // Tres batidas antes de acusar: rede tem soluco, e alarme por soluco e o jeito
 // mais rapido de ensinar todo mundo a ignorar o alarme.
 const motivos = [];
+let respondeu = false;
 for (let i = 1; i <= TENTATIVAS; i++) {
   const resultado = await bater();
   if (resultado.ok) {
     console.log(`vigia: ${ENDERECO} respondeu em ${resultado.demorou} ms`);
-    process.exit(0);
+    respondeu = true;
+    break;
   }
   motivos.push(`tentativa ${i}: ${resultado.motivo}`);
   console.error(`vigia: ${motivos.at(-1)}`);
   if (i < TENTATIVAS)
     await new Promise((pronto) => setTimeout(pronto, ESPERA_MS));
+}
+
+if (respondeu && problemasDeCertificado.length === 0) process.exit(0);
+
+if (respondeu) {
+  const aviso = [
+    "A aplicacao responde, mas o certificado do dominio proprio esta com problema.",
+    "Enquanto isso durar, NINGUEM consegue entrar: o navegador recusa o TLS",
+    "antes de chegar na aplicacao.",
+    "",
+    `Quando: ${new Date().toISOString()}`,
+    "",
+    ...problemasDeCertificado,
+    "",
+    "Onde olhar: Railway > projeto birdjud > servico aplicacao > Settings >",
+    "Networking > o dominio > certificado. Em falha, reemitir.",
+    "",
+    "BirdJud · vigia automatico",
+  ].join("\n");
+  console.error(aviso);
+  await avisar("BirdJud sem certificado valido", aviso);
+  process.exit(1);
 }
 
 const resumo = [
@@ -148,6 +264,9 @@ const resumo = [
   `Quando: ${new Date().toISOString()}`,
   "",
   ...motivos,
+  ...(problemasDeCertificado.length
+    ? ["", "E o certificado do dominio proprio tambem:", ...problemasDeCertificado]
+    : []),
   "",
   "Onde olhar: Railway > projeto birdjud > servico aplicacao > Deployments.",
   "",
@@ -155,24 +274,7 @@ const resumo = [
 ].join("\n");
 
 console.error(resumo);
-
-if (!DESTINO || !temRemetenteDaPlataforma()) {
-  console.error(
-    "vigia: sem VIGIA_AVISAR/CONTATO_COMERCIAL ou sem remetente — o aviso nao saiu por e-mail",
-  );
-  process.exit(1);
-}
-
-try {
-  await enviarPelaPlataforma({
-    para: DESTINO,
-    assunto: "BirdJud fora do ar",
-    texto: resumo,
-  });
-  console.error(`vigia: aviso enviado para ${DESTINO}`);
-} catch (erro) {
-  console.error(`vigia: o aviso nao pode ser enviado — ${erro.message}`);
-}
+await avisar("BirdJud fora do ar", resumo);
 
 // Sai com erro para a execucao aparecer como falha no painel do Railway,
 // mesmo que o e-mail tenha saido.
