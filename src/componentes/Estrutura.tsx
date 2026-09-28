@@ -79,6 +79,13 @@ const AREAS: Area[] = [
     grupo: "escritorio",
   },
   {
+    href: "/administracao",
+    rotulo: "Administracao",
+    icone: "integracoes",
+    soAdmin: true,
+    grupo: "escritorio",
+  },
+  {
     href: "/conta",
     rotulo: "Minha conta",
     icone: "conta",
