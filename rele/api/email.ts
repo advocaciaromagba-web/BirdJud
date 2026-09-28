@@ -143,7 +143,23 @@ export default async function handler(
 
   const url = new URL(pedido.url ?? "/", "http://rele");
   if (url.searchParams.get("diagnostico") === "1") {
-    return responder(resposta, 200, { diagnostico: await diagnosticar() });
+    // Usuario e tamanho da senha, nunca a senha. Serve para separar "a
+    // credencial esta errada" de "a credencial chegou truncada ate aqui" —
+    // dois problemas com o mesmo sintoma (535 do Gmail) e donos diferentes.
+    const senhaConfigurada = process.env.GMAIL_SENHA ?? "";
+    return responder(resposta, 200, {
+      diagnostico: await diagnosticar(),
+      configuracao: {
+        usuario: process.env.GMAIL_USUARIO ?? null,
+        remetente: process.env.GMAIL_REMETENTE ?? null,
+        senha: {
+          caracteres: senhaConfigurada.length,
+          temEspaco: /\s/.test(senhaConfigurada),
+          soMinusculas: /^[a-z]+$/.test(senhaConfigurada),
+        },
+        porta: Number(process.env.GMAIL_PORTA ?? 465),
+      },
+    });
   }
 
   if (pedido.method !== "POST") return responder(resposta, 405, { erro: "Use POST." });
