@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import { MARCA_NEUTRA } from "@/lib/escritorio";
+import { normalizarCor, paletaDe, variaveisDaPaleta } from "@/lib/identidade";
 import { escritorioDoEndereco } from "@/lib/sessao";
 import "./globals.css";
 
@@ -47,18 +48,22 @@ export default async function RootLayout({
   // A marca vem do subdominio, nunca de constante no codigo.
   const marca = (await escritorioDoEndereco()) ?? MARCA_NEUTRA;
 
+  // O valor vai para o atributo style, e propriedade personalizada aceita
+  // qualquer texto — inclusive o resto de uma regra CSS. Uma linha gravada
+  // antes desta conferencia existir, ou por outro caminho, nao pode virar
+  // estilo: cor que nao normaliza cai na cor neutra.
+  const paleta = paletaDe(
+    normalizarCor(marca.corPrimaria) ?? MARCA_NEUTRA.corPrimaria,
+    normalizarCor(marca.corSecundaria) ?? MARCA_NEUTRA.corSecundaria,
+  );
+
   return (
     <html
       lang="pt-BR"
       className={`${interface_.variable} ${titulo.variable} ${serifada.variable}`}
     >
       <body
-        style={
-          {
-            "--marca-primaria": marca.corPrimaria,
-            "--marca-secundaria": marca.corSecundaria,
-          } as React.CSSProperties
-        }
+        style={variaveisDaPaleta(paleta) as React.CSSProperties}
       >
         {children}
       </body>

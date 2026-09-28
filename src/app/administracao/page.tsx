@@ -5,6 +5,7 @@ import { Estrutura } from "@/componentes/Estrutura";
 import { PortaDeAdministracao } from "@/componentes/PortaDeAdministracao";
 import { EnvioDeCertificado } from "@/componentes/EnvioDeCertificado";
 import { TrocaDaSenhaDeAdministracao } from "@/componentes/TrocaDaSenhaDeAdministracao";
+import { IdentidadeDoEscritorio } from "@/componentes/IdentidadeDoEscritorio";
 import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
 import Link from "next/link";
 
@@ -54,7 +55,14 @@ export default async function PaginaAdministracao() {
     comEscritorio(contexto.escritorioId, (db) =>
       db.escritorio.findFirst({
         where: { id: contexto.escritorioId },
-        select: { senhaAdminEm: true },
+        select: {
+        senhaAdminEm: true,
+        corPrimaria: true,
+        corSecundaria: true,
+        telefoneAtendimento: true,
+        cidade: true,
+        logoUrl: true,
+      },
       }),
     ),
   ]);
@@ -75,6 +83,15 @@ export default async function PaginaAdministracao() {
       </p>
 
       <div className="mt-6 space-y-6">
+        <IdentidadeDoEscritorio
+          nome={contexto.marca.nome}
+          corPrimariaAtual={escritorio?.corPrimaria ?? "#0B1F3B"}
+          corSecundariaAtual={escritorio?.corSecundaria ?? "#D4AF7C"}
+          telefoneAtual={escritorio?.telefoneAtendimento ?? null}
+          cidadeAtual={escritorio?.cidade ?? null}
+          logoUrlAtual={escritorio?.logoUrl ?? null}
+        />
+
         <TrocaDaSenhaDeAdministracao
           definidaEm={escritorio?.senhaAdminEm?.toISOString() ?? null}
         />
