@@ -125,6 +125,68 @@ async function diagnosticar(): Promise<string[]> {
   return linhas;
 }
 
+/**
+ * Conversa SMTP na mao com o Gmail, so ate o AUTH.
+ *
+ * Existe porque "535" vindo de dentro de uma biblioteca nao diz se quem errou
+ * foi a credencial ou a biblioteca. Aqui nao ha biblioteca: EHLO, AUTH LOGIN,
+ * e o que o Gmail responder volta cru. Nao envia mensagem nenhuma, e a senha
+ * so aparece na fita como base64 para o proprio Gmail — nunca na resposta.
+ */
+async function conversarComOGmail(usuario: string, senha: string): Promise<string[]> {
+  const { connect: conectarTls } = await import("node:tls");
+  const fita: string[] = [];
+  return new Promise<string[]>((pronto) => {
+    const tomada = conectarTls({ host: "smtp.gmail.com", port: 465, servername: "smtp.gmail.com" });
+    const passos = [
+      "EHLO birdjud-rele",
+      "AUTH LOGIN",
+      Buffer.from(usuario).toString("base64"),
+      Buffer.from(senha).toString("base64"),
+      "QUIT",
+    ];
+    let i = -1;
+    let sobra = "";
+    const encerrar = () => {
+      tomada.destroy();
+      pronto(fita);
+    };
+    const relogio = setTimeout(encerrar, 20_000);
+    tomada.on("secureConnect", () => tomada.write(""));
+    tomada.on("data", (pedaco: Buffer) => {
+      sobra += pedaco.toString("utf8");
+      const linhas = sobra.split("\r\n");
+      sobra = linhas.pop() ?? "";
+      for (const linha of linhas) {
+        if (!linha) continue;
+        // A resposta multi-linha do EHLO tem hifen na quarta coluna; so a
+        // ultima (com espaco) libera o proximo passo.
+        const final = /^\d{3} /.test(linha);
+        fita.push(`<- ${linha}`);
+        if (!final) continue;
+        i += 1;
+        if (i >= passos.length) {
+          clearTimeout(relogio);
+          return encerrar();
+        }
+        const passo = passos[i];
+        // Nunca registrar o passo 3 (a senha em base64) na fita.
+        fita.push(i === 3 ? "-> <senha em base64>" : `-> ${passo}`);
+        tomada.write(`${passo}\r\n`);
+      }
+    });
+    tomada.on("error", (e: Error) => {
+      fita.push(`!! ${e.message}`);
+      clearTimeout(relogio);
+      encerrar();
+    });
+    tomada.on("close", () => {
+      clearTimeout(relogio);
+      pronto(fita);
+    });
+  });
+}
+
 export default async function handler(
   pedido: IncomingMessage,
   resposta: ServerResponse,
@@ -147,6 +209,11 @@ export default async function handler(
     // credencial esta errada" de "a credencial chegou truncada ate aqui" —
     // dois problemas com o mesmo sintoma (535 do Gmail) e donos diferentes.
     const senhaConfigurada = process.env.GMAIL_SENHA ?? "";
+    if (url.searchParams.get("conversa") === "1") {
+      const u = process.env.GMAIL_USUARIO ?? "";
+      const p = process.env.GMAIL_SENHA ?? "";
+      return responder(resposta, 200, { conversa: await conversarComOGmail(u, p) });
+    }
     return responder(resposta, 200, {
       diagnostico: await diagnosticar(),
       configuracao: {
