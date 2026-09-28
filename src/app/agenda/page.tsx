@@ -24,18 +24,26 @@ export default async function PaginaAgenda() {
   const contexto = await contextoDaPagina();
 
   const modulos = await modulosAtivos(contexto.escritorioId);
-  const { compromissos, processos } = await comEscritorio(
+  const { compromissos, processos, clientes } = await comEscritorio(
     contexto.escritorioId,
     async (db) => ({
       compromissos: await db.compromisso.findMany({
         where: { inicio: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
         orderBy: { inicio: "asc" },
         take: 200,
-        include: { processo: { select: { numero: true } } },
+        include: {
+          processo: { select: { numero: true } },
+          cliente: { select: { nome: true } },
+        },
       }),
       processos: await db.processo.findMany({
         orderBy: { criadoEm: "desc" },
         take: 500,
+      }),
+      clientes: await db.cliente.findMany({
+        orderBy: { nome: "asc" },
+        take: 500,
+        select: { id: true, nome: true },
       }),
     }),
   );
@@ -65,6 +73,7 @@ export default async function PaginaAgenda() {
         recolhivel
         textoAbrir="Novo compromisso"
         textoBotao="Agendar"
+        leitura={modulos.includes("IA") ? "AGENDA" : undefined}
         campos={[
           { nome: "titulo", rotulo: "Titulo", obrigatorio: true, largo: true },
           {
@@ -75,6 +84,15 @@ export default async function PaginaAgenda() {
           },
           { nome: "tipo", rotulo: "Tipo", tipo: "select", opcoes: TIPOS },
           {
+            nome: "clienteId",
+            rotulo: "Cliente",
+            tipo: "cliente",
+            largo: true,
+            opcoes: clientes.map((c) => ({ valor: c.id, rotulo: c.nome })),
+            ajuda:
+              "Obrigatorio na tarefa. No agendamento e opcional — a primeira reuniao pode ser com quem ainda nao e cliente.",
+          },
+          {
             nome: "processoId",
             rotulo: "Processo",
             tipo: "select",
@@ -82,8 +100,14 @@ export default async function PaginaAgenda() {
               valor: p.id,
               rotulo: formatarNumeroProcesso(p.numero),
             })),
+            ajuda: "Opcional. Agendamento nao precisa de processo.",
           },
           { nome: "local", rotulo: "Local" },
+          {
+            nome: "observacoes",
+            rotulo: "Observacoes",
+            tipo: "textarea",
+          },
         ]}
       />
 
@@ -120,10 +144,15 @@ export default async function PaginaAgenda() {
                     </span>
                     <span className="font-semibold">{compromisso.titulo}</span>
                     <span className="text-slate-500">
-                      {compromisso.processo
-                        ? formatarNumeroProcesso(compromisso.processo.numero)
-                        : ""}
-                      {compromisso.local ? ` · ${compromisso.local}` : ""}
+                      {[
+                        compromisso.cliente?.nome,
+                        compromisso.processo
+                          ? formatarNumeroProcesso(compromisso.processo.numero)
+                          : null,
+                        compromisso.local,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </li>
                 ))}

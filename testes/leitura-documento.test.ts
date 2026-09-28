@@ -14,6 +14,7 @@ import {
   interpretar,
   LeituraIlegivel,
   montarInstrucao,
+  normalizarDataHora,
   rotuloDoCampo,
 } from "../src/lib/leitura-documento";
 
@@ -138,5 +139,73 @@ describe("leitura de documento", () => {
     expect(instrucao).toContain("Nao invente");
     expect(instrucao).not.toContain('"tribunal"');
     expect(rotuloDoCampo("PROCESSO", "vara")).toBe("Vara");
+  });
+});
+
+// Perfil AGENDA: a intimacao ja traz dia, hora e endereco. O risco aqui e
+// especifico e caro — audiencia no dia errado e perda de prazo, nao
+// inconveniente. Por isso data que nao da para entender e recusada, nunca
+// adivinhada.
+describe("leitura para a agenda", () => {
+  it("aceita os formatos que aparecem em intimacao brasileira", () => {
+    expect(normalizarDataHora("2026-11-03T14:30")).toBe("2026-11-03T14:30");
+    expect(normalizarDataHora("2026-11-03 14:30")).toBe("2026-11-03T14:30");
+    expect(normalizarDataHora("03/11/2026 14:30")).toBe("2026-11-03T14:30");
+    expect(normalizarDataHora("3/11/2026 as 14:30")).toBe("2026-11-03T14:30");
+    expect(normalizarDataHora("03/11/2026 às 14h30")).toBe("2026-11-03T14:30");
+  });
+
+  it("sem hora, assume 09:00", () => {
+    expect(normalizarDataHora("03/11/2026")).toBe("2026-11-03T09:00");
+  });
+
+  // O Date "corrige" 31/11 para 01/12 em silencio, e a audiencia mudaria de
+  // mes sem ninguem ver.
+  it("recusa data que nao existe em vez de deslizar para o mes seguinte", () => {
+    expect(normalizarDataHora("31/11/2026 10:00")).toBeNull();
+    expect(normalizarDataHora("30/02/2026 10:00")).toBeNull();
+    expect(normalizarDataHora("2026-02-30T10:00")).toBeNull();
+  });
+
+  it("recusa hora impossivel e texto solto", () => {
+    expect(normalizarDataHora("03/11/2026 25:00")).toBeNull();
+    expect(normalizarDataHora("em quinze dias")).toBeNull();
+    expect(normalizarDataHora("")).toBeNull();
+  });
+
+  it("a leitura rebaixa e explica quando a data nao serve", () => {
+    const leitura = interpretar(
+      "AGENDA",
+      JSON.stringify({
+        campos: {
+          titulo: { valor: "Audiencia de instrucao", confianca: "ALTA" },
+          inicio: { valor: "em quinze dias", confianca: "ALTA" },
+          local: { valor: "Forum Ruy Barbosa, sala 3", confianca: "ALTA" },
+        },
+        observacoes: [],
+      }),
+    );
+    // Campo que a tela nao conseguiria usar nao entra preenchido com lixo.
+    expect(leitura.campos.inicio).toBeUndefined();
+    expect(leitura.campos.titulo.valor).toBe("Audiencia de instrucao");
+    expect(leitura.observacoes.join(" ")).toContain("nao pode ser entendida");
+  });
+
+  it("aceita a data boa e mantem o resto", () => {
+    const leitura = interpretar(
+      "AGENDA",
+      JSON.stringify({
+        campos: {
+          titulo: { valor: "Audiencia una", confianca: "ALTA" },
+          inicio: { valor: "03/11/2026 as 14:30", confianca: "ALTA" },
+          local: { valor: "Forum", confianca: "MEDIA" },
+          // Campo que o perfil nao conhece continua sendo descartado.
+          documento: { valor: "123", confianca: "ALTA" },
+        },
+        observacoes: [],
+      }),
+    );
+    expect(leitura.campos.inicio.valor).toBe("2026-11-03T14:30");
+    expect(leitura.campos.documento).toBeUndefined();
   });
 });

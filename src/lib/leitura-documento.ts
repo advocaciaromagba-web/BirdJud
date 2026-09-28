@@ -18,7 +18,7 @@ import { z } from "zod";
 import { digitosDe, documentoValido, formatarDocumento } from "./documentos";
 import { normalizarNumeroProcesso } from "./leitura-publicacao";
 
-export const PERFIS = ["CLIENTE", "PROCESSO"] as const;
+export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA"] as const;
 export type Perfil = (typeof PERFIS)[number];
 
 export type Confianca = "ALTA" | "MEDIA" | "BAIXA";
@@ -50,6 +50,14 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
     vara: "Vara",
     area: "Area",
   },
+  // Agenda: a intimacao de audiencia ja traz dia, hora e endereco. Redigitar
+  // isso e onde nasce audiencia marcada no dia errado.
+  AGENDA: {
+    titulo: "Do que se trata",
+    inicio: "Data e hora",
+    local: "Local",
+    observacoes: "Observacoes",
+  },
 };
 
 const AJUDA_DO_PERFIL: Record<Perfil, string> = {
@@ -57,6 +65,8 @@ const AJUDA_DO_PERFIL: Record<Perfil, string> = {
     "RG, CNH, cartao CNPJ, contrato social, procuracao ou ficha preenchida a mao.",
   PROCESSO:
     "Peticao inicial, capa dos autos, despacho, sentenca ou print do andamento.",
+  AGENDA:
+    "Intimacao de audiencia, mandado, carta precatoria, e-mail de reuniao ou print do despacho que marcou a data.",
 };
 
 export function camposDoPerfil(perfil: Perfil): Record<string, string> {
@@ -92,6 +102,13 @@ export function montarInstrucao(perfil: Perfil): string {
     "- documento (CPF/CNPJ) e numero de processo: devolva os digitos como estao no papel, sem corrigir o que parece errado;",
     "- se dois documentos discordarem, use o mais recente, marque MEDIA e explique em observacoes;",
     "- observacoes sao para o que o advogado precisa saber: divergencia entre documentos, documento vencido, pagina faltando.",
+    ...(perfil === "AGENDA"
+      ? [
+          '- "inicio" sai no formato aaaa-mm-ddThh:mm, horario de Brasilia. Sem hora no documento, use 09:00 e marque MEDIA dizendo isso na origem;',
+          '- "titulo" e curto e diz do que se trata ("Audiencia de instrucao", "Reuniao com o cliente"), nao o texto do documento inteiro;',
+          "- data relativa ('em 15 dias') so vira data se o documento disser a partir de quando. Na duvida, nao devolva o campo e explique em observacoes.",
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -107,6 +124,56 @@ const esquema = z.object({
     .default({}),
   observacoes: z.array(z.string().max(500)).max(20).default([]),
 });
+
+/**
+ * Para o formato que o campo datetime-local entende (aaaa-mm-ddThh:mm).
+ *
+ * Aceita o que o modelo costuma devolver e o que esta escrito em intimacao
+ * brasileira: ISO, "dd/mm/aaaa hh:mm" e "dd/mm/aaaa as hh:mm". Qualquer outra
+ * coisa e recusada em vez de adivinhada — audiencia no dia errado e perda de
+ * prazo, nao inconveniente.
+ */
+export function normalizarDataHora(bruto: string): string | null {
+  const texto = bruto.trim();
+
+  const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (iso) {
+    const [, a, m, d, h, min] = iso;
+    return valida(a, m, d, h, min);
+  }
+
+  const br = texto.match(
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s*(?:as|às|,)?\s*(\d{1,2})[:h](\d{2}))?/i,
+  );
+  if (br) {
+    const [, d, m, a, h, min] = br;
+    return valida(a, m, d, h ?? "09", min ?? "00");
+  }
+
+  return null;
+}
+
+function valida(
+  a: string,
+  m: string,
+  d: string,
+  h: string,
+  min: string,
+): string | null {
+  const ano = Number(a);
+  const mes = Number(m);
+  const dia = Number(d);
+  const hora = Number(h);
+  const minuto = Number(min);
+  if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
+  if (hora > 23 || minuto > 59) return null;
+  // Dia 31 em mes de 30 nao existe, e o Date "corrige" para o mes seguinte em
+  // silencio. Conferir de volta e o que impede isso.
+  const data = new Date(Date.UTC(ano, mes - 1, dia, hora, minuto));
+  if (data.getUTCMonth() !== mes - 1 || data.getUTCDate() !== dia) return null;
+  const dois = (n: number) => String(n).padStart(2, "0");
+  return `${ano}-${dois(mes)}-${dois(dia)}T${dois(hora)}:${dois(minuto)}`;
+}
 
 function menorConfianca(atual: Confianca, teto: Confianca): Confianca {
   const ordem: Confianca[] = ["BAIXA", "MEDIA", "ALTA"];
@@ -172,6 +239,21 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
         observacoes.push(
           `O ${digitos.length === 14 ? "CNPJ" : "CPF"} lido (${valor}) nao fecha o digito verificador. Confira no documento.`,
         );
+      }
+    }
+
+    if (chave === "inicio") {
+      const normalizada = normalizarDataHora(valor);
+      if (normalizada) {
+        valor = normalizada;
+      } else {
+        // Data que a tela nao consegue usar e pior que data ausente: o campo
+        // fica preenchido com lixo e alguem grava assim.
+        confianca = "BAIXA";
+        observacoes.push(
+          `A data e hora lida ("${valor}") nao pode ser entendida. Preencha a mao.`,
+        );
+        continue;
       }
     }
 

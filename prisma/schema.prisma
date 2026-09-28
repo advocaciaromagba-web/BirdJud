@@ -170,10 +170,11 @@ model Cliente {
   atualizadoEm DateTime @updatedAt
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
-  processos  Processo[]
-  cobrancas  Cobranca[]
-  arquivos   Arquivo[]
-  notas      NotaFiscal[]
+  processos    Processo[]
+  cobrancas    Cobranca[]
+  arquivos     Arquivo[]
+  notas        NotaFiscal[]
+  compromissos Compromisso[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -206,6 +207,9 @@ model Compromisso {
   id           String   @id @default(cuid())
   escritorioId String
   processoId   String?
+  // Tarefa exige cliente; agendamento nao. A coluna e nula porque a regra
+  // vive na API — ver src/lib/compromissos.ts.
+  clienteId    String?
   titulo       String
   tipo         String   @default("COMPROMISSO") // COMPROMISSO | AUDIENCIA | PRAZO | TAREFA
   inicio       DateTime
@@ -217,9 +221,11 @@ model Compromisso {
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
 
   @@index([escritorioId])
   @@index([escritorioId, inicio])
+  @@index([escritorioId, clienteId])
 }
 
 // ---------------------------------------------------------------------------

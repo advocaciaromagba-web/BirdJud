@@ -15,7 +15,12 @@ export type Campo = {
     | "date"
     | "datetime-local"
     | "select"
-    | "textarea";
+    | "textarea"
+    // Cliente: escolhe um da base OU cadastra um novo ali mesmo. Existe
+    // porque a primeira reuniao costuma ser com quem ainda nao e cliente, e
+    // mandar a pessoa sair para cadastrar antes e o jeito certo de ela nao
+    // cadastrar.
+    | "cliente";
   obrigatorio?: boolean;
   opcoes?: { valor: string; rotulo: string }[];
   ajuda?: string;
@@ -34,6 +39,9 @@ export type Campo = {
  * leitor de documentos acima do formulario — a pagina so o passa quando o
  * escritorio tem o modulo IA contratado.
  */
+/** Valor sentinela do seletor de cliente. */
+export const NOVO_CLIENTE = "__novo__";
+
 export function FormularioCriar({
   rota,
   campos,
@@ -78,8 +86,26 @@ export function FormularioCriar({
     setEnviando(true);
     setErro(null);
 
-    const corpo: Record<string, string> = {};
+    const corpo: Record<string, unknown> = {};
     for (const campo of campos) {
+      if (campo.tipo === "cliente") {
+        const escolhido = (valores[campo.nome] ?? "").trim();
+        if (escolhido === NOVO_CLIENTE) {
+          const nome = (valores[`${campo.nome}__nome`] ?? "").trim();
+          const documento = (valores[`${campo.nome}__documento`] ?? "").trim();
+          const telefone = (valores[`${campo.nome}__telefone`] ?? "").trim();
+          if (nome) {
+            corpo.clienteNovo = {
+              nome,
+              ...(documento ? { documento } : {}),
+              ...(telefone ? { telefone } : {}),
+            };
+          }
+        } else if (escolhido) {
+          corpo[campo.nome] = escolhido;
+        }
+        continue;
+      }
       const valor = (valores[campo.nome] ?? "").trim();
       if (valor) corpo[campo.nome] = valor;
     }
@@ -140,7 +166,90 @@ export function FormularioCriar({
                 <span className="text-slate-400"> *</span>
               ) : null}
             </label>
-            {campo.tipo === "select" ? (
+            {campo.tipo === "cliente" ? (
+              <>
+                <select
+                  id={`campo-${campo.nome}`}
+                  name={campo.nome}
+                  required={campo.obrigatorio}
+                  value={valores[campo.nome] ?? ""}
+                  onChange={(evento) => mudar(campo.nome, evento.target.value)}
+                  className="campo"
+                >
+                  <option value="">—</option>
+                  {campo.opcoes?.map((opcao) => (
+                    <option key={opcao.valor} value={opcao.valor}>
+                      {opcao.rotulo}
+                    </option>
+                  ))}
+                  <option value={NOVO_CLIENTE}>+ Cadastrar cliente novo</option>
+                </select>
+
+                {valores[campo.nome] === NOVO_CLIENTE ? (
+                  <div className="mt-3 space-y-3 border-l-2 border-slate-200 pl-3">
+                    <div>
+                      <label
+                        className="rotulo"
+                        htmlFor={`campo-${campo.nome}-nome`}
+                      >
+                        Nome do cliente novo
+                        <span className="text-slate-400"> *</span>
+                      </label>
+                      <input
+                        id={`campo-${campo.nome}-nome`}
+                        className="campo"
+                        required
+                        value={valores[`${campo.nome}__nome`] ?? ""}
+                        onChange={(evento) =>
+                          mudar(`${campo.nome}__nome`, evento.target.value)
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label
+                          className="rotulo"
+                          htmlFor={`campo-${campo.nome}-documento`}
+                        >
+                          CPF ou CNPJ
+                        </label>
+                        <input
+                          id={`campo-${campo.nome}-documento`}
+                          className="campo"
+                          value={valores[`${campo.nome}__documento`] ?? ""}
+                          onChange={(evento) =>
+                            mudar(
+                              `${campo.nome}__documento`,
+                              evento.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="rotulo"
+                          htmlFor={`campo-${campo.nome}-telefone`}
+                        >
+                          Telefone
+                        </label>
+                        <input
+                          id={`campo-${campo.nome}-telefone`}
+                          className="campo"
+                          value={valores[`${campo.nome}__telefone`] ?? ""}
+                          onChange={(evento) =>
+                            mudar(`${campo.nome}__telefone`, evento.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                    <p className="ajuda">
+                      O cadastro completo pode ser feito depois, em Clientes.
+                      Aqui basta o nome.
+                    </p>
+                  </div>
+                ) : null}
+              </>
+            ) : campo.tipo === "select" ? (
               <select
                 id={`campo-${campo.nome}`}
                 name={campo.nome}
