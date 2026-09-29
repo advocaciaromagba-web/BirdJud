@@ -103,3 +103,73 @@ servico `cron-backup`. Falta escolher o destino.
 No Railway, servico `cron-backup` > Deployments: cada execucao aparece com a
 saida do script, que diz o arquivo, o tamanho, quantas tabelas e quantas linhas
 foram gravadas, e quantos arquivos antigos foram apagados.
+
+
+## A copia fora do Railway
+
+O plano do Railway **nao faz backup nenhum** do volume (`maxBackupsCount: 0`).
+Sem copia externa, o backup diario mora no mesmo provedor que ele deveria
+proteger: um incidente la leva o banco e a copia junto, e o ensaio de
+restauracao nao serve de nada sem de onde restaurar.
+
+Desde 29/09/2026 o `backup:banco` tambem envia para armazenamento compativel
+com S3 — **Cloudflare R2** ou **Backblaze B2**, tanto faz: o codigo fala o
+protocolo, nao o fornecedor. Trocar de um para o outro e trocar duas
+variaveis.
+
+### Variaveis (no servico cron-backup)
+
+```
+BACKUP_S3_ENDERECO=https://<conta>.r2.cloudflarestorage.com
+BACKUP_S3_BALDE=birdjud-backup
+BACKUP_S3_CHAVE=<access key id>
+BACKUP_S3_SEGREDO=<secret access key>
+BACKUP_S3_REGIAO=auto          # R2 usa "auto"; a B2 usa a regiao dela
+BACKUP_CHAVE=<32 bytes em base64>
+```
+
+`BACKUP_CHAVE` sai de `openssl rand -base64 32`.
+
+### A regra que nao se quebra
+
+**A BACKUP_CHAVE tem de existir FORA do Railway.** Backup cifrado sem a chave
+e lixo. Se o Railway sumir com o banco, com a copia e com a chave ao mesmo
+tempo, a copia externa nao serviu para nada — guarde-a em gerenciador de
+senhas, ou impressa em pasta, ou nos dois.
+
+### Por que cifrado, e por que falha fechada
+
+O dump leva nome, CPF e processo de cliente de todos os escritorios. Nao vai
+em claro para balde de terceiro — nao por desconfianca do fornecedor, mas
+porque uma chave de acesso vazada nao pode virar vazamento de dado de
+cliente.
+
+Sem `BACKUP_CHAVE`, o backup **falha** em vez de enviar em claro. Mandar dado
+de cliente sem cifra precisa ser decisao consciente (`BACKUP_SEM_CIFRA=1`), e
+nao o que acontece quando alguem esquece uma variavel.
+
+Do mesmo jeito, configuracao pela metade levanta erro dizendo o que falta:
+o pior estado possivel e parecer configurado e nao copiar nada.
+
+### Trazer de volta
+
+```
+npm run restaurar-copia                      # lista o que existe la
+npm run restaurar-copia -- banco/birdjud-....sql.gz.cifrado
+gunzip -c birdjud-....sql.gz | psql "$DATABASE_URL_MIGRACAO"
+npm run rls:aplicar                          # o dump nao traz privilegios
+```
+
+O ultimo passo nao e opcional: `pg_dump --no-privileges` nao carrega as
+politicas, e um banco restaurado sem `rls:aplicar` fica **sem isolamento entre
+escritorios**.
+
+### O que foi provado, e o que nao foi
+
+Provado em 29/09/2026 contra um servidor S3 local: dump, cifra, envio
+assinado, conferencia do tamanho no destino, download, decifra — e o arquivo
+que voltou e **byte a byte identico** ao dump original, com as 27 tabelas.
+
+Nao provado ainda: o mesmo ciclo contra o R2 de verdade. Isso so acontece
+quando as credenciais entrarem no Railway — e e o primeiro teste a fazer
+depois disso, nao o ultimo.

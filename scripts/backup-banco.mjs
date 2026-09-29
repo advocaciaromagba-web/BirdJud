@@ -6,16 +6,29 @@
 // de proposito separado do volume da aplicacao e do volume do Postgres. Um
 // backup guardado no mesmo disco do banco nao protege contra perder o disco.
 //
-// O que este script NAO faz: copia para fora do Railway. Backup de verdade
-// mora em outro lugar. Enquanto nao houver destino externo definido, isto
-// protege contra o erro humano (exclusao errada, migracao ruim), que e o
-// acidente mais comum — nao contra perder o projeto.
+// E, desde 29/09/2026, tambem copia para FORA do Railway, em armazenamento
+// compativel com S3 (Cloudflare R2 ou Backblaze B2), cifrada. Isso importa
+// porque o plano do Railway nao faz backup nenhum do volume: sem copia
+// externa, um incidente la levaria o banco e o backup juntos, e o ensaio de
+// restauracao nao serviria de nada sem de onde restaurar.
+//
+// A copia externa e opcional na configuracao e OBRIGATORIA no resultado: se
+// as variaveis estiverem postas e o envio falhar, o script falha. Backup que
+// "quase" foi para fora e o mesmo que nao ter ido, com a diferenca de que
+// alguem acha que tem.
 import { spawn } from "node:child_process";
 import { createReadStream, createWriteStream } from "node:fs";
 import { mkdir, readdir, stat, unlink } from "node:fs/promises";
 import { createGunzip, createGzip } from "node:zlib";
 import { pipeline } from "node:stream/promises";
 import { createInterface } from "node:readline";
+import { readFile } from "node:fs/promises";
+import {
+  chaveDoBackup,
+  cifrarBackup,
+  destinoDoAmbiente,
+  enviarObjeto,
+} from "../src/lib/copia-remota.ts";
 
 const DESTINO = process.env.RAIZ_BACKUP ?? "/backups";
 const DIAS = Number(process.env.BACKUP_DIAS ?? 14);
@@ -179,3 +192,50 @@ for (const nome of nomes.sort()) {
 console.log(
   `backup: ${nomes.length - apagados} arquivo(s) guardado(s), ${apagados} apagado(s) por idade (retencao de ${DIAS} dias)`,
 );
+
+
+// ---------------------------------------------------------------------------
+// Copia para fora do Railway
+// ---------------------------------------------------------------------------
+
+let destino;
+try {
+  destino = destinoDoAmbiente();
+} catch (erro) {
+  falhar(erro.message);
+}
+
+if (!destino) {
+  console.warn(
+    "backup: SEM COPIA EXTERNA. O arquivo esta apenas no volume do Railway, " +
+      "que nao tem backup automatico no plano atual. Configure BACKUP_S3_*.",
+  );
+} else {
+  const chave = chaveDoBackup();
+  if (!chave && process.env.BACKUP_SEM_CIFRA !== "1") {
+    // Falha fechada: o dump leva nome, CPF e processo de cliente. Mandar isso
+    // em claro para um balde de terceiro precisa ser decisao consciente, e
+    // nao o que acontece quando alguem esquece uma variavel.
+    falhar(
+      "BACKUP_CHAVE ausente. O dump tem dado de cliente e nao vai em claro " +
+        "para fora. Gere com `openssl rand -base64 32`, guarde FORA do Railway, " +
+        "e ponha em BACKUP_CHAVE. (Para enviar sem cifra, de proposito: BACKUP_SEM_CIFRA=1.)",
+    );
+  }
+
+  const nomeLocal = arquivo.split("/").at(-1);
+  const bruto = await readFile(arquivo);
+  const corpo = chave ? cifrarBackup(bruto, chave) : bruto;
+  const nomeRemoto = `banco/${nomeLocal}${chave ? ".cifrado" : ""}`;
+
+  try {
+    const enviado = await enviarObjeto(destino, nomeRemoto, corpo);
+    console.log(
+      `backup: copia externa em ${destino.balde}/${nomeRemoto} ` +
+        `(${(enviado.tamanho / 1024 / 1024).toFixed(1)} MB, ` +
+        `${chave ? "cifrada" : "SEM CIFRA"}), conferida no destino`,
+    );
+  } catch (erro) {
+    falhar(erro.message);
+  }
+}
