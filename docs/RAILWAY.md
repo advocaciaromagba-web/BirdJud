@@ -276,6 +276,34 @@ Prova de ponta a ponta feita no ar: cadastro pelo endereco da plataforma,
 login no subdominio do escritorio, sessao com o `escritorioId` certo e o
 cookie preso ao subdominio (a mesma sessao nao vale em `app.birdjud.com.br`).
 
+### "Deploy Crashed" que nao e queda
+
+Em 28/09/2026 chegou um aviso da Railway: *"Deployment crashed for aplicacao
+in birdjud"*. O sistema nunca saiu do ar — o vigia, que bate de 5 em 5
+minutos com tres tentativas, nao acusou nada em nenhum momento.
+
+O que aconteceu: **mudar variavel na Railway ja dispara deploy sozinho**.
+Quando alem disso se chama `serviceInstanceDeployV2`, nascem dois deploys no
+mesmo minuto. Um deles perde a corrida e e morto no meio da inicializacao, e
+e isso que a Railway chama de "crashed".
+
+O rastro confirma: nos deploys da aplicacao ha exatamente tres pares no mesmo
+minuto (24/09 15:29, 28/09 16:02 e 28/09 20:53), e os tres coincidem com os
+momentos em que uma variavel foi gravada e um deploy foi pedido em seguida. O
+perdedor de 20:53 nao imprimiu nenhuma linha de log — morreu antes de comecar.
+
+**Entao: depois de `variableUpsert`, nao chame deploy.** A Railway ja esta
+subindo. Chamar de novo custa build, e paga o preco pior — alarme falso
+ensina a ignorar o alarme, e o proximo aviso de queda de verdade vai ser lido
+como mais um destes.
+
+Para conferir se um aviso desses e queda de verdade, em ordem:
+
+1. o vigia acusou? Se nao acusou, ninguem ficou sem sistema;
+2. `curl -o /dev/null -w "%{http_code}" https://app.birdjud.com.br/api/saude`;
+3. o deploy atual tem mais de um "Starting Container" no log? Ai sim e
+   reinicio em laco, e o motivo esta nas linhas anteriores.
+
 ## 6. Antes de cada deploy
 
 O CI (`.github/workflows/ci.yml`) roda `npm run teste:isolamento` contra um
