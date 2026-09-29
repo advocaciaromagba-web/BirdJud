@@ -276,6 +276,21 @@ Prova de ponta a ponta feita no ar: cadastro pelo endereco da plataforma,
 login no subdominio do escritorio, sessao com o `escritorioId` certo e o
 cookie preso ao subdominio (a mesma sessao nao vale em `app.birdjud.com.br`).
 
+### Dominio proprio de escritorio: decidido que nao existe
+
+O plano permite **2 dominios proprios**, e os dois estao em uso:
+`birdjud.com.br` e `*.birdjud.com.br`. Nao cabe um terceiro.
+
+Isso NAO e um limite a contornar: por decisao de produto (29/09/2026), todo
+escritorio fica em subdominio da BirdJud — `escritorio.birdjud.com.br` —, e
+nenhum usa dominio proprio. O curinga cobre todos os escritorios com um
+dominio so, entao o teto de 2 nunca e alcancado por crescimento de clientes.
+
+Fica escrito por dois motivos: para o limite nao ser lido como bloqueio numa
+investigacao futura, e para ninguem construir suporte a dominio proprio de
+escritorio achando que e lacuna. Se um dia a decisao mudar, ai sim e preciso
+subir de plano — e o custo entra na conta do cliente que pediu.
+
 ### "Deploy Crashed" que nao e queda
 
 Em 28/09/2026 chegou um aviso da Railway: *"Deployment crashed for aplicacao
