@@ -9,6 +9,7 @@ import {
   assinar,
   caminhoCanonico,
   carimbos,
+  consultaCanonica,
   chaveDoBackup,
   cifrarBackup,
   decifrarBackup,
@@ -201,6 +202,41 @@ describe("vetor conhecido do SigV4", () => {
         vazio,
       ].join("\n"),
     );
+  });
+});
+
+/*
+ * A consulta na assinatura.
+ *
+ * Isto faltava, e o sintoma foi um 403 mudo ao LISTAR o balde — a operacao
+ * que so se usa no dia da restauracao. Nao teria aparecido em uso nenhum
+ * ate o dia em que importasse.
+ */
+describe("consulta assinada", () => {
+  it("ordena por nome e codifica", () => {
+    expect(consultaCanonica({ prefix: "banco/", "list-type": "2" })).toBe(
+      "list-type=2&prefix=banco%2F",
+    );
+  });
+
+  it("sem consulta, string vazia", () => {
+    expect(consultaCanonica({})).toBe("");
+  });
+
+  it("entra na requisicao canonica e na url", () => {
+    const vazio = "0".repeat(64);
+    const com = assinar(DESTINO, "GET", "", vazio, 0, AGORA, {
+      "list-type": "2",
+      prefix: "banco/",
+    });
+    const sem = assinar(DESTINO, "GET", "", vazio, 0, AGORA);
+    expect(com.requisicaoCanonica.split("\n")[2]).toBe(
+      "list-type=2&prefix=banco%2F",
+    );
+    expect(com.url).toContain("?list-type=2&prefix=banco%2F");
+    // Sem isto, listar e assinado como se nao houvesse consulta, e o
+    // servidor recusa com 403 sem dizer por que.
+    expect(com.cabecalhos.authorization).not.toBe(sem.cabecalhos.authorization);
   });
 });
 

@@ -28,10 +28,11 @@ const alvo = process.argv[2];
 async function listar() {
   const vazio =
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-  const a = assinar(destino, "GET", "", vazio, 0, new Date());
-  const resposta = await fetch(`${a.url}?list-type=2&prefix=banco/`, {
-    headers: a.cabecalhos,
+  const a = assinar(destino, "GET", "", vazio, 0, new Date(), {
+    "list-type": "2",
+    prefix: "banco/",
   });
+  const resposta = await fetch(a.url, { headers: a.cabecalhos });
   if (!resposta.ok) {
     falhar(`o balde respondeu ${resposta.status} ao listar.`);
   }

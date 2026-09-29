@@ -106,6 +106,24 @@ export function caminhoCanonico(chaveDoObjeto: string): string {
     .join("/");
 }
 
+/**
+ * A consulta tambem e assinada, e a ordem importa.
+ *
+ * Isto faltava, e o sintoma foi um 403 mudo ao LISTAR o balde — justamente
+ * a operacao que so se usa no dia da restauracao. Parametros vao ordenados
+ * por nome e percent-encoded; e o que o SigV4 manda, e o servidor refaz a
+ * mesma conta do lado dele.
+ */
+export function consultaCanonica(consulta: Record<string, string>): string {
+  return Object.keys(consulta)
+    .sort()
+    .map(
+      (nome) =>
+        `${encodeURIComponent(nome)}=${encodeURIComponent(consulta[nome])}`,
+    )
+    .join("&");
+}
+
 export type Assinatura = {
   url: string;
   cabecalhos: Record<string, string>;
@@ -127,6 +145,7 @@ export function assinar(
   corpoSha256: string,
   tamanho: number,
   agora: Date,
+  consulta: Record<string, string> = {},
 ): Assinatura {
   const { longo, curto } = carimbos(agora);
   const host = new URL(destino.endereco).host;
@@ -149,7 +168,7 @@ export function assinar(
   const requisicaoCanonica = [
     metodo,
     caminho,
-    "", // sem query
+    consultaCanonica(consulta),
     canonicos,
     listaDeNomes,
     corpoSha256,
@@ -171,8 +190,9 @@ export function assinar(
     .update(paraAssinar)
     .digest("hex");
 
+  const query = consultaCanonica(consulta);
   return {
-    url: `${destino.endereco}${caminho}`,
+    url: `${destino.endereco}${caminho}${query ? `?${query}` : ""}`,
     requisicaoCanonica,
     cabecalhos: {
       ...cabecalhosAssinados,
