@@ -174,12 +174,12 @@ export function Estrutura({
   );
 
   return (
-    <div className="min-h-dvh lg:flex">
+    <div className="min-h-dvh bg-[color:var(--off-white)] lg:flex">
       <MenuLateral marca={marca} grupos={grupos} />
 
       <div className="min-w-0 flex-1">
-        <div className="sticky top-0 z-10 hidden border-b border-slate-200 bg-white/90 backdrop-blur lg:block">
-          <div className="flex items-center gap-4 px-6 py-3">
+        <div className="sticky top-0 z-10 hidden border-b border-slate-200/70 bg-white/75 backdrop-blur-md lg:block">
+          <div className="flex items-center gap-4 px-6 py-2.5">
             <CampoDeBusca termoInicial={termoDeBusca} />
             <div className="ml-auto flex items-center gap-2">
               <span className="etiqueta-neutra">{papel.toLowerCase()}</span>

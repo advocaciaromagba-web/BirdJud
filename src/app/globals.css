@@ -48,6 +48,62 @@
   --grafite: #1f1f1f;
   --prata: #a7a9ac;
   --off-white: #f6f7f8;
+
+  /*
+   * Forma, elevacao e movimento em um lugar so.
+   *
+   * Antes cada classe escolhia o proprio raio e a propria sombra, e o
+   * resultado era um sistema em que nada parecia da mesma familia. Sao
+   * tokens, nao gosto: mudar a linguagem do sistema inteiro passa a ser
+   * mudar estes valores.
+   */
+  --raio: 0.625rem; /* campo, botao, etiqueta */
+  --raio-grande: 1rem; /* cartao, painel */
+
+  /*
+   * Sombra em duas camadas: uma linha de contato rente a superficie e um
+   * halo largo e fraco. Uma sombra unica e forte e o que dava aspecto de
+   * caixa colada na tela; duas camadas fracas dao profundidade sem peso.
+   */
+  --sombra-baixa:
+    0 1px 2px -1px rgb(15 23 42 / 0.08), 0 1px 3px 0 rgb(15 23 42 / 0.04);
+  --sombra-media:
+    0 2px 4px -2px rgb(15 23 42 / 0.1), 0 6px 16px -4px rgb(15 23 42 / 0.08);
+  --sombra-alta:
+    0 4px 8px -4px rgb(15 23 42 / 0.12), 0 16px 32px -8px rgb(15 23 42 / 0.12);
+
+  --curva: cubic-bezier(0.2, 0, 0, 1);
+  --duracao: 160ms;
+}
+
+/*
+ * Quem pediu menos movimento recebe menos movimento.
+ *
+ * Nao e detalhe de acessibilidade distante: animacao incomoda de verdade
+ * quem tem enxaqueca vestibular, e o sistema e usado o dia inteiro.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Foco visivel, e na cor da marca.
+ *
+ * O anel cinza de antes sumia em fundo claro, e quem navega por teclado
+ * ficava sem saber onde estava. :focus-visible mostra so para quem navega
+ * por teclado — clique de mouse nao acende nada.
+ */
+*:focus-visible {
+  outline: 2px solid var(--marca-primaria);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 body {
@@ -74,14 +130,24 @@ body {
  * identidade e aparece pouco; a de tela e a que se le o dia inteiro. Numero
  * de processo, tabela e formulario ficam todos na sans.
  */
+/*
+ * Escala fluida: o titulo cresce com a tela, sem ponto de quebra.
+ *
+ * Tamanho fixo obrigava a escolher entre grande demais no celular e pequeno
+ * demais no monitor; clamp resolve os dois com um valor so.
+ */
 h1 {
   font-family: var(--fonte-titulo);
-  @apply text-2xl font-bold tracking-tight text-slate-900;
+  font-size: clamp(1.5rem, 1.25rem + 1.1vw, 2rem);
+  line-height: 1.15;
+  @apply font-bold tracking-tight text-slate-900;
 }
 
 h2 {
   font-family: var(--fonte-titulo);
-  @apply text-lg font-semibold tracking-tight text-slate-900;
+  font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  line-height: 1.25;
+  @apply font-semibold tracking-tight text-slate-900;
 }
 
 h3 {
@@ -157,21 +223,46 @@ p.esquerda {
 
 /* ---------- superficies ---------- */
 
+/*
+ * Cartao: anel de 1px em vez de borda, e a sombra em duas camadas.
+ *
+ * O anel nao ocupa espaco no layout, entao o cartao nao "cresce" 2px quando
+ * ganha contorno — era isso que fazia as colunas desalinharem por um fio.
+ */
 .cartao {
-  @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra-baixa);
+  @apply bg-white p-5 ring-1 ring-slate-900/[0.07];
 }
 
 .cartao-aperto {
-  @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm;
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra-baixa);
+  @apply bg-white p-4 ring-1 ring-slate-900/[0.07];
+}
+
+/* Cartao que leva a algum lugar: sobe de leve e a sombra acompanha. */
+.cartao-clicavel {
+  @apply cartao;
+  transition:
+    box-shadow var(--duracao) var(--curva),
+    transform var(--duracao) var(--curva);
+}
+.cartao-clicavel:hover {
+  box-shadow: var(--sombra-media);
+  transform: translateY(-2px);
 }
 
 /* Numero grande com rotulo: contadores do painel. */
 .indicador {
-  @apply rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm;
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra-baixa);
+  @apply bg-white px-4 py-3.5 ring-1 ring-slate-900/[0.07];
 }
 
 .indicador-numero {
-  @apply text-2xl font-bold tracking-tight text-slate-900;
+  /* tabular-nums: numero que muda nao empurra o vizinho de lugar. */
+  @apply text-2xl font-bold tabular-nums tracking-tight text-slate-900;
 }
 
 .indicador-rotulo {
@@ -180,7 +271,9 @@ p.esquerda {
 
 /* Linha de lista clicavel: cliente, processo, arquivo. */
 .linha {
-  @apply flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg px-3 py-3 transition hover:bg-slate-50;
+  border-radius: var(--raio);
+  transition: background-color var(--duracao) var(--curva);
+  @apply flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-3 hover:bg-slate-50;
 }
 
 /* ---------- formulario ---------- */
@@ -189,9 +282,25 @@ p.esquerda {
   @apply mb-1 block text-sm font-medium text-slate-700;
 }
 
+/*
+ * Campo: 44px de altura e foco na cor da marca.
+ *
+ * A altura nao e estetica — e o alvo de toque que a mao acerta no celular.
+ * O anel de foco usa color-mix sobre a cor do escritorio, entao ele muda
+ * junto com a marca sem nenhuma linha a mais.
+ */
 .campo {
-  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition
-         focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100;
+  border-radius: var(--raio);
+  min-height: 2.75rem;
+  transition:
+    border-color var(--duracao) var(--curva),
+    box-shadow var(--duracao) var(--curva);
+  @apply w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none
+         placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
+}
+.campo:focus {
+  border-color: var(--marca-primaria);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--marca-primaria) 18%, transparent);
 }
 
 .ajuda {
@@ -200,37 +309,58 @@ p.esquerda {
 
 /* ---------- botoes ---------- */
 
+/*
+ * min-h-11: alvo de toque de 44px, o minimo que a mao acerta no celular.
+ *
+ * O botao afunda 1px ao ser pressionado. Parece detalhe, e e o que faz a
+ * interface responder ao dedo em vez de so mudar de cor depois.
+ */
 .botao {
-  /* min-h-11: alvo de toque de 44px, o minimo que a mao acerta no celular. */
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
-         transition disabled:cursor-not-allowed disabled:opacity-50;
+  border-radius: var(--raio);
+  transition:
+    background-color var(--duracao) var(--curva),
+    box-shadow var(--duracao) var(--curva),
+    transform var(--duracao) var(--curva);
+  @apply inline-flex min-h-11 select-none items-center justify-center gap-2 px-4 py-2 text-sm font-medium
+         disabled:cursor-not-allowed disabled:opacity-50;
+}
+.botao:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .botao-principal {
   @apply botao;
   background-color: var(--marca-primaria);
   color: var(--marca-contraste);
+  box-shadow: var(--sombra-baixa);
 }
 .botao-principal:hover:not(:disabled) {
-  filter: brightness(0.92);
+  background-color: var(--marca-primaria-escura);
+  box-shadow: var(--sombra-media);
 }
 
 .botao-secundario {
-  @apply botao border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  @apply botao border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50;
 }
 
 .botao-discreto {
-  @apply botao px-2 text-slate-600 hover:text-slate-900;
+  @apply botao px-2.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900;
 }
 
 .botao-perigo {
-  @apply botao border border-red-200 bg-white text-red-700 hover:bg-red-50;
+  @apply botao border border-red-200 bg-white text-red-700 hover:border-red-300 hover:bg-red-50;
 }
 
 /* ---------- sinalizacao ---------- */
 
+/*
+ * Etiqueta com anel em vez de so fundo colorido.
+ *
+ * O fundo pastel sozinho some em tela clara; o anel da contorno sem escurecer
+ * o preenchimento e sem pedir mais contraste do texto.
+ */
 .etiqueta {
-  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset;
 }
 
 .etiqueta-marca {
@@ -240,23 +370,24 @@ p.esquerda {
 }
 
 .etiqueta-neutra {
-  @apply etiqueta bg-slate-100 text-slate-600;
+  @apply etiqueta bg-slate-50 text-slate-700 ring-slate-200;
 }
 
 .etiqueta-atencao {
-  @apply etiqueta bg-amber-100 text-amber-800;
+  @apply etiqueta bg-amber-50 text-amber-800 ring-amber-200/70;
 }
 
 .etiqueta-ok {
-  @apply etiqueta bg-emerald-100 text-emerald-800;
+  @apply etiqueta bg-emerald-50 text-emerald-800 ring-emerald-200/70;
 }
 
 .etiqueta-erro {
-  @apply etiqueta bg-red-100 text-red-800;
+  @apply etiqueta bg-red-50 text-red-800 ring-red-200/70;
 }
 
 .aviso {
-  @apply rounded-lg border-l-4 p-4 text-sm;
+  border-radius: var(--raio);
+  @apply border-l-[3px] p-4 text-sm leading-relaxed;
 }
 .aviso-atencao {
   @apply aviso border-amber-400 bg-amber-50 text-amber-900;
@@ -272,23 +403,38 @@ p.esquerda {
 }
 
 /* Tela sem nada ainda: diz o que fazer, nao so que esta vazio. */
+/* Tela sem nada ainda: respira mais que um paragrafo solto, e diz o que fazer. */
 .vazio {
-  @apply rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600;
+  border-radius: var(--raio-grande);
+  @apply border border-dashed border-slate-300 bg-white/60 p-8 text-center text-sm text-slate-600;
 }
 
 /* ---------- tabela ---------- */
 
+/*
+ * O cabecalho gruda no topo ao rolar.
+ *
+ * Tabela de lancamentos passa de trinta linhas com facilidade, e rolar sem
+ * cabecalho e ler numero sem saber de que coluna ele e.
+ */
 .tabela {
   @apply w-full border-collapse text-sm;
 }
 .tabela thead th {
-  @apply border-b border-slate-200 bg-slate-50 px-3 py-2 text-left font-medium text-slate-600;
+  @apply sticky top-0 z-[1] border-b border-slate-200 bg-slate-50/95 px-3 py-2.5 text-left
+         text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur;
 }
 .tabela tbody td {
-  @apply border-b border-slate-100 px-3 py-2.5 align-top;
+  @apply border-b border-slate-100 px-3 py-3 align-middle;
+}
+.tabela tbody tr {
+  transition: background-color var(--duracao) var(--curva);
 }
 .tabela tbody tr:hover {
   @apply bg-slate-50;
+}
+.tabela tbody tr:last-child td {
+  @apply border-b-0;
 }
 
 /* ---------- estrutura da pagina ---------- */
@@ -303,4 +449,16 @@ p.esquerda {
 
 .cabecalho-da-pagina {
   @apply mb-6 flex flex-wrap items-end justify-between gap-3;
+}
+
+/*
+ * Grade de cartoes que se ajusta sozinha.
+ *
+ * auto-fit com minmax troca a quantidade de colunas pela largura disponivel,
+ * sem ponto de quebra declarado — e o que faz o painel caber no celular, no
+ * notebook e no monitor grande sem tres regras diferentes.
+ */
+.grade-cartoes {
+  @apply grid gap-4;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
 }

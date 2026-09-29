@@ -51,16 +51,22 @@ export function MenuLateral({
                     href={area.href}
                     onClick={() => setAberto(false)}
                     aria-current={atual ? "page" : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition ${
+                    /*
+                     * O item atual ganha um marcador vertical na cor da
+                     * marca, alem do fundo tingido. So o fundo era sutil
+                     * demais em marca clara — com ela, a diferenca entre
+                     * "estou aqui" e "nao estou" quase sumia.
+                     */
+                    className={`relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors ${
                       atual
-                        ? "font-semibold text-[color:var(--marca-primaria)]"
+                        ? "font-semibold text-[color:var(--marca-primaria)] before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-[color:var(--marca-primaria)]"
                         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                     }`}
                     style={
                       atual
                         ? {
                             backgroundColor:
-                              "color-mix(in srgb, var(--marca-primaria) 10%, white)",
+                              "color-mix(in srgb, var(--marca-primaria) 8%, white)",
                           }
                         : undefined
                     }
@@ -80,7 +86,7 @@ export function MenuLateral({
   return (
     <>
       {/* Tela larga: o menu fica sempre visivel. */}
-      <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white lg:block">
+      <aside className="hidden w-64 shrink-0 border-r border-slate-200/70 bg-white/80 backdrop-blur-sm lg:block">
         <div className="sticky top-0 max-h-dvh overflow-y-auto">
           <div className="px-3 pt-4">{marca}</div>
           {lista}
@@ -96,7 +102,7 @@ export function MenuLateral({
               onClick={() => setAberto((estava) => !estava)}
               aria-expanded={aberto}
               aria-label="Menu"
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-slate-600 hover:bg-slate-100"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -122,9 +128,17 @@ export function MenuLateral({
           </div>
         </div>
 
-        {aberto ? (
-          <div className="border-b border-slate-200 bg-white">{lista}</div>
-        ) : null}
+        {/*
+          A gaveta desliza em vez de aparecer seca. grid-template-rows anima
+          de 0fr para 1fr, que e o jeito de animar altura desconhecida sem
+          medir nada em JavaScript.
+        */}
+        <div
+          className="grid overflow-hidden border-b border-slate-200 bg-white transition-[grid-template-rows] duration-200"
+          style={{ gridTemplateRows: aberto ? "1fr" : "0fr" }}
+        >
+          <div className="min-h-0">{lista}</div>
+        </div>
       </div>
     </>
   );
