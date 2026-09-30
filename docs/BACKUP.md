@@ -164,12 +164,54 @@ O ultimo passo nao e opcional: `pg_dump --no-privileges` nao carrega as
 politicas, e um banco restaurado sem `rls:aplicar` fica **sem isolamento entre
 escritorios**.
 
+### Retencao no R2: regra do balde, nao codigo
+
+A retencao de 14 dias do `BACKUP_DIAS` vale para o volume do Railway. No R2
+os objetos **nao sao apagados por nos** — quem apaga e uma regra de ciclo de
+vida do proprio balde, configurada uma vez no painel:
+
+```
+R2 > birdjud-backup > Settings > Object lifecycle rules > Add rule
+  nome:  apagar-backup-apos-90-dias
+  alvo:  todos os objetos
+  acao:  apagar 90 dias depois do envio
+  extra: abortar multipart incompleto depois de 7 dias
+```
+
+Noventa dias cobre o pior caso — descobrir em novembro que algo se perdeu em
+setembro — sem guardar dado de cliente indefinidamente, o que a LGPD
+desaconselha.
+
+**Por que nao pela API:** o token do backup tem permissao de OBJETO (ler e
+escrever), nao de administracao do balde. Aplicar a regra por ele devolve
+403. Isso e o token funcionando como projetado, e ampliar a permissao para
+um ajuste feito uma vez deixaria o token mais poderoso para sempre — pelo
+resto da vida dele, dentro do Railway.
+
+Conferido em 30/09/2026: `GET ?list-type=2` responde 200 e
+`GET ?lifecycle` responde 403 com o mesmo token. A diferenca separa
+"assinatura errada" de "sem permissao", e vale repetir esse par sempre que
+um 403 aparecer aqui — foi assim que o defeito da consulta nao assinada foi
+distinguido de falta de permissao.
+
 ### O que foi provado, e o que nao foi
 
 Provado em 29/09/2026 contra um servidor S3 local: dump, cifra, envio
 assinado, conferencia do tamanho no destino, download, decifra — e o arquivo
 que voltou e **byte a byte identico** ao dump original, com as 27 tabelas.
 
-Nao provado ainda: o mesmo ciclo contra o R2 de verdade. Isso so acontece
-quando as credenciais entrarem no Railway — e e o primeiro teste a fazer
-depois disso, nao o ultimo.
+Provado tambem contra o R2 de verdade, em 29/09/2026, com o backup rodando
+de dentro do Railway sobre os dados de producao: 27 tabelas, 124 linhas,
+enviado cifrado, listado, baixado, decifrado — e o dump que voltou traz o
+escritorio ADVOCACIA ROMA.
+
+O que esse teste pegou, e o servidor de mentira nao pegaria: a consulta
+(`?list-type=2&prefix=`) nao entrava na requisicao canonica, e LISTAR o
+balde voltava 403. Era o defeito mais caro possivel — listar so se usa no
+dia da restauracao, entao o backup teria subido todo dia com aparencia de
+tudo certo.
+
+Ainda NAO resolvido: ninguem e avisado quando o backup falha. O script sai
+com erro e a execucao aparece como falha no painel do Railway, mas o vigia
+olha o sistema no ar e os certificados, nao o backup. Se o token do R2 for
+revogado, as copias param e a descoberta e no dia em que precisarem delas.
