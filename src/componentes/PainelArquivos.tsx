@@ -109,7 +109,7 @@ export function PainelArquivos({
       {arquivos.length === 0 ? (
         <p className="mt-6 text-slate-600">Nenhum arquivo guardado ainda.</p>
       ) : (
-        <ul className="mt-6 divide-y divide-slate-200">
+        <ul className="lista mt-6">
           {arquivos.map((arquivo) => (
             <li
               key={arquivo.id}

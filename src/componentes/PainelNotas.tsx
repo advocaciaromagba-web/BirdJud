@@ -237,7 +237,7 @@ export function PainelNotas({
       {notas.length === 0 ? (
         <p className="mt-6 text-slate-600">Nenhuma nota emitida ainda.</p>
       ) : (
-        <ul className="mt-6 divide-y divide-slate-200">
+        <ul className="lista mt-6">
           {notas.map((nota) => (
             <li
               key={nota.id}

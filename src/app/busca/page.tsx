@@ -51,7 +51,7 @@ export default async function PaginaBusca({
         </p>
       ) : null}
 
-      <ul className="mt-6 divide-y divide-slate-200">
+      <ul className="lista mt-6">
         {achados.map((achado) => (
           <li key={`${achado.tipo}-${achado.id}`} className="py-3">
             <Link href={achado.destino} className="block hover:text-marca">

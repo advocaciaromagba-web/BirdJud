@@ -75,7 +75,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
       {cobrancas.length === 0 ? (
         <p className="mt-6 text-slate-600">Nenhuma cobranca emitida ainda.</p>
       ) : (
-        <ul className="mt-4 divide-y divide-slate-200">
+        <ul className="lista mt-4">
           {cobrancas.map((cobranca) => (
             <li
               key={cobranca.id}

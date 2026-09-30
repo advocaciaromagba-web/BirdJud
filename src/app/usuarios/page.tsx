@@ -113,7 +113,7 @@ export default async function PaginaUsuarios() {
         </span>
       </p>
 
-      <ul className="mt-6 divide-y divide-slate-200">
+      <ul className="lista mt-6">
         {usuarios.map((usuario) => (
           <li key={usuario.id} className="py-3">
             <p className="font-semibold">

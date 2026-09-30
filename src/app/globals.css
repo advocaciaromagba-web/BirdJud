@@ -269,6 +269,21 @@ p.esquerda {
   @apply text-xs font-medium uppercase tracking-wide text-slate-500;
 }
 
+/*
+ * Lista assentada: a superficie que as listas de cliente, cobranca, arquivo
+ * e nota tinham de faltar.
+ *
+ * Elas ficavam soltas sobre o fundo da pagina, com linhas divisorias no ar,
+ * enquanto o painel ao lado tinha cartoes. O olho lia duas telas de sistemas
+ * diferentes. Aqui a lista ganha a mesma superficie do cartao, e o
+ * espacamento vem da propria classe para nao repetir px-* em cada pagina.
+ */
+.lista {
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra-baixa);
+  @apply divide-y divide-slate-100 bg-white px-4 ring-1 ring-slate-900/[0.07];
+}
+
 /* Linha de lista clicavel: cliente, processo, arquivo. */
 .linha {
   border-radius: var(--raio);
