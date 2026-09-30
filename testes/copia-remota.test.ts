@@ -13,7 +13,9 @@ import {
   chaveDoBackup,
   cifrarBackup,
   decifrarBackup,
+  avaliarCopias,
   destinoDoAmbiente,
+  interpretarListagem,
   type Destino,
 } from "@/lib/copia-remota";
 
@@ -280,5 +282,76 @@ describe("cifra do backup", () => {
     expect(() => chaveDoBackup()).toThrow(/32 bytes/);
     delete process.env.BACKUP_CHAVE;
     expect(chaveDoBackup()).toBeNull();
+  });
+});
+
+/*
+ * A vigilancia do backup.
+ *
+ * O risco que isto cobre e especifico: o backup para de subir e ninguem
+ * sabe. O risco que isto CRIA e alarme falso, que ensina a ignorar o alarme
+ * — por isso as duas metades tem teste.
+ */
+describe("listagem do balde", () => {
+  const xml = `<?xml version="1.0"?>
+<ListBucketResult>
+  <Contents><Key>banco/a.sql.gz.cifrado</Key><LastModified>2026-09-29T05:00:00.000Z</LastModified><Size>9483</Size></Contents>
+  <Contents><Key>banco/b.sql.gz.cifrado</Key><LastModified>2026-09-30T05:00:00.000Z</LastModified><Size>9521</Size></Contents>
+</ListBucketResult>`;
+
+  it("le chave, data e tamanho", () => {
+    expect(interpretarListagem(xml)).toEqual([
+      { chave: "banco/a.sql.gz.cifrado", tamanho: 9483, modificadoEm: new Date("2026-09-29T05:00:00.000Z") },
+      { chave: "banco/b.sql.gz.cifrado", tamanho: 9521, modificadoEm: new Date("2026-09-30T05:00:00.000Z") },
+    ]);
+  });
+
+  it("balde vazio da lista vazia", () => {
+    expect(interpretarListagem("<ListBucketResult></ListBucketResult>")).toEqual([]);
+  });
+
+  it("entrada com data ilegivel e descartada em vez de virar NaN", () => {
+    const ruim = `<ListBucketResult><Contents><Key>x</Key><LastModified>ontem</LastModified><Size>1</Size></Contents></ListBucketResult>`;
+    expect(interpretarListagem(ruim)).toEqual([]);
+  });
+});
+
+describe("avaliacao das copias", () => {
+  const agora = new Date("2026-09-30T12:00:00Z");
+  const copia = (horasAtras: number, tamanho = 9000) => ({
+    chave: `banco/x-${horasAtras}.sql.gz.cifrado`,
+    tamanho,
+    modificadoEm: new Date(agora.getTime() - horasAtras * 3_600_000),
+  });
+
+  it("cala quando ha copia recente", () => {
+    expect(avaliarCopias([copia(6)], agora)).toBeNull();
+    expect(avaliarCopias([copia(24)], agora)).toBeNull();
+  });
+
+  // Seis horas de folga sobre as 24 do ciclo diario: atraso de fila nao pode
+  // virar alarme.
+  it("aguenta o atraso normal e acusa depois dele", () => {
+    expect(avaliarCopias([copia(29)], agora)).toBeNull();
+    expect(avaliarCopias([copia(31)], agora)).toContain("parou de subir");
+  });
+
+  it("olha a MAIS NOVA, nao a primeira da lista", () => {
+    expect(avaliarCopias([copia(200), copia(3), copia(100)], agora)).toBeNull();
+  });
+
+  it("balde vazio e o caso mais grave", () => {
+    expect(avaliarCopias([], agora)).toContain("NENHUMA copia");
+  });
+
+  it("zero byte acusa", () => {
+    expect(avaliarCopias([copia(2, 0)], agora)).toContain("zero byte");
+  });
+
+  // O script ja confere o conteudo do dump antes de enviar. Inventar um piso
+  // aqui produziria alarme falso no dia em que o banco fosse pequeno de
+  // verdade — foi o que aconteceu com o piso de 10 KB do backup local.
+  it("copia pequena mas nao vazia NAO acusa", () => {
+    expect(avaliarCopias([copia(2, 300)], agora)).toBeNull();
   });
 });

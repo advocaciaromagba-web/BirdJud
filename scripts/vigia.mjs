@@ -24,6 +24,11 @@ import {
   temRemetenteDaPlataforma,
 } from "../src/lib/email-plataforma.ts";
 import { julgar } from "../src/lib/certificado.ts";
+import {
+  avaliarCopias,
+  destinoDoAmbiente,
+  listarObjetos,
+} from "../src/lib/copia-remota.ts";
 
 const ENDERECO =
   process.env.VIGIA_ENDERECO ?? "https://app.birdjud.com.br/api/saude";
@@ -72,6 +77,58 @@ function certificadoDaBorda(host) {
     });
     tomada.on("error", (erro) => pronto({ erro: erro.code ?? erro.message }));
   });
+}
+
+/**
+ * O backup ainda esta subindo para fora do Railway?
+ *
+ * Sem BACKUP_S3_* configurado, cala: nem todo ambiente tem copia externa, e
+ * acusar a ausencia de uma configuracao opcional seria alarme por decisao
+ * tomada. Falha ao LISTAR tambem nao acusa aqui — pode ser rede deste
+ * container —, mas fica registrada.
+ *
+ * O vigia so lista. Ele nao tem a chave de cifra, e nao deve ter: para dizer
+ * que a copia existe e recente, ler o nome e a data basta.
+ */
+async function conferirCopiaExterna() {
+  let destino;
+  try {
+    destino = destinoDoAmbiente();
+  } catch (erro) {
+    // Configuracao pela metade e problema de verdade: parece configurada e
+    // nao copia nada.
+    return [erro.message];
+  }
+  if (!destino) return [];
+
+  let objetos;
+  try {
+    // O prefixo e configuravel para que o alarme possa ser exercitado sem
+    // mexer nas copias de verdade: apontar para um prefixo vazio produz
+    // exatamente o cenario "o backup parou".
+    objetos = await listarObjetos(
+      destino,
+      process.env.VIGIA_PREFIXO_BACKUP ?? "banco/",
+    );
+  } catch (erro) {
+    console.log(`vigia: copia externa inconclusiva — ${erro.message}`);
+    return [];
+  }
+
+  const problema = avaliarCopias(objetos);
+  if (problema) {
+    console.error(`vigia: ${problema}`);
+    return [problema];
+  }
+
+  const maisNova = objetos.reduce((a, b) =>
+    a.modificadoEm > b.modificadoEm ? a : b,
+  );
+  console.log(
+    `vigia: copia externa ok — ${objetos.length} no balde, a mais nova de ` +
+      `${maisNova.modificadoEm.toISOString()}`,
+  );
+  return [];
 }
 
 /** Confere todos os dominios e devolve so o que e falha certa. */
@@ -217,6 +274,7 @@ if (process.env.VIGIA_DIAGNOSTICO === "1") {
 // O certificado primeiro: healthcheck verde com certificado invalido e
 // justamente o caso em que o sistema esta fora do ar para quem usa.
 const problemasDeCertificado = await conferirCertificados();
+const problemasDoBackup = await conferirCopiaExterna();
 
 // Tres batidas antes de acusar: rede tem soluco, e alarme por soluco e o jeito
 // mais rapido de ensinar todo mundo a ignorar o alarme.
@@ -235,7 +293,32 @@ for (let i = 1; i <= TENTATIVAS; i++) {
     await new Promise((pronto) => setTimeout(pronto, ESPERA_MS));
 }
 
-if (respondeu && problemasDeCertificado.length === 0) process.exit(0);
+// Backup parado nao e queda: o sistema segue no ar. Por isso ele tem aviso
+// proprio, com assunto proprio — quem recebe precisa saber, em uma linha, se
+// larga o almoco ou se resolve hoje a tarde.
+if (problemasDoBackup.length > 0) {
+  const aviso = [
+    "O backup do banco parou de ir para fora do Railway.",
+    "",
+    "O sistema continua no ar. O que esta em risco e a recuperacao: sem copia",
+    "externa, um incidente no Railway leva o banco e o backup juntos.",
+    "",
+    `Quando: ${new Date().toISOString()}`,
+    "",
+    ...problemasDoBackup,
+    "",
+    "Onde olhar: Railway > projeto birdjud > servico cron-backup > ultima",
+    "execucao. Depois, Cloudflare > R2 > birdjud-backup.",
+    "",
+    "BirdJud · vigia automatico",
+  ].join("\n");
+  console.error(aviso);
+  await avisar("BirdJud: o backup parou de subir", aviso);
+}
+
+if (respondeu && problemasDeCertificado.length === 0) {
+  process.exit(problemasDoBackup.length > 0 ? 1 : 0);
+}
 
 if (respondeu) {
   const aviso = [

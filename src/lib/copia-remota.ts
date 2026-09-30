@@ -204,6 +204,94 @@ export function assinar(
   };
 }
 
+export type ObjetoNoBalde = {
+  chave: string;
+  tamanho: number;
+  modificadoEm: Date;
+};
+
+/**
+ * Lista o que esta no balde, sob um prefixo.
+ *
+ * XML lido por expressao regular de proposito: sao tres campos de uma
+ * resposta de formato fixo, e trazer um analisador de XML para isto seria
+ * mais codigo e mais dependencia do que o problema pede.
+ */
+export async function listarObjetos(
+  destino: Destino,
+  prefixo: string,
+  agora: Date = new Date(),
+): Promise<ObjetoNoBalde[]> {
+  const vazio = sha256(Buffer.alloc(0));
+  const a = assinar(destino, "GET", "", vazio, 0, agora, {
+    "list-type": "2",
+    prefix: prefixo,
+  });
+  const resposta = await fetch(a.url, { headers: a.cabecalhos });
+  if (!resposta.ok) {
+    throw new FalhaNaCopia(`HTTP ${resposta.status} ao listar ${prefixo}.`);
+  }
+  return interpretarListagem(await resposta.text());
+}
+
+/** Separado da rede para poder ser testado com uma resposta de verdade. */
+export function interpretarListagem(xml: string): ObjetoNoBalde[] {
+  const itens: ObjetoNoBalde[] = [];
+  for (const bloco of xml.split("<Contents>").slice(1)) {
+    const chave = bloco.match(/<Key>([^<]*)<\/Key>/)?.[1];
+    const data = bloco.match(/<LastModified>([^<]*)<\/LastModified>/)?.[1];
+    const tamanho = bloco.match(/<Size>(\d+)<\/Size>/)?.[1];
+    if (!chave || !data) continue;
+    const modificadoEm = new Date(data);
+    if (Number.isNaN(modificadoEm.getTime())) continue;
+    itens.push({ chave, tamanho: Number(tamanho ?? 0), modificadoEm });
+  }
+  return itens;
+}
+
+/** Quantas horas sem copia nova antes de acusar. */
+export const HORAS_ATE_ACUSAR = 30;
+
+/**
+ * A copia mais nova ainda esta dentro do prazo?
+ *
+ * Devolve o motivo, ou null quando esta tudo bem. O backup roda uma vez por
+ * dia, entao a copia mais nova tem no maximo 24 horas; 30 da seis horas de
+ * folga para atraso de fila sem virar alarme falso — e alarme falso em
+ * backup e pior que silencio, porque ensina a ignorar.
+ */
+export function avaliarCopias(
+  objetos: ObjetoNoBalde[],
+  agora: Date = new Date(),
+  horas: number = HORAS_ATE_ACUSAR,
+): string | null {
+  if (objetos.length === 0) {
+    return "Nao ha NENHUMA copia do banco no armazenamento externo.";
+  }
+
+  const maisNova = objetos.reduce((a, b) =>
+    a.modificadoEm > b.modificadoEm ? a : b,
+  );
+  const idade = (agora.getTime() - maisNova.modificadoEm.getTime()) / 3_600_000;
+
+  if (idade > horas) {
+    return (
+      `A copia mais nova do banco tem ${Math.floor(idade)} horas ` +
+      `(${maisNova.chave}). O backup roda todo dia — isto significa que ele ` +
+      "parou de subir."
+    );
+  }
+
+  // Zero byte e o unico tamanho que acusa: o script ja confere o conteudo do
+  // dump antes de enviar, e inventar um piso aqui produziria alarme falso no
+  // dia em que o banco estivesse legitimamente pequeno.
+  if (maisNova.tamanho === 0) {
+    return `A copia mais nova (${maisNova.chave}) esta com zero byte.`;
+  }
+
+  return null;
+}
+
 export class FalhaNaCopia extends Error {
   constructor(motivo: string) {
     super(`Copia remota falhou: ${motivo}`);
