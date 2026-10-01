@@ -11,6 +11,7 @@ import {
   TIPOS_DE_LOGO,
   exigirCor,
 } from "@/lib/identidade";
+import { documentoValido, formatarDocumento } from "@/lib/documentos";
 import { tratarErro } from "@/lib/respostas";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,10 @@ const cores = z.object({
   corSecundaria: z.string().max(20),
   telefoneAtendimento: z.string().max(30).optional(),
   cidade: z.string().max(120).optional(),
+  // CNPJ do escritorio. Nao e detalhe de cadastro: sem ele o meio de
+  // pagamento recusa emitir a cobranca da assinatura, e o escritorio ficaria
+  // devendo uma fatura que nunca lhe foi apresentada.
+  cnpj: z.string().max(20).optional(),
 });
 
 export async function POST(req: Request) {
@@ -36,6 +41,20 @@ export async function POST(req: Request) {
     const primaria = exigirCor(corpo.data.corPrimaria, "principal");
     const secundaria = exigirCor(corpo.data.corSecundaria, "de destaque");
 
+    // Conferido aqui, nao so na tela: CNPJ com digito errado so apareceria
+    // como recusa do Asaas no dia da primeira fatura.
+    let cnpj: string | null = null;
+    const bruto = corpo.data.cnpj?.trim();
+    if (bruto) {
+      if (!documentoValido(bruto)) {
+        return NextResponse.json(
+          { erro: "O CNPJ informado nao fecha o digito verificador." },
+          { status: 400 },
+        );
+      }
+      cnpj = formatarDocumento(bruto);
+    }
+
     await comEscritorio(escritorioId, (db) =>
       db.escritorio.update({
         where: { id: escritorioId },
@@ -44,6 +63,7 @@ export async function POST(req: Request) {
           corSecundaria: secundaria,
           telefoneAtendimento: corpo.data.telefoneAtendimento || null,
           cidade: corpo.data.cidade || null,
+          ...(bruto !== undefined ? { cnpj } : {}),
         },
       }),
     );

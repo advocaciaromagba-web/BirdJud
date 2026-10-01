@@ -38,7 +38,8 @@ export type Pendencia = {
     | "SEM_INTEGRACAO_EMAIL"
     | "INTEGRACAO_COM_ERRO"
     | "AVISOS_FALHADOS"
-    | "SEM_CADASTRO_FISCAL";
+    | "SEM_CADASTRO_FISCAL"
+    | "SEM_CNPJ";
   texto: string;
   /** Para onde a tela manda quem quiser resolver. */
   destino: string;
@@ -109,6 +110,10 @@ export async function montarPainel(
     fiscal: tem("NFSE")
       ? await db.fiscal.findFirst({ select: { id: true } })
       : { id: "x" },
+    escritorio: await db.escritorio.findFirst({
+      where: { id: escritorioId },
+      select: { cnpj: true },
+    }),
   }));
 
   const pendencias: Pendencia[] = [];
@@ -148,6 +153,24 @@ export async function montarPainel(
       tipo: "AVISOS_FALHADOS",
       texto: `${dados.avisosFalhados} aviso(s) nao chegaram ao destino.`,
       destino: "/integracoes",
+      soAdmin: true,
+    });
+  }
+
+  /*
+   * CNPJ.
+   *
+   * Aparece ANTES de fazer falta, de proposito: sem ele o meio de pagamento
+   * recusa emitir a fatura da assinatura, e a descoberta seria no primeiro
+   * vencimento — com o escritorio devendo uma fatura que nunca lhe foi
+   * apresentada. Aviso em cima do prazo nao e aviso.
+   */
+  if (!dados.escritorio?.cnpj) {
+    pendencias.push({
+      tipo: "SEM_CNPJ",
+      texto:
+        "CNPJ do escritorio nao informado: sem ele a fatura da assinatura nao pode ser emitida.",
+      destino: "/administracao",
       soAdmin: true,
     });
   }

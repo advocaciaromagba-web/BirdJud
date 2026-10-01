@@ -196,6 +196,28 @@ d("painel e busca por escritorio", () => {
     });
   });
 
+  /*
+   * O CNPJ aparece como pendencia ANTES de fazer falta.
+   *
+   * Sem ele o meio de pagamento recusa emitir a fatura da assinatura, e a
+   * descoberta seria no primeiro vencimento — com o escritorio devendo uma
+   * fatura que nunca lhe foi apresentada. Aviso em cima do prazo nao e aviso.
+   */
+  it("cobra o CNPJ enquanto ele falta, e cala quando chega", async () => {
+    const sem = await montarPainel(alfa);
+    expect(sem.pendencias.map((p) => p.tipo)).toContain("SEM_CNPJ");
+    const pendencia = sem.pendencias.find((p) => p.tipo === "SEM_CNPJ");
+    expect(pendencia?.destino).toBe("/administracao");
+    expect(pendencia?.soAdmin).toBe(true);
+
+    await prismaPlataforma().escritorio.update({
+      where: { id: alfa },
+      data: { cnpj: "11.222.333/0001-81" },
+    });
+    const com = await montarPainel(alfa);
+    expect(com.pendencias.map((p) => p.tipo)).not.toContain("SEM_CNPJ");
+  });
+
   it("aponta a integracao que falta e a que esta com erro", async () => {
     const semEmail = await montarPainel(alfa);
     // O modulo de e-mail esta contratado e o SMTP nao foi conectado.

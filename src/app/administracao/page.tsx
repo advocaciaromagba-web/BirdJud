@@ -61,6 +61,7 @@ export default async function PaginaAdministracao() {
         corSecundaria: true,
         telefoneAtendimento: true,
         cidade: true,
+        cnpj: true,
         logoUrl: true,
       },
       }),
@@ -89,6 +90,7 @@ export default async function PaginaAdministracao() {
           corSecundariaAtual={escritorio?.corSecundaria ?? "#D4AF7C"}
           telefoneAtual={escritorio?.telefoneAtendimento ?? null}
           cidadeAtual={escritorio?.cidade ?? null}
+          cnpjAtual={escritorio?.cnpj ?? null}
           logoUrlAtual={escritorio?.logoUrl ?? null}
         />
 

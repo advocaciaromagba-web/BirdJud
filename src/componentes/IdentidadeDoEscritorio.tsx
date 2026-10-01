@@ -21,6 +21,7 @@ export function IdentidadeDoEscritorio({
   corSecundariaAtual,
   telefoneAtual,
   cidadeAtual,
+  cnpjAtual,
   logoUrlAtual,
 }: {
   nome: string;
@@ -28,6 +29,7 @@ export function IdentidadeDoEscritorio({
   corSecundariaAtual: string;
   telefoneAtual: string | null;
   cidadeAtual: string | null;
+  cnpjAtual: string | null;
   logoUrlAtual: string | null;
 }) {
   const router = useRouter();
@@ -36,6 +38,7 @@ export function IdentidadeDoEscritorio({
   const [secundaria, setSecundaria] = useState(corSecundariaAtual);
   const [telefone, setTelefone] = useState(telefoneAtual ?? "");
   const [cidade, setCidade] = useState(cidadeAtual ?? "");
+  const [cnpj, setCnpj] = useState(cnpjAtual ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -68,6 +71,7 @@ export function IdentidadeDoEscritorio({
           corSecundaria: secundaria,
           telefoneAtendimento: telefone,
           cidade,
+          cnpj,
         }),
       });
       const corpo = await resposta.json().catch(() => ({}));
@@ -177,6 +181,23 @@ export function IdentidadeDoEscritorio({
               />
             </div>
             <p className="ajuda">Reguas, filetes e detalhes.</p>
+          </div>
+
+          <div>
+            <label className="rotulo" htmlFor="ident-cnpj">
+              CNPJ do escritorio
+            </label>
+            <input
+              id="ident-cnpj"
+              className="campo"
+              value={cnpj}
+              onChange={(e) => setCnpj(e.target.value)}
+              placeholder="00.000.000/0001-00"
+            />
+            <p className="ajuda">
+              Usado na cobranca da assinatura. Sem ele, a fatura mensal nao
+              pode ser emitida.
+            </p>
           </div>
 
           {avisoDeContraste && (
