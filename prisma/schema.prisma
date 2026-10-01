@@ -30,6 +30,11 @@ model Escritorio {
   senhaAdminHash String?
   senhaAdminEm   DateTime?
 
+  // Id deste escritorio como CLIENTE na conta Asaas da PLATAFORMA. Nao
+  // confundir com Cliente.idNoAsaas, que vive na conta do escritorio: sao
+  // contas diferentes, e misturar as duas cobraria a pessoa errada.
+  idNaCobrancaDaPlataforma String?
+
   // marca e dados que, em sistemas de escritorio unico, ficam fixos no codigo
   logoUrl             String?
   corPrimaria         String?
@@ -261,7 +266,9 @@ model Fatura {
   vencimento    DateTime
   status        String    @default("ABERTA") // ABERTA | PAGA | CANCELADA
   pagoEm        DateTime?
-  idExterno     String? // id no meio de pagamento
+  idExterno     String? @unique // id da cobranca no meio de pagamento
+  linkPagamento String? // para onde mandar o escritorio pagar
+  emitidaEm     DateTime? // quando a cobranca foi emitida no provedor
   criadaEm      DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)

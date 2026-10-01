@@ -113,6 +113,28 @@ export default async function EscritorioNoPainel({
                         ? ` · paga em ${fatura.pagoEm.toLocaleDateString("pt-BR")}`
                         : ""}
                     </span>
+                    {/*
+                      Sem isto nao da para distinguir "a cobranca nao foi
+                      emitida" de "foi emitida e o escritorio nao pagou" — dois
+                      problemas com remedios opostos: um e nosso, o outro e
+                      dele.
+                    */}
+                    <span className="block text-xs">
+                      {fatura.linkPagamento ? (
+                        <a
+                          className="text-[color:var(--marca-primaria)] underline"
+                          href={fatura.linkPagamento}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          link de pagamento
+                        </a>
+                      ) : fatura.status === "ABERTA" ? (
+                        <span className="text-amber-700">
+                          cobranca ainda nao emitida
+                        </span>
+                      ) : null}
+                    </span>
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="tabular-nums">

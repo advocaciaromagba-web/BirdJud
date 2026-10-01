@@ -107,7 +107,7 @@ export function comoDia(data: Date): string {
   return data.toISOString().slice(0, 10);
 }
 
-async function chamarAsaas(
+export async function chamarAsaas(
   chave: string,
   caminho: string,
   init: RequestInit = {},

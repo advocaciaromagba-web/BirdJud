@@ -5,6 +5,15 @@
 import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { competenciaDe, consumoDoMes, type Metrica } from "./consumo";
 import { ehFaixa } from "./faixas";
+import {
+  emitirCobrancaDaFatura,
+  mensagemDaFatura,
+  temCobrancaDaPlataforma,
+} from "./cobranca-plataforma";
+import {
+  enviarPelaPlataforma,
+  temRemetenteDaPlataforma,
+} from "./email-plataforma";
 import type { Modulo } from "./modulos";
 import {
   excedentes,
@@ -120,6 +129,7 @@ export async function aplicarRegua(
         },
       });
       faturaGerada = fatura.id;
+      await cobrarEAvisar(fatura.id);
     }
   }
 
@@ -206,3 +216,70 @@ export async function criarAssinatura(
 }
 
 export { semEscritorio };
+
+
+/**
+ * Emite a cobranca da fatura no provedor e manda o link ao escritorio.
+ *
+ * NAO DERRUBA A REGUA. Se o Asaas estiver fora, ou a conta nao estiver
+ * configurada, a fatura continua existindo e o status continua sendo
+ * ajustado — a cobranca e tentada de novo na proxima passada, porque
+ * `emitirCobrancaDaFatura` e idempotente e so emite para fatura ABERTA sem
+ * idExterno.
+ *
+ * A alternativa seria deixar a excecao subir, e ai uma indisponibilidade do
+ * meio de pagamento pararia a regua de TODOS os escritorios — inclusive a
+ * parte que nao tem nada a ver com cobranca.
+ */
+async function cobrarEAvisar(faturaId: string): Promise<void> {
+  if (!temCobrancaDaPlataforma()) {
+    console.warn(
+      `regua: fatura ${faturaId} criada SEM cobranca — ASAAS_PLATAFORMA_CHAVE ausente. ` +
+        "A baixa tera de ser manual.",
+    );
+    return;
+  }
+
+  let emitida;
+  try {
+    emitida = await emitirCobrancaDaFatura(faturaId);
+  } catch (erro) {
+    console.error(
+      `regua: fatura ${faturaId} criada, mas a cobranca falhou — ${(erro as Error).message}. ` +
+        "Sera tentada de novo na proxima passada.",
+    );
+    return;
+  }
+  if (!emitida) return;
+
+  const fatura = await prismaPlataforma().fatura.findUnique({
+    where: { id: faturaId },
+    include: { escritorio: { select: { nome: true } } },
+  });
+  if (!fatura) return;
+
+  const admin = await prismaPlataforma().usuario.findFirst({
+    where: { escritorioId: fatura.escritorioId, papel: "ADMIN", ativo: true },
+    select: { email: true },
+    orderBy: { criadoEm: "asc" },
+  });
+  if (!admin?.email || !temRemetenteDaPlataforma()) return;
+
+  const mensagem = mensagemDaFatura({
+    nomeDoEscritorio: fatura.escritorio.nome,
+    competencia: fatura.competencia,
+    valorCentavos: fatura.valorCentavos,
+    vencimento: fatura.vencimento,
+    link: emitida.linkPagamento,
+  });
+
+  try {
+    await enviarPelaPlataforma({ para: admin.email, ...mensagem });
+  } catch (erro) {
+    // O e-mail falhar nao desfaz a cobranca: ela existe, e o escritorio pode
+    // pagar pelo link no painel. Fica registrado para nao sumir em silencio.
+    console.error(
+      `regua: fatura ${faturaId} cobrada, mas o aviso nao saiu — ${(erro as Error).message}`,
+    );
+  }
+}

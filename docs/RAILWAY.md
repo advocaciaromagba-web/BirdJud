@@ -319,6 +319,21 @@ Para conferir se um aviso desses e queda de verdade, em ordem:
 3. o deploy atual tem mais de um "Starting Container" no log? Ai sim e
    reinicio em laco, e o motivo esta nas linhas anteriores.
 
+### A cobranca da assinatura
+
+`ASAAS_PLATAFORMA_CHAVE` no servico **aplicacao** e no **cron-diario**: e a
+chave da conta Asaas DA BLACKBIRD, nao a de nenhum escritorio. As duas
+existem e sao diferentes:
+
+| conta | quem recebe | onde fica a chave |
+| --- | --- | --- |
+| do escritorio | o advogado, dos clientes dele | banco, cifrada (Integracao ASAAS) |
+| da plataforma | a BirdJud, dos escritorios | `ASAAS_PLATAFORMA_CHAVE` |
+
+Sem ela a regua continua gerando a fatura e ajustando o status, mas ninguem
+cobra — e o escritorio seria suspenso por nao pagar uma fatura que nunca lhe
+foi apresentada. O log avisa em toda passada.
+
 ## 6. Antes de cada deploy
 
 O CI (`.github/workflows/ci.yml`) roda `npm run teste:isolamento` contra um
