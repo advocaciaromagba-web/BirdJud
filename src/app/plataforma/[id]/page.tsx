@@ -78,6 +78,20 @@ export default async function EscritorioNoPainel({
           Advogados {uso.advogados.usados}/{uso.advogados.limite} · apoio{" "}
           {uso.apoio.usados}/{uso.apoio.limite}
         </p>
+        {/* Sem CNPJ o provedor recusa emitir a fatura, e o escritorio fica
+            devendo uma cobranca que nunca lhe foi apresentada. O suporte
+            precisa VER isso antes do primeiro vencimento, nao descobrir
+            depois: e o lado de leitura da acao "cnpj" deste console. */}
+        <p className="mt-2 text-slate-600">
+          CNPJ{" "}
+          {escritorio.cnpj ? (
+            escritorio.cnpj
+          ) : (
+            <strong className="text-amber-700">
+              nao informado — a cobranca nao sai
+            </strong>
+          )}
+        </p>
       </section>
 
       <AcoesDoEscritorio
