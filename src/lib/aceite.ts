@@ -1,4 +1,5 @@
 // Registro de aceite dos documentos juridicos.
+import { ipDeQuemChamou } from "./origem";
 import { comEscritorio, semEscritorio } from "./prisma";
 import {
   DOCUMENTOS,
@@ -52,9 +53,14 @@ export async function documentosPendentes(
   return DOCUMENTOS.map((d) => d.chave).filter((chave) => !aceitos.has(chave));
 }
 
-/** IP do cliente atras do proxy do provedor. */
+/**
+ * IP do cliente atras do proxy do provedor.
+ *
+ * A decisao mora em origem.ts, que le a lista pela direita. Lia pela
+ * esquerda, que e a parte da lista escrita pelo proprio cliente: quem
+ * atacasse escolhia a propria origem e todos os tetos por origem deixavam de
+ * existir juntos.
+ */
 export function ipDaRequisicao(req: Request): string | null {
-  const encaminhado = req.headers.get("x-forwarded-for");
-  if (encaminhado) return encaminhado.split(",")[0]?.trim() ?? null;
-  return req.headers.get("x-real-ip");
+  return ipDeQuemChamou(req.headers);
 }

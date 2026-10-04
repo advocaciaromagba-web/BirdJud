@@ -17,6 +17,7 @@ import {
 } from "./auth-comum";
 import { prismaPlataforma } from "./prisma";
 import { registrarTentativa } from "./limite";
+import { chaveDeOrigem } from "./origem";
 
 /** Minutos de bloqueio depois de errar a senha vezes demais. */
 const TENTATIVAS_ATE_BLOQUEIO = 5;
@@ -36,16 +37,18 @@ const JANELA_DA_ORIGEM = 15 * 60;
 const TENTATIVAS_DO_OPERADOR = 10;
 const JANELA_DO_OPERADOR = 15 * 60;
 
-/** IP de quem chamou, como o NextAuth entrega os cabecalhos. */
+/**
+ * IP de quem chamou, como o NextAuth entrega os cabecalhos.
+ *
+ * A leitura mora em origem.ts. Lia o PRIMEIRO valor de X-Forwarded-For, que e
+ * a parte da lista escrita pelo proprio cliente: o teto por origem no login —
+ * a defesa contra quem testa uma senha vazada em cem contas — era desligado
+ * trocando um cabecalho.
+ */
 function origemDaTentativa(
   cabecalhos: Record<string, unknown> | undefined,
 ): string {
-  const encaminhado = cabecalhos?.["x-forwarded-for"];
-  if (typeof encaminhado === "string" && encaminhado.trim()) {
-    return encaminhado.split(",")[0]!.trim();
-  }
-  const real = cabecalhos?.["x-real-ip"];
-  return typeof real === "string" && real.trim() ? real.trim() : "sem-ip";
+  return chaveDeOrigem(cabecalhos);
 }
 
 export const opcoesAuth: NextAuthOptions = {
