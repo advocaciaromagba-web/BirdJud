@@ -358,3 +358,41 @@ e conferindo registro a registro (`testes/fase5.test.ts`).
 
 **O que ainda falta na infraestrutura:** agendar esse backup e guardar o arquivo
 fora do Railway. O arquivo carrega credenciais cifradas — trate-o como o banco.
+
+## "Deploy Crashed!" que nao e queda
+
+A Railway manda e-mail de *Deploy Crashed* a cada troca de versao do
+`aplicacao`, e nenhuma dessas vezes houve queda. Vale saber separar, porque
+alarme falso repetido ensina todo mundo a ignorar o alarme — e um dia o
+e-mail vai ser de verdade, com a mesma cara.
+
+O que acontece na troca: a versao nova sobe, passa o healthcheck, assume o
+trafego, e so entao a antiga recebe SIGTERM. Em 04/10/2026, por exemplo:
+
+    14:14:10  versao nova pronta e servindo
+    14:14:13  versao antiga parada
+
+Houve sobreposicao, nao buraco. O log da antiga mostrava exatamente isto:
+
+    14:02:52  ✓ Ready in 217ms          <- estava servindo
+    14:14:04  Stopping Container        <- SIGTERM da troca
+    14:14:04  npm error signal SIGTERM  <- o npm chamando de erro
+
+O problema era so o codigo de saida. Medido aqui, com o mesmo SIGTERM:
+
+    next start                          -> 143
+    npm run start                       -> 143
+    exec node_modules/.bin/next start   -> 0
+
+Sem `exec`, quem recebe o sinal e o shell (ou o npm), que morre pelo sinal e
+sai 143 — e a Railway le qualquer saida diferente de zero como queda. Com
+`exec`, o shell e SUBSTITUIDO pelo processo do Next, que trata o SIGTERM e
+sai 0: parada limpa, sem e-mail.
+
+Por isso o `startCommand` termina em `exec`. Quem puser um `npm run` na
+frente do passo final desfaz a correcao: o npm volta a ser quem recebe o
+sinal, e o alarme falso volta junto.
+
+Nota: o `trabalhador` ainda sobe por `npm run trabalhador` e sai 143 na
+troca. Ele nao dispara e-mail hoje, mas tem uma questao maior e separada —
+o que acontece com o trabalho em andamento quando o sinal chega.

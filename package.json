@@ -18,7 +18,7 @@
     "teste": "vitest run",
     "teste:isolamento": "vitest run testes/isolamento.test.ts",
     "migrar": "node scripts/migrar.mjs",
-    "start:producao": "npm run migrar && npm run rls:aplicar && npm run conferir-producao && next start",
+    "start:producao": "npm run migrar && npm run rls:aplicar && npm run conferir-producao && exec node_modules/.bin/next start",
     "trabalhador": "tsx scripts/trabalhador.ts",
     "espalhar": "tsx scripts/espalhar-trabalho.ts",
     "criar-operador": "tsx scripts/criar-operador.ts",
