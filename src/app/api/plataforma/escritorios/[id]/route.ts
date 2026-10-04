@@ -17,6 +17,7 @@ import {
 } from "@/lib/contratacao";
 import { ehFaixa, type Faixa } from "@/lib/faixas";
 import type { Modulo } from "@/lib/catalogo";
+import { documentoValido, formatarDocumento } from "@/lib/documentos";
 
 const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("faixa"), faixa: z.enum(FAIXAS) }),
@@ -27,6 +28,11 @@ const acao = z.discriminatedUnion("acao", [
   }),
   z.object({ acao: z.literal("plano"), plano: z.enum(PLANOS) }),
   z.object({ acao: z.literal("regua") }),
+  // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
+  // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
+  // O caminho normal e o proprio escritorio preencher em Administracao; esta
+  // acao existe para o suporte destravar quem ja esbarrou.
+  z.object({ acao: z.literal("cnpj"), cnpj: z.string().max(20) }),
 ]);
 
 function tratar(erro: unknown) {
@@ -83,6 +89,23 @@ export async function POST(
       return NextResponse.json({
         detalhe: `Faixa alterada para ${corpo.data.faixa}.`,
       });
+    }
+
+    if (corpo.data.acao === "cnpj") {
+      // Conferido aqui tambem: digito errado so apareceria como recusa do
+      // provedor no dia da primeira fatura.
+      if (!documentoValido(corpo.data.cnpj)) {
+        return NextResponse.json(
+          { erro: "O CNPJ informado nao fecha o digito verificador." },
+          { status: 400 },
+        );
+      }
+      const formatado = formatarDocumento(corpo.data.cnpj);
+      await prismaPlataforma().escritorio.update({
+        where: { id: escritorio.id },
+        data: { cnpj: formatado },
+      });
+      return NextResponse.json({ detalhe: `CNPJ gravado: ${formatado}.` });
     }
 
     if (corpo.data.acao === "modulo") {
