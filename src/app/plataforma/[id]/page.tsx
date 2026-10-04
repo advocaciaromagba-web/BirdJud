@@ -8,6 +8,7 @@ import {
 } from "@/lib/plataforma";
 import { consumoDoMes, competenciaDe } from "@/lib/consumo";
 import { usoDaFaixa } from "@/lib/faixas";
+import { resumoDaBaixa } from "@/lib/referencia-cobranca";
 import { diasDeAtraso } from "@/lib/cobranca";
 import { emReais } from "@/lib/dinheiro";
 import {
@@ -149,6 +150,17 @@ export default async function EscritorioNoPainel({
                         </span>
                       ) : null}
                     </span>
+                    {/*
+                      Quem pagou, quanto e como. A conta do provedor e
+                      compartilhada entre sistemas da Blackbird: sem esta
+                      linha, "a fatura esta paga" nao dizia por qual caminho o
+                      dinheiro entrou nem quem deu a baixa.
+                    */}
+                    {resumoDaBaixa(fatura.baixa) ? (
+                      <span className="block text-xs text-slate-500">
+                        {resumoDaBaixa(fatura.baixa)}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="tabular-nums">

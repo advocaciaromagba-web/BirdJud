@@ -2,6 +2,7 @@
 //
 // Tudo aqui roda pela fila, um trabalho por escritorio. Nada depende de
 // alguem lembrar de rodar um script no fim do mes.
+import type { Prisma } from "@prisma/client";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { competenciaDe, consumoDoMes, type Metrica } from "./consumo";
 import { ehFaixa } from "./faixas";
@@ -185,11 +186,26 @@ export async function itensDaFatura(
 export async function registrarPagamento(
   faturaId: string,
   idExterno: string | null = null,
-  agora = new Date(),
+  opcoes: { agora?: Date; baixa?: unknown } = {},
 ): Promise<{ escritorioId: string; statusNovo: string }> {
+  const agora = opcoes.agora ?? new Date();
   const fatura = await prismaPlataforma().fatura.update({
     where: { id: faturaId },
-    data: { status: "PAGA", pagoEm: agora, idExterno },
+    data: {
+      status: "PAGA",
+      pagoEm: agora,
+      // Sem idExterno recebido NAO apagamos o que ja estava gravado. Antes
+      // apagava: a baixa manual de uma fatura ja emitida zerava o id da
+      // cobranca no provedor, e com ele o unico caminho de volta ate o
+      // pagamento. Quem quer limpar o campo limpa explicitamente.
+      ...(idExterno ? { idExterno } : {}),
+      // Retrato de quem pagou, quanto e como. Fica na fatura porque a
+      // pergunta "de quem foi este dinheiro?" chega depois do prazo dos
+      // logs — do provedor e do nosso.
+      ...(opcoes.baixa === undefined
+        ? {}
+        : { baixa: opcoes.baixa as Prisma.InputJsonValue }),
+    },
   });
 
   const resultado = await aplicarRegua(fatura.escritorioId, agora);

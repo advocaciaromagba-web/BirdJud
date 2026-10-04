@@ -3,6 +3,7 @@ import { z } from "zod";
 import { timingSafeEqual } from "node:crypto";
 import { prismaPlataforma } from "@/lib/prisma";
 import { registrarPagamento } from "@/lib/cobranca";
+import { SISTEMA, lerReferencia } from "@/lib/referencia-cobranca";
 
 // Recebe evento de pagamento e nunca e estatica.
 export const dynamic = "force-dynamic";
@@ -15,10 +16,21 @@ const evento = z.object({
   payment: z
     .object({
       id: z.string().optional(),
-      // Guardamos o id da nossa fatura aqui ao criar a cobranca no provedor.
-      externalReference: z.string().optional(),
+      // Guardamos "birdjud:fatura:<id>" aqui ao criar a cobranca. A marca do
+      // sistema e o que separa o nosso pagamento dos dos outros sistemas que
+      // dividem esta conta Asaas: ver referencia-cobranca.ts.
+      externalReference: z.string().nullish(),
+      // O resto e o retrato da baixa: quem pagou, quanto, como e quando.
+      // Guardamos para poder responder "de quem foi este dinheiro?" meses
+      // depois, sem depender do log do provedor nem do nosso.
+      customer: z.string().nullish(),
+      value: z.number().nullish(),
+      netValue: z.number().nullish(),
+      billingType: z.string().nullish(),
+      paymentDate: z.string().nullish(),
+      invoiceNumber: z.string().nullish(),
     })
-    .optional(),
+    .nullish(),
 });
 
 /** Comparacao em tempo constante, para o token nao vazar por cronometragem. */
@@ -83,25 +95,57 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, ignorado: corpo.data.event });
   }
 
-  const faturaId = corpo.data.payment?.externalReference;
+  const pagamento = corpo.data.payment ?? {};
+  const leitura = lerReferencia(pagamento.externalReference);
+
+  // Pagamento de outro sistema da mesma conta Asaas. Isto NAO e erro nosso, e
+  // responder erro seria o pior caminho possivel: o Asaas reenvia o que nao
+  // recebeu 200, e este webhook esta em fila (sendType SEQUENTIALLY). Um
+  // pagamento alheio recusado travaria a fila e as nossas proprias baixas
+  // parariam de chegar.
+  if (leitura.dono === "outro") {
+    anotar("pagamento de outro sistema", {
+      sistema: leitura.sistema,
+      evento: corpo.data.event,
+    });
+    return NextResponse.json({ ok: true, deOutroSistema: leitura.sistema });
+  }
+
+  // Sem marca: pode ser nossa, de antes da marca existir, ou de um sistema que
+  // tambem nao marca. Quem decide e o banco, logo abaixo.
+  const faturaId = leitura.dono === "nosso" ? leitura.id : leitura.bruto;
   if (!faturaId) {
-    anotar("sem referencia da fatura", { evento: corpo.data.event });
-    return NextResponse.json(
-      { erro: "Evento sem referencia da fatura." },
-      { status: 400 },
-    );
+    anotar("evento sem referencia", { evento: corpo.data.event });
+    // Tambem 200: referencia ausente nao aparece por reenvio.
+    return NextResponse.json({ ok: true, semReferencia: true });
+  }
+  if (leitura.dono === "nosso" && leitura.tipo !== "fatura") {
+    anotar("referencia nossa que nao e de fatura", {
+      tipo: leitura.tipo,
+      evento: corpo.data.event,
+    });
+    return NextResponse.json({ ok: true, ignorado: leitura.tipo });
   }
 
   const fatura = await prismaPlataforma().fatura.findUnique({
     where: { id: faturaId },
-    select: { id: true, status: true },
+    include: {
+      escritorio: { select: { id: true, nome: true, slug: true, cnpj: true } },
+    },
   });
   if (!fatura) {
-    anotar("fatura nao encontrada", { faturaId });
-    return NextResponse.json(
-      { erro: "Fatura nao encontrada." },
-      { status: 404 },
+    // Com a nossa marca e sem fatura, o problema e nosso e e grave: alguem
+    // pagou uma cobranca que o nosso banco nao conhece. Sem a marca, o mais
+    // provavel e que o pagamento seja de outro sistema da conta.
+    anotar(
+      leitura.dono === "nosso"
+        ? "fatura marcada como nossa nao existe no banco"
+        : "pagamento sem marca e sem fatura nossa: de outro sistema",
+      { faturaId, evento: corpo.data.event },
     );
+    // 200 nos dois casos. Reenviar nao faz a fatura existir, e recusar
+    // travaria a fila para todos os outros eventos.
+    return NextResponse.json({ ok: true, naoEnossa: true });
   }
 
   // Provedor reenvia evento quando nao recebe 200. Fatura ja paga responde ok
@@ -111,14 +155,40 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, jaProcessada: true });
   }
 
-  const resultado = await registrarPagamento(
-    fatura.id,
-    corpo.data.payment?.id ?? null,
-  );
+  // Quem pagou, quanto, como e quando — guardado na propria fatura. O log do
+  // provedor tem prazo e o nosso tambem; a pergunta "de quem foi este
+  // dinheiro?" costuma chegar depois dos dois.
+  const baixa = {
+    sistema: SISTEMA,
+    referencia: pagamento.externalReference ?? null,
+    marcada: leitura.dono === "nosso",
+    evento: corpo.data.event,
+    pagamentoId: pagamento.id ?? null,
+    clienteNoProvedor: pagamento.customer ?? null,
+    escritorio: {
+      id: fatura.escritorio.id,
+      nome: fatura.escritorio.nome,
+      slug: fatura.escritorio.slug,
+      cnpj: fatura.escritorio.cnpj,
+    },
+    valor: pagamento.value ?? null,
+    valorLiquido: pagamento.netValue ?? null,
+    forma: pagamento.billingType ?? null,
+    pagoEm: pagamento.paymentDate ?? null,
+    recebidoEm: new Date().toISOString(),
+  };
+
+  const resultado = await registrarPagamento(fatura.id, pagamento.id ?? null, {
+    baixa,
+  });
   anotar("baixa registrada", {
     faturaId,
     evento: corpo.data.event,
+    sistema: SISTEMA,
     escritorioId: resultado.escritorioId,
+    escritorio: fatura.escritorio.slug,
+    forma: baixa.forma,
+    valor: baixa.valor,
     statusNovo: resultado.statusNovo,
   });
   return NextResponse.json({ ok: true, status: resultado.statusNovo });

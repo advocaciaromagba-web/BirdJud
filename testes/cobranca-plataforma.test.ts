@@ -15,6 +15,7 @@ import {
   mensagemDaFatura,
   temCobrancaDaPlataforma,
 } from "@/lib/cobranca-plataforma";
+import { lerReferencia, referencia } from "@/lib/referencia-cobranca";
 
 type Chamada = {
   metodo: string;
@@ -174,7 +175,17 @@ seTemBanco("emissao contra o banco", () => {
     const dePagamento = chamadas.filter((c) => c.caminho === "/payments");
     const pagamento = dePagamento[dePagamento.length - 1];
     // Sem externalReference o webhook recebe o pagamento e nao sabe de quem e.
-    expect(pagamento?.corpo?.externalReference).toBe(fatura.id);
+    // E sem a marca do sistema nao sabe de qual SISTEMA e: esta conta Asaas e
+    // compartilhada entre varios sistemas da Blackbird, e o evento de
+    // pagamento de qualquer um deles chega no webhook de todos.
+    expect(pagamento?.corpo?.externalReference).toBe(
+      referencia("fatura", fatura.id),
+    );
+    expect(lerReferencia(String(pagamento?.corpo?.externalReference))).toEqual({
+      dono: "nosso",
+      tipo: "fatura",
+      id: fatura.id,
+    });
     // UNDEFINED e o que entrega boleto, Pix e cartao na mesma tela.
     expect(pagamento?.corpo?.billingType).toBe("UNDEFINED");
     expect(pagamento?.corpo?.value).toBe(299);

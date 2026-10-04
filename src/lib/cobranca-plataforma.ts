@@ -12,6 +12,7 @@
 // defensavel; com dez, o escritorio seria suspenso por nao pagar uma fatura
 // que nunca lhe foi apresentada.
 import { prismaPlataforma } from "./prisma";
+import { referencia } from "./referencia-cobranca";
 import {
   FalhaNoAsaas,
   chamarAsaas,
@@ -103,8 +104,9 @@ export async function assinanteNoAsaas(
       cpfCnpj: documento,
       ...(dados.email ? { email: dados.email } : {}),
       // Ligar o cliente ao nosso id permite reencontra-lo mesmo se a coluna
-      // se perder.
-      externalReference: escritorioId,
+      // se perder. A marca do sistema vem na frente porque esta conta Asaas
+      // atende varios sistemas da Blackbird: ver referencia-cobranca.ts.
+      externalReference: referencia("escritorio", escritorioId),
       notificationDisabled: false,
     }),
   });
@@ -180,9 +182,11 @@ export async function emitirCobrancaDaFatura(
       value: emReaisDecimal(fatura.valorCentavos),
       dueDate: comoDia(fatura.vencimento),
       description: descricaoDaFatura(fatura.competencia),
-      // O webhook le este campo para saber qual fatura dar baixa. Sem ele, o
-      // pagamento chega e ninguem sabe de quem e.
-      externalReference: fatura.id,
+      // O webhook le este campo para saber qual fatura dar baixa, e a marca
+      // do sistema e o que permite separar o nosso pagamento dos outros
+      // sistemas que dividem esta conta Asaas. Sem ela, o pagamento chega e
+      // ninguem sabe de quem e — nem de qual sistema.
+      externalReference: referencia("fatura", fatura.id),
     }),
   });
 

@@ -7,6 +7,7 @@ import {
   SemOperador,
 } from "@/lib/plataforma";
 import { registrarPagamento } from "@/lib/cobranca";
+import { SISTEMA } from "@/lib/referencia-cobranca";
 
 const corpoEsperado = z.object({
   faturaId: z.string().min(1),
@@ -54,6 +55,18 @@ export async function POST(req: Request) {
     const resultado = await registrarPagamento(
       fatura.id,
       corpo.data.idExterno ?? null,
+      {
+        // Baixa na mao tambem responde "quem deu isto por pago?". Sem este
+        // registro, uma fatura paga pelo webhook e uma marcada por um
+        // operador ficavam indistinguiveis depois do fato.
+        baixa: {
+          sistema: SISTEMA,
+          origem: "baixa manual no console da plataforma",
+          operadorId: operador.operadorId,
+          pagamentoId: corpo.data.idExterno ?? null,
+          recebidoEm: new Date().toISOString(),
+        },
+      },
     );
     return NextResponse.json({
       detalhe: `Pagamento registrado. Escritorio agora ${resultado.statusNovo}.`,

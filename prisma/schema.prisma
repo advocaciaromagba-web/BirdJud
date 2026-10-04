@@ -269,6 +269,11 @@ model Fatura {
   idExterno     String? @unique // id da cobranca no meio de pagamento
   linkPagamento String? // para onde mandar o escritorio pagar
   emitidaEm     DateTime? // quando a cobranca foi emitida no provedor
+  // Retrato da baixa: sistema, referencia, quem pagou, quanto, como e quando.
+  // A conta Asaas e compartilhada entre varios sistemas da Blackbird, e sem
+  // isto nao havia como responder de quem foi um recebimento depois que o log
+  // do provedor expira. Ver src/lib/referencia-cobranca.ts.
+  baixa         Json?
   criadaEm      DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
