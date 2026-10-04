@@ -389,9 +389,20 @@ sai 143 — e a Railway le qualquer saida diferente de zero como queda. Com
 `exec`, o shell e SUBSTITUIDO pelo processo do Next, que trata o SIGTERM e
 sai 0: parada limpa, sem e-mail.
 
-Por isso o `startCommand` termina em `exec`. Quem puser um `npm run` na
-frente do passo final desfaz a correcao: o npm volta a ser quem recebe o
-sinal, e o alarme falso volta junto.
+Por isso o `startCommand` termina em `exec`. E por isso ele NAO comeca com
+`npm run`. Medido, com um script que ja terminava em `exec`:
+
+    npm run <script que termina em exec ...>  -> 143
+
+Com o npm no topo, o `exec` la dentro nao adianta nada: quem recebe o sinal
+e o npm, que morre pelo sinal e sai 143 do mesmo jeito. A cadeia tem de
+estar inteira no `startCommand`, sem npm envolvendo o passo final.
+
+E atencao a precedencia: o `startCommand` gravado NO SERVICO ganha do
+`railway.json`. Mudar so o arquivo do repositorio nao muda nada em producao
+— foi o que aconteceu na primeira tentativa desta correcao. Os dois precisam
+dizer a mesma coisa; o `railway.json` fica como registro do que o servico
+deve ter.
 
 Nota: o `trabalhador` ainda sobe por `npm run trabalhador` e sai 143 na
 troca. Ele nao dispara e-mail hoje, mas tem uma questao maior e separada —
