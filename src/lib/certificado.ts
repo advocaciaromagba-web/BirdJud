@@ -123,3 +123,64 @@ export function julgar(
   }
   return { situacao: "ok", nomes, expiraEm: dias };
 }
+
+/**
+ * Onde o vigia vai bater para ver o certificado de um nome.
+ *
+ * POR QUE ISTO EXISTE: com uma borda de terceiro na frente (Cloudflare), quem
+ * responde no nome publico e ela, com um certificado dela, sempre valido. O
+ * certificado do NOSSO servidor passa a vencer em silencio — e foi exatamente
+ * um certificado nosso em falha que deixou o sistema inteiro fora do ar em
+ * 28/09/2026. A conferencia precisa poder bater na origem, por tras da borda.
+ *
+ * A origem e um endereco diferente do nome publico; o que decide qual
+ * certificado o servidor apresenta e o SNI, que continua sendo o nome
+ * PUBLICO. Medido em 05/10/2026 contra a origem de verdade:
+ *
+ *   tzp59u2a.up.railway.app com SNI birdjud.com.br  -> DNS:birdjud.com.br
+ *   tzp59u2a.up.railway.app sem SNI                 -> DNS:default.domain
+ *
+ * Essa segunda linha e a armadilha: conectar sem SNI nao da erro, da o
+ * certificado errado — e o vigia acusaria falha todo dia, por conta propria.
+ * Alarme falso diario e pior que nenhum alarme, porque ensina a ignorar.
+ */
+export type AlvoDeCertificado = {
+  /** Nome publico. E o que vai no SNI e o que o certificado precisa cobrir. */
+  nome: string;
+  /** Onde conectar. Igual ao nome quando nao ha borda de terceiro na frente. */
+  origem: string;
+};
+
+/**
+ * Le a lista de alvos. Cada item e `nome` ou `nome@origem`.
+ *
+ * Item vazio ou malformado e DESCARTADO, nao vira alvo quebrado: uma virgula
+ * sobrando na configuracao nao deve produzir alarme sobre um host "".
+ */
+export function alvosDeCertificado(texto: string | undefined | null): AlvoDeCertificado[] {
+  const alvos: AlvoDeCertificado[] = [];
+  for (const parte of (texto ?? "").split(",")) {
+    const item = parte.trim();
+    if (!item) continue;
+    const corte = item.indexOf("@");
+    if (corte < 0) {
+      alvos.push({ nome: item.toLowerCase(), origem: item.toLowerCase() });
+      continue;
+    }
+    const nome = item.slice(0, corte).trim().toLowerCase();
+    const origem = item.slice(corte + 1).trim().toLowerCase();
+    if (!nome) continue;
+    // Origem vazia depois do "@" e engano de digitacao, nao pedido de
+    // conectar no nome: descartar é melhor que adivinhar.
+    if (!origem) continue;
+    alvos.push({ nome, origem });
+  }
+  return alvos;
+}
+
+/** Como dizer o alvo no log e no alarme, para saber onde foi batido. */
+export function descreverAlvo(alvo: AlvoDeCertificado): string {
+  return alvo.origem === alvo.nome
+    ? alvo.nome
+    : `${alvo.nome} (na origem ${alvo.origem})`;
+}

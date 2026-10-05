@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DIAS_DE_AVISO,
+  alvosDeCertificado,
+  descreverAlvo,
   julgar,
   nomeCobre,
   nomesDoCertificado,
@@ -89,5 +91,91 @@ describe("julgar", () => {
   it("valida ilegivel nao vira alarme quando o nome confere", () => {
     const v = julgar("app.birdjud.com.br", { ...bom, valid_to: "nao e data" }, AGORA);
     expect(v.situacao).toBe("ok");
+  });
+});
+
+describe("onde bater para ver o certificado", () => {
+  // POR QUE ISTO IMPORTA: com uma borda de terceiro na frente, quem responde
+  // no nome publico e ela, com um certificado dela, sempre valido. O
+  // certificado do nosso servidor passaria a vencer em silencio — e foi um
+  // certificado nosso em falha que derrubou o sistema inteiro em 28/09/2026.
+  it("um nome sozinho bate nele mesmo", () => {
+    expect(alvosDeCertificado("app.birdjud.com.br")).toEqual([
+      { nome: "app.birdjud.com.br", origem: "app.birdjud.com.br" },
+    ]);
+  });
+
+  it("nome@origem bate na origem, julgando o nome publico", () => {
+    expect(
+      alvosDeCertificado("app.birdjud.com.br@qj91rgxj.up.railway.app"),
+    ).toEqual([
+      { nome: "app.birdjud.com.br", origem: "qj91rgxj.up.railway.app" },
+    ]);
+  });
+
+  it("le uma lista com os dois tipos, e nao se perde com espacos", () => {
+    expect(
+      alvosDeCertificado(
+        " birdjud.com.br@tzp59u2a.up.railway.app , app.birdjud.com.br ",
+      ),
+    ).toEqual([
+      { nome: "birdjud.com.br", origem: "tzp59u2a.up.railway.app" },
+      { nome: "app.birdjud.com.br", origem: "app.birdjud.com.br" },
+    ]);
+  });
+
+  // Virgula sobrando na configuracao nao pode virar alarme sobre o host "".
+  it("descarta item vazio em vez de criar alvo quebrado", () => {
+    expect(alvosDeCertificado("a.br,,  , b.br")).toEqual([
+      { nome: "a.br", origem: "a.br" },
+      { nome: "b.br", origem: "b.br" },
+    ]);
+    expect(alvosDeCertificado("")).toEqual([]);
+    expect(alvosDeCertificado(undefined)).toEqual([]);
+    expect(alvosDeCertificado(null)).toEqual([]);
+  });
+
+  it("descarta engano de digitacao em vez de adivinhar", () => {
+    expect(alvosDeCertificado("app.birdjud.com.br@")).toEqual([]);
+    expect(alvosDeCertificado("@origem.br")).toEqual([]);
+  });
+
+  it("a descricao diz onde foi batido, para separar borda de origem", () => {
+    expect(descreverAlvo({ nome: "a.br", origem: "a.br" })).toBe("a.br");
+    expect(descreverAlvo({ nome: "a.br", origem: "o.railway.app" })).toBe(
+      "a.br (na origem o.railway.app)",
+    );
+  });
+
+  // A armadilha medida em 05/10/2026: a origem sem SNI entrega
+  // DNS:default.domain. Julgar esse certificado contra o nome publico tem de
+  // dar FALHA — se desse "ok", um vigia mal ligado diria que esta tudo bem; e
+  // o julgamento do certificado certo tem de dar ok.
+  it("o certificado padrao da origem nao passa por certificado do nome", () => {
+    const padraoDaOrigem = {
+      subject: { CN: "default.domain" },
+      subjectaltname: "DNS:default.domain",
+      valid_to: "Nov  4 18:12:13 2026 GMT",
+    };
+    const veredito = julgar(
+      "app.birdjud.com.br",
+      padraoDaOrigem,
+      new Date("2026-10-05T12:00:00Z"),
+    );
+    expect(veredito.situacao).toBe("falha");
+  });
+
+  it("o certificado real da origem passa", () => {
+    const daOrigem = {
+      subject: { CN: "*.birdjud.com.br" },
+      subjectaltname: "DNS:app.birdjud.com.br",
+      valid_to: "Nov  4 18:12:13 2026 GMT",
+    };
+    const veredito = julgar(
+      "app.birdjud.com.br",
+      daOrigem,
+      new Date("2026-10-05T12:00:00Z"),
+    );
+    expect(veredito.situacao).toBe("ok");
   });
 });

@@ -10,10 +10,13 @@
 //
 // 1. ele roda dentro do mesmo provedor que vigia. Se o Railway inteiro cair,
 //    o vigia cai junto e ninguem e avisado;
-// 2. ele bate no dominio do Railway, nao em app.birdjud.com.br. De dentro do
-//    Railway, chamar o proprio dominio publico do projeto falha ("fetch
-//    failed") — a borda nao aceita a volta. Entao a camada de DNS e
-//    certificado do dominio proprio fica de fora desta vigilancia.
+// 2. o healthcheck bate no dominio do Railway, nao em app.birdjud.com.br. De
+//    dentro do Railway, chamar o proprio dominio publico do projeto falha
+//    ("fetch failed") — a borda nao aceita a volta. Entao a camada de DNS do
+//    dominio proprio fica de fora desta vigilancia. O CERTIFICADO do dominio
+//    proprio nao fica mais: e conferido a parte, e pode ser conferido na
+//    origem, por tras de uma borda de terceiro — ver alvosDeCertificado em
+//    certificado.ts.
 //
 // Ele pega o caso comum — a aplicacao fora do ar com a plataforma de pe. As
 // duas lacunas acima sao exatamente o que um monitor de fora cobre, e por
@@ -23,7 +26,11 @@ import {
   enviarPelaPlataforma,
   temRemetenteDaPlataforma,
 } from "../src/lib/email-plataforma.ts";
-import { julgar } from "../src/lib/certificado.ts";
+import {
+  alvosDeCertificado,
+  descreverAlvo,
+  julgar,
+} from "../src/lib/certificado.ts";
 import {
   avaliarCopias,
   destinoDoAmbiente,
@@ -42,13 +49,10 @@ const LIMITE_MS = Number(process.env.VIGIA_LIMITE_MS ?? 15_000);
  * Um por linha do healthcheck nao serve: o que interessa aqui e o nome que a
  * borda apresenta, e ele vale para o subdominio inteiro.
  */
-const CERTIFICADOS = (
+const CERTIFICADOS = alvosDeCertificado(
   process.env.VIGIA_CERTIFICADOS ??
-  `app.${process.env.DOMINIO_PLATAFORMA?.trim() || "birdjud.com.br"}`
-)
-  .split(",")
-  .map((nome) => nome.trim())
-  .filter(Boolean);
+    `app.${process.env.DOMINIO_PLATAFORMA?.trim() || "birdjud.com.br"}`,
+);
 
 /**
  * Abre o TLS e devolve o certificado que a borda apresentou.
@@ -57,12 +61,17 @@ const CERTIFICADOS = (
  * errado, nao levar um erro e ficar sem saber qual era. O julgamento e do
  * modulo certificado.ts, que e testado.
  */
-function certificadoDaBorda(host) {
+function certificadoDaBorda(alvo) {
   return new Promise((pronto) => {
     const tomada = conectarTls({
-      host,
+      // Conecta na ORIGEM — que, com uma borda de terceiro na frente, nao e o
+      // endereco do nome publico.
+      host: alvo.origem,
       port: 443,
-      servername: host,
+      // ...mas o SNI e sempre o nome PUBLICO. Sem ele a origem entrega o
+      // certificado padrao dela (medido: DNS:default.domain) e o vigia
+      // acusaria falha todo dia sozinho.
+      servername: alvo.nome,
       rejectUnauthorized: false,
       timeout: LIMITE_MS,
     });
@@ -134,23 +143,31 @@ async function conferirCopiaExterna() {
 /** Confere todos os dominios e devolve so o que e falha certa. */
 async function conferirCertificados() {
   const falhas = [];
-  for (const host of CERTIFICADOS) {
-    const { certificado, erro } = await certificadoDaBorda(host);
+  for (const alvo of CERTIFICADOS) {
+    const onde = descreverAlvo(alvo);
+    const { certificado, erro } = await certificadoDaBorda(alvo);
     if (erro) {
       // Nao alcancar o host pode ser a rede deste container. Registra e cala.
-      console.log(`vigia: certificado de ${host} inconclusivo — ${erro}`);
+      console.log(`vigia: certificado de ${onde} inconclusivo — ${erro}`);
       continue;
     }
-    const veredito = julgar(host, certificado, new Date());
+    const veredito = julgar(alvo.nome, certificado, new Date());
     if (veredito.situacao === "ok") {
       console.log(
-        `vigia: certificado de ${host} ok (${veredito.nomes.join(", ")}), ${veredito.expiraEm} dia(s)`,
+        `vigia: certificado de ${onde} ok (${veredito.nomes.join(", ")}), ${veredito.expiraEm} dia(s)`,
       );
     } else if (veredito.situacao === "inconclusivo") {
-      console.log(`vigia: certificado de ${host} inconclusivo — ${veredito.motivo}`);
+      console.log(`vigia: certificado de ${onde} inconclusivo — ${veredito.motivo}`);
     } else {
-      console.error(`vigia: ${veredito.motivo}`);
-      falhas.push(veredito.motivo);
+      // O motivo nomeia o host publico; acrescentar onde foi batido separa
+      // "a borda esta errada" de "a origem esta errada" — dois problemas com
+      // remedios diferentes.
+      const recado =
+        alvo.origem === alvo.nome
+          ? veredito.motivo
+          : `${veredito.motivo} (conferido na origem ${alvo.origem})`;
+      console.error(`vigia: ${recado}`);
+      falhas.push(recado);
     }
   }
   return falhas;
