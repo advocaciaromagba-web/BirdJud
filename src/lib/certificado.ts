@@ -135,14 +135,24 @@ export function julgar(
  *
  * A origem e um endereco diferente do nome publico; o que decide qual
  * certificado o servidor apresenta e o SNI, que continua sendo o nome
- * PUBLICO. Medido em 05/10/2026 contra a origem de verdade:
+ * PUBLICO. Conectar sem SNI nao da erro: da o certificado padrao do servidor
+ * (DNS:default.domain no Railway). Essa e a armadilha — o vigia acusaria
+ * falha todo dia por conta propria, e alarme falso diario e pior que nenhum
+ * alarme, porque ensina a ignorar.
  *
- *   tzp59u2a.up.railway.app com SNI birdjud.com.br  -> DNS:birdjud.com.br
- *   tzp59u2a.up.railway.app sem SNI                 -> DNS:default.domain
+ * Conferido no cron-vigia em 05/10/2026, que e onde a saida e direta:
  *
- * Essa segunda linha e a armadilha: conectar sem SNI nao da erro, da o
- * certificado errado — e o vigia acusaria falha todo dia, por conta propria.
- * Alarme falso diario e pior que nenhum alarme, porque ensina a ignorar.
+ *   tzp59u2a.up.railway.app com SNI birdjud.com.br      -> birdjud.com.br
+ *   qj91rgxj.up.railway.app com SNI app.birdjud.com.br  -> *.birdjud.com.br
+ *
+ * Os dois enderecos devolvem certificados DIFERENTES, e so o SNI os separa:
+ * e a prova de que ele esta sendo mandado.
+ *
+ * ONDE MEDIR IMPORTA, e isto custou uma afirmacao errada: a mesma conferencia
+ * rodada de um ambiente com proxy TLS na frente devolveu CN=*.com.br, emissor
+ * "Egress Gateway SDS Issuing CA", com outra validade. Era o certificado do
+ * proxy, nao o do Railway. E o limite ja anotado no topo deste arquivo, e ele
+ * vale para quem le o resultado tanto quanto para quem escreve o codigo.
  */
 export type AlvoDeCertificado = {
   /** Nome publico. E o que vai no SNI e o que o certificado precisa cobrir. */

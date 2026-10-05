@@ -30,10 +30,11 @@ dele por validacao de DNS, com o registro
 
     _acme-challenge  CNAME  qj91rgxj.authorize.railwaydns.net
 
-Se esse registro for para a nuvem laranja, a renovacao para de funcionar. O
-certificado atual vence em 04/11/2026: a quebra so apareceria semanas depois,
-e apareceria como o sistema inteiro inacessivel — foi isso que aconteceu em
-28/09/2026, por outra razao. Esse registro fica cinza, sempre.
+Se esse registro for para a nuvem laranja, a renovacao para de funcionar. Os
+certificados hoje vencem em 23/12/2026 (apice) e 26/12/2026 (curinga), medidos
+pelo cron-vigia: a quebra so apareceria semanas depois, e apareceria como o
+sistema inteiro inacessivel — foi isso que aconteceu em 28/09/2026, por outra
+razao. Esse registro fica cinza, sempre.
 
 **2. O webhook de pagamento nao pode ser tratado como robo.** O Asaas chama
 `app.birdjud.com.br/api/webhooks/asaas` sem navegador, sem JavaScript — o
