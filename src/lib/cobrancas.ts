@@ -60,8 +60,8 @@ export function statusNosso(statusDoAsaas: string): string | null {
 
 export class SemContaDeCobranca extends Error {
   readonly status = 503;
-  constructor() {
-    super("O escritorio ainda nao conectou a conta Asaas em Integracoes.");
+  constructor(motivo = "O escritorio ainda nao conectou a conta Asaas em Integracoes.") {
+    super(motivo);
     this.name = "SemContaDeCobranca";
   }
 }
@@ -315,7 +315,7 @@ export async function emitirCobranca(
           contratoId: pedido.contrato?.id ?? null,
           parcelaNumero: pedido.contrato?.numero ?? null,
           parcelaTotal: pedido.contrato?.total ?? null,
-          idNoAsaas: `pendente:${chaveOperacao}`,
+          idNoProvedor: `pendente:${chaveOperacao}`,
         }),
       }));
     } catch (erro) {
@@ -378,15 +378,15 @@ async function finalizarCobranca(
   id: string,
   criada: Record<string, unknown>,
 ): Promise<{ id: string; linkPagamento: string | null }> {
-  const idNoAsaas = typeof criada.id === "string" ? criada.id : null;
-  if (!idNoAsaas) throw new FalhaNoAsaas("O Asaas nao devolveu o id da cobranca.");
+  const idNoProvedor = typeof criada.id === "string" ? criada.id : null;
+  if (!idNoProvedor) throw new FalhaNoAsaas("O Asaas nao devolveu o id da cobranca.");
 
   const cobranca = await comEscritorio(escritorioId, (db) =>
     db.cobranca.update({
       where: { id },
       data: {
         status: statusNosso(String(criada.status ?? "")) ?? "ABERTA",
-        idNoAsaas,
+        idNoProvedor,
         linkPagamento:
           typeof criada.invoiceUrl === "string" ? criada.invoiceUrl : null,
         linkBoleto:
@@ -411,7 +411,9 @@ async function finalizarCobranca(
  * tem livro-caixa nenhum, e criar linha que ele nao pode ver seria dado orfao.
  * A cobranca fica marcada como paga de qualquer jeito.
  */
-async function darBaixa(
+/** Exportada porque a InfinitePay da baixa pelo mesmo caminho: uma receita no
+ * livro-caixa so pode nascer de um lugar. */
+export async function darBaixa(
   escritorioId: string,
   cobranca: { id: string; descricao: string; lancamentoId: string | null },
   valorCentavos: number,
@@ -493,7 +495,7 @@ export async function sincronizarCobrancas(
     try {
       const doAsaas = await chamarAsaas(
         chave,
-        `/payments/${cobranca.idNoAsaas}`,
+        `/payments/${cobranca.idNoProvedor}`,
       );
       const status = statusNosso(String(doAsaas.status ?? ""));
       if (!status) continue;
@@ -570,7 +572,7 @@ export async function cancelarCobranca(
   if (cobranca.status === "CANCELADA") return;
 
   const chave = await chaveDoEscritorio(escritorioId);
-  await chamarAsaas(chave, `/payments/${cobranca.idNoAsaas}`, {
+  await chamarAsaas(chave, `/payments/${cobranca.idNoProvedor}`, {
     method: "DELETE",
   });
 

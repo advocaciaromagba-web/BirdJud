@@ -20,7 +20,7 @@ import { diaBR } from "../src/lib/datas";
 
 const COBRANCA = (over: Partial<CobrancaAberta> = {}): CobrancaAberta => ({
   id: "cob1",
-  idNoAsaas: "pay_1",
+  idNoProvedor: "pay_1",
   nomeDoCliente: "JOSE CICERO DOS SANTOS",
   descricao: "Honorarios",
   faltaCentavos: 150_000,
@@ -132,7 +132,7 @@ describe("a sugestao", () => {
   it("duas candidatas viram AMBIGUA, e nao escolhemos", () => {
     const s = sugerir(
       [ENTRADA()],
-      [COBRANCA(), COBRANCA({ id: "cob2", idNoAsaas: "pay_2" })],
+      [COBRANCA(), COBRANCA({ id: "cob2", idNoProvedor: "pay_2" })],
     );
     const r = s.get("tr1")!;
     expect(r.tipo).toBe("AMBIGUA");

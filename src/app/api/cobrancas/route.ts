@@ -15,6 +15,8 @@ import {
   SemContaDeCobranca,
   sincronizarCobrancas,
 } from "@/lib/cobrancas";
+import { PROVEDORES } from "@/lib/provedores";
+import { emitirNaInfinitePay } from "@/lib/infinitepay-do-escritorio";
 
 const novaCobranca = z.object({
   clienteId: z.string().min(1),
@@ -24,6 +26,9 @@ const novaCobranca = z.object({
   vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   forma: z.enum(FORMAS),
   chaveOperacao: z.string().uuid(),
+  // Em qual conta do escritorio a cobranca nasce. Quem escolhe e quem emite,
+  // sempre na hora — o sistema nunca escolhe por conta propria.
+  provedor: z.enum(PROVEDORES).optional(),
 });
 
 const acao = z.discriminatedUnion("acao", [
@@ -74,16 +79,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ erro: "Valor invalido." }, { status: 400 });
     }
 
-    const cobranca = await emitirCobranca(escritorioId, {
-      clienteId: corpo.data.clienteId,
-      processoId: corpo.data.processoId ?? null,
-      descricao: corpo.data.descricao,
-      valorCentavos,
-      // Meio-dia UTC para o vencimento nao escorregar de dia por fuso.
-      vencimento: new Date(`${corpo.data.vencimento}T12:00:00Z`),
-      forma: corpo.data.forma,
-      chaveOperacao: corpo.data.chaveOperacao,
-    });
+    // Meio-dia UTC para o vencimento nao escorregar de dia por fuso.
+    const vencimento = new Date(`${corpo.data.vencimento}T12:00:00Z`);
+
+    const cobranca =
+      corpo.data.provedor === "INFINITEPAY"
+        ? await emitirNaInfinitePay(escritorioId, {
+            clienteId: corpo.data.clienteId,
+            processoId: corpo.data.processoId ?? null,
+            descricao: corpo.data.descricao,
+            valorCentavos,
+            vencimento,
+            chaveOperacao: corpo.data.chaveOperacao,
+          })
+        : await emitirCobranca(escritorioId, {
+            clienteId: corpo.data.clienteId,
+            processoId: corpo.data.processoId ?? null,
+            descricao: corpo.data.descricao,
+            valorCentavos,
+            vencimento,
+            forma: corpo.data.forma,
+            chaveOperacao: corpo.data.chaveOperacao,
+          });
     return NextResponse.json({ cobranca }, { status: 201 });
   } catch (erro) {
     return respostaDoDominio(erro) ?? tratarErro(erro);

@@ -108,11 +108,11 @@ abaixo e a que sobrou.
 
 | O que | O que resolve |
 | --- | --- |
-| ✔ **Conciliacao por extrato** (`asaas-extrato`, `lancamento-match`, `monitor-pagamentos`) | Conferir o extrato, nao so o webhook: tarifa, Pix avulso, estorno e saque. O extrato da InfinitePay vem junto com a InfinitePay, abaixo. |
+| ✔ **Conciliacao por extrato** (`asaas-extrato`, `infinitepay-extrato`, `lancamento-match`, `monitor-pagamentos`) | Conferir o extrato, nao so o webhook: tarifa, Pix avulso, estorno e saque. Asaas por API, InfinitePay por CSV, uma tela so. |
 | ✔ **Honorarios e contrato** (`cobrancas-contrato`, parcelas, a vista) | Cobranca que nasce do contrato: plano de parcelas visivel antes de existir cobranca, uma parcela por vez perto do vencimento. |
 | ✔ **Contas a pagar** e despesa recorrente | Despesa fixa com vigencia (de quando ate quando), geracao diaria automatica e aviso de vencimento — conta a pagar e recebimento — na mesma regua dos prazos, so para ADMIN. |
 | ✔ **Metas** (`AnnualGoal`) | Meta anual contra o realizado, com o RITMO: quanto deveria ter entrado a esta altura do ano, quanto falta por mes e onde o ano fecha se nada mudar. |
-| **InfinitePay** | Segundo meio de pagamento, a escolha do escritorio. |
+| ✔ **InfinitePay** | Segundo meio de pagamento, a escolha de quem emite. O aviso de pagamento deles NAO vem assinado: a baixa so sai depois de conferir com eles. O extrato vem por CSV, porque nao ha API, e cai na mesma fila de conferencia do Asaas. |
 
 ### Depois: a rotina do dia
 

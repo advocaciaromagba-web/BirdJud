@@ -7,6 +7,7 @@ import { comEscritorio, semEscritorio } from "./prisma";
 import { chaveDoEscritorio, chamarAsaas } from "./cobrancas";
 import { competenciaDe } from "./consumo";
 import { moduloAtivo } from "./modulos";
+import { lerCsvDaInfinitePay } from "./infinitepay-extrato";
 import {
   emCentavos,
   regraDoTipo,
@@ -69,7 +70,7 @@ export async function importarExtrato(
       // tela e onde alguem decide se o financeiro bate.
       const jaExiste = await comEscritorio(escritorioId, (db) =>
         db.entradaDeExtrato.findFirst({
-          where: { idNoProvedor: id },
+          where: { provedor: "ASAAS", idNoProvedor: id },
           select: { id: true },
         }),
       );
@@ -78,6 +79,7 @@ export async function importarExtrato(
       await comEscritorio(escritorioId, (db) =>
         db.entradaDeExtrato.create({
           data: semEscritorio({
+            provedor: "ASAAS",
             idNoProvedor: id,
             tipo,
             valorCentavos: emCentavos(valor),
@@ -110,7 +112,7 @@ export async function cobrancasAbertas(
       where: { status: { in: ["ABERTA", "VENCIDA"] } },
       select: {
         id: true,
-        idNoAsaas: true,
+        idNoProvedor: true,
         descricao: true,
         valorCentavos: true,
         valorPagoCentavos: true,
@@ -121,7 +123,7 @@ export async function cobrancasAbertas(
   );
   return linhas.map((c) => ({
     id: c.id,
-    idNoAsaas: c.idNoAsaas,
+    idNoProvedor: c.idNoProvedor,
     nomeDoCliente: c.cliente.nome,
     descricao: c.descricao,
     faltaCentavos: c.valorCentavos - (c.valorPagoCentavos ?? 0),
@@ -278,4 +280,68 @@ export async function decidirEntrada(
     }),
   );
   return { lancamentoId: lancamento.id };
+}
+
+
+/**
+ * Importa o extrato da InfinitePay a partir do CSV exportado do app deles.
+ *
+ * Nao ha API para listar transacoes la — so a exportacao do aplicativo. As
+ * linhas caem na MESMA fila de conferencia do Asaas, com as mesmas regras:
+ * dois extratos, uma tela, um jeito so de decidir.
+ */
+export async function importarCsvDaInfinitePay(
+  escritorioId: string,
+  conteudo: string,
+): Promise<{
+  lidas: number;
+  novas: number;
+  jaExistiam: number;
+  recusadas: Array<{ linha: number; motivo: string }>;
+  erro: string | null;
+}> {
+  const leitura = lerCsvDaInfinitePay(conteudo);
+  if (leitura.erro) {
+    return { lidas: 0, novas: 0, jaExistiam: 0, recusadas: [], erro: leitura.erro };
+  }
+
+  let novas = 0;
+  let jaExistiam = 0;
+
+  for (const linha of leitura.linhas) {
+    const jaExiste = await comEscritorio(escritorioId, (db) =>
+      db.entradaDeExtrato.findFirst({
+        where: { provedor: "INFINITEPAY", idNoProvedor: linha.idNoProvedor },
+        select: { id: true },
+      }),
+    );
+    if (jaExiste) {
+      jaExistiam++;
+      continue;
+    }
+
+    await comEscritorio(escritorioId, (db) =>
+      db.entradaDeExtrato.create({
+        data: semEscritorio({
+          provedor: "INFINITEPAY",
+          idNoProvedor: linha.idNoProvedor,
+          tipo: linha.tipo,
+          valorCentavos: linha.valorCentavos,
+          data: comoData(linha.data),
+          descricao: linha.descricao,
+          destino: regraDoTipo(linha.tipo).destino,
+        }),
+        select: { id: true },
+      }),
+    );
+    novas++;
+  }
+
+  return {
+    lidas: leitura.lidas,
+    novas,
+    jaExistiam,
+    recusadas: leitura.recusadas,
+    erro: null,
+  };
 }

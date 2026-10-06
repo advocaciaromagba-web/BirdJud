@@ -200,7 +200,7 @@ async function main() {
           vencimento: daquiA(-6 * DIA),
           forma: "BOLETO",
           status: "VENCIDA",
-          idNoAsaas: "demo-1",
+          idNoProvedor: "demo-1",
         },
         {
           clienteId: clientes[1].id,
@@ -209,7 +209,7 @@ async function main() {
           vencimento: daquiA(4 * DIA),
           forma: "PIX",
           status: "ABERTA",
-          idNoAsaas: "demo-2",
+          idNoProvedor: "demo-2",
         },
         {
           clienteId: clientes[2].id,
@@ -219,7 +219,7 @@ async function main() {
           vencimento: daquiA(-20 * DIA),
           forma: "BOLETO",
           status: "PAGA",
-          idNoAsaas: "demo-3",
+          idNoProvedor: "demo-3",
           pagoEm: daquiA(-18 * DIA),
           valorPagoCentavos: 950_000,
         },

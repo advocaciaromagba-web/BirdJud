@@ -538,8 +538,10 @@ model Cobranca {
   vencimento        DateTime
   forma             String // BOLETO | PIX | CARTAO | QUALQUER
   status            String    @default("ABERTA") // PENDENTE | ABERTA | PAGA | VENCIDA | CANCELADA | ESTORNADA
-  // Id da cobranca na conta Asaas do escritorio. E a chave da sincronizacao.
-  idNoAsaas         String
+  // ASAAS | INFINITEPAY. A conta do escritorio em que esta cobranca vive.
+  provedor          String    @default("ASAAS")
+  // Id da cobranca na conta do provedor. E a chave da sincronizacao.
+  idNoProvedor      String
   linkPagamento     String?
   linkBoleto        String?
   pagoEm            DateTime?
@@ -561,13 +563,14 @@ model Cobranca {
 
   entradasDeExtrato EntradaDeExtrato[]
 
-  @@unique([escritorioId, idNoAsaas])
+  @@unique([escritorioId, idNoProvedor])
   // A mesma parcela nunca vira duas cobrancas: nem com duas pessoas na tela,
   // nem com o cron rodando duas vezes.
   @@unique([contratoId, parcelaNumero])
   @@index([escritorioId, status])
   @@index([escritorioId, vencimento])
   @@index([escritorioId, contratoId])
+  @@index([escritorioId, provedor])
 }
 
 /// Contrato de honorarios: o que o escritorio combinou de receber, e como.
@@ -926,7 +929,10 @@ model Representante {
 model EntradaDeExtrato {
   id            String    @id @default(cuid())
   escritorioId  String
+  /// ASAAS | INFINITEPAY. De qual conta do escritorio este lancamento veio.
+  provedor      String    @default("ASAAS")
   /// Id no provedor. E o que impede importar o mesmo lancamento duas vezes.
+  /// Na InfinitePay nao ha id de transacao no CSV: e um hash da linha.
   idNoProvedor  String
   tipo          String
   valorCentavos Int
@@ -947,7 +953,7 @@ model EntradaDeExtrato {
   cobranca   Cobranca?   @relation(fields: [cobrancaId], references: [id], onDelete: SetNull)
   lancamento Lancamento? @relation(fields: [lancamentoId], references: [id], onDelete: SetNull)
 
-  @@unique([escritorioId, idNoProvedor])
+  @@unique([escritorioId, provedor, idNoProvedor])
   @@index([escritorioId, situacao])
   @@index([escritorioId, data])
 }

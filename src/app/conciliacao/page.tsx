@@ -17,7 +17,10 @@ export default async function PaginaConciliacao() {
   const [{ entradas, abertas }, integracao] = await Promise.all([
     pendentesComSugestao(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, (db) =>
-      db.integracao.findFirst({ where: { tipo: "ASAAS" }, select: { id: true } }),
+      db.integracao.findMany({
+        where: { tipo: { in: ["ASAAS", "INFINITEPAY"] } },
+        select: { tipo: true },
+      }),
     ),
   ]);
 
@@ -66,7 +69,11 @@ export default async function PaginaConciliacao() {
           : `${naTela.length} lancamento(s) a conferir.`
       }
     >
-      <PainelConciliacao entradas={naTela} temConta={integracao !== null} />
+      <PainelConciliacao
+        entradas={naTela}
+        temConta={integracao.some((i) => i.tipo === "ASAAS")}
+        temInfinitePay={integracao.some((i) => i.tipo === "INFINITEPAY")}
+      />
     </Estrutura>
   );
 }

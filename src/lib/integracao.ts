@@ -7,6 +7,7 @@ import { cifrar, decifrar } from "./segredo";
 export type TipoIntegracao =
   | "WHATSAPP_META"
   | "ASAAS"
+  | "INFINITEPAY"
   | "AUTENTIQUE"
   | "SMTP"
   | "MICROSOFT"

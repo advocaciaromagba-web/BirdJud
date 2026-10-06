@@ -3,6 +3,7 @@ import type { TipoIntegracao } from "../integracao";
 import type { Conector } from "./tipos";
 import { conectorEmail } from "./email";
 import { conectorAsaas } from "./asaas";
+import { conectorInfinitePay } from "./infinitepay";
 import { conectorAutentique } from "./autentique";
 import { conectorWhatsapp } from "./whatsapp";
 import { conectorCertificado } from "./certificado";
@@ -11,6 +12,7 @@ import { conectorGoogle, conectorMicrosoft } from "./pendentes";
 export const CONECTORES: Record<TipoIntegracao, Conector> = {
   SMTP: conectorEmail,
   ASAAS: conectorAsaas,
+  INFINITEPAY: conectorInfinitePay,
   AUTENTIQUE: conectorAutentique,
   WHATSAPP_META: conectorWhatsapp,
   NFSE_CERT: conectorCertificado,

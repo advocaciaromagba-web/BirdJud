@@ -31,12 +31,15 @@ const COR: Record<string, string> = {
 export function PainelConciliacao({
   entradas,
   temConta,
+  temInfinitePay,
 }: {
   entradas: EntradaNaTela[];
   temConta: boolean;
+  temInfinitePay: boolean;
 }) {
   const router = useRouter();
   const [importando, setImportando] = useState(false);
+  const [lendoCsv, setLendoCsv] = useState(false);
   const [decidindo, setDecidindo] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [resumo, setResumo] = useState<string | null>(null);
@@ -66,6 +69,36 @@ export function PainelConciliacao({
     setResumo(
       `${detalhe.lidos} lancamento(s) lidos, ${detalhe.novos} novo(s). ` +
         "Reimportar o mesmo periodo nao duplica nada.",
+    );
+    router.refresh();
+  }
+
+  async function lerCsv(arquivo: File) {
+    setErro(null);
+    setResumo(null);
+    setLendoCsv(true);
+
+    const corpo = new FormData();
+    corpo.set("arquivo", arquivo);
+    const resposta = await fetch("/api/extrato/csv", { method: "POST", body: corpo });
+    setLendoCsv(false);
+
+    const d = await resposta.json().catch(() => null);
+    if (!resposta.ok) {
+      setErro(d?.erro ?? "Nao consegui ler o arquivo.");
+      return;
+    }
+    const recusadas: Array<{ linha: number; motivo: string }> = d.recusadas ?? [];
+    setResumo(
+      `${d.lidas} linha(s) lidas, ${d.novas} nova(s), ${d.jaExistiam} ja estavam. ` +
+        (recusadas.length > 0
+          ? `${recusadas.length} recusada(s): ` +
+            recusadas
+              .slice(0, 3)
+              .map((r) => `linha ${r.linha} (${r.motivo})`)
+              .join(", ") +
+            ". Linha pela metade nao vira lancamento."
+          : "Reimportar o mesmo periodo nao duplica nada."),
     );
     router.refresh();
   }
@@ -123,6 +156,31 @@ export function PainelConciliacao({
             </button>
           </form>
         )}
+        {temInfinitePay ? (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <p className="text-sm font-medium">Extrato da InfinitePay</p>
+            <p className="mt-1 text-sm text-slate-600">
+              A InfinitePay nao tem API para listar o que passou na conta — so a
+              exportacao do aplicativo. Baixe o extrato em CSV no app e mande
+              aqui: as linhas entram nesta mesma lista.
+            </p>
+            <label className="botao-secundario mt-3 inline-block cursor-pointer">
+              {lendoCsv ? "Lendo..." : "Enviar o CSV"}
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                disabled={lendoCsv}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) void lerCsv(f);
+                }}
+              />
+            </label>
+          </div>
+        ) : null}
+
         {resumo ? (
           <p className="mt-3 text-sm text-emerald-700">{resumo}</p>
         ) : null}

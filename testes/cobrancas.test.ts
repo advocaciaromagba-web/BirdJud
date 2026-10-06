@@ -254,7 +254,7 @@ d("cobrancas por escritorio", () => {
     expect(cobranca?.status).toBe("ABERTA");
     expect(cobranca?.valorCentavos).toBe(150_000);
     expect(cobranca?.linkPagamento).toContain("asaas.exemplo");
-    expect(cobranca?.idNoAsaas).toMatch(/^pay_/);
+    expect(cobranca?.idNoProvedor).toMatch(/^pay_/);
   });
 
   it("repetir a mesma operacao nao emite novamente", async () => {
@@ -424,8 +424,8 @@ d("cobrancas por escritorio", () => {
     const cobranca = await comEscritorio(alfa, (db) =>
       db.cobranca.findUnique({ where: { id } }),
     );
-    pagamentos[cobranca!.idNoAsaas] = {
-      ...pagamentos[cobranca!.idNoAsaas],
+    pagamentos[cobranca!.idNoProvedor] = {
+      ...pagamentos[cobranca!.idNoProvedor],
       status: "RECEIVED",
       paymentDate: "2026-09-18",
       value: 800,
@@ -470,8 +470,8 @@ d("cobrancas por escritorio", () => {
     const cobranca = await comEscritorio(beta, (db) =>
       db.cobranca.findUnique({ where: { id } }),
     );
-    pagamentos[cobranca!.idNoAsaas] = {
-      ...pagamentos[cobranca!.idNoAsaas],
+    pagamentos[cobranca!.idNoProvedor] = {
+      ...pagamentos[cobranca!.idNoProvedor],
       status: "CONFIRMED",
       paymentDate: "2026-09-18",
       value: 300,
@@ -509,8 +509,8 @@ d("cobrancas por escritorio", () => {
       }),
     );
     for (const cobranca of ids) {
-      pagamentos[cobranca.idNoAsaas] = {
-        ...pagamentos[cobranca.idNoAsaas],
+      pagamentos[cobranca.idNoProvedor] = {
+        ...pagamentos[cobranca.idNoProvedor],
         status:
           cobranca.id === vencida.id ? "OVERDUE" : "ALGO_QUE_NAO_CONHECEMOS",
       };
@@ -546,8 +546,8 @@ d("cobrancas por escritorio", () => {
     const registros = await comEscritorio(alfa, (db) =>
       db.cobranca.findMany({ where: { id: { in: [boa.id, ruim.id] } } }),
     );
-    const idDaBoa = registros.find((c) => c.id === boa.id)!.idNoAsaas;
-    const idDaRuim = registros.find((c) => c.id === ruim.id)!.idNoAsaas;
+    const idDaBoa = registros.find((c) => c.id === boa.id)!.idNoProvedor;
+    const idDaRuim = registros.find((c) => c.id === ruim.id)!.idNoProvedor;
     pagamentos[idDaBoa] = {
       ...pagamentos[idDaBoa],
       status: "RECEIVED",
@@ -591,8 +591,8 @@ d("cobrancas por escritorio", () => {
     const registro = await comEscritorio(alfa, (db) =>
       db.cobranca.findUnique({ where: { id: paga.id } }),
     );
-    pagamentos[registro!.idNoAsaas] = {
-      ...pagamentos[registro!.idNoAsaas],
+    pagamentos[registro!.idNoProvedor] = {
+      ...pagamentos[registro!.idNoProvedor],
       status: "RECEIVED",
       value: 40,
     };

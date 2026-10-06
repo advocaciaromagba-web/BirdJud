@@ -148,7 +148,7 @@ d("painel e busca por escritorio", () => {
           vencimento: new Date(Date.now() - 10 * DIA),
           forma: "BOLETO",
           status: "VENCIDA",
-          idNoAsaas: `pay-pnl-${marca}`,
+          idNoProvedor: `pay-pnl-${marca}`,
         }),
       });
       await db.arquivo.create({

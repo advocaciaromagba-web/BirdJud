@@ -43,8 +43,15 @@ export default async function PaginaCobrancas() {
       contaConectada: await db.integracao.count({
         where: { tipo: "ASAAS", status: "OK" },
       }),
+      infinitePayConectada: await db.integracao.count({
+        where: { tipo: "INFINITEPAY" },
+      }),
     })),
   ]);
+
+  // Com as duas contas, quem emite escolhe na hora. Com uma so, nao ha o que
+  // perguntar — e um campo a menos para alguem errar.
+  const temInfinitePay = dados.infinitePayConectada > 0;
 
   const data = dataBR;
 
@@ -92,6 +99,9 @@ export default async function PaginaCobrancas() {
           <p className="mt-2 text-sm text-slate-500">
             O Asaas exige CPF/CNPJ do cliente. Cliente sem documento cadastrado
             e recusado com essa mensagem.
+            {temInfinitePay
+              ? " Na InfinitePay sai um link com Pix e cartao, e quem escolhe e o cliente no checkout — a forma abaixo so vale para o Asaas."
+              : ""}
           </p>
           <FormularioCriar
             rota="/api/cobrancas"
@@ -108,6 +118,23 @@ export default async function PaginaCobrancas() {
                     : `${cliente.nome} (sem CPF/CNPJ)`,
                 })),
               },
+              ...(temInfinitePay
+                ? [
+                    {
+                      nome: "provedor",
+                      rotulo: "Conta",
+                      tipo: "select" as const,
+                      obrigatorio: true,
+                      opcoes: [
+                        { valor: "ASAAS", rotulo: "Asaas — boleto, Pix ou cartao" },
+                        {
+                          valor: "INFINITEPAY",
+                          rotulo: "InfinitePay — link com Pix ou cartao",
+                        },
+                      ],
+                    },
+                  ]
+                : []),
               { nome: "descricao", rotulo: "Descricao", obrigatorio: true },
               { nome: "valor", rotulo: "Valor (R$)", obrigatorio: true },
               {

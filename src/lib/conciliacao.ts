@@ -92,6 +92,21 @@ export const REGRAS: Record<string, Regra> = {
   // quem o estorno se refere. Vao para alguem decidir.
   BILL_PAYMENT: { destino: "DESPESA", automatico: false, rotulo: "Conta paga pelo provedor" },
   PAYMENT_REFUND: { destino: "DESPESA", automatico: false, rotulo: "Estorno ao cliente" },
+
+  // ----- InfinitePay. Os nomes nao colidem com os do Asaas de proposito. ----
+  PIX_RECEBIDO: { destino: "RECEITA", automatico: true, rotulo: "Pix recebido" },
+  DEPOSITO_VENDAS: {
+    destino: "RECEITA",
+    automatico: true,
+    rotulo: "Deposito de venda (checkout ou maquininha)",
+  },
+  // Pix enviado e boleto pago NAO sao automaticos, e e de proposito: pelo
+  // extrato nao da para saber se e despesa do escritorio, repasse de lucro
+  // entre socios ou dinheiro de cliente indo para onde devia. Classificar
+  // sozinho acertaria as vezes — e errar as vezes, aqui, e o resultado do mes
+  // ficar "plausivel" e errado.
+  PIX_ENVIADO: { destino: "DESPESA", automatico: false, rotulo: "Pix enviado" },
+  BOLETO_PAGO: { destino: "DESPESA", automatico: false, rotulo: "Boleto pago" },
 };
 
 /**
@@ -163,7 +178,7 @@ export type EntradaDoExtrato = {
 
 export type CobrancaAberta = {
   id: string;
-  idNoAsaas: string;
+  idNoProvedor: string;
   nomeDoCliente: string;
   descricao: string;
   /** Quanto falta receber, em centavos. */
@@ -190,7 +205,7 @@ export function sugerir(
   entradas: readonly EntradaDoExtrato[],
   abertas: readonly CobrancaAberta[],
 ): Map<string, Sugestao> {
-  const porId = new Map(abertas.map((c) => [c.idNoAsaas, c]));
+  const porId = new Map(abertas.map((c) => [c.idNoProvedor, c]));
   const saida = new Map<string, Sugestao>();
 
   for (const entrada of entradas) {
