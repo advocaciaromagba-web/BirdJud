@@ -39,7 +39,8 @@ DECLARE
     'AcessoSuporte',
     'Prazo',
     'DiaSemExpediente',
-    'ItemDeChecklist'
+    'ItemDeChecklist',
+    'Representante'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

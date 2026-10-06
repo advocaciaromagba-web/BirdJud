@@ -242,6 +242,25 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("representante de cliente de um escritorio nao vaza para o outro", async () => {
+    const cli = await comEscritorio(alfaP, (db) =>
+      db.cliente.create({
+        data: semEscritorio({ nome: "Empresa de Alfa", documento: "11.222.333/0001-81" }),
+      }),
+    );
+    await comEscritorio(alfaP, (db) =>
+      db.representante.create({
+        data: semEscritorio({
+          clienteId: cli.id,
+          nome: "Socio de Alfa",
+          cpf: "529.982.247-25",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) => db.representante.findMany());
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("o calendario de um escritorio nao vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({

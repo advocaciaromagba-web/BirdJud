@@ -8,6 +8,11 @@ import { tamanhoLegivel } from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { pendenciasDoCliente } from "@/lib/clientes";
 import {
+  ehPessoaJuridica,
+  qualificacao,
+  type Endereco,
+} from "@/lib/representantes";
+import {
   ROTULO_DO_GRUPO,
   emTexto,
   type GrupoDoChecklist,
@@ -18,6 +23,10 @@ import {
   ChecklistDoCliente,
   type ItemNaTela,
 } from "@/componentes/ChecklistDoCliente";
+import {
+  RepresentantesDoCliente,
+  type RepresentanteNaTela,
+} from "@/componentes/RepresentantesDoCliente";
 
 const COR = {
   IMPEDE: "border-l-red-500 bg-red-50 text-red-900",
@@ -49,6 +58,7 @@ export default async function FichaCliente({
           orderBy: { ordem: "asc" },
           include: { arquivo: { select: { nome: true } } },
         },
+        representantes: { orderBy: { ordem: "asc" } },
       },
     }),
   );
@@ -62,6 +72,37 @@ export default async function FichaCliente({
       (i) => i.essencial && i.entregueEm === null,
     ).length,
   });
+
+  const enderecoDaEmpresa = (cliente.endereco ?? null) as Endereco | null;
+  const representantes: RepresentanteNaTela[] = cliente.representantes.map(
+    (r) => ({
+      nome: r.nome,
+      cpf: r.cpf,
+      rg: r.rg ?? "",
+      nacionalidade: r.nacionalidade ?? "",
+      estadoCivil: r.estadoCivil ?? "",
+      profissao: r.profissao ?? "",
+      email: r.email ?? "",
+      telefone: r.telefone ?? "",
+      mesmoEnderecoDaEmpresa: r.mesmoEnderecoDaEmpresa,
+      // A qualificacao e montada no servidor, pelo mesmo codigo que a peca vai
+      // usar: mostrar na tela um texto diferente do que sai na peca seria pior
+      // que nao mostrar nada.
+      qualificacao: qualificacao(
+        {
+          nome: r.nome,
+          cpf: r.cpf,
+          rg: r.rg,
+          nacionalidade: r.nacionalidade,
+          estadoCivil: r.estadoCivil,
+          profissao: r.profissao,
+          endereco: (r.endereco ?? null) as Endereco | null,
+          mesmoEnderecoDaEmpresa: r.mesmoEnderecoDaEmpresa,
+        },
+        enderecoDaEmpresa,
+      ),
+    }),
+  );
 
   const itensDoChecklist: ItemNaTela[] = cliente.itensDeChecklist.map((i) => ({
     id: i.id,
@@ -186,6 +227,19 @@ export default async function FichaCliente({
           ) : null}
         </aside>
       </div>
+
+      {/*
+        So para pessoa juridica: pedir representante legal de pessoa fisica e
+        pedir que alguem invente um dado.
+      */}
+      {ehPessoaJuridica(cliente.documento) ? (
+        <div className="mt-6">
+          <RepresentantesDoCliente
+            clienteId={cliente.id}
+            iniciais={representantes}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-6">
         <ChecklistDoCliente

@@ -107,6 +107,7 @@ const TABELAS_COM_RLS = [
   "Prazo",
   "DiaSemExpediente",
   "ItemDeChecklist",
+  "Representante",
 ];
 
 async function conferirBanco() {

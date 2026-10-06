@@ -76,6 +76,7 @@ model Escritorio {
   prazos            Prazo[]
   diasSemExpediente DiaSemExpediente[]
   itensDeChecklist  ItemDeChecklist[]
+  representantes    Representante[]
 }
 
 model ModuloContratado {
@@ -190,6 +191,8 @@ model Cliente {
   prazos Prazo[]
 
   itensDeChecklist ItemDeChecklist[]
+
+  representantes Representante[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -786,4 +789,31 @@ model ItemDeChecklist {
 
   @@index([escritorioId, clienteId])
   @@index([escritorioId, entregueEm])
+}
+
+/// Quem assina pela pessoa juridica. Mais de um quando os socios assinam em
+/// conjunto. Diferente do sistema que inspirou isto, TODOS moram aqui — dois
+/// lugares para o mesmo dado e onde nasce a peca faltando um socio.
+model Representante {
+  id                     String   @id @default(cuid())
+  escritorioId           String
+  clienteId              String
+  ordem                  Int      @default(0)
+  nome                   String
+  cpf                    String
+  rg                     String?
+  nacionalidade          String?
+  estadoCivil            String?
+  profissao              String?
+  /// Por onde a assinatura eletronica chega.
+  email                  String?
+  telefone               String?
+  mesmoEnderecoDaEmpresa Boolean  @default(true)
+  endereco               Json?
+  criadoEm               DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, clienteId])
 }
