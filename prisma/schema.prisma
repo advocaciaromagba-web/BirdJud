@@ -75,6 +75,7 @@ model Escritorio {
   consumos          ConsumoMensal[]
   prazos            Prazo[]
   diasSemExpediente DiaSemExpediente[]
+  itensDeChecklist  ItemDeChecklist[]
 }
 
 model ModuloContratado {
@@ -188,6 +189,8 @@ model Cliente {
 
   prazos Prazo[]
 
+  itensDeChecklist ItemDeChecklist[]
+
   @@index([escritorioId])
   @@index([escritorioId, documento])
 }
@@ -212,6 +215,8 @@ model Processo {
   arquivos     Arquivo[]
 
   prazos Prazo[]
+
+  itensDeChecklist ItemDeChecklist[]
 
   @@unique([escritorioId, numero])
   @@index([escritorioId])
@@ -450,6 +455,8 @@ model Arquivo {
   processo    Processo?    @relation(fields: [processoId], references: [id], onDelete: SetNull)
   usuario     Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   lancamentos Lancamento[]
+
+  itensDeChecklist ItemDeChecklist[]
 
   @@index([escritorioId, criadoEm])
   @@index([escritorioId, processoId])
@@ -750,4 +757,33 @@ model DiaSemExpediente {
 
   @@unique([escritorioId, dia])
   @@index([escritorioId, dia])
+}
+
+/// Item da lista de documentos de um cliente. Um por documento pedido, para
+/// que alguem possa marcar o que ja chegou e ligar ao arquivo que chegou.
+model ItemDeChecklist {
+  id           String    @id @default(cuid())
+  escritorioId String
+  clienteId    String
+  processoId   String?
+  /// PESSOAIS | DO_CASO | AJUDAM | GRATUIDADE | ACESSOS
+  grupo        String
+  documento    String
+  paraQue      String
+  essencial    Boolean   @default(false)
+  ordem        Int       @default(0)
+  /// O que o escritorio escreveu como motivo da lista (tipo de acao).
+  tipoAcao     String?
+  entregueEm   DateTime?
+  /// O arquivo que cumpriu este item, quando ha um.
+  arquivoId    String?
+  criadoEm     DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  arquivo    Arquivo?   @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
+
+  @@index([escritorioId, clienteId])
+  @@index([escritorioId, entregueEm])
 }

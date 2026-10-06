@@ -221,6 +221,27 @@ d("isolamento dos prazos", () => {
     expect(intacto?.cumpridoEm).toBeNull();
   });
 
+  it("a lista de documentos de um cliente nao vaza para o outro escritorio", async () => {
+    const cliA = await comEscritorio(alfaP, (db) =>
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Alfa" }) }),
+    );
+    await comEscritorio(alfaP, (db) =>
+      db.itemDeChecklist.create({
+        data: semEscritorio({
+          clienteId: cliA.id,
+          grupo: "PESSOAIS",
+          documento: "CPF",
+          paraQue: "qualificacao",
+          essencial: true,
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.itemDeChecklist.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("o calendario de um escritorio nao vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({

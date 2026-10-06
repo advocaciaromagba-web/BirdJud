@@ -38,7 +38,8 @@ DECLARE
     'RedefinicaoDeSenha',
     'AcessoSuporte',
     'Prazo',
-    'DiaSemExpediente'
+    'DiaSemExpediente',
+    'ItemDeChecklist'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

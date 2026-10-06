@@ -33,7 +33,8 @@ export type PendenciaDoCliente = {
     | "DOCUMENTO_INVALIDO"
     | "SEM_EMAIL"
     | "SEM_TELEFONE"
-    | "SEM_ARQUIVO";
+    | "SEM_ARQUIVO"
+    | "DOCUMENTO_ESSENCIAL_PENDENTE";
   gravidade: GravidadeDaPendencia;
   /** O que falta E o que acontece por causa disso. Nunca so o que falta. */
   texto: string;
@@ -64,7 +65,9 @@ function vazio(valor: string | null | undefined): boolean {
 export function pendenciasDoCliente(
   cliente: DadosDoCliente,
   modulos: readonly Modulo[],
-  contagens: { arquivos: number } = { arquivos: 0 },
+  contagens: { arquivos: number; essenciaisPendentes?: number } = {
+    arquivos: 0,
+  },
 ): PendenciaDoCliente[] {
   const tem = (m: Modulo) => modulos.includes(m);
   const cobra = tem("COBRANCAS");
@@ -113,6 +116,21 @@ export function pendenciasDoCliente(
       texto: zap
         ? "Sem telefone, o aviso por WhatsApp nao sai para este cliente."
         : "Sem telefone cadastrado.",
+    });
+  }
+
+  // Documento essencial que a lista pediu e o cliente ainda nao trouxe. Fica
+  // ANTES do aviso de "nenhum arquivo": saber O QUE falta vale mais que saber
+  // que falta alguma coisa.
+  const pendentes = contagens.essenciaisPendentes ?? 0;
+  if (pendentes > 0) {
+    pendencias.push({
+      tipo: "DOCUMENTO_ESSENCIAL_PENDENTE",
+      gravidade: "LIMITA",
+      texto:
+        pendentes === 1
+          ? "1 documento essencial da lista ainda nao foi recebido."
+          : `${pendentes} documentos essenciais da lista ainda nao foram recebidos.`,
     });
   }
 

@@ -14,7 +14,15 @@ export default async function PaginaClientes() {
     db.cliente.findMany({
       orderBy: { nome: "asc" },
       take: 200,
-      include: { _count: { select: { processos: true, arquivos: true } } },
+      include: {
+        _count: {
+          select: {
+            processos: true,
+            arquivos: true,
+            itensDeChecklist: { where: { essencial: true, entregueEm: null } },
+          },
+        },
+      },
     }),
   );
 
@@ -71,6 +79,7 @@ export default async function PaginaClientes() {
               {clientes.map((cliente) => {
                 const pendencias = pendenciasDoCliente(cliente, modulos, {
                   arquivos: cliente._count.arquivos,
+                  essenciaisPendentes: cliente._count.itensDeChecklist,
                 });
                 const impedem = quantasImpedem(pendencias);
                 return (

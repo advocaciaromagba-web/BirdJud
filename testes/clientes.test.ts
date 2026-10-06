@@ -104,3 +104,46 @@ describe("ordem e contagem", () => {
     expect(quantasImpedem(p)).toBe(0);
   });
 });
+
+describe("documento essencial que a lista pediu", () => {
+  const COMPLETO2 = {
+    documento: "11.222.333/0001-81",
+    email: "contato@exemplo.com.br",
+    telefone: "71 99999-0000",
+  };
+
+  it("nao acusa quando nao ha lista", () => {
+    const p = pendenciasDoCliente(COMPLETO2, ["NUCLEO"], { arquivos: 1 });
+    expect(p).toEqual([]);
+  });
+
+  it("acusa o que falta, pelo numero", () => {
+    const p = pendenciasDoCliente(COMPLETO2, ["NUCLEO"], {
+      arquivos: 1,
+      essenciaisPendentes: 3,
+    });
+    expect(p).toHaveLength(1);
+    expect(p[0]!.tipo).toBe("DOCUMENTO_ESSENCIAL_PENDENTE");
+    expect(p[0]!.texto).toContain("3 documentos essenciais");
+  });
+
+  it("fala no singular quando e um so", () => {
+    const p = pendenciasDoCliente(COMPLETO2, ["NUCLEO"], {
+      arquivos: 1,
+      essenciaisPendentes: 1,
+    });
+    expect(p[0]!.texto).toContain("1 documento essencial");
+  });
+
+  // Saber O QUE falta vale mais que saber que falta alguma coisa.
+  it("vem antes do aviso generico de nenhum arquivo", () => {
+    const p = pendenciasDoCliente(COMPLETO2, ["NUCLEO"], {
+      arquivos: 0,
+      essenciaisPendentes: 2,
+    });
+    expect(p.map((x) => x.tipo)).toEqual([
+      "DOCUMENTO_ESSENCIAL_PENDENTE",
+      "SEM_ARQUIVO",
+    ]);
+  });
+});

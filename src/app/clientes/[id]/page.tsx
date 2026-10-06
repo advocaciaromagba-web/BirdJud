@@ -7,8 +7,17 @@ import { dataBR } from "@/lib/datas";
 import { tamanhoLegivel } from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { pendenciasDoCliente } from "@/lib/clientes";
+import {
+  ROTULO_DO_GRUPO,
+  emTexto,
+  type GrupoDoChecklist,
+} from "@/lib/checklist";
 import { Estrutura } from "@/componentes/Estrutura";
 import { FichaDoCliente } from "@/componentes/FichaDoCliente";
+import {
+  ChecklistDoCliente,
+  type ItemNaTela,
+} from "@/componentes/ChecklistDoCliente";
 
 const COR = {
   IMPEDE: "border-l-red-500 bg-red-50 text-red-900",
@@ -36,6 +45,10 @@ export default async function FichaCliente({
           select: { id: true, numero: true, tribunal: true, vara: true, situacao: true },
         },
         _count: { select: { cobrancas: true, compromissos: true } },
+        itensDeChecklist: {
+          orderBy: { ordem: "asc" },
+          include: { arquivo: { select: { nome: true } } },
+        },
       },
     }),
   );
@@ -45,7 +58,43 @@ export default async function FichaCliente({
 
   const pendencias = pendenciasDoCliente(cliente, modulos, {
     arquivos: cliente.arquivos.length,
+    essenciaisPendentes: cliente.itensDeChecklist.filter(
+      (i) => i.essencial && i.entregueEm === null,
+    ).length,
   });
+
+  const itensDoChecklist: ItemNaTela[] = cliente.itensDeChecklist.map((i) => ({
+    id: i.id,
+    grupo: i.grupo,
+    rotuloDoGrupo:
+      ROTULO_DO_GRUPO[i.grupo as GrupoDoChecklist] ?? i.grupo,
+    documento: i.documento,
+    paraQue: i.paraQue,
+    essencial: i.essencial,
+    entregue: i.entregueEm !== null,
+    arquivoNome: i.arquivo?.nome ?? null,
+  }));
+
+  // O texto sai do MESMO dado que a tela mostra, e nao de uma segunda consulta:
+  // mandar ao cliente uma lista diferente da que o escritorio esta vendo seria
+  // o pior desfecho possivel aqui.
+  const textoParaCliente =
+    cliente.itensDeChecklist.length > 0
+      ? emTexto(
+          {
+            tipoAcao: cliente.itensDeChecklist[0]?.tipoAcao ?? "",
+            itens: cliente.itensDeChecklist.map((i) => ({
+              documento: i.documento,
+              paraQue: i.paraQue,
+              essencial: i.essencial,
+              grupo: i.grupo as GrupoDoChecklist,
+            })),
+            observacoes: [],
+          },
+          cliente.nome,
+          contexto.marca.nome,
+        )
+      : null;
 
   return (
     <Estrutura
@@ -136,6 +185,16 @@ export default async function FichaCliente({
             </section>
           ) : null}
         </aside>
+      </div>
+
+      <div className="mt-6">
+        <ChecklistDoCliente
+          clienteId={cliente.id}
+          tipoAcao={cliente.itensDeChecklist[0]?.tipoAcao ?? null}
+          itens={itensDoChecklist}
+          temIA={modulos.includes("IA")}
+          textoParaCliente={textoParaCliente}
+        />
       </div>
 
       <section className="cartao mt-6">

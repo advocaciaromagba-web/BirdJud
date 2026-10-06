@@ -4,6 +4,7 @@
 // isso o consumo precisa ser medido POR ESCRITORIO: e a plataforma que paga a
 // conta e repassa pela franquia do modulo.
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
 import { comEscritorio, semEscritorio } from "./prisma";
 import { registrarConsumo } from "./consumo";
 
@@ -117,6 +118,68 @@ export async function pedir(
       (resposta.usage.cache_read_input_tokens ?? 0),
     tokensSaida: resposta.usage.output_tokens,
     // O modelo que respondeu pode nao ser o pedido, quando houve fallback.
+    modelo: resposta.model,
+  };
+}
+
+/**
+ * Uma chamada cujo resultado precisa ter FORMA, nao texto livre.
+ *
+ * POR QUE NAO E `tool_choice` FORCADO: o jeito classico de arrancar JSON do
+ * modelo era declarar uma ferramenta e obrigar a chamada
+ * (`tool_choice: {type: "tool"}`). Isso deixou de valer — nos modelos atuais a
+ * chamada forcada responde 400. O caminho de hoje e saida estruturada, que o
+ * proprio servidor valida contra o esquema.
+ *
+ * `parsed_output` volta null quando o modelo nao conseguiu produzir algo que
+ * casasse com o esquema. Tratamos isso como falha explicita, nunca como
+ * resultado vazio: um checklist de documentos pela metade e pior que nenhum,
+ * porque ninguem percebe o que faltou.
+ *
+ * O esquema vai como JSON Schema, nao pelo ajudante de zod: o projeto esta no
+ * zod 3 e aquele ajudante quer o 4. Trocar a versao do zod aqui mexeria em
+ * todas as rotas do sistema para ganhar acucar sintatico em uma chamada.
+ */
+export async function pedirEstruturado<T>(
+  sistema: string,
+  entrada: string,
+  esquema: Record<string, unknown> & { type: "object" },
+  esforco: "low" | "medium" | "high" = "medium",
+): Promise<{ dados: T; tokensEntrada: number; tokensSaida: number; modelo: string }> {
+  if (entrada.length > LIMITE_DE_CARACTERES)
+    throw new EntradaLongaDemais(entrada.length);
+
+  const resposta = await obterCliente().messages.parse({
+    model: MODELO,
+    max_tokens: MAX_TOKENS,
+    system: [
+      { type: "text", text: sistema, cache_control: { type: "ephemeral" } },
+    ],
+    output_config: {
+      effort: esforco,
+      // O ajudante tipa o esquema de forma literal; aqui ele chega como dado,
+      // e quem garante a forma do resultado e o `esquema` que o chamador passa
+      // junto do tipo T.
+      format: jsonSchemaOutputFormat(
+        esquema as unknown as Parameters<typeof jsonSchemaOutputFormat>[0],
+      ),
+    },
+    messages: [{ role: "user", content: entrada }],
+  });
+
+  if (resposta.stop_reason === "refusal") {
+    throw new IARecusou(resposta.stop_details?.category ?? null);
+  }
+  if (!resposta.parsed_output) {
+    throw new Error("A IA respondeu fora do formato pedido.");
+  }
+
+  return {
+    dados: resposta.parsed_output as T,
+    tokensEntrada:
+      resposta.usage.input_tokens +
+      (resposta.usage.cache_read_input_tokens ?? 0),
+    tokensSaida: resposta.usage.output_tokens,
     modelo: resposta.model,
   };
 }
