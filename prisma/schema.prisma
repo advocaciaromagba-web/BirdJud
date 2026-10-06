@@ -17,12 +17,12 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 model Escritorio {
-  id     String @id @default(cuid())
-  slug   String @unique // subdominio: <slug>.birdjud.com.br
+  id     String  @id @default(cuid())
+  slug   String  @unique // subdominio: <slug>.birdjud.com.br
   nome   String
   cnpj   String?
-  status String @default("TESTE") // TESTE | ATIVO | INADIMPLENTE | SUSPENSO | ENCERRADO
-  faixa  String @default("ATE_1") // ATE_1 | ATE_3 | ATE_10 | ATE_25 | ATE_50
+  status String  @default("TESTE") // TESTE | ATIVO | INADIMPLENTE | SUSPENSO | ENCERRADO
+  faixa  String  @default("ATE_1") // ATE_1 | ATE_3 | ATE_10 | ATE_25 | ATE_50
 
   // A segunda senha: destrava o financeiro e a area de administracao. Do
   // escritorio, nao da pessoa. Nula ate ser definida — e enquanto for nula, a
@@ -51,28 +51,30 @@ model Escritorio {
   encerradoEm  DateTime?
   purgadoEm    DateTime?
 
-  aceites      AceiteDeTermos[]
-  usuarios     Usuario[]
-  clientes     Cliente[]
-  processos    Processo[]
-  compromissos Compromisso[]
-  oabs         OabMonitorada[]
-  publicacoes  Publicacao[]
-  analises     AnaliseIA[]
-  avisos       Aviso[]
-  assinatura   Assinatura?
-  faturas      Fatura[]
-  lancamentos  Lancamento[]
-  despesasFixas DespesaFixa[]
-  cobrancas    Cobranca[]
-  arquivos     Arquivo[]
-  notas        NotaFiscal[]
-  fiscal       Fiscal?
-  trabalhos    Trabalho[]
-  modulos      ModuloContratado[]
-  redefinicoes RedefinicaoDeSenha[]
-  integracoes  Integracao[]
-  consumos     ConsumoMensal[]
+  aceites           AceiteDeTermos[]
+  usuarios          Usuario[]
+  clientes          Cliente[]
+  processos         Processo[]
+  compromissos      Compromisso[]
+  oabs              OabMonitorada[]
+  publicacoes       Publicacao[]
+  analises          AnaliseIA[]
+  avisos            Aviso[]
+  assinatura        Assinatura?
+  faturas           Fatura[]
+  lancamentos       Lancamento[]
+  despesasFixas     DespesaFixa[]
+  cobrancas         Cobranca[]
+  arquivos          Arquivo[]
+  notas             NotaFiscal[]
+  fiscal            Fiscal?
+  trabalhos         Trabalho[]
+  modulos           ModuloContratado[]
+  redefinicoes      RedefinicaoDeSenha[]
+  integracoes       Integracao[]
+  consumos          ConsumoMensal[]
+  prazos            Prazo[]
+  diasSemExpediente DiaSemExpediente[]
 }
 
 model ModuloContratado {
@@ -143,18 +145,20 @@ model Usuario {
 
   // Telefone em E.164 para o WhatsApp do escritorio. Guardado como digitado
   // e normalizado na hora do envio.
-  telefone        String?
+  telefone String?
 
   // O que esta pessoa quer receber por aviso, e por onde.
   recebeResumo    Boolean @default(true)
   recebeLembretes Boolean @default(true)
   recebeWhatsapp  Boolean @default(false)
 
-  avisos Aviso[]
+  avisos   Aviso[]
   arquivos Arquivo[]
-  criadoEm     DateTime  @default(now())
+  criadoEm DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  prazos Prazo[]
 
   @@unique([escritorioId, email])
   @@index([escritorioId])
@@ -175,12 +179,14 @@ model Cliente {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  escritorio   Escritorio    @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processos    Processo[]
   cobrancas    Cobranca[]
   arquivos     Arquivo[]
   notas        NotaFiscal[]
   compromissos Compromisso[]
+
+  prazos Prazo[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -205,25 +211,27 @@ model Processo {
   cobrancas    Cobranca[]
   arquivos     Arquivo[]
 
+  prazos Prazo[]
+
   @@unique([escritorioId, numero])
   @@index([escritorioId])
 }
 
 model Compromisso {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   escritorioId String
   processoId   String?
   // Tarefa exige cliente; agendamento nao. A coluna e nula porque a regra
   // vive na API — ver src/lib/compromissos.ts.
   clienteId    String?
   titulo       String
-  tipo         String   @default("COMPROMISSO") // COMPROMISSO | AUDIENCIA | PRAZO | TAREFA
+  tipo         String    @default("COMPROMISSO") // COMPROMISSO | AUDIENCIA | PRAZO | TAREFA
   inicio       DateTime
   fim          DateTime?
   local        String?
   observacoes  String?
-  concluido    Boolean  @default(false)
-  criadoEm     DateTime @default(now())
+  concluido    Boolean   @default(false)
+  criadoEm     DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: Cascade)
@@ -244,14 +252,14 @@ model Compromisso {
 // ---------------------------------------------------------------------------
 
 model Assinatura {
-  escritorioId   String    @id
+  escritorioId  String    @id
   // Preco fechado com este escritorio, em centavos. Fica gravado: mudanca de
   // tabela nao altera contrato ja assinado.
-  valorCentavos  Int
-  diaVencimento  Int       @default(10)
-  fimDoTeste     DateTime
-  canceladaEm    DateTime?
-  criadaEm       DateTime  @default(now())
+  valorCentavos Int
+  diaVencimento Int       @default(10)
+  fimDoTeste    DateTime
+  canceladaEm   DateTime?
+  criadaEm      DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
 }
@@ -266,7 +274,7 @@ model Fatura {
   vencimento    DateTime
   status        String    @default("ABERTA") // ABERTA | PAGA | CANCELADA
   pagoEm        DateTime?
-  idExterno     String? @unique // id da cobranca no meio de pagamento
+  idExterno     String?   @unique // id da cobranca no meio de pagamento
   linkPagamento String? // para onde mandar o escritorio pagar
   emitidaEm     DateTime? // quando a cobranca foi emitida no provedor
   // Retrato da baixa: sistema, referencia, quem pagou, quanto, como e quando.
@@ -371,43 +379,43 @@ model Lancamento {
 // ---------------------------------------------------------------------------
 
 model Fiscal {
-  id                  String   @id @default(cuid())
-  escritorioId        String   @unique
-  razaoSocial         String
-  cnpj                String
-  inscricaoMunicipal  String
-  codigoMunicipio     String // IBGE, 7 digitos
-  regime              String // SIMPLES | MEI | NORMAL
-  codigoTributacao    String // item da lista de servicos, do contador
-  aliquotaMilesimos   Int // 2% = 2000
-  serie               String   @default("1")
-  proximoNumero       Int      @default(1)
-  ambiente            String   @default("HOMOLOGACAO") // HOMOLOGACAO | PRODUCAO
-  atualizadoEm        DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  escritorioId       String   @unique
+  razaoSocial        String
+  cnpj               String
+  inscricaoMunicipal String
+  codigoMunicipio    String // IBGE, 7 digitos
+  regime             String // SIMPLES | MEI | NORMAL
+  codigoTributacao   String // item da lista de servicos, do contador
+  aliquotaMilesimos  Int // 2% = 2000
+  serie              String   @default("1")
+  proximoNumero      Int      @default(1)
+  ambiente           String   @default("HOMOLOGACAO") // HOMOLOGACAO | PRODUCAO
+  atualizadoEm       DateTime @updatedAt
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
 }
 
 model NotaFiscal {
-  id            String    @id @default(cuid())
-  escritorioId  String
-  clienteId     String?
-  cobrancaId    String?
-  serie         String
-  numero        Int
-  descricao     String
-  valorCentavos Int
+  id                 String    @id @default(cuid())
+  escritorioId       String
+  clienteId          String?
+  cobrancaId         String?
+  serie              String
+  numero             Int
+  descricao          String
+  valorCentavos      Int
   // RASCUNHO -> EMITIDA | RECUSADA | INDETERMINADA; EMITIDA -> CANCELADA
-  status        String    @default("RASCUNHO")
-  chaveAcesso   String?
+  status             String    @default("RASCUNHO")
+  chaveAcesso        String?
   numeroNaPrefeitura String?
-  linkPdf       String?
-  xmlEnviado    String? // o DPS assinado, como foi mandado
-  xmlRetorno    String? // a NFS-e como voltou
-  erro          String?
-  emitidaEm     DateTime?
-  canceladaEm   DateTime?
-  criadoEm      DateTime  @default(now())
+  linkPdf            String?
+  xmlEnviado         String? // o DPS assinado, como foi mandado
+  xmlRetorno         String? // a NFS-e como voltou
+  erro               String?
+  emitidaEm          DateTime?
+  canceladaEm        DateTime?
+  criadoEm           DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
@@ -456,27 +464,27 @@ model Arquivo {
 // ---------------------------------------------------------------------------
 
 model Cobranca {
-  id            String    @id @default(cuid())
-  chaveOperacao  String?   @unique // mesma tentativa, inclusive apos perda da resposta
-  escritorioId  String
-  clienteId     String
-  processoId    String?
-  descricao     String
-  valorCentavos Int // em centavos: dinheiro nunca em ponto flutuante
-  vencimento    DateTime
-  forma         String // BOLETO | PIX | CARTAO | QUALQUER
-  status        String    @default("ABERTA") // PENDENTE | ABERTA | PAGA | VENCIDA | CANCELADA | ESTORNADA
+  id                String    @id @default(cuid())
+  chaveOperacao     String?   @unique // mesma tentativa, inclusive apos perda da resposta
+  escritorioId      String
+  clienteId         String
+  processoId        String?
+  descricao         String
+  valorCentavos     Int // em centavos: dinheiro nunca em ponto flutuante
+  vencimento        DateTime
+  forma             String // BOLETO | PIX | CARTAO | QUALQUER
+  status            String    @default("ABERTA") // PENDENTE | ABERTA | PAGA | VENCIDA | CANCELADA | ESTORNADA
   // Id da cobranca na conta Asaas do escritorio. E a chave da sincronizacao.
-  idNoAsaas     String
-  linkPagamento String?
-  linkBoleto    String?
-  pagoEm        DateTime?
+  idNoAsaas         String
+  linkPagamento     String?
+  linkBoleto        String?
+  pagoEm            DateTime?
   valorPagoCentavos Int?
   // Lancamento de receita gerado na baixa. Guardado para a baixa nao repetir.
-  lancamentoId  String?
-  sincronizadoEm DateTime?
-  criadoEm      DateTime  @default(now())
-  atualizadoEm  DateTime  @updatedAt
+  lancamentoId      String?
+  sincronizadoEm    DateTime?
+  criadoEm          DateTime  @default(now())
+  atualizadoEm      DateTime  @updatedAt
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -581,8 +589,8 @@ model Publicacao {
 
   dataDisponibilizacao DateTime
   // Classificacao automatica a partir do texto, sempre conferivel pelo humano.
-  urgente   Boolean @default(false)
-  prazoDias Int?
+  urgente              Boolean  @default(false)
+  prazoDias            Int?
 
   lida      Boolean  @default(false)
   arquivada Boolean  @default(false)
@@ -685,4 +693,61 @@ model RedefinicaoDeSenha {
   @@index([escritorioId])
   @@index([escritorioId, usuarioId])
   @@index([expiraEm])
+}
+
+// ---------------------------------------------------------------------------
+// Prazos processuais
+// ---------------------------------------------------------------------------
+
+/// Prazo com data fatal. A conta mora em src/lib/prazos.ts e nunca vem pronta
+/// da leitura de um documento: prazo errado perde o direito.
+model Prazo {
+  id             String    @id @default(cuid())
+  escritorioId   String
+  processoId     String?
+  clienteId      String?
+  titulo         String
+  /// Data da intimacao ou ciencia. O dia do comeco e excluido (CPC 224).
+  termoInicial   DateTime  @db.Date
+  dias           Int
+  /// UTEIS (CPC 219) | CORRIDOS (CPP 798, direito material)
+  contagem       String    @default("UTEIS")
+  /// Resultado da conta, guardado para nao depender de recalcular depois: o
+  /// calendario do escritorio muda, e um prazo ja comunicado ao cliente nao
+  /// pode mudar de data sozinho.
+  inicioContagem DateTime  @db.Date
+  vencimento     DateTime  @db.Date
+  /// Como a data foi obtida, em linguagem de gente. E o que permite conferir
+  /// sem abrir o codigo.
+  explicacao     String
+  responsavelId  String?
+  cumpridoEm     DateTime?
+  observacao     String?
+  criadoEm       DateTime  @default(now())
+  atualizadoEm   DateTime  @updatedAt
+
+  escritorio  Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  processo    Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  cliente     Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  responsavel Usuario?   @relation(fields: [responsavelId], references: [id], onDelete: SetNull)
+
+  @@index([escritorioId, vencimento])
+  @@index([escritorioId, cumpridoEm])
+  @@index([escritorioId, processoId])
+}
+
+/// Dia sem expediente do proprio escritorio: feriado municipal, suspensao de
+/// tribunal, ponto facultativo da comarca. Nao cabe em lista nacional porque
+/// cada escritorio trabalha em comarcas diferentes.
+model DiaSemExpediente {
+  id           String   @id @default(cuid())
+  escritorioId String
+  dia          DateTime @db.Date
+  motivo       String
+  criadoEm     DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, dia])
+  @@index([escritorioId, dia])
 }

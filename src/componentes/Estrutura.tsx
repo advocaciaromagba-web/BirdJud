@@ -29,6 +29,7 @@ const AREAS: Area[] = [
     grupo: "trabalho",
   },
   { href: "/agenda", rotulo: "Agenda", icone: "agenda", grupo: "trabalho" },
+  { href: "/prazos", rotulo: "Prazos", icone: "prazos", grupo: "trabalho" },
   {
     href: "/publicacoes",
     rotulo: "Publicacoes",

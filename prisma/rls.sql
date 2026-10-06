@@ -36,7 +36,9 @@ DECLARE
     'Fatura',
     'AceiteDeTermos',
     'RedefinicaoDeSenha',
-    'AcessoSuporte'
+    'AcessoSuporte',
+    'Prazo',
+    'DiaSemExpediente'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

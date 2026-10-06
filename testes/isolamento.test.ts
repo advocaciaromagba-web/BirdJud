@@ -139,3 +139,100 @@ d("isolamento entre escritorios", () => {
     expect(linhas).toHaveLength(0);
   });
 });
+
+/**
+ * Prazos, isolados.
+ *
+ * Tabela nova ganha teste de isolamento proprio, sempre. A regra do porte diz
+ * isso, e aqui ela custa pouco: funcao vinda de um sistema de escritorio unico
+ * supoe que "o escritorio" e implicito, e esse e o jeito de quebrar o
+ * isolamento sem produzir erro nenhum.
+ */
+d("isolamento dos prazos", () => {
+  let alfaP = "";
+  let betaP = "";
+  let prazoDeBeta = "";
+
+  beforeAll(async () => {
+    const a = await prismaPlataforma().escritorio.create({
+      data: { slug: `pz-alfa-${Date.now()}`, nome: "Prazo Alfa" },
+    });
+    const b = await prismaPlataforma().escritorio.create({
+      data: { slug: `pz-beta-${Date.now()}`, nome: "Prazo Beta" },
+    });
+    alfaP = a.id;
+    betaP = b.id;
+
+    await comEscritorio(alfaP, (db) =>
+      db.prazo.create({
+        data: semEscritorio({
+          titulo: "Contestacao de Alfa",
+          termoInicial: new Date("2026-10-08T00:00:00Z"),
+          dias: 15,
+          contagem: "UTEIS",
+          inicioContagem: new Date("2026-10-09T00:00:00Z"),
+          vencimento: new Date("2026-10-30T00:00:00Z"),
+          explicacao: "teste",
+        }),
+      }),
+    );
+    const p = await comEscritorio(betaP, (db) =>
+      db.prazo.create({
+        data: semEscritorio({
+          titulo: "Recurso de Beta",
+          termoInicial: new Date("2026-10-08T00:00:00Z"),
+          dias: 15,
+          contagem: "UTEIS",
+          inicioContagem: new Date("2026-10-09T00:00:00Z"),
+          vencimento: new Date("2026-10-30T00:00:00Z"),
+          explicacao: "teste",
+        }),
+      }),
+    );
+    prazoDeBeta = p.id;
+  });
+
+  afterAll(async () => {
+    for (const id of [alfaP, betaP]) {
+      if (id)
+        await prismaPlataforma()
+          .escritorio.delete({ where: { id } })
+          .catch(() => {});
+    }
+  });
+
+  it("um escritorio nao ve o prazo do outro", async () => {
+    const vistos = await comEscritorio(alfaP, (db) => db.prazo.findMany());
+    expect(vistos).toHaveLength(1);
+    expect(vistos[0]!.titulo).toBe("Contestacao de Alfa");
+  });
+
+  it("marcar como cumprido o prazo de outro escritorio nao afeta nada", async () => {
+    const r = await comEscritorio(alfaP, (db) =>
+      db.prazo.updateMany({
+        where: { id: prazoDeBeta },
+        data: { cumpridoEm: new Date() },
+      }),
+    );
+    expect(r.count).toBe(0);
+    const intacto = await comEscritorio(betaP, (db) =>
+      db.prazo.findFirst({ where: { id: prazoDeBeta } }),
+    );
+    expect(intacto?.cumpridoEm).toBeNull();
+  });
+
+  it("o calendario de um escritorio nao vale para o outro", async () => {
+    await comEscritorio(alfaP, (db) =>
+      db.diaSemExpediente.create({
+        data: semEscritorio({
+          dia: new Date("2026-10-14T00:00:00Z"),
+          motivo: "feriado so da comarca de Alfa",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.diaSemExpediente.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+});

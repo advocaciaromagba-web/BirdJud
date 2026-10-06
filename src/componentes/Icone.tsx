@@ -18,7 +18,8 @@ export type NomeDeIcone =
   | "integracoes"
   | "conta"
   | "ia"
-  | "busca";
+  | "busca"
+  | "prazos";
 
 const TRACOS: Record<NomeDeIcone, string> = {
   painel: "M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z",
@@ -42,6 +43,8 @@ const TRACOS: Record<NomeDeIcone, string> = {
     "M10 4H6a2 2 0 0 0-2 2v4m6-6h4m4 0h-4m10 6V6a2 2 0 0 0-2-2m2 6v4m0 4v-4M4 14v4a2 2 0 0 0 2 2h4m4 0h4a2 2 0 0 0 2-2M8 12h8",
   conta: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-8 9a8 8 0 0 1 16 0",
   ia: "M12 3v3m0 12v3M3 12h3m12 0h3M7 7l2 2m6 6 2 2m0-10-2 2m-6 6-2 2M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
+  prazos:
+    "M7 3h10M7 21h10M8 3v4a4 4 0 0 0 4 4 4 4 0 0 0 4-4V3M8 21v-4a4 4 0 0 1 4-4 4 4 0 0 1 4 4v4",
   busca: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm5 -2 5 5",
 };
 

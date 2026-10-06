@@ -9,7 +9,8 @@
 // bloco de publicacao, nem vazio.
 import { comEscritorio } from "./prisma";
 import { modulosAtivos, type Modulo } from "./modulos";
-import { ehMesmoDiaEmBrasilia } from "./datas";
+import { diaEmBrasilia, ehMesmoDiaEmBrasilia } from "./datas";
+import { urgenciaDoPrazo } from "./prazos-do-escritorio";
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -39,7 +40,8 @@ export type Pendencia = {
     | "INTEGRACAO_COM_ERRO"
     | "AVISOS_FALHADOS"
     | "SEM_CADASTRO_FISCAL"
-    | "SEM_CNPJ";
+    | "SEM_CNPJ"
+    | "PRAZO_APERTADO";
   texto: string;
   /** Para onde a tela manda quem quiser resolver. */
   destino: string;
@@ -114,9 +116,39 @@ export async function montarPainel(
       where: { id: escritorioId },
       select: { cnpj: true },
     }),
+    // Prazo e a unica coisa aqui cujo erro nao tem conserto depois. Buscamos
+    // em DIAS CORRIDOS de folga e so para separar o que pode estar apertado;
+    // quem conta os dias uteis de verdade e o modulo de prazos, abaixo.
+    prazos: await db.prazo.findMany({
+      where: { cumpridoEm: null },
+      select: { vencimento: true },
+      orderBy: { vencimento: "asc" },
+      take: 200,
+    }),
   }));
 
   const pendencias: Pendencia[] = [];
+
+  // PRIMEIRO de todas, sempre: perder prazo perde direito, e nenhuma outra
+  // pendencia desta lista tem esse peso. Fica visivel para TODO MUNDO, nao so
+  // para o admin — quem cumpre o prazo raramente e quem administra o sistema.
+  const hojeISO = diaEmBrasilia(agora);
+  const apertados = dados.prazos.filter((p) => {
+    const vence = p.vencimento.toISOString().slice(0, 10);
+    const { urgencia } = urgenciaDoPrazo(vence, hojeISO);
+    return urgencia !== "EM_CURSO";
+  }).length;
+  if (apertados > 0) {
+    pendencias.push({
+      tipo: "PRAZO_APERTADO",
+      texto:
+        apertados === 1
+          ? "1 prazo vence hoje, esta a tres dias uteis ou ja venceu."
+          : `${apertados} prazos vencem hoje, estao a tres dias uteis ou ja venceram.`,
+      destino: "/prazos",
+      soAdmin: false,
+    });
+  }
 
   if (tem("PUBLICACOES_DJEN") && dados.oabs === 0) {
     pendencias.push({

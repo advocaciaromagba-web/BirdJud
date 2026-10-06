@@ -104,6 +104,8 @@ const TABELAS_COM_RLS = [
   "AceiteDeTermos",
   "AcessoSuporte",
   "RedefinicaoDeSenha",
+  "Prazo",
+  "DiaSemExpediente",
 ];
 
 async function conferirBanco() {
