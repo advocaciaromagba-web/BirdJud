@@ -73,7 +73,7 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
 
 const AJUDA_DO_PERFIL: Record<Perfil, string> = {
   CLIENTE:
-    "RG, CNH, cartao CNPJ, contrato social, procuracao ou ficha preenchida a mao.",
+    "Documento de identificacao (CIN, RG), CNH, cartao CNPJ, contrato social, procuracao ou ficha preenchida a mao.",
   PROCESSO:
     "Peticao inicial, capa dos autos, despacho, sentenca ou print do andamento.",
   AGENDA:

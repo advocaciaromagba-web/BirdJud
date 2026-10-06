@@ -23,7 +23,7 @@ const DEMONSTRACOES: Demonstracao[] = [
     sobretitulo: "Cadastro por leitura",
     titulo: "A IA le o documento e preenche o cadastro",
     texto:
-      "Envie o RG, a CNH, o cartao CNPJ, o contrato social ou a procuracao. A inteligencia artificial devolve cada campo com a confianca que teve na leitura e diz onde achou aquilo no papel. Nada entra no sistema antes de alguem conferir e aprovar, campo a campo.",
+      "Envie o documento de identificacao, a CNH, o cartao CNPJ, o contrato social ou a procuracao. A inteligencia artificial devolve cada campo com a confianca que teve na leitura e diz onde achou aquilo no papel. Nada entra no sistema antes de alguem conferir e aprovar, campo a campo.",
     pontos: [
       "CPF e CNPJ conferidos pelo digito verificador, do nosso lado",
       "Numero de processo validado no padrao do CNJ",

@@ -2,19 +2,17 @@ import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { dataBR } from "@/lib/datas";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
-import { espacoDoEscritorio, TAMANHO_MAXIMO_MB } from "@/lib/arquivos";
+import {
+  espacoDoEscritorio,
+  tamanhoLegivel,
+  TAMANHO_MAXIMO_MB,
+} from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { Estrutura } from "@/componentes/Estrutura";
 import {
   PainelArquivos,
   type ArquivoNaTela,
 } from "@/componentes/PainelArquivos";
-
-function tamanhoLegivel(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export default async function PaginaArquivos() {
   let contexto;
