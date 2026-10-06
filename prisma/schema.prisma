@@ -77,6 +77,7 @@ model Escritorio {
   diasSemExpediente DiaSemExpediente[]
   itensDeChecklist  ItemDeChecklist[]
   representantes    Representante[]
+  entradasDeExtrato EntradaDeExtrato[]
 }
 
 model ModuloContratado {
@@ -372,6 +373,8 @@ model Lancamento {
   despesaFixa DespesaFixa? @relation(fields: [despesaFixaId], references: [id], onDelete: SetNull)
   arquivo     Arquivo?     @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
 
+  entradasDeExtrato EntradaDeExtrato[]
+
   @@index([escritorioId])
   @@index([escritorioId, competencia])
   @@index([escritorioId, categoria])
@@ -499,6 +502,8 @@ model Cobranca {
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+
+  entradasDeExtrato EntradaDeExtrato[]
 
   @@unique([escritorioId, idNoAsaas])
   @@index([escritorioId, status])
@@ -816,4 +821,38 @@ model Representante {
   cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
 
   @@index([escritorioId, clienteId])
+}
+
+/// Lancamento do extrato do meio de pagamento, antes de virar financeiro.
+///
+/// Existe porque o webhook so avisa das cobrancas que passam por ele. O
+/// extrato traz tambem tarifa, Pix avulso, estorno e saque — e sem eles o
+/// financeiro fica parecido com a verdade, que em dinheiro e errado.
+model EntradaDeExtrato {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  /// Id no provedor. E o que impede importar o mesmo lancamento duas vezes.
+  idNoProvedor  String
+  tipo          String
+  valorCentavos Int
+  data          DateTime  @db.Date
+  descricao     String
+  /// Id da cobranca no provedor, quando o lancamento veio de uma.
+  idDaCobranca  String?
+  /// RECEITA | DESPESA | IGNORAR, pela regra do tipo.
+  destino       String
+  /// PENDENTE | LANCADO | IGNORADO
+  situacao      String    @default("PENDENTE")
+  cobrancaId    String?
+  lancamentoId  String?
+  decididoEm    DateTime?
+  criadoEm      DateTime  @default(now())
+
+  escritorio Escritorio  @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cobranca   Cobranca?   @relation(fields: [cobrancaId], references: [id], onDelete: SetNull)
+  lancamento Lancamento? @relation(fields: [lancamentoId], references: [id], onDelete: SetNull)
+
+  @@unique([escritorioId, idNoProvedor])
+  @@index([escritorioId, situacao])
+  @@index([escritorioId, data])
 }

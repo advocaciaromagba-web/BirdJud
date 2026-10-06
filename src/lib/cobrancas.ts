@@ -151,7 +151,7 @@ export async function chamarAsaas(
   return corpo;
 }
 
-async function chaveDoEscritorio(escritorioId: string): Promise<string> {
+export async function chaveDoEscritorio(escritorioId: string): Promise<string> {
   try {
     const dados = await obterIntegracao<{ chave: string }>(
       escritorioId,

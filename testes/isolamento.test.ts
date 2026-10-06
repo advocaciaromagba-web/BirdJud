@@ -261,6 +261,25 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("o extrato de um escritorio nao aparece para o outro", async () => {
+    await comEscritorio(alfaP, (db) =>
+      db.entradaDeExtrato.create({
+        data: semEscritorio({
+          idNoProvedor: `tr-${Date.now()}`,
+          tipo: "PIX_RECEIVED",
+          valorCentavos: 150_000,
+          data: new Date("2026-10-06T00:00:00Z"),
+          descricao: "PIX de Alfa",
+          destino: "RECEITA",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.entradaDeExtrato.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("o calendario de um escritorio nao vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({

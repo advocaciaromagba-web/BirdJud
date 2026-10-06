@@ -24,6 +24,10 @@ export const CATEGORIAS_DE_DESPESA = [
   "MARKETING",
   "MATERIAL",
   "VIAGENS",
+  // Tarifa do meio de pagamento e do banco. Tem categoria propria porque e
+  // despesa recorrente e invisivel: diluida em "outras", ninguem ve quanto o
+  // escritorio paga por mes so para receber.
+  "TARIFAS",
   "OUTRAS_DESPESAS",
 ] as const;
 
@@ -60,6 +64,7 @@ const ROTULOS: Record<Categoria, string> = {
   MARKETING: "Marketing",
   MATERIAL: "Material de escritorio",
   VIAGENS: "Viagens e deslocamento",
+  TARIFAS: "Tarifas de cobranca e banco",
   OUTRAS_DESPESAS: "Outras despesas",
   HONORARIOS: "Honorarios",
   HONORARIOS_DE_EXITO: "Honorarios de exito",

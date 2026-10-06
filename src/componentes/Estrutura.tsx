@@ -45,6 +45,13 @@ const AREAS: Area[] = [
     grupo: "trabalho",
   },
   {
+    href: "/conciliacao",
+    rotulo: "Conferir extrato",
+    icone: "financeiro",
+    modulo: "COBRANCAS",
+    grupo: "dinheiro",
+  },
+  {
     href: "/cobrancas",
     rotulo: "Cobrancas",
     icone: "cobrancas",

@@ -26,6 +26,18 @@ export const horaBR = new Intl.DateTimeFormat("pt-BR", {
   timeZone: FUSO,
 });
 
+/**
+ * Uma coluna que guarda DIA, nao momento, escrita como "02/10/2026".
+ *
+ * Dia de extrato e dia de prazo sao gravados como meia-noite em UTC: sao data
+ * do calendario, nao hora de nada. Formatar isso em Brasilia volta tres horas
+ * e mostra o dia anterior — um Pix do dia 1o apareceria como dia 30. Por isso
+ * se le de volta em UTC, o mesmo fuso em que foi gravado.
+ */
+export function diaBR(data: Date): string {
+  return data.toISOString().slice(0, 10).split("-").reverse().join("/");
+}
+
 /** Cabecalho de dia na agenda, como "quinta-feira, 25 de setembro". */
 export const diaPorExtensoBR = new Intl.DateTimeFormat("pt-BR", {
   weekday: "long",

@@ -40,7 +40,8 @@ DECLARE
     'Prazo',
     'DiaSemExpediente',
     'ItemDeChecklist',
-    'Representante'
+    'Representante',
+    'EntradaDeExtrato'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP
