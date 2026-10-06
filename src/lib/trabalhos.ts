@@ -13,6 +13,7 @@ import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
+import { emitirParcelasDevidas } from "./honorarios-do-escritorio";
 import {
   enviarAvisosNoWhatsapp,
   enviarAvisosPendentes,
@@ -176,9 +177,41 @@ async function limparVencidos(): Promise<void> {
   );
 }
 
+/**
+ * Emite as parcelas de contrato de honorarios que entraram na janela.
+ *
+ * So mexe em contrato com emissao automatica ligada. Parcela que o cadastro
+ * do cliente impede, ou que ja venceu sem nunca ter sido emitida, NAO e falha
+ * do trabalho: e decisao que espera alguem. Vira linha no log e fica na tela.
+ */
+async function emitirHonorarios({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("EMITIR_HONORARIOS exige escritorio.");
+
+  let r;
+  try {
+    r = await emitirParcelasDevidas(escritorioId);
+  } catch (erro) {
+    if (erro instanceof SemContaDeCobranca) {
+      console.log(`EMITIR_HONORARIOS ${escritorioId}: conta Asaas nao conectada.`);
+      return;
+    }
+    throw erro;
+  }
+
+  if (r.emitidas.length > 0) {
+    console.log(`EMITIR_HONORARIOS ${escritorioId}: ${r.emitidas.join(" | ")}`);
+  }
+  if (r.falhas.length > 0) {
+    console.log(
+      `EMITIR_HONORARIOS ${escritorioId}: esperando decisao — ${r.falhas.join(" | ")}`,
+    );
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   SINCRONIZAR_COBRANCAS: sincronizarCobrancasDoEscritorio,
+  EMITIR_HONORARIOS: emitirHonorarios,
   CAPTURAR_PUBLICACOES: capturar,
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
@@ -198,6 +231,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   CAPTURAR_PUBLICACOES: "PUBLICACOES_DJEN",
   AVISAR: "EMAIL",
   SINCRONIZAR_COBRANCAS: "COBRANCAS",
+  EMITIR_HONORARIOS: "COBRANCAS",
   APURAR_CONSUMO: undefined,
   REGUA_DE_COBRANCA: undefined,
   LIMPAR_VENCIDOS: undefined,

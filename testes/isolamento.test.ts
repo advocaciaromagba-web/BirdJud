@@ -280,6 +280,28 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("contrato de honorarios de um escritorio nao vaza para o outro", async () => {
+    const cliA = await comEscritorio(alfaP, (db) =>
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente de Alfa" }) }),
+    );
+    await comEscritorio(alfaP, (db) =>
+      db.contratoDeHonorarios.create({
+        data: semEscritorio({
+          clienteId: cliA.id,
+          tipo: "VALOR",
+          valorCentavos: 300_000,
+          parcelas: 3,
+          primeiroVencimento: new Date("2026-11-10T00:00:00Z"),
+          forma: "BOLETO",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.contratoDeHonorarios.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("o calendario de um escritorio nao vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({

@@ -324,6 +324,33 @@ d("fase 2", () => {
         data: { status: "TESTE" },
       });
     });
+
+    // Emitir cobranca no nome de um escritorio que nao contratou cobranca
+    // seria cobrar cliente dele sem que ele tenha o modulo.
+    it("so vai emitir honorarios em escritorio com COBRANCAS", async () => {
+      expect(EXECUTORES.EMITIR_HONORARIOS).toBeTypeOf("function");
+
+      await prismaPlataforma().trabalho.deleteMany({
+        where: { escritorioId: beta, tipo: "EMITIR_HONORARIOS" },
+      });
+      const tinha = await prismaPlataforma().moduloContratado.findFirst({
+        where: { escritorioId: beta, modulo: "COBRANCAS" },
+      });
+      await prismaPlataforma().moduloContratado.deleteMany({
+        where: { escritorioId: beta, modulo: "COBRANCAS" },
+      });
+
+      try {
+        await espalhar("EMITIR_HONORARIOS");
+        const deBeta = await prismaPlataforma().trabalho.count({
+          where: { escritorioId: beta, tipo: "EMITIR_HONORARIOS" },
+        });
+        expect(deBeta).toBe(0);
+      } finally {
+        // Devolve o modulo: beta e compartilhado com os testes seguintes.
+        if (tinha) await prismaPlataforma().moduloContratado.create({ data: tinha });
+      }
+    });
   });
 
   describe("valor em centavos", () => {

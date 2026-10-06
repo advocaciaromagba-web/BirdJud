@@ -78,6 +78,7 @@ model Escritorio {
   itensDeChecklist  ItemDeChecklist[]
   representantes    Representante[]
   entradasDeExtrato EntradaDeExtrato[]
+  contratos         ContratoDeHonorarios[]
 }
 
 model ModuloContratado {
@@ -195,6 +196,8 @@ model Cliente {
 
   representantes Representante[]
 
+  contratos ContratoDeHonorarios[]
+
   @@index([escritorioId])
   @@index([escritorioId, documento])
 }
@@ -216,6 +219,7 @@ model Processo {
   compromissos Compromisso[]
   publicacoes  Publicacao[]
   cobrancas    Cobranca[]
+  contratos    ContratoDeHonorarios[]
   arquivos     Arquivo[]
 
   prazos Prazo[]
@@ -496,18 +500,62 @@ model Cobranca {
   // Lancamento de receita gerado na baixa. Guardado para a baixa nao repetir.
   lancamentoId      String?
   sincronizadoEm    DateTime?
+  // De qual contrato de honorarios, e qual parcela dele, esta cobranca veio.
+  contratoId        String?
+  parcelaNumero     Int?
+  parcelaTotal      Int?
   criadoEm          DateTime  @default(now())
   atualizadoEm      DateTime  @updatedAt
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  contrato   ContratoDeHonorarios? @relation(fields: [contratoId], references: [id], onDelete: SetNull)
 
   entradasDeExtrato EntradaDeExtrato[]
 
   @@unique([escritorioId, idNoAsaas])
+  // A mesma parcela nunca vira duas cobrancas: nem com duas pessoas na tela,
+  // nem com o cron rodando duas vezes.
+  @@unique([contratoId, parcelaNumero])
   @@index([escritorioId, status])
   @@index([escritorioId, vencimento])
+  @@index([escritorioId, contratoId])
+}
+
+/// Contrato de honorarios: o que o escritorio combinou de receber, e como.
+///
+/// PERCENTUAL nao gera parcela — o valor do exito so existe quando a acao
+/// termina. MISTO gera so a entrada. Ver src/lib/honorarios.ts.
+model ContratoDeHonorarios {
+  id                 String    @id @default(cuid())
+  escritorioId       String
+  clienteId          String
+  processoId         String?
+  tipo               String // VALOR | PERCENTUAL | MISTO
+  /// Parte fixa, em centavos. No MISTO, e a entrada.
+  valorCentavos      Int?
+  /// Percentual de exito em centesimos: 30% = 3000. Inteiro, nunca float.
+  percentualBp       Int?
+  parcelas           Int       @default(1)
+  primeiroVencimento DateTime? @db.Date
+  forma              String    @default("BOLETO") // BOLETO | PIX | CARTAO | QUALQUER
+  /// Desligado, o plano continua visivel e a emissao e so a mao.
+  emissaoAutomatica  Boolean   @default(false)
+  descricao          String?
+  ativo              Boolean   @default(true)
+  encerradoEm        DateTime?
+  criadoEm           DateTime  @default(now())
+  atualizadoEm       DateTime  @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+
+  cobrancas Cobranca[]
+
+  @@index([escritorioId, ativo])
+  @@index([escritorioId, clienteId])
 }
 
 // ---------------------------------------------------------------------------

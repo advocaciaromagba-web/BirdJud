@@ -101,7 +101,11 @@ Para agendar as rotinas, crons do Railway chamando:
   publicacoes e os lembretes de compromisso. A ordem importa: avisar antes de
   capturar manda o resumo de ontem;
 - `npm run espalhar SINCRONIZAR_COBRANCAS` — uma ou duas vezes por dia,
-  confere no Asaas o que foi pago e da baixa.
+  confere no Asaas o que foi pago e da baixa;
+- `npm run espalhar EMITIR_HONORARIOS` — todo dia, emite a parcela de contrato
+  de honorarios que entrou na janela dos dez dias. So em contrato com emissao
+  automatica ligada. Parcela travada por cadastro incompleto, ou ja vencida sem
+  nunca ter sido emitida, nao e falha: fica na tela esperando decisao.
 
 ## O que existe hoje no Railway (23/09/2026)
 

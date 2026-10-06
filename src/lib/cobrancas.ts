@@ -230,6 +230,8 @@ export type PedidoDeCobranca = {
   valorCentavos: number;
   vencimento: Date;
   forma: Forma;
+  /** Quando a cobranca e parcela de um contrato de honorarios. */
+  contrato?: { id: string; numero: number; total: number } | null;
 };
 
 export class PedidoInvalido extends Error {
@@ -310,6 +312,9 @@ export async function emitirCobranca(
           vencimento: pedido.vencimento,
           forma: pedido.forma,
           status: "PENDENTE",
+          contratoId: pedido.contrato?.id ?? null,
+          parcelaNumero: pedido.contrato?.numero ?? null,
+          parcelaTotal: pedido.contrato?.total ?? null,
           idNoAsaas: `pendente:${chaveOperacao}`,
         }),
       }));
