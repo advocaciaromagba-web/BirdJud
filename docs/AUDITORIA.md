@@ -1,164 +1,133 @@
-# Auditoria: o que falta para colocar o sistema em teste
+# Auditoria: o que falta
 
-Feita em 25/09/2026, contra o que esta em producao em `birdjud.com.br`.
-
-Teste aqui quer dizer **escritorio de verdade usando com processo de
-verdade**. E um patamar diferente de "o sistema funciona": o que um
-escritorio nao perdoa e perder prazo, perder documento e nao conseguir
-entrar.
+Refeita em 06/10/2026 contra o que esta em producao em `birdjud.com.br`.
+A versao anterior era de 25/09 e ficou errada em quase tudo: falava em 326
+testes e 20 tabelas sob RLS, e dava como pendentes itens ja entregues.
 
 Cada item diz quem resolve — `[nos]` e trabalho de codigo, `[voce]` depende de
 uma decisao, uma credencial ou um contrato.
 
----
+## Onde o sistema esta
 
-## Impedem o teste
+Tres medidas diferentes, porque uma so engana:
 
-### 1. ~~Nao existe recuperacao de senha~~ — FEITO, falta a credencial `[voce]`
+| Dimensao | Onde esta |
+| --- | --- |
+| Codigo e infraestrutura | praticamente pronto |
+| Credenciais de producao | quase todas ligadas |
+| **Provado com uso real** | **quase nada** |
+| Pronto para vender a terceiros | pela metade |
 
-O fluxo esta pronto e provado de ponta a ponta (`npm run conferir-recuperacao`):
-link que vale uma vez e por uma hora, token guardado como hash, sessoes
-abertas derrubadas na troca, resposta identica para conta que existe e que
-nao existe.
+A terceira linha e a que importa. O sistema esta construido e esta no ar; o
+que ele ainda nao tem e um processo de verdade passando por dentro dele.
 
-Falta so ligar o remetente em producao: as variaveis `PLATAFORMA_SMTP_*` no
-Railway. Ver `docs/EMAIL-DA-PLATAFORMA.md`. Enquanto elas nao existirem, a
-tela diz que a recuperacao automatica nao esta disponivel — nao finge que o
-e-mail saiu.
+Medido no console da plataforma em 06/10: ADVOCACIA ROMA tem **1 usuario e 0
+registros**. Nenhum cliente, nenhum processo, nenhuma publicacao capturada,
+nenhuma fatura emitida, nenhum pagamento recebido.
 
-### 2. A captura do DJEN nao funciona de dentro do Railway `[nos + voce]`
+## Prazo que esta correndo
 
-`DJEN_RELE_URL` nao esta definida em producao. O DJEN recusa requisicao de
-fora do Brasil e o Railway serve de fora; sem o rele na Vercel (regiao
-`gru1`), a captura de publicacoes — que e o modulo que mais vende o produto —
-nao traz nada.
+**12/10/2026**: acaba o teste da ADVOCACIA ROMA (R$ 299,00/mes, vencimento dia
+10). Quando a regua passar, ela agora **emite cobranca de verdade** no Asaas —
+boleto e Pix — e manda o link por e-mail ao administrador. E a Blackbird
+cobrando a Advocacia Roma, as duas suas. Decidir antes se e isso mesmo:
+estender o teste, cancelar a assinatura ou deixar correr para provar o ciclo.
 
-O rele esta escrito e testado (`rele/`, 15 testes), mas nunca foi implantado.
-Falta: publicar na Vercel, gerar o `RELE_TOKEN`, definir as duas variaveis no
-Railway e rodar `npm run conferir-djen`.
+## Impedem o uso real
 
-### 3. A IA esta desligada em producao `[voce]`
+### 1. A senha de administracao nao existe `[voce]`
 
-`ANTHROPIC_API_KEY` nao esta definida. A leitura de documento, o resumo de
-publicacao e a minuta respondem com uma mensagem honesta ("a plataforma ainda
-nao configurou a chave de IA"), mas nao funcionam — e sao o que a pagina
-inicial promete primeiro.
+Ela destrava financeiro, certificado A1 e identidade do escritorio. Sem ela, o
+proprio escritorio nao preenche nada disso sozinho — foi por isso que o CNPJ
+precisou ser gravado pelo console do operador.
 
-### 4. ~~Nao ha backup automatico do banco~~ — FEITO pela metade `[voce escolhe o destino]`
+### 2. O advogado nao foi criado, e nenhuma OAB e monitorada `[voce + nos]`
 
-Existe agora um `pg_dump` diario as 02h de Brasilia, no servico `cron-backup`,
-com volume proprio, retencao de 14 dias, conferencia do conteudo (nao so do
-tamanho) e **ensaio de restauracao ja feito** — ver `docs/BACKUP.md`.
+Sem OAB cadastrada, a captura do DJEN nao tem o que buscar — e e o modulo que
+mais vende o produto. O rele esta no ar e provado com dado real do CNJ. Falta
+o cadastro.
 
-O que falta: **a copia sair do Railway**. Como esta, protege contra o acidente
-mais comum (exclusao errada, migracao ruim) e nao contra perder o projeto ou a
-conta. Falta escolher um destino externo (S3, Backblaze B2, Storage Box); o
-resto ja esta pronto.
+### 3. Nada na frente do sistema `[voce]`
 
----
+Ver `docs/CLOUDFLARE.md`. Bloqueado: a zona `birdjud.com.br` esta na
+Cloudflare (nameservers `ingrid` e `salvador`), mas nao na conta a que temos
+acesso. Enquanto a conta nao for encontrada, nao ha o que ligar.
+
+### 4. Monitor externo `[nos + voce]`
+
+O vigia roda dentro do mesmo provedor que vigia. Se o ambiente inteiro cair,
+ele cai junto e ninguem e avisado. Plano gratuito de UptimeRobot ou Better
+Stack basta.
+
+### 5. Regra de 90 dias no balde do R2 `[voce]`
+
+O backup cifrado sobe todo dia e a restauracao foi ensaiada, mas sem a regra
+de expurgo o balde cresce para sempre. O token tem permissao de objeto, nao de
+administracao do balde: tem de ser clicado no painel.
 
 ## Fazem falta antes do segundo escritorio
 
-### 5. ~~Usuario novo nao recebe convite~~ — FEITO `[voce: a mesma credencial]`
+### 6. As minutas juridicas nao foram revisadas por advogado `[voce]`
 
-Com remetente configurado, a senha no formulario vira **opcional**: em branco,
-o usuario nasce com um hash que ninguem reproduz e recebe convite por e-mail
-para escolher a propria senha. Ninguem precisa passar senha por WhatsApp.
+O mecanismo de aceite esta certo — data, hora, IP e versao. O **texto** e
+rascunho meu.
 
-O convite vale 7 dias (contra 1 hora da redefinicao), porque quem recebe pode
-estar de plantao ou de ferias — convite vencido antes de ser aberto so gera
-retrabalho. Sem remetente, o caminho antigo continua valendo, e a tela diz
-isso.
+### 7. Onboarding nao existe `[nos]`
 
-### 6. Nao existe cobranca automatica da assinatura `[nos + voce]`
+Quem se cadastra cai no painel vazio. As pendencias aparecem, o que ajuda, mas
+nao ha caminho guiado de primeira configuracao.
 
-A fatura da plataforma e gerada pela regua, mas quem marca como paga e um
-operador, na mao (`/api/plataforma/faturas`). Para um piloto com poucos
-escritorios isso e ate razoavel — e mais honesto do que cobrar cartao antes de
-o produto se provar. Para o decimo escritorio, nao.
+### 8. Conta Asaas compartilhada entre sete sistemas `[voce]`
 
-### 7. As minutas juridicas nao foram revisadas por advogado `[voce]`
-
-Termos de uso, contrato de licenca e acordo de LGPD estao escritos e com
-aceite registrado com data, hora, IP e versao — o mecanismo esta certo. O
-**texto** e rascunho meu e precisa de leitura de quem assina.
-
-### 8. Onboarding nao existe `[nos]`
-
-Quem se cadastra cai no painel vazio. As pendencias ("cadastre uma OAB",
-"conecte o e-mail") aparecem, o que ja ajuda, mas nao ha um caminho guiado de
-primeira configuracao. Em piloto acompanhado de perto da para viver sem; em
-autoatendimento, nao.
-
-### 9. ~~Nao ha monitoramento~~ — FEITO por dentro; o externo continua faltando
-
-O servico `cron-vigia` bate no healthcheck de quinze em quinze minutos, tenta
-tres vezes antes de acusar (rede tem soluco, e alarme por soluco ensina todo
-mundo a ignorar o alarme) e manda e-mail quando o sistema nao responde.
-
-**Duas coisas que ele nao resolve, e precisam ser ditas.** Primeira: ele roda
-dentro do mesmo provedor que vigia — se o Railway inteiro cair, o vigia cai
-junto. Segunda: ele bate no dominio do Railway, nao em `app.birdjud.com.br`.
-De dentro do Railway, chamar o proprio dominio publico do projeto falha — a
-borda nao aceita a volta —, entao a camada de DNS e certificado do dominio
-proprio fica de fora.
-
-As duas lacunas sao exatamente o que um monitor de fora cobre (UptimeRobot,
-Better Stack e afins tem plano gratuito que basta), e por isso ele continua
-valendo a pena.
-
-### 10. Sem canal de contato configurado `[voce]`
-
-`CONTATO_COMERCIAL` nao esta definida: a pagina de planos e a de contato
-levam ao teste em vez de levarem a voce. Falta so o e-mail (ou WhatsApp) que
-voce quer publicar.
-
----
+A separacao por marca de sistema (`birdjud:fatura:<id>`) faz funcionar, mas e
+remendo sobre conta compartilhada, nao isolamento: a chave de producao e a
+mesma para os sete, e revogar por causa de um derruba os outros seis.
 
 ## Ficam para depois do piloto
 
 - **WhatsApp**: dois modelos aprovados na Meta e as credenciais do escritorio.
-  O modulo esta pronto e testado, mas modelo nao aprovado nao envia.
-- **NFS-e em homologacao**: o layout esta marcado "a conferir" no codigo. Antes
-  de emitir nota de verdade, rodar `npm run conferir-nfse` com certificado A1
-  em homologacao.
-- **Acessibilidade**: nunca foi auditada com leitor de tela.
-- **Desempenho sob carga**: nunca foi medido com mais de um escritorio ativo.
-- **Retencao de registros de acesso**: o que e guardado esta declarado, mas nao
-  ha rotina de expurgo dos registros antigos de acesso de suporte.
+- **NFS-e**: layout marcado "a conferir"; rodar `npm run conferir-nfse` com
+  certificado A1 em homologacao antes de emitir nota de verdade.
+- **Acessibilidade**: nunca auditada com leitor de tela.
+- **Desempenho sob carga**: nunca medido com mais de um escritorio ativo.
+- **Expurgo dos registros de acesso de suporte**: declarado, sem rotina.
+- **Varredura por mais confianca em cabecalho de visitante**: em 04/10 foi
+  achado um ponto (a origem das tentativas). Nao ha base para dizer que era o
+  unico.
 
----
-
-## O que ja esta pronto, e foi conferido
-
-Para nao parecer que falta tudo:
+## O que esta pronto, e foi conferido
 
 - **isolamento entre escritorios** em duas camadas independentes (extensao do
-  Prisma e RLS com FORCE em 20 tabelas), com bateria propria de testes que
-  roda antes de todo deploy;
-- **326 testes** passando, incluindo os de seguranca, de migracao e de preco;
-- **dominio, certificado e subdominio por escritorio** funcionando, com prova
-  de ponta a ponta feita em producao (cadastro na plataforma, login no
-  subdominio, sessao que nao atravessa para outro endereco);
-- **tres papeis de banco** (migracao, aplicacao e plataforma), com a aplicacao
-  sem BYPASSRLS e sem ser dona das tabelas;
-- **segredos cifrados** por escritorio (AES-256-GCM), CSP com nonce, limitador
-  de tentativas de login por conta e por origem, e sessao revogavel;
-- **conferencia de producao no start** (`npm run conferir-producao`), que
-  recusa subir se o isolamento nao estiver de pe;
-- **deploy automatico** com CI que constroi do jeito que o Railway constroi;
-- **robots, sitemap e pagina 404** (este commit).
-
----
+  Prisma e RLS com FORCE em 22 tabelas), conferido a cada arranque pelo
+  `conferir-producao`, que recusa subir se nao estiver de pe;
+- **549 testes** passando, incluindo seguranca, migracao, preco, isolamento e
+  as decisoes de alarme;
+- **backup cifrado fora do provedor** (AES-256-GCM no R2 da Cloudflare), com
+  caminho de restauracao provado e vigia proprio: se o backup parar de subir,
+  o alarme e separado do alarme de queda, porque backup parado nao e queda;
+- **cobranca da plataforma de ponta a ponta**: emissao marcada por sistema,
+  webhook que separa os sete sistemas da conta sem travar a fila, e baixa que
+  registra quem pagou, quanto e por qual caminho;
+- **certificado conferido na origem**, por tras de qualquer borda — a licao de
+  28/09, quando um certificado em falha derrubou o sistema inteiro e o vigia
+  nao viu;
+- **origem das tentativas confiavel**: ate 04/10 quem chamava escolhia a
+  propria identidade e desligava todos os tetos de uma vez;
+- **dominio, certificado e subdominio por escritorio**, com prova de ponta a
+  ponta em producao;
+- **tres papeis de banco**, com a aplicacao sem BYPASSRLS e sem ser dona das
+  tabelas;
+- **segredos cifrados** por escritorio, CSP com nonce por requisicao, sessao
+  revogavel;
+- **os nove modulos** escritos e testados: DJEN, WhatsApp, e-mail, NFS-e,
+  cobrancas, financeiro, assinatura eletronica, IA e arquivos.
 
 ## Ordem que eu seguiria
 
-1. ~~Recuperacao de senha~~ feita; falta so a credencial do remetente;
-2. Rele do DJEN na Vercel (destrava o modulo que mais vende);
-3. Chave de IA e contato comercial (duas variaveis, cinco minutos);
-4. ~~Backup diario com restauracao testada~~ feito; falta so o destino externo;
-5. ~~Monitor do healthcheck~~ feito por dentro; o de fora ainda vale a pena;
+1. Senha de administracao (destrava tres telas de uma vez);
+2. Criar o advogado e a OAB, e disparar a captura do DJEN — o primeiro dado
+   real entrando no sistema;
+3. Decidir o que fazer com o vencimento do teste em 12/10;
+4. Achar a conta da Cloudflare e ligar a nuvem laranja;
+5. Monitor externo e regra de 90 dias no R2;
 6. Revisao juridica das minutas, em paralelo com tudo acima.
-
-Com 1 a 5 feitos, eu poria um escritorio amigo para usar de verdade — de
-preferencia o seu, onde o erro e barato e o retorno chega no mesmo dia.
