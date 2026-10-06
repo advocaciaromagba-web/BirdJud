@@ -20,10 +20,19 @@ export const MAXIMO_DE_PARCELAS = 60;
 
 export type Contrato = {
   tipo: TipoDeHonorario;
-  /** Parte fixa, em centavos. Entrada, no MISTO. */
+  /** O TOTAL da parte fixa, em centavos. */
   valorCentavos: number | null;
+  /**
+   * Quanto desse total e pago a vista, na assinatura.
+   *
+   * Zero ou nulo e "sem entrada". Com entrada, a primeira cobranca e ela, e o
+   * que sobra e que se divide em `parcelas` — e por isso que o contrato de
+   * "entrada mais 3x" gera QUATRO cobrancas, nao tres.
+   */
+  entradaCentavos: number | null;
   /** Percentual de exito em centesimos: 30% = 3000. */
   percentualBp: number | null;
+  /** Em quantas vezes o que sobra depois da entrada e dividido. */
   parcelas: number;
   /** Dia do primeiro vencimento, "AAAA-MM-DD". */
   primeiroVencimento: string | null;
@@ -94,12 +103,22 @@ export function planoDoContrato(contrato: Contrato): Plano {
   const total = contrato.valorCentavos ?? 0;
   if (total <= 0) return recusa("O contrato esta sem valor.");
 
+  const entrada = contrato.entradaCentavos ?? 0;
+  if (entrada < 0) return recusa("A entrada nao pode ser negativa.");
+  if (entrada > total) return recusa("A entrada e maior que o valor do contrato.");
+
   const quantidade = Math.round(contrato.parcelas);
   if (!Number.isFinite(quantidade) || quantidade < 1) return recusa("O contrato nao diz em quantas parcelas.");
   if (quantidade > MAXIMO_DE_PARCELAS) {
     return recusa(`Mais de ${MAXIMO_DE_PARCELAS} parcelas: confira o contrato.`);
   }
-  if (quantidade > total) {
+
+  const aParcelar = total - entrada;
+  // Entrada que cobre o contrato inteiro e pagamento a vista, nao entrada:
+  // gerar "entrada + 1 parcela de zero" seria mandar um boleto de R$ 0,00.
+  const temEntrada = entrada > 0 && aParcelar > 0;
+  const vezes = aParcelar > 0 ? quantidade : 0;
+  if (vezes > aParcelar) {
     // 10 parcelas de R$ 0,50 ate existem; 200 parcelas de R$ 1,00 total nao.
     return recusa("Sao mais parcelas que centavos: o valor ou a quantidade esta errada.");
   }
@@ -110,18 +129,67 @@ export function planoDoContrato(contrato: Contrato): Plano {
   const base = contrato.descricao?.trim()
     ? `Honorarios advocaticios — ${contrato.descricao.trim()}`
     : "Honorarios advocaticios";
-  const rotulo = contrato.tipo === "MISTO" ? `${base} (entrada)` : base;
+  const rotulo = contrato.tipo === "MISTO" ? `${base} (parte fixa)` : base;
 
-  const valores = dividir(total, quantidade);
-  const parcelas = valores.map((valorCentavos, i) => ({
-    numero: i + 1,
-    total: quantidade,
-    valorCentavos,
-    vencimento: mesesAdiante(primeiro, i),
-    descricao: quantidade > 1 ? `${rotulo} — parcela ${i + 1}/${quantidade}` : rotulo,
-  }));
+  const parcelas: Parcela[] = [];
+  // Quantas cobrancas o contrato tem ao todo: a entrada conta como uma.
+  const totalDeCobrancas = (temEntrada ? 1 : 0) + (aParcelar > 0 ? vezes : 1);
+
+  if (temEntrada) {
+    parcelas.push({
+      numero: 1,
+      total: totalDeCobrancas,
+      valorCentavos: entrada,
+      vencimento: primeiro,
+      descricao: `${rotulo} — entrada`,
+    });
+  }
+
+  const sobra = temEntrada ? aParcelar : total;
+  const emQuantas = temEntrada ? vezes : Math.max(1, vezes);
+  const valores = dividir(sobra, emQuantas);
+  // Com entrada, a primeira parcela vence no mes SEGUINTE a ela: cobrar as
+  // duas no mesmo dia e cobrar duas vezes no dia da assinatura.
+  const deslocamento = temEntrada ? 1 : 0;
+
+  valores.forEach((valorCentavos, i) => {
+    const numero = (temEntrada ? 1 : 0) + i + 1;
+    parcelas.push({
+      numero,
+      total: totalDeCobrancas,
+      valorCentavos,
+      vencimento: mesesAdiante(primeiro, i + deslocamento),
+      descricao:
+        totalDeCobrancas > 1
+          ? `${rotulo} — parcela ${numero}/${totalDeCobrancas}`
+          : rotulo,
+    });
+  });
 
   return { emiteSozinho: true, motivo: null, parcelas };
+}
+
+/**
+ * Como a contratacao se chama, para a tela e para a peca.
+ *
+ * Derivado, nunca gravado: o nome tem de seguir os numeros. Gravar "a vista" e
+ * depois alguem mudar para 3 parcelas deixaria um contrato que se diz uma
+ * coisa e cobra outra.
+ */
+export function comoSeContrata(contrato: Contrato): string {
+  const total = contrato.valorCentavos ?? 0;
+  const entrada = contrato.entradaCentavos ?? 0;
+  const vezes = Math.max(1, Math.round(contrato.parcelas));
+  const exito = contrato.percentualBp ? `${percentualEmTexto(contrato.percentualBp)} de exito` : null;
+
+  if (total <= 0) return exito ?? "sem valor definido";
+
+  let fixo: string;
+  if (entrada > 0 && entrada < total) fixo = `entrada mais ${vezes}x`;
+  else if (vezes > 1) fixo = `${vezes}x`;
+  else fixo = "a vista";
+
+  return exito ? `${fixo} + ${exito}` : fixo;
 }
 
 /** A primeira parcela do plano que ainda nao virou cobranca. */

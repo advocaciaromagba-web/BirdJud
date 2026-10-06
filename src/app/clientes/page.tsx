@@ -46,6 +46,46 @@ export default async function PaginaClientes() {
           { nome: "documento", rotulo: "CPF / CNPJ" },
           { nome: "telefone", rotulo: "Telefone" },
           { nome: "email", rotulo: "E-mail", tipo: "email" },
+
+          // Honorarios no mesmo gesto. Tudo opcional: cliente entra antes de
+          // haver contrato, e obrigar o valor aqui faria alguem inventar um
+          // numero so para conseguir cadastrar.
+          {
+            nome: "honDescricao",
+            rotulo: "Honorarios — sobre o que",
+            largo: true,
+            ajuda:
+              "Preencha daqui para baixo so se ja houver contratacao. Valor fixo, " +
+              "percentual de exito, ou os dois.",
+          },
+          { nome: "honValor", rotulo: "Valor total (R$)" },
+          {
+            nome: "honEntrada",
+            rotulo: "Entrada (R$)",
+            ajuda: "Para a vista mais parcelamento. Em branco, nao ha entrada.",
+          },
+          {
+            nome: "honParcelas",
+            rotulo: "Parcelas",
+            ajuda: "Em quantas vezes o que sobra depois da entrada. 1 e a vista.",
+          },
+          { nome: "honPercentual", rotulo: "Exito (%)" },
+          {
+            nome: "honPrimeiroVencimento",
+            rotulo: "1o vencimento",
+            tipo: "date",
+          },
+          {
+            nome: "honForma",
+            rotulo: "Forma",
+            tipo: "select",
+            opcoes: [
+              { valor: "BOLETO", rotulo: "Boleto" },
+              { valor: "PIX", rotulo: "Pix" },
+              { valor: "CARTAO", rotulo: "Cartao" },
+              { valor: "QUALQUER", rotulo: "O cliente escolhe" },
+            ],
+          },
         ]}
       />
       {/*

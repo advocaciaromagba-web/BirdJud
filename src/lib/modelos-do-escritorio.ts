@@ -9,7 +9,7 @@ import { gravar, ler, apagar } from "./armazenamento";
 import { emReais, porExtenso } from "./dinheiro";
 import { formatarDocumento } from "./documentos";
 import { enderecoEmLinha, ehPessoaJuridica, qualificacao } from "./representantes";
-import { percentualEmTexto, planoDoContrato } from "./honorarios";
+import { comoSeContrata, percentualEmTexto, planoDoContrato } from "./honorarios";
 import {
   lerTextos,
   montarDocx,
@@ -200,6 +200,14 @@ export async function arquivoDoModelo(
   return { conteudo: await ler(escritorioId, m.id), doEscritorio: true };
 }
 
+/** Como a forma aparece na peca: em portugues, nao em caixa alta de banco. */
+const NOME_DA_FORMA: Record<string, string> = {
+  BOLETO: "boleto",
+  PIX: "Pix",
+  CARTAO: "cartao",
+  QUALQUER: "Pix, boleto ou cartao, a escolha do CONTRATANTE",
+};
+
 const MES = [
   "janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho",
   "agosto", "setembro", "outubro", "novembro", "dezembro",
@@ -281,13 +289,22 @@ export type DadosDaPeca = {
   escritorio: { nome: string; cidade: string | null; telefoneAtendimento: string | null };
   processo?: { numero: string; vara: string | null; tribunal: string | null } | null;
   contrato?: {
+    forma?: string;
     tipo: string;
     valorCentavos: number | null;
+    entradaCentavos: number | null;
     percentualBp: number | null;
     parcelas: number;
     primeiroVencimento: Date | null;
     descricao: string | null;
     ativo: boolean;
+  } | null;
+  /** So para o recibo: o que foi recebido. */
+  recibo?: {
+    valorCentavos: number;
+    referenteA: string;
+    forma: string | null;
+    quando: Date;
   } | null;
   hoje?: Date;
 };
@@ -303,6 +320,7 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     ? planoDoContrato({
         tipo: c.tipo as "VALOR" | "PERCENTUAL" | "MISTO",
         valorCentavos: c.valorCentavos,
+        entradaCentavos: c.entradaCentavos,
         percentualBp: c.percentualBp,
         parcelas: c.parcelas,
         primeiroVencimento: c.primeiroVencimento
@@ -338,6 +356,25 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     "honorarios.percentual": c?.percentualBp ? percentualEmTexto(c.percentualBp) : null,
     "honorarios.descricao": c?.descricao ?? null,
     "honorarios.primeiro_vencimento": emDia(c?.primeiroVencimento ?? null),
+    "honorarios.entrada": c?.entradaCentavos ? emReais(c.entradaCentavos) : null,
+    "honorarios.forma": c?.forma ? (NOME_DA_FORMA[c.forma] ?? c.forma) : null,
+    "honorarios.contratacao": c
+      ? comoSeContrata({
+          tipo: c.tipo as "VALOR" | "PERCENTUAL" | "MISTO",
+          valorCentavos: c.valorCentavos,
+          entradaCentavos: c.entradaCentavos,
+          percentualBp: c.percentualBp,
+          parcelas: c.parcelas,
+          primeiroVencimento: null,
+          descricao: null,
+          ativo: c.ativo,
+        })
+      : null,
+    "recibo.valor": d.recibo ? emReais(d.recibo.valorCentavos) : null,
+    "recibo.valor_por_extenso": d.recibo ? porExtenso(d.recibo.valorCentavos) : null,
+    "recibo.referente_a": d.recibo?.referenteA ?? null,
+    "recibo.forma": d.recibo?.forma ?? null,
+    "recibo.data": d.recibo ? emDia(d.recibo.quando) : null,
     "data.hoje": porExtensoData(hoje),
     "data.cidade_e_data": `${d.escritorio.cidade ?? ""}, ${porExtensoData(hoje)}`.replace(/^, /, ""),
   };

@@ -22,6 +22,7 @@ function comoContrato(c: ContratoDeHonorarios): Contrato {
   return {
     tipo: c.tipo as Contrato["tipo"],
     valorCentavos: c.valorCentavos,
+    entradaCentavos: c.entradaCentavos,
     percentualBp: c.percentualBp,
     parcelas: c.parcelas,
     primeiroVencimento: c.primeiroVencimento
@@ -229,6 +230,7 @@ export type NovoContrato = {
   processoId?: string | null;
   tipo: Contrato["tipo"];
   valorCentavos?: number | null;
+  entradaCentavos?: number | null;
   percentualBp?: number | null;
   parcelas: number;
   primeiroVencimento?: string | null;
@@ -260,6 +262,7 @@ export async function salvarContrato(
     processoId: dados.processoId ?? null,
     tipo: dados.tipo,
     valorCentavos: dados.valorCentavos ?? null,
+    entradaCentavos: dados.entradaCentavos ?? null,
     percentualBp: dados.percentualBp ?? null,
     parcelas: dados.parcelas,
     primeiroVencimento: dados.primeiroVencimento

@@ -16,6 +16,8 @@ const contrato = z.object({
   tipo: z.enum(TIPOS),
   // Em reais, como digitado. A conversao para centavos e uma so, aqui.
   valor: z.string().max(20).nullish(),
+  // Quanto do total e pago a vista, na assinatura.
+  entrada: z.string().max(20).nullish(),
   // Em por cento, como digitado: "30" ou "12,5".
   percentual: z.string().max(10).nullish(),
   parcelas: z.number().int().min(1).max(MAXIMO_DE_PARCELAS),
@@ -50,6 +52,14 @@ export async function POST(req: Request) {
       }
     }
 
+    let entradaCentavos: number | null = null;
+    if (d.entrada?.trim()) {
+      entradaCentavos = paraCentavos(d.entrada);
+      if (entradaCentavos === null || entradaCentavos < 0) {
+        return NextResponse.json({ erro: "Entrada invalida." }, { status: 400 });
+      }
+    }
+
     let percentualBp: number | null = null;
     if (d.percentual?.trim()) {
       percentualBp = paraCentesimos(d.percentual);
@@ -75,6 +85,7 @@ export async function POST(req: Request) {
       processoId: d.processoId ?? null,
       tipo: d.tipo,
       valorCentavos,
+      entradaCentavos,
       percentualBp,
       parcelas: d.tipo === "PERCENTUAL" ? 1 : d.parcelas,
       primeiroVencimento: d.primeiroVencimento ?? null,

@@ -76,9 +76,9 @@ const CONTRATO: Linha[] = [
   T(
     "CLAUSULA 2ª — DOS HONORARIOS. Pelos servicos contratados, o CONTRATANTE pagara ao " +
       "CONTRATADO a quantia de {{honorarios.valor}} ({{honorarios.valor_por_extenso}}), " +
-      "em {{honorarios.parcelas}} parcela(s) de {{honorarios.parcela_valor}}, vencendo a " +
-      "primeira em {{honorarios.primeiro_vencimento}} e as demais no mesmo dia dos meses " +
-      "seguintes.",
+      "contratada {{honorarios.contratacao}}, vencendo a primeira em " +
+      "{{honorarios.primeiro_vencimento}} e as demais no mesmo dia dos meses seguintes, " +
+      "pagas por {{honorarios.forma}}.",
   ),
   T(
     "Paragrafo unico. Havendo exito, sera devido ao CONTRATADO o percentual de " +
@@ -120,10 +120,29 @@ const CONTRATO: Linha[] = [
   { texto: "{{escritorio.nome}} — CONTRATADO", centro: true },
 ];
 
+const RECIBO: Linha[] = [
+  TITULO("RECIBO DE PAGAMENTO DE HONORARIOS"),
+  T("Valor: {{recibo.valor}} ({{recibo.valor_por_extenso}})"),
+  T(
+    "Recebi de {{cliente.qualificacao}}, a quantia acima, referente a " +
+      "{{recibo.referente_a}}, paga por {{recibo.forma}} em {{recibo.data}}.",
+  ),
+  T(
+    "Para clareza, firmo o presente recibo, dando plena e geral quitacao do " +
+      "valor ora recebido, e somente dele.",
+  ),
+  { texto: "", espacoDepois: true },
+  { texto: "{{data.cidade_e_data}}", centro: true, espacoDepois: true },
+  { texto: "", espacoDepois: true },
+  { texto: "_______________________________", centro: true },
+  { texto: "{{escritorio.nome}}", centro: true },
+];
+
 export const MODELO_PADRAO: Record<Especie, Linha[]> = {
   CONTRATO,
   PROCURACAO,
   DECLARACAO,
+  RECIBO,
 };
 
 export function nomeDoArquivoPadrao(especie: Especie): string {

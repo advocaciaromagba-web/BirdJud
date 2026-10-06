@@ -1,6 +1,7 @@
 # Modelos de documento do escritorio
 
-Contrato de honorarios, procuracao e declaracao de hipossuficiencia saem no
+Contrato de honorarios, procuracao, declaracao de hipossuficiencia e recibo de
+pagamento de honorarios saem no
 papel do escritorio: o timbre dele, a fonte dele, a redacao que o advogado dele
 assina. O sistema guarda o `.docx` que o escritorio enviou e troca so os campos
 marcados.
@@ -54,6 +55,44 @@ lido e revisado como qualquer outro codigo.
 novo conseguir emitir no primeiro dia. Antes de usar como esta, o advogado
 responsavel le e adapta: a redacao e a responsabilidade sao do escritorio, e a
 tela diz isso.
+
+## Onde se gera
+
+Na ficha do cliente, em **Gerar documentos**: marca-se o que precisa e sai de
+uma vez. Quase sempre sao os tres juntos — contrato, procuracao e declaracao —
+e obrigar tres idas a tela para o que e um gesto so era pedir que alguem
+esquecesse um.
+
+O **recibo** precisa de um pagamento. Em branco, sai da ultima cobranca paga do
+cliente. Dinheiro que entrou por fora do sistema precisa ser digitado: inventar
+o numero de um recibo seria dar quitacao de um valor que ninguem conferiu.
+
+Os honorarios podem ser lancados **junto com o cadastro do cliente**, no mesmo
+formulario. Se o contrato falhar, o cliente fica cadastrado do mesmo jeito —
+perder o cadastro inteiro por causa de um campo de honorario seria pior que
+ficar sem o contrato, que da para lancar depois na ficha.
+
+## Como se contrata
+
+Duas dimensoes independentes, e nao uma lista de tipos:
+
+- **parte fixa**: valor total, quanto dele e **entrada** (a vista, na
+  assinatura) e em quantas **parcelas** o que sobra e dividido;
+- **parte de exito**: percentual.
+
+Daí saem todas as formas de uma vez: a vista (1 parcela, sem entrada),
+parcelado (N parcelas), **a vista mais parcelamento** (entrada + N parcelas),
+so exito (sem valor fixo) e misto (fixo + exito). O nome — `a vista`, `3x`,
+`entrada mais 3x + 30% de exito` — e DERIVADO dos numeros, nunca gravado:
+gravar "a vista" e depois alguem mudar para 3 parcelas deixaria um contrato que
+se diz uma coisa e cobra outra.
+
+Com entrada, a primeira parcela vence no mes SEGUINTE a ela: cobrar as duas no
+mesmo dia e cobrar duas vezes no dia da assinatura. E "entrada mais 3x" gera
+QUATRO cobrancas, nao tres.
+
+A forma de pagamento — boleto, Pix, cartao, ou o cliente escolhe — e do
+contrato e entra na peca.
 
 ## Historico
 

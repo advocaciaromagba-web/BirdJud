@@ -10,13 +10,14 @@
 /** Como o campo e escrito no modelo: {{cliente.nome}}. */
 const MARCA = /\{\{\s*([a-z0-9_.]+)\s*\}\}/gi;
 
-export const ESPECIES = ["CONTRATO", "PROCURACAO", "DECLARACAO"] as const;
+export const ESPECIES = ["CONTRATO", "PROCURACAO", "DECLARACAO", "RECIBO"] as const;
 export type Especie = (typeof ESPECIES)[number];
 
 export const NOME_DA_ESPECIE: Record<Especie, string> = {
   CONTRATO: "Contrato de honorarios",
   PROCURACAO: "Procuracao",
   DECLARACAO: "Declaracao de hipossuficiencia",
+  RECIBO: "Recibo de pagamento de honorarios",
 };
 
 /**
@@ -47,6 +48,14 @@ export const CAMPOS: Array<{ chave: string; sobre: string }> = [
   { chave: "honorarios.percentual", sobre: "Percentual de exito" },
   { chave: "honorarios.descricao", sobre: "Sobre o que sao os honorarios" },
   { chave: "honorarios.primeiro_vencimento", sobre: "Data da primeira parcela" },
+  { chave: "honorarios.contratacao", sobre: "Como foi contratado: a vista, 3x, entrada mais 3x..." },
+  { chave: "honorarios.entrada", sobre: "Valor da entrada, quando ha" },
+  { chave: "honorarios.forma", sobre: "Boleto, Pix, cartao ou o cliente escolhe" },
+  { chave: "recibo.valor", sobre: "Valor recebido, para o recibo" },
+  { chave: "recibo.valor_por_extenso", sobre: "O mesmo valor escrito por extenso" },
+  { chave: "recibo.referente_a", sobre: "A que se refere o pagamento" },
+  { chave: "recibo.forma", sobre: "Como foi pago: Pix, boleto, cartao, dinheiro" },
+  { chave: "recibo.data", sobre: "Data do pagamento" },
   { chave: "data.hoje", sobre: "Data de hoje, por extenso" },
   { chave: "data.cidade_e_data", sobre: "Cidade e data, para fechar a peca" },
 ];

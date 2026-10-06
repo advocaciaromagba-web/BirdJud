@@ -11,6 +11,7 @@ import {
   mesesAdiante,
   naJanela,
   percentualEmTexto,
+  comoSeContrata,
   planoDoContrato,
   proximaParcela,
   type Contrato,
@@ -20,6 +21,7 @@ import {
 const CONTRATO = (over: Partial<Contrato> = {}): Contrato => ({
   tipo: "VALOR",
   valorCentavos: 300_000,
+  entradaCentavos: null,
   percentualBp: null,
   parcelas: 3,
   primeiroVencimento: "2026-11-10",
@@ -102,11 +104,11 @@ describe("plano do contrato", () => {
     expect(p.parcelas).toEqual([]);
   });
 
-  it("misto gera so a entrada, e diz que e entrada", () => {
+  it("misto gera a parte fixa, e diz que e a parte fixa", () => {
     const p = planoDoContrato(CONTRATO({ tipo: "MISTO", percentualBp: 2000, parcelas: 1 }));
     expect(p.emiteSozinho).toBe(true);
     expect(p.parcelas).toHaveLength(1);
-    expect(p.parcelas[0].descricao).toContain("(entrada)");
+    expect(p.parcelas[0].descricao).toContain("(parte fixa)");
   });
 
   it("contrato encerrado nao gera mais nada", () => {
@@ -187,5 +189,78 @@ describe("parcela atrasada", () => {
     expect(vencida("2026-11-10", "2026-11-11")).toBe(true);
     expect(vencida("2026-11-10", "2026-11-10")).toBe(false);
     expect(vencida("2026-11-10", "2026-11-09")).toBe(false);
+  });
+});
+
+
+describe("a vista mais parcelamento", () => {
+  // O caso que o sistema nao sabia representar: entrada na assinatura e o
+  // resto parcelado. "Entrada mais 3x" sao QUATRO cobrancas, nao tres.
+  it("a entrada e uma cobranca, e as parcelas vem depois dela", () => {
+    const p = planoDoContrato(
+      CONTRATO({ valorCentavos: 400_000, entradaCentavos: 100_000, parcelas: 3 }),
+    );
+    expect(p.parcelas).toHaveLength(4);
+    expect(p.parcelas[0]).toMatchObject({
+      numero: 1,
+      total: 4,
+      valorCentavos: 100_000,
+      vencimento: "2026-11-10",
+    });
+    expect(p.parcelas[0].descricao).toContain("entrada");
+    // Cobrar a entrada e a 1a parcela no mesmo dia e cobrar duas vezes na
+    // assinatura.
+    expect(p.parcelas[1].vencimento).toBe("2026-12-10");
+    expect(p.parcelas.slice(1).map((x) => x.valorCentavos)).toEqual([
+      100_000, 100_000, 100_000,
+    ]);
+  });
+
+  it("a soma continua batendo com o total ate o ultimo centavo", () => {
+    const p = planoDoContrato(
+      CONTRATO({ valorCentavos: 100_00, entradaCentavos: 30_00, parcelas: 3 }),
+    );
+    expect(p.parcelas.reduce((s, x) => s + x.valorCentavos, 0)).toBe(100_00);
+    expect(p.parcelas.map((x) => x.valorCentavos)).toEqual([3000, 2333, 2333, 2334]);
+  });
+
+  // Entrada que cobre o contrato inteiro e pagamento a vista: gerar "entrada
+  // + 1 parcela de zero" seria mandar um boleto de R$ 0,00.
+  it("entrada igual ao total e pagamento a vista, nao entrada", () => {
+    const p = planoDoContrato(
+      CONTRATO({ valorCentavos: 300_000, entradaCentavos: 300_000, parcelas: 3 }),
+    );
+    expect(p.parcelas).toHaveLength(1);
+    expect(p.parcelas[0].valorCentavos).toBe(300_000);
+  });
+
+  it("entrada maior que o total e recusada", () => {
+    expect(
+      planoDoContrato(CONTRATO({ valorCentavos: 100_000, entradaCentavos: 200_000 })).motivo,
+    ).toMatch(/maior que o valor/i);
+  });
+
+  it("entrada negativa e recusada", () => {
+    expect(
+      planoDoContrato(CONTRATO({ entradaCentavos: -1 })).motivo,
+    ).toMatch(/negativa/i);
+  });
+});
+
+describe("como a contratacao se chama", () => {
+  // Derivado, nunca gravado: gravar "a vista" e depois alguem mudar para 3
+  // parcelas deixaria um contrato que se diz uma coisa e cobra outra.
+  it("acompanha os numeros", () => {
+    expect(comoSeContrata(CONTRATO({ parcelas: 1 }))).toBe("a vista");
+    expect(comoSeContrata(CONTRATO({ parcelas: 3 }))).toBe("3x");
+    expect(
+      comoSeContrata(CONTRATO({ valorCentavos: 400_000, entradaCentavos: 100_000, parcelas: 3 })),
+    ).toBe("entrada mais 3x");
+    expect(
+      comoSeContrata(CONTRATO({ parcelas: 1, percentualBp: 3000, tipo: "MISTO" })),
+    ).toBe("a vista + 30% de exito");
+    expect(
+      comoSeContrata(CONTRATO({ tipo: "PERCENTUAL", valorCentavos: null, percentualBp: 2000 })),
+    ).toBe("20% de exito");
   });
 });

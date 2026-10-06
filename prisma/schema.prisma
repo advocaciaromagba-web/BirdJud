@@ -583,8 +583,10 @@ model ContratoDeHonorarios {
   clienteId          String
   processoId         String?
   tipo               String // VALOR | PERCENTUAL | MISTO
-  /// Parte fixa, em centavos. No MISTO, e a entrada.
+  /// O TOTAL da parte fixa, em centavos.
   valorCentavos      Int?
+  /// Quanto desse total e pago a vista, na assinatura. Ver src/lib/honorarios.ts.
+  entradaCentavos    Int?
   /// Percentual de exito em centesimos: 30% = 3000. Inteiro, nunca float.
   percentualBp       Int?
   parcelas           Int       @default(1)

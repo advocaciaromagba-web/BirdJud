@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
+import { paraCentavos } from "@/lib/dinheiro";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import { ehEspecie, gerarPeca } from "@/lib/modelos-do-escritorio";
@@ -15,9 +16,23 @@ const pedido = z.object({
   clienteId: z.string().min(1),
   contratoId: z.string().min(1).nullish(),
   processoId: z.string().min(1).nullish(),
+  // So para o recibo: de qual cobranca paga ele sai. Sem id, a mais recente.
+  cobrancaId: z.string().min(1).nullish(),
+  // Recibo sem cobranca no sistema: dinheiro que entrou por fora.
+  reciboValor: z.string().max(20).nullish(),
+  reciboReferenteA: z.string().max(200).nullish(),
+  reciboForma: z.string().max(40).nullish(),
+  reciboData: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   // Previa devolve texto e avisos; sem ela, devolve o arquivo.
   previa: z.boolean().optional(),
 });
+
+const NOME_DA_FORMA: Record<string, string> = {
+  BOLETO: "boleto",
+  PIX: "Pix",
+  CARTAO: "cartao",
+  QUALQUER: "Pix ou cartao",
+};
 
 /**
  * Monta a peca para um cliente: o modelo vigente com os campos trocados.
@@ -83,12 +98,60 @@ export async function POST(
       return NextResponse.json({ erro: "Escritorio nao encontrado." }, { status: 404 });
     }
 
+    // O recibo precisa de um pagamento. Se nao vier digitado, usa a cobranca
+    // paga escolhida — ou a mais recente do cliente. Recibo de valor que o
+    // sistema nao conhece so sai se alguem digitar: inventar o numero de um
+    // recibo seria dar quitacao de um valor que ninguem conferiu.
+    let recibo: {
+      valorCentavos: number;
+      referenteA: string;
+      forma: string | null;
+      quando: Date;
+    } | null = null;
+
+    if (especie === "RECIBO") {
+      const digitado = corpo.data.reciboValor?.trim()
+        ? paraCentavos(corpo.data.reciboValor)
+        : null;
+
+      if (digitado !== null && digitado > 0) {
+        recibo = {
+          valorCentavos: digitado,
+          referenteA: corpo.data.reciboReferenteA?.trim() || "honorarios advocaticios",
+          forma: corpo.data.reciboForma?.trim() || null,
+          quando: corpo.data.reciboData
+            ? new Date(`${corpo.data.reciboData}T00:00:00Z`)
+            : new Date(),
+        };
+      } else {
+        const paga = await comEscritorio(escritorioId, (db) =>
+          db.cobranca.findFirst({
+            where: {
+              clienteId,
+              status: "PAGA",
+              ...(corpo.data.cobrancaId ? { id: corpo.data.cobrancaId } : {}),
+            },
+            orderBy: { pagoEm: "desc" },
+          }),
+        );
+        if (paga) {
+          recibo = {
+            valorCentavos: paga.valorPagoCentavos ?? paga.valorCentavos,
+            referenteA: paga.descricao,
+            forma: NOME_DA_FORMA[paga.forma] ?? null,
+            quando: paga.pagoEm ?? new Date(),
+          };
+        }
+      }
+    }
+
     const peca = await gerarPeca(escritorioId, especie, {
       cliente,
       representantes,
       escritorio,
       contrato,
       processo,
+      recibo,
     });
 
     if (corpo.data.previa) {
