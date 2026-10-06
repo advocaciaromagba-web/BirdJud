@@ -112,6 +112,7 @@ const TABELAS_COM_RLS = [
   "ContratoDeHonorarios",
   "ModeloDeDocumento",
   "Meta",
+  "ParticipanteDeCompromisso",
 ];
 
 async function conferirBanco() {

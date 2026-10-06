@@ -81,6 +81,7 @@ model Escritorio {
   contratos         ContratoDeHonorarios[]
   modelos           ModeloDeDocumento[]
   metas             Meta[]
+  participantes     ParticipanteDeCompromisso[]
 }
 
 model ModuloContratado {
@@ -199,6 +200,7 @@ model Cliente {
   representantes Representante[]
 
   contratos ContratoDeHonorarios[]
+  comparecimentos ParticipanteDeCompromisso[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -251,6 +253,8 @@ model Compromisso {
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: Cascade)
   cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  participantes ParticipanteDeCompromisso[]
 
   @@index([escritorioId])
   @@index([escritorioId, inicio])
@@ -344,6 +348,30 @@ model Meta {
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
 
   @@unique([escritorioId, ano])
+}
+
+/// Quem mais vai ao compromisso. Ver src/lib/participantes.ts.
+model ParticipanteDeCompromisso {
+  id            String   @id @default(cuid())
+  escritorioId  String
+  compromissoId String
+  /// Preenchido quando a pessoa ja e cliente do escritorio.
+  clienteId     String?
+  /// Usados quando nao e cliente.
+  nome          String?
+  /// Guardado ja no formato de envio, para a mesma pessoa nao ser avisada duas vezes.
+  telefone      String?
+  email         String?
+  papel         String?
+  avisar        Boolean  @default(true)
+  criadoEm      DateTime @default(now())
+
+  escritorio  Escritorio  @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  compromisso Compromisso @relation(fields: [compromissoId], references: [id], onDelete: Cascade)
+  cliente     Cliente?    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([compromissoId])
+  @@index([escritorioId])
 }
 
 model OperadorPlataforma {

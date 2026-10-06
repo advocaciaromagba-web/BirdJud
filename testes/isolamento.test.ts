@@ -329,6 +329,31 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("participante de compromisso de um escritorio nao vaza para o outro", async () => {
+    const comp = await comEscritorio(alfaP, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo: "Audiencia de Alfa",
+          inicio: new Date("2026-11-10T13:00:00Z"),
+        }),
+      }),
+    );
+    await comEscritorio(alfaP, (db) =>
+      db.participanteDeCompromisso.create({
+        data: semEscritorio({
+          compromissoId: comp.id,
+          nome: "Testemunha de Alfa",
+          telefone: "5511999990000",
+          papel: "testemunha",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.participanteDeCompromisso.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("o calendario de um escritorio nao vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({

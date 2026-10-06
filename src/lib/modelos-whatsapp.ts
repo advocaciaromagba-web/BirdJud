@@ -37,6 +37,20 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
       "Esta mensagem so e enviada quando ha algo no dia.",
     parametros: ["nome do escritorio", "o resumo em numeros"],
   },
+  LEMBRETE_AO_PARTICIPANTE: {
+    nome: "birdjud_lembrete_participante",
+    idioma: "pt_BR",
+    texto:
+      "{{1}}, o escritorio {{2}} lembra: {{3}} em {{4}}. {{5}}. " +
+      "Em caso de duvida, fale com o escritorio.",
+    parametros: [
+      "nome de quem recebe",
+      "nome do escritorio",
+      "o que e",
+      "quando",
+      "onde, ou o processo",
+    ],
+  },
   LEMBRETE_COMPROMISSO: {
     nome: "birdjud_lembrete_compromisso",
     idioma: "pt_BR",

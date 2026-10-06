@@ -21,10 +21,13 @@ import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
 import { dataHoraBR } from "./datas";
 import {
   assuntoDoLembrete,
+  assuntoDoLembreteAoParticipante,
   assuntoDoResumo,
   corpoDoLembrete,
+  corpoDoLembreteAoParticipante,
   corpoDoResumo,
 } from "./textos-aviso";
+import { paraAvisarNoCompromisso } from "./participantes-do-escritorio";
 import { dominioDaPlataforma } from "./dominio";
 import { contasParaAvisar } from "./contas-do-escritorio";
 import { fatosDoDia } from "./resumo-do-escritorio";
@@ -242,6 +245,60 @@ async function gerarLembretes(
       });
       if (criadoZap) criados += 1;
     }
+
+    // ----- quem vai ao compromisso e nao trabalha no escritorio -----
+    //
+    // Texto proprio: quem recebe precisa saber ONDE e QUANDO estar, nao como o
+    // escritorio chamou aquilo internamente. E a chave leva o id do
+    // participante, nao o do usuario: um compromisso tem varios, e cada um
+    // recebe o seu.
+    const { avisar } = await paraAvisarNoCompromisso(escritorioId, compromisso.id);
+    for (const pessoa of avisar) {
+      const assuntoDele = assuntoDoLembreteAoParticipante(nomeEscritorio, dados);
+      const corpoDele = corpoDoLembreteAoParticipante(
+        nomeEscritorio,
+        pessoa.nome,
+        dados,
+      );
+
+      if (pessoa.email) {
+        const criadoEmail = await criarAviso(escritorioId, {
+          usuarioId: null,
+          canal: "EMAIL",
+          tipo: "LEMBRETE_AO_PARTICIPANTE",
+          chave: `participante:${compromisso.id}:${pessoa.participanteId}`,
+          destino: pessoa.email,
+          assunto: assuntoDele,
+          corpo: corpoDele,
+        });
+        if (criadoEmail) criados += 1;
+      }
+
+      const modeloDele = modeloDoTipo("LEMBRETE_AO_PARTICIPANTE");
+      if (!pessoa.telefone || !comWhatsapp || !modeloDele) continue;
+
+      const criadoZapDele = await criarAviso(escritorioId, {
+        usuarioId: null,
+        canal: "WHATSAPP",
+        tipo: "LEMBRETE_AO_PARTICIPANTE",
+        chave: `zap:participante:${compromisso.id}:${pessoa.participanteId}`,
+        destino: pessoa.telefone,
+        assunto: assuntoDele,
+        corpo: corpoDele,
+        modelo: modeloDele.nome,
+        parametros: [
+          limparParametro(pessoa.nome),
+          limparParametro(nomeEscritorio),
+          limparParametro(dados.titulo),
+          limparParametro(quando.format(dados.inicio)),
+          limparParametro(
+            dados.local ??
+              (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null),
+          ),
+        ],
+      });
+      if (criadoZapDele) criados += 1;
+    }
   }
   return criados;
 }
@@ -360,7 +417,8 @@ export async function gerarAvisosFinanceiros(
 }
 
 type NovoAviso = {
-  usuarioId: string;
+  /** Nulo quando o aviso vai para alguem de fora: cliente, testemunha. */
+  usuarioId: string | null;
   canal: "EMAIL" | "WHATSAPP";
   tipo: string;
   chave: string;

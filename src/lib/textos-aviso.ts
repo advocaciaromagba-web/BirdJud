@@ -102,3 +102,38 @@ export function corpoDoLembrete(
   linhas.push("", "Agenda completa:", endereco);
   return linhas.join("\n");
 }
+
+/**
+ * O lembrete para quem vai ao compromisso, e nao trabalha no escritorio.
+ *
+ * Texto diferente do que vai para a equipe, de proposito. Quem recebe e o
+ * cliente, a testemunha, o conjuge: precisa saber ONDE e QUANDO estar, nao o
+ * que o escritorio chamou aquilo internamente. E nao leva link do sistema, que
+ * essa pessoa nao tem como abrir.
+ */
+export function corpoDoLembreteAoParticipante(
+  nomeEscritorio: string,
+  nomeDoParticipante: string,
+  compromisso: CompromissoNoLembrete,
+): string {
+  const linhas = [
+    `${nomeDoParticipante}, o escritorio ${nomeEscritorio} lembra:`,
+    "",
+    `${compromisso.titulo} — ${dataHora.format(compromisso.inicio)}`,
+  ];
+
+  if (compromisso.local) linhas.push(`Local: ${compromisso.local}`);
+  if (compromisso.numeroProcesso) {
+    linhas.push(`Processo: ${formatarNumeroProcesso(compromisso.numeroProcesso)}`);
+  }
+
+  linhas.push("", "Em caso de duvida, fale com o escritorio.");
+  return linhas.join("\n");
+}
+
+export function assuntoDoLembreteAoParticipante(
+  nomeEscritorio: string,
+  compromisso: CompromissoNoLembrete,
+): string {
+  return `${nomeEscritorio}: lembrete de ${compromisso.titulo.toLowerCase()}`;
+}

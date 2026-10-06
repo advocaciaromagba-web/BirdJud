@@ -3,6 +3,7 @@ import { contextoDaPagina } from "@/lib/pagina";
 import { diaEmBrasilia, diaPorExtensoBR, horaBR } from "@/lib/datas";
 import { modulosAtivos } from "@/lib/modulos";
 import { Estrutura } from "@/componentes/Estrutura";
+import { ParticipantesDoCompromisso } from "@/componentes/ParticipantesDoCompromisso";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 
@@ -34,6 +35,10 @@ export default async function PaginaAgenda() {
         include: {
           processo: { select: { numero: true } },
           cliente: { select: { nome: true } },
+          participantes: {
+            orderBy: { criadoEm: "asc" },
+            include: { cliente: { select: { nome: true, telefone: true, email: true } } },
+          },
         },
       }),
       processos: await db.processo.findMany({
@@ -154,6 +159,23 @@ export default async function PaginaAgenda() {
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
+                    <div className="w-full">
+                      <ParticipantesDoCompromisso
+                        compromissoId={compromisso.id}
+                        titulo={compromisso.titulo}
+                        clientes={clientes}
+                        comWhatsapp={modulos.includes("WHATSAPP")}
+                        iniciais={compromisso.participantes.map((p) => ({
+                          clienteId: p.clienteId,
+                          // O nome do cliente vem do cadastro, sempre.
+                          nome: p.clienteId ? "" : (p.nome ?? ""),
+                          telefone: p.telefone ?? "",
+                          email: p.email ?? "",
+                          papel: p.papel ?? "",
+                          avisar: p.avisar,
+                        }))}
+                      />
+                    </div>
                   </li>
                 ))}
               </ul>

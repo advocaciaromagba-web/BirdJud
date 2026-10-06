@@ -118,8 +118,8 @@ abaixo e a que sobrou.
 
 | O que | O que resolve |
 | --- | --- |
-| **Resumo diario** (`resumo-diario`) | O que vence hoje, chegou hoje, precisa de alguem. |
-| **Participantes** em evento e tarefa | Compromisso com mais de uma pessoa. |
+| ✔ **Resumo diario** (`resumo-diario`) | O que vence hoje, chegou hoje, precisa de alguem — e a regra de nao mandar quando nao ha nada. |
+| ✔ **Participantes** em evento | Compromisso com mais de uma pessoa, cliente ou nao, cada uma avisada no contato dela. Quem nao da para avisar aparece na tela, com o motivo. |
 | **Lembretes e auto-resposta de WhatsApp** | Confirmacao de audiencia sem alguem lembrar de mandar. |
 | **Duplicados** (`clientes-duplicados`, `publicacoes-duplicadas`) | Cadastro repetido e publicacao repetida. |
 | **Permissoes por area** (`permissoes`, `area-auth`, `areas`) | O BirdJud tem tres papeis; la ha permissao por area. |
