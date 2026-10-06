@@ -9,6 +9,8 @@ import {
   vencimentoNaCompetencia,
 } from "@/lib/financeiro";
 import { tratarErro } from "@/lib/respostas";
+import { gerarContasDoMes } from "@/lib/contas-do-escritorio";
+import { vigenciaCoerente } from "@/lib/contas-a-pagar";
 
 const nova = z.object({
   descricao: z.string().min(2).max(200),
@@ -16,6 +18,10 @@ const nova = z.object({
   fornecedor: z.string().max(120).optional(),
   valor: z.string().min(1),
   diaDoVencimento: z.union([z.string(), z.number()]),
+  // De quando ate quando a despesa existe. Vazio dos dois lados: vale sempre.
+  inicioEm: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+  fimEm: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+  observacoes: z.string().max(300).nullish(),
 });
 
 export async function GET() {
@@ -51,6 +57,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const inicioEm = corpo.data.inicioEm || null;
+    const fimEm = corpo.data.fimEm || null;
+    if (!vigenciaCoerente(inicioEm, fimEm)) {
+      return NextResponse.json(
+        { erro: "O fim da vigencia vem antes do comeco." },
+        { status: 400 },
+      );
+    }
+
     const despesa = await comEscritorio(escritorioId, (db) =>
       db.despesaFixa.create({
         data: semEscritorio({
@@ -59,6 +74,9 @@ export async function POST(req: Request) {
           fornecedor: corpo.data.fornecedor || null,
           valorCentavos,
           diaDoVencimento: dia,
+          inicioEm: inicioEm ? new Date(`${inicioEm}T00:00:00Z`) : null,
+          fimEm: fimEm ? new Date(`${fimEm}T00:00:00Z`) : null,
+          observacoes: corpo.data.observacoes || null,
         }),
       }),
     );
@@ -71,12 +89,9 @@ export async function POST(req: Request) {
 /**
  * Gera os lancamentos do mes a partir das despesas fixas.
  *
- * Idempotente por construcao: ha indice unico em (despesaFixaId, competencia),
- * entao rodar duas vezes nao duplica nada. Isso importa porque quem clica
- * "gerar" e gente com pressa, e clicar duas vezes e o normal.
- *
- * O valor entra como PREVISAO: conta de agua muda todo mes, e o lancamento e
- * corrigido quando a conta chega — inclusive pela leitura do documento.
+ * A regra de quais despesas valem neste mes, e de nao duplicar, mora em
+ * contas-do-escritorio.ts — a mesma que o cron usa todo dia. Dois caminhos
+ * para a mesma coisa nao podem ter duas regras.
  */
 export async function PUT(req: Request) {
   try {
@@ -88,41 +103,7 @@ export async function PUT(req: Request) {
         ? corpo.competencia
         : competenciaDaData(new Date());
 
-    const resultado = await comEscritorio(escritorioId, async (db) => {
-      const fixas = await db.despesaFixa.findMany({ where: { ativo: true } });
-      let criados = 0;
-      let jaExistiam = 0;
-
-      for (const fixa of fixas) {
-        const jaTem = await db.lancamento.findFirst({
-          where: { despesaFixaId: fixa.id, competencia },
-          select: { id: true },
-        });
-        if (jaTem) {
-          jaExistiam += 1;
-          continue;
-        }
-        await db.lancamento.create({
-          data: semEscritorio({
-            descricao: fixa.descricao,
-            valorCentavos: fixa.valorCentavos,
-            tipo: "DESPESA",
-            categoria: fixa.categoria,
-            fornecedor: fixa.fornecedor,
-            competencia,
-            vencimento: vencimentoNaCompetencia(
-              competencia,
-              fixa.diaDoVencimento,
-            ),
-            despesaFixaId: fixa.id,
-            observacoes: "Gerado da despesa fixa. Valor previsto.",
-          }),
-        });
-        criados += 1;
-      }
-      return { criados, jaExistiam };
-    });
-
+    const resultado = await gerarContasDoMes(escritorioId, competencia);
     return NextResponse.json({ ...resultado, competencia });
   } catch (erro) {
     return tratarErro(erro);

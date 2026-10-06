@@ -14,10 +14,12 @@ import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
 import { emitirParcelasDevidas } from "./honorarios-do-escritorio";
+import { gerarContasDoMes } from "./contas-do-escritorio";
 import {
   enviarAvisosNoWhatsapp,
   enviarAvisosPendentes,
   gerarAvisos,
+  gerarAvisosFinanceiros,
 } from "./avisos";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
@@ -103,6 +105,13 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("AVISAR exige escritorio.");
 
   await gerarAvisos(escritorioId);
+
+  // Vencimento de conta e de recebimento entra na mesma fila de avisos, so
+  // que para ADMIN: o financeiro e fechado por papel, e o e-mail nao pode
+  // abrir por fora o que a tela fecha por dentro.
+  if (await moduloAtivo(escritorioId, "FINANCEIRO")) {
+    await gerarAvisosFinanceiros(escritorioId);
+  }
 
   const envio = await enviarAvisosPendentes(escritorioId);
   if (envio.semRemetente) {
@@ -208,10 +217,26 @@ async function emitirHonorarios({ escritorioId }: Contexto): Promise<void> {
   }
 }
 
+/**
+ * Gera as contas a pagar do mes a partir das despesas fixas vigentes.
+ *
+ * Roda todo dia, e nao uma vez por mes: assim a despesa fixa cadastrada no
+ * dia 12 ja vira conta do mes corrente sem ninguem precisar lembrar de clicar
+ * em nada. Repetir nao duplica.
+ */
+async function gerarContasAPagar({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("GERAR_CONTAS_A_PAGAR exige escritorio.");
+  const r = await gerarContasDoMes(escritorioId);
+  if (r.criados > 0) {
+    console.log(`GERAR_CONTAS_A_PAGAR ${escritorioId}: ${r.criados} conta(s) do mes.`);
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   SINCRONIZAR_COBRANCAS: sincronizarCobrancasDoEscritorio,
   EMITIR_HONORARIOS: emitirHonorarios,
+  GERAR_CONTAS_A_PAGAR: gerarContasAPagar,
   CAPTURAR_PUBLICACOES: capturar,
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
@@ -232,6 +257,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   AVISAR: "EMAIL",
   SINCRONIZAR_COBRANCAS: "COBRANCAS",
   EMITIR_HONORARIOS: "COBRANCAS",
+  GERAR_CONTAS_A_PAGAR: "FINANCEIRO",
   APURAR_CONSUMO: undefined,
   REGUA_DE_COBRANCA: undefined,
   LIMPAR_VENCIDOS: undefined,

@@ -370,6 +370,11 @@ model DespesaFixa {
   fornecedor      String?
   valorCentavos   Int
   diaDoVencimento Int
+  /// De quando ate quando a despesa existe. Sem valor, vale sempre — que e o
+  /// comportamento de antes. Ver src/lib/contas-a-pagar.ts.
+  inicioEm        DateTime? @db.Date
+  fimEm           DateTime? @db.Date
+  observacoes     String?
   ativo           Boolean  @default(true)
   criadoEm        DateTime @default(now())
 

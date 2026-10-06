@@ -1,3 +1,4 @@
+import { diaBR } from "@/lib/datas";
 import Link from "next/link";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
@@ -247,6 +248,8 @@ export default async function PaginaFinanceiro({
             valorCentavos: f.valorCentavos,
             diaDoVencimento: f.diaDoVencimento,
             ativo: f.ativo,
+            inicioEmBR: f.inicioEm ? diaBR(f.inicioEm) : null,
+            fimEmBR: f.fimEm ? diaBR(f.fimEm) : null,
           }))}
           competencia={competencia}
           nomeDaCompetencia={nomeDaCompetencia(competencia)}

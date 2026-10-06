@@ -13,6 +13,8 @@ type Fixa = {
   valorCentavos: number;
   diaDoVencimento: number;
   ativo: boolean;
+  inicioEmBR: string | null;
+  fimEmBR: string | null;
 };
 
 /**
@@ -42,6 +44,8 @@ export function DespesasFixas({
     fornecedor: "",
     valor: "",
     diaDoVencimento: "10",
+    inicioEm: "",
+    fimEm: "",
   });
 
   async function criar(evento: React.FormEvent) {
@@ -60,7 +64,15 @@ export function DespesasFixas({
         setErro(corpo.erro ?? "Nao foi possivel gravar.");
         return;
       }
-      setNova({ descricao: "", categoria: "ALUGUEL", fornecedor: "", valor: "", diaDoVencimento: "10" });
+      setNova({
+        descricao: "",
+        categoria: "ALUGUEL",
+        fornecedor: "",
+        valor: "",
+        diaDoVencimento: "10",
+        inicioEm: "",
+        fimEm: "",
+      });
       setAberto(false);
       router.refresh();
     } finally {
@@ -139,6 +151,13 @@ export function DespesasFixas({
                 {d.descricao}
                 <span className="ml-2 text-xs text-slate-500">
                   {rotuloDaCategoria(d.categoria)}
+                  {d.inicioEmBR || d.fimEmBR ? (
+                    <>
+                      {" · "}
+                      {d.inicioEmBR ? `de ${d.inicioEmBR}` : "desde sempre"}
+                      {d.fimEmBR ? ` ate ${d.fimEmBR}` : ""}
+                    </>
+                  ) : null}
                 </span>
               </span>
               <span className="tabular-nums font-medium">
@@ -240,6 +259,35 @@ export function DespesasFixas({
             />
             <p className="ajuda">
               Dia 31 em mes de 30 cai no ultimo dia do mes, como no boleto.
+            </p>
+          </div>
+          <div>
+            <label className="rotulo" htmlFor="fixa-inicio">
+              Comeca em <span className="text-slate-400">opcional</span>
+            </label>
+            <input
+              id="fixa-inicio"
+              className="campo"
+              type="date"
+              value={nova.inicioEm}
+              onChange={(e) => setNova({ ...nova, inicioEm: e.target.value })}
+            />
+            <p className="ajuda">Em branco, vale desde sempre.</p>
+          </div>
+          <div>
+            <label className="rotulo" htmlFor="fixa-fim">
+              Acaba em <span className="text-slate-400">opcional</span>
+            </label>
+            <input
+              id="fixa-fim"
+              className="campo"
+              type="date"
+              value={nova.fimEm}
+              onChange={(e) => setNova({ ...nova, fimEm: e.target.value })}
+            />
+            <p className="ajuda">
+              Depois desta data a conta nao e mais gerada — e o que impede
+              chegar aluguel de sala ja devolvida.
             </p>
           </div>
           <div className="sm:col-span-2">

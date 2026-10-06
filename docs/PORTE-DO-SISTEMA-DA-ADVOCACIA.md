@@ -110,7 +110,7 @@ abaixo e a que sobrou.
 | --- | --- |
 | ✔ **Conciliacao por extrato** (`asaas-extrato`, `lancamento-match`, `monitor-pagamentos`) | Conferir o extrato, nao so o webhook: tarifa, Pix avulso, estorno e saque. O extrato da InfinitePay vem junto com a InfinitePay, abaixo. |
 | ✔ **Honorarios e contrato** (`cobrancas-contrato`, parcelas, a vista) | Cobranca que nasce do contrato: plano de parcelas visivel antes de existir cobranca, uma parcela por vez perto do vencimento. |
-| **Contas a pagar** e despesa recorrente | O BirdJud tem `DespesaFixa`; falta o resto. |
+| ✔ **Contas a pagar** e despesa recorrente | Despesa fixa com vigencia (de quando ate quando), geracao diaria automatica e aviso de vencimento — conta a pagar e recebimento — na mesma regua dos prazos, so para ADMIN. |
 | **Metas** (`AnnualGoal`) | Meta anual contra o realizado. |
 | **InfinitePay** | Segundo meio de pagamento, a escolha do escritorio. |
 

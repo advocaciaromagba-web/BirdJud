@@ -97,9 +97,15 @@ Para agendar as rotinas, crons do Railway chamando:
   encerrou ha mais tempo que o prazo de retencao;
 - `npm run espalhar CAPTURAR_PUBLICACOES` — de madrugada, busca no DJEN as
   publicacoes das OABs monitoradas;
+- `npm run espalhar GERAR_CONTAS_A_PAGAR` — todo dia, cria as contas do mes a
+  partir das despesas fixas vigentes. Todo dia, e nao uma vez por mes, para a
+  despesa cadastrada no dia 12 ja virar conta do mes corrente. Repetir nao
+  duplica;
 - `npm run espalhar AVISAR` — logo depois da captura, manda o resumo das
-  publicacoes e os lembretes de compromisso. A ordem importa: avisar antes de
-  capturar manda o resumo de ontem;
+  publicacoes, os lembretes de compromisso e o vencimento de conta e de
+  recebimento (so para ADMIN). A ordem importa duas vezes: avisar antes de
+  capturar manda o resumo de ontem, e avisar antes de gerar as contas do mes
+  deixa de avisar as que acabaram de nascer;
 - `npm run espalhar SINCRONIZAR_COBRANCAS` — uma ou duas vezes por dia,
   confere no Asaas o que foi pago e da baixa;
 - `npm run espalhar EMITIR_HONORARIOS` — todo dia, emite a parcela de contrato
@@ -117,7 +123,7 @@ do Railway, nao a mao — o que esta aqui e o retrato do que foi criado.
 | `postgres` | PostgreSQL 16 (imagem oficial do Railway, com SSL) | volume proprio em `/var/lib/postgresql/data`; banco `birdjud` pertencente a `birdjud_owner` |
 | `aplicacao` | a aplicacao web, do repositorio, branch `main` | volume em `/dados/arquivos`; healthcheck em `/api/saude`; start `npm run start:producao` |
 | `trabalhador` | consome a fila | start `npm run trabalhador`, reinicio sempre |
-| `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN e, em seguida, os avisos — nessa ordem |
+| `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN, contas a pagar do mes e, em seguida, os avisos — nessa ordem |
 | `cron-diario` | `0 9 * * *` (06h de Brasilia) | consumo, regua de cobranca, sincronizacao de cobrancas e emissao de parcela de honorarios |
 | `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados |
 

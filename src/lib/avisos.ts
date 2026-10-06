@@ -26,6 +26,7 @@ import {
   corpoDoResumo,
 } from "./textos-aviso";
 import { dominioDaPlataforma } from "./dominio";
+import { contasParaAvisar } from "./contas-do-escritorio";
 
 const HORA = 60 * 60 * 1000;
 
@@ -235,6 +236,50 @@ async function gerarLembretes(
         ],
       });
       if (criadoZap) criados += 1;
+    }
+  }
+  return criados;
+}
+
+/**
+ * Avisos de vencimento: contas a pagar e recebimentos previstos.
+ *
+ * SO PARA ADMIN. O financeiro do escritorio e fechado por papel e por senha de
+ * administracao; mandar "conta a pagar de R$ 8.000 vence amanha" por e-mail
+ * para todo mundo abriria por fora exatamente o que a tela fecha por dentro.
+ *
+ * Usa a mesma chave de "recebe lembretes" dos compromissos, de proposito: um
+ * segundo interruptor so para dinheiro seria mais um lugar para alguem
+ * esquecer de ligar.
+ */
+export async function gerarAvisosFinanceiros(
+  escritorioId: string,
+  agora = new Date(),
+): Promise<number> {
+  const [contas, administradores] = await Promise.all([
+    contasParaAvisar(escritorioId, agora),
+    comEscritorio(escritorioId, (db) =>
+      db.usuario.findMany({
+        where: { ativo: true, papel: "ADMIN", recebeLembretes: true },
+        select: { id: true, email: true },
+      }),
+    ),
+  ]);
+  if (contas.length === 0 || administradores.length === 0) return 0;
+
+  let criados = 0;
+  for (const conta of contas) {
+    for (const admin of administradores) {
+      const criado = await criarAviso(escritorioId, {
+        usuarioId: admin.id,
+        canal: "EMAIL",
+        tipo: conta.tipo,
+        chave: `${conta.chave}:${admin.id}`,
+        destino: admin.email,
+        assunto: conta.titulo,
+        corpo: conta.corpo,
+      });
+      if (criado) criados += 1;
     }
   }
   return criados;
