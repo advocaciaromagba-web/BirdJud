@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 /** Trocar a segunda senha. Exige a atual, e derruba os destravamentos abertos. */
 export function TrocaDaSenhaDeAdministracao({
@@ -73,10 +74,9 @@ export function TrocaDaSenhaDeAdministracao({
         <form onSubmit={enviar} className="mt-4 space-y-4">
           <div>
             <label className="rotulo" htmlFor="adm-atual">Senha atual</label>
-            <input
+            <CampoDeSenha
               id="adm-atual"
               className="campo"
-              type="password"
               autoComplete="current-password"
               value={atual}
               onChange={(e) => setAtual(e.target.value)}
@@ -85,10 +85,9 @@ export function TrocaDaSenhaDeAdministracao({
           </div>
           <div>
             <label className="rotulo" htmlFor="adm-nova">Nova senha</label>
-            <input
+            <CampoDeSenha
               id="adm-nova"
               className="campo"
-              type="password"
               autoComplete="new-password"
               value={nova}
               onChange={(e) => setNova(e.target.value)}
@@ -97,10 +96,9 @@ export function TrocaDaSenhaDeAdministracao({
           </div>
           <div>
             <label className="rotulo" htmlFor="adm-confirma">Repita a nova senha</label>
-            <input
+            <CampoDeSenha
               id="adm-confirma"
               className="campo"
-              type="password"
               autoComplete="new-password"
               value={confirma}
               onChange={(e) => setConfirma(e.target.value)}

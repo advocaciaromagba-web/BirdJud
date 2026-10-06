@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { PROVEDOR } from "@/lib/auth-comum";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 // O escritorio nao e passado daqui: o servidor o resolve pelo endereco.
 export function FormularioLogin() {
@@ -51,10 +52,9 @@ export function FormularioLogin() {
         <label htmlFor="login-senha" className="rotulo">
           Senha
         </label>
-        <input
+        <CampoDeSenha
           id="login-senha"
           name="senha"
-          type="password"
           required
           autoComplete="current-password"
           className="campo"

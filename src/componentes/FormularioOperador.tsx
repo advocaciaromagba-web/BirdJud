@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { PROVEDOR_OPERADOR } from "@/lib/auth-comum";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 export function FormularioOperador() {
   const [erro, setErro] = useState<string | null>(null);
@@ -42,9 +43,8 @@ export function FormularioOperador() {
       </label>
       <label className="grid gap-1 text-sm">
         Senha
-        <input
+        <CampoDeSenha
           name="senha"
-          type="password"
           required
           autoComplete="current-password"
           className="campo"

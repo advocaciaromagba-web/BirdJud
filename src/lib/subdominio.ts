@@ -3,7 +3,7 @@
 export const CABECALHO_SLUG = "x-escritorio-slug";
 
 /** Subdominios da propria plataforma, que nao sao escritorio. */
-const RESERVADOS = new Set(["www", "app", "api", "admin", "painel"]);
+export const RESERVADOS = new Set(["www", "app", "api", "admin", "painel"]);
 
 /** Extrai o slug de <slug>.birdjud.com.br. Devolve null quando nao ha. */
 export function slugDoHost(host: string | null): string | null {

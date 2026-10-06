@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Tranca } from "@/lib/pagina";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 /**
  * A porta das areas protegidas: pede a senha de administracao, ou pede para
@@ -106,10 +107,9 @@ export function PortaDeAdministracao({
           <label className="rotulo" htmlFor="senha-adm">
             {definindo ? "Nova senha de administracao" : "Senha de administracao"}
           </label>
-          <input
+          <CampoDeSenha
             id="senha-adm"
             className="campo"
-            type="password"
             autoComplete={definindo ? "new-password" : "current-password"}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
@@ -127,10 +127,9 @@ export function PortaDeAdministracao({
             <label className="rotulo" htmlFor="confirma-adm">
               Repita a senha
             </label>
-            <input
+            <CampoDeSenha
               id="confirma-adm"
               className="campo"
-              type="password"
               autoComplete="new-password"
               value={confirma}
               onChange={(e) => setConfirma(e.target.value)}

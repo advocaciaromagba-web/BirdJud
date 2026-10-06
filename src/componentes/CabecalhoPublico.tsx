@@ -42,6 +42,17 @@ export function CabecalhoPublico() {
         </nav>
 
         <div className="ml-auto hidden items-center gap-3 lg:flex">
+          {/*
+            Quem JA e cliente entra por aqui. Ate este botao existir, o site
+            publico so oferecia cadastro: para entrar, a pessoa precisava
+            lembrar o proprio endereco de cabeca ou procurar um e-mail antigo.
+          */}
+          <Link
+            href="/entrar"
+            className="rounded-[var(--raio)] px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            Entrar no meu escritorio
+          </Link>
           <Link href="/cadastro" className="botao-principal">
             Criar o sistema do meu escritorio
           </Link>
@@ -83,6 +94,13 @@ export function CabecalhoPublico() {
                 {area.rotulo}
               </Link>
             ))}
+            <Link
+              href="/entrar"
+              onClick={() => setAberto(false)}
+              className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-900 hover:bg-slate-100"
+            >
+              Entrar no meu escritorio
+            </Link>
             <Link
               href="/cadastro"
               onClick={() => setAberto(false)}

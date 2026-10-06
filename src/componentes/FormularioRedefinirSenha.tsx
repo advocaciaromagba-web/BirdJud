@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 export function FormularioRedefinirSenha({ token }: { token: string }) {
   const [enviando, setEnviando] = useState(false);
@@ -57,10 +58,9 @@ export function FormularioRedefinirSenha({ token }: { token: string }) {
         <label htmlFor="nova-senha" className="rotulo">
           Senha nova
         </label>
-        <input
+        <CampoDeSenha
           id="nova-senha"
           name="senha"
-          type="password"
           required
           minLength={10}
           autoComplete="new-password"
@@ -73,10 +73,9 @@ export function FormularioRedefinirSenha({ token }: { token: string }) {
         <label htmlFor="confirmacao-senha" className="rotulo">
           Repita a senha nova
         </label>
-        <input
+        <CampoDeSenha
           id="confirmacao-senha"
           name="confirmacao"
-          type="password"
           required
           minLength={10}
           autoComplete="new-password"

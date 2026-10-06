@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 /**
  * Envio do certificado A1 do escritorio.
@@ -119,10 +120,9 @@ export function EnvioDeCertificado({
           <label className="rotulo" htmlFor="cert-senha">
             Senha do certificado
           </label>
-          <input
+          <CampoDeSenha
             id="cert-senha"
             className="campo"
-            type="password"
             autoComplete="off"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}

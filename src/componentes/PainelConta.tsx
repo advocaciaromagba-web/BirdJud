@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 async function enviar(rota: string, corpo: Record<string, string>) {
   const resposta = await fetch(rota, {
@@ -224,9 +225,8 @@ function TrocarSenha() {
       <form onSubmit={trocar} className="mt-3 grid gap-3">
         <label className="grid gap-1 text-sm">
           Senha atual
-          <input
+          <CampoDeSenha
             name="senhaAtual"
-            type="password"
             required
             autoComplete="current-password"
             className="campo"
@@ -234,9 +234,8 @@ function TrocarSenha() {
         </label>
         <label className="grid gap-1 text-sm">
           Nova senha (minimo 10 caracteres)
-          <input
+          <CampoDeSenha
             name="novaSenha"
-            type="password"
             required
             minLength={10}
             autoComplete="new-password"
@@ -245,9 +244,8 @@ function TrocarSenha() {
         </label>
         <label className="grid gap-1 text-sm">
           Repita a nova senha
-          <input
+          <CampoDeSenha
             name="confirmacao"
-            type="password"
             required
             minLength={10}
             autoComplete="new-password"
@@ -344,7 +342,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
           </p>
           <label className="grid gap-1 text-sm">
             Senha
-            <input name="senha" type="password" required className="campo" />
+            <CampoDeSenha name="senha" required className="campo" />
           </label>
           <label className="grid gap-1 text-sm">
             Codigo de 6 digitos

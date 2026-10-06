@@ -5,6 +5,7 @@ import { DOCUMENTOS, VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 import { emReais } from "@/lib/dinheiro";
 import { PLANO, type Plano } from "@/lib/planos";
 import type { Modulo } from "@/lib/catalogo";
+import { CampoDeSenha } from "./CampoDeSenha";
 
 export function FormularioCadastro({
   dominio,
@@ -146,10 +147,9 @@ export function FormularioCadastro({
         <label htmlFor="cad-senha" className="rotulo">
           Senha
         </label>
-        <input
+        <CampoDeSenha
           id="cad-senha"
           name="senha"
-          type="password"
           required
           minLength={10}
           autoComplete="new-password"
