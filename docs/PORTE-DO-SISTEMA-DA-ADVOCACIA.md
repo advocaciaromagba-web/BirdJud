@@ -93,19 +93,22 @@ tabelas, 573 testes.
 O numero de linhas nao mede valor — mede trabalho. O que decide a ordem abaixo
 e o que um escritorio nao perdoa perder.
 
+Linha com ✔ ja esta no BirdJud, com teste proprio de isolamento. A ordem
+abaixo e a que sobrou.
+
 ### Primeiro: o que o escritorio nao perdoa
 
 | O que | O que resolve |
 | --- | --- |
-| **Prazos processuais** (`prazos`, `expediente`) | Contagem em dias uteis com feriado forense e suspensao de 20/12 a 20/01, feita em codigo e nunca aceita pronta da IA. Perder prazo perde direito. |
-| **Checklist de documentos** (`checklist-documentos`) | O que pedir ao cliente por tipo de acao: basicos fixos em codigo, especificos sugeridos pela IA. |
-| **Representantes legais** (`representantes`) | Quem assina pela pessoa juridica, o que entra na qualificacao da peca. |
+| ✔ **Prazos processuais** (`prazos`, `expediente`) | Contagem em dias uteis com feriado forense e suspensao de 20/12 a 20/01, feita em codigo e nunca aceita pronta da IA. Perder prazo perde direito. |
+| ✔ **Checklist de documentos** (`checklist-documentos`) | O que pedir ao cliente por tipo de acao: basicos fixos em codigo, especificos sugeridos pela IA. |
+| ✔ **Representantes legais** (`representantes`) | Quem assina pela pessoa juridica, o que entra na qualificacao da peca. |
 
 ### Depois: dinheiro que entra e sai
 
 | O que | O que resolve |
 | --- | --- |
-| **Conciliacao por extrato** (`asaas-extrato`, `infinitepay-extrato`, `lancamento-match`, `monitor-pagamentos`) | Baixa automatica conferindo o extrato, nao so o webhook. |
+| ✔ **Conciliacao por extrato** (`asaas-extrato`, `lancamento-match`, `monitor-pagamentos`) | Conferir o extrato, nao so o webhook: tarifa, Pix avulso, estorno e saque. O extrato da InfinitePay vem junto com a InfinitePay, abaixo. |
 | **Honorarios e contrato** (`cobrancas-contrato`, parcelas, a vista) | Cobranca que nasce do contrato, parcelada. |
 | **Contas a pagar** e despesa recorrente | O BirdJud tem `DespesaFixa`; falta o resto. |
 | **Metas** (`AnnualGoal`) | Meta anual contra o realizado. |
