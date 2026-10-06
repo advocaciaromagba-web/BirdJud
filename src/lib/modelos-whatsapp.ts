@@ -29,6 +29,14 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
       "automatica e serve como alerta — confira sempre nos autos.",
     parametros: ["nome do escritorio", "quantidade", "urgentes"],
   },
+  RESUMO_DO_DIA: {
+    nome: "birdjud_resumo_do_dia",
+    idioma: "pt_BR",
+    texto:
+      "{{1}}: o seu dia tem {{2}} Abra o sistema para ver os detalhes. " +
+      "Esta mensagem so e enviada quando ha algo no dia.",
+    parametros: ["nome do escritorio", "o resumo em numeros"],
+  },
   LEMBRETE_COMPROMISSO: {
     nome: "birdjud_lembrete_compromisso",
     idioma: "pt_BR",

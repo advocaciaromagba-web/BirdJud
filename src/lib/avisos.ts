@@ -27,6 +27,11 @@ import {
 } from "./textos-aviso";
 import { dominioDaPlataforma } from "./dominio";
 import { contasParaAvisar } from "./contas-do-escritorio";
+import { fatosDoDia } from "./resumo-do-escritorio";
+import {
+  corpoDoResumo as corpoDoResumoDoDia,
+  montarResumo,
+} from "./resumo-do-dia";
 
 const HORA = 60 * 60 * 1000;
 
@@ -238,6 +243,75 @@ async function gerarLembretes(
       if (criadoZap) criados += 1;
     }
   }
+  return criados;
+}
+
+/**
+ * O resumo do dia, para quem recebe lembretes.
+ *
+ * DIA SEM NADA NAO GERA MENSAGEM — ver resumo-do-dia.ts. Esta e a regra que
+ * mantem o resumo util: um e-mail que chega todo dia dizendo "nada para hoje"
+ * ensina a pessoa a ignorar o resumo, e no dia do prazo vencendo ela nao le.
+ *
+ * Vai para todo mundo que quis receber, nao so para advogado: prazo sem
+ * responsavel marcado nao pode virar problema de ninguem.
+ */
+export async function gerarResumoDoDia(
+  escritorioId: string,
+  agora = new Date(),
+): Promise<number> {
+  const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
+    where: { id: escritorioId },
+    select: { nome: true, slug: true },
+  });
+  const endereco = `https://${escritorio.slug}.${dominioDaPlataforma()}`;
+
+  const fatos = await fatosDoDia(escritorioId, agora);
+  const resumo = montarResumo(fatos, escritorio.nome);
+  if (resumo.vazio) return 0;
+
+  const corpo = corpoDoResumoDoDia(fatos, escritorio.nome, endereco);
+  const dia = diaDaChave(agora);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
+  const modelo = modeloDoTipo("RESUMO_DO_DIA");
+
+  const usuarios = await comEscritorio(escritorioId, (db) =>
+    db.usuario.findMany({ where: { ativo: true, recebeLembretes: true } }),
+  );
+
+  let criados = 0;
+  for (const usuario of usuarios) {
+    const criado = await criarAviso(escritorioId, {
+      usuarioId: usuario.id,
+      canal: "EMAIL",
+      tipo: "RESUMO_DO_DIA",
+      chave: `dia:${dia}:${usuario.id}`,
+      destino: usuario.email,
+      assunto: resumo.assunto,
+      corpo,
+    });
+    if (criado) criados += 1;
+
+    const telefone = telefoneDoUsuario(usuario, comWhatsapp);
+    if (!telefone || !modelo) continue;
+
+    const criadoZap = await criarAviso(escritorioId, {
+      usuarioId: usuario.id,
+      canal: "WHATSAPP",
+      tipo: "RESUMO_DO_DIA",
+      // Chave propria por canal: ligar o WhatsApp hoje nao reenvia o e-mail
+      // de ontem.
+      chave: `zap:dia:${dia}:${usuario.id}`,
+      destino: telefone,
+      assunto: resumo.assunto,
+      // No WhatsApp vai a linha, nao o corpo: o corpo e HTML.
+      corpo: resumo.linha,
+      modelo: modelo.nome,
+      parametros: [limparParametro(escritorio.nome), limparParametro(resumo.linha)],
+    });
+    if (criadoZap) criados += 1;
+  }
+
   return criados;
 }
 

@@ -20,6 +20,7 @@ import {
   enviarAvisosPendentes,
   gerarAvisos,
   gerarAvisosFinanceiros,
+  gerarResumoDoDia,
 } from "./avisos";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
@@ -105,6 +106,9 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("AVISAR exige escritorio.");
 
   await gerarAvisos(escritorioId);
+
+  // O resumo do dia so sai quando ha dia: ver resumo-do-dia.ts.
+  await gerarResumoDoDia(escritorioId);
 
   // Vencimento de conta e de recebimento entra na mesma fila de avisos, so
   // que para ADMIN: o financeiro e fechado por papel, e o e-mail nao pode
