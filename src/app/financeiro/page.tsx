@@ -11,6 +11,10 @@ import { ListaFinanceira } from "@/componentes/ListaFinanceira";
 import { DespesasFixas } from "@/componentes/DespesasFixas";
 import { emReais } from "@/lib/dinheiro";
 import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
+import { PainelDoAno } from "@/componentes/PainelDoAno";
+import { anoDe, anosOferecidos, COMO_ESTA } from "@/lib/metas";
+import { anoDoEscritorio } from "@/lib/metas-do-escritorio";
+import { hojeNoEscritorio } from "@/lib/contas-do-escritorio";
 import {
   CATEGORIAS_DE_DESPESA,
   CATEGORIAS_DE_RECEITA,
@@ -29,6 +33,11 @@ const TIPOS = [
 const SIM_NAO = [
   { valor: "nao", rotulo: "Em aberto" },
   { valor: "sim", rotulo: "Ja pago / recebido" },
+];
+
+const NOME_DO_MES = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
 ];
 
 const mesPorExtenso = new Intl.DateTimeFormat("pt-BR", {
@@ -52,7 +61,7 @@ function vizinha(competencia: string, passos: number): string {
 export default async function PaginaFinanceiro({
   searchParams,
 }: {
-  searchParams: Promise<{ competencia?: string }>;
+  searchParams: Promise<{ competencia?: string; ano?: string }>;
 }) {
   let porta;
   try {
@@ -97,7 +106,15 @@ export default async function PaginaFinanceiro({
     ? parametros.competencia!
     : competenciaDaData(new Date());
 
+  const hoje = hojeNoEscritorio();
+  const anoPedido = Number(parametros.ano);
+  const ano =
+    Number.isInteger(anoPedido) && anoPedido >= 2020 && anoPedido <= 2100
+      ? anoPedido
+      : anoDe(hoje);
+
   const modulos = await modulosAtivos(contexto.escritorioId);
+  const doAno = await anoDoEscritorio(contexto.escritorioId, ano, hoje);
   const { lancamentos, fixas } = await comEscritorio(
     contexto.escritorioId,
     async (db) => ({
@@ -237,6 +254,44 @@ export default async function PaginaFinanceiro({
           />
         </div>
       </section>
+
+      <div className="mt-6">
+        <PainelDoAno
+          ano={doAno.ano}
+          anos={anosOferecidos(anoDe(hoje))}
+          meses={doAno.meses.map((m) => ({
+            nome: NOME_DO_MES[m.mes - 1],
+            realizado: emReais(m.realizadoCentavos),
+            realizadoCentavos: m.realizadoCentavos,
+            despesas: emReais(m.despesasCentavos),
+            previsto: emReais(m.previstoCentavos),
+          }))}
+          meta={doAno.metaCentavos ? emReais(doAno.metaCentavos) : null}
+          ritmo={
+            doAno.ritmo
+              ? {
+                  comoEsta: COMO_ESTA[doAno.ritmo.situacao],
+                  situacao: doAno.ritmo.situacao,
+                  cumpridoPorCento: Math.round(doAno.ritmo.cumprido * 100),
+                  esperado: emReais(doAno.ritmo.esperadoCentavos),
+                  diferenca: emReais(Math.abs(doAno.ritmo.diferencaCentavos)),
+                  sobra: doAno.ritmo.diferencaCentavos >= 0,
+                  falta: emReais(doAno.ritmo.faltaCentavos),
+                  porMesRestante:
+                    doAno.ritmo.porMesRestanteCentavos === null ||
+                    doAno.ritmo.porMesRestanteCentavos === 0
+                      ? null
+                      : emReais(doAno.ritmo.porMesRestanteCentavos),
+                  projecao: emReais(doAno.ritmo.projecaoCentavos),
+                }
+              : null
+          }
+          realizado={emReais(doAno.realizadoCentavos)}
+          despesas={emReais(doAno.despesasCentavos)}
+          previsto={emReais(doAno.previstoCentavos)}
+          maiorMes={Math.max(0, ...doAno.meses.map((m) => m.realizadoCentavos))}
+        />
+      </div>
 
       <div className="mt-6">
         <DespesasFixas

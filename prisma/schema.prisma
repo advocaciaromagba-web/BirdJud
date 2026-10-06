@@ -80,6 +80,7 @@ model Escritorio {
   entradasDeExtrato EntradaDeExtrato[]
   contratos         ContratoDeHonorarios[]
   modelos           ModeloDeDocumento[]
+  metas             Meta[]
 }
 
 model ModuloContratado {
@@ -329,6 +330,20 @@ model ModeloDeDocumento {
   // declarar (ver 28_modelos). Declarar @@unique aqui seria mentira: proibiria
   // tambem dois inativos da mesma especie, que e justamente o historico.
   @@index([escritorioId])
+}
+
+/// Meta de faturamento do ano. Ver src/lib/metas.ts.
+model Meta {
+  id            String   @id @default(cuid())
+  escritorioId  String
+  ano           Int
+  valorCentavos Int
+  criadoEm      DateTime @default(now())
+  atualizadoEm  DateTime @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, ano])
 }
 
 model OperadorPlataforma {

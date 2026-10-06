@@ -319,6 +319,16 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("a meta de um escritorio nao aparece para o outro", async () => {
+    await comEscritorio(alfaP, (db) =>
+      db.meta.create({
+        data: semEscritorio({ ano: 2026, valorCentavos: 600_000_00 }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) => db.meta.findMany());
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("o calendario de um escritorio nao vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({

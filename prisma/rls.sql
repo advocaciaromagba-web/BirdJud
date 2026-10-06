@@ -43,7 +43,8 @@ DECLARE
     'Representante',
     'EntradaDeExtrato',
     'ContratoDeHonorarios',
-    'ModeloDeDocumento'
+    'ModeloDeDocumento',
+    'Meta'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

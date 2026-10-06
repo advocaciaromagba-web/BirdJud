@@ -111,6 +111,7 @@ const TABELAS_COM_RLS = [
   "EntradaDeExtrato",
   "ContratoDeHonorarios",
   "ModeloDeDocumento",
+  "Meta",
 ];
 
 async function conferirBanco() {
