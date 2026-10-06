@@ -27,6 +27,7 @@ import {
   RepresentantesDoCliente,
   type RepresentanteNaTela,
 } from "@/componentes/RepresentantesDoCliente";
+import { PecasDoCliente } from "@/componentes/PecasDoCliente";
 
 const COR = {
   IMPEDE: "border-l-red-500 bg-red-50 text-red-900",
@@ -250,6 +251,8 @@ export default async function FichaCliente({
           textoParaCliente={textoParaCliente}
         />
       </div>
+
+      <PecasDoCliente clienteId={cliente.id} />
 
       <section className="cartao mt-6">
         <h2 className="font-semibold">Documentos deste cliente</h2>

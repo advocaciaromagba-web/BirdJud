@@ -80,6 +80,12 @@ const AREAS: Area[] = [
     grupo: "dinheiro",
   },
   {
+    href: "/modelos",
+    rotulo: "Modelos",
+    icone: "arquivos",
+    grupo: "escritorio",
+  },
+  {
     href: "/usuarios",
     rotulo: "Usuarios",
     icone: "usuarios",

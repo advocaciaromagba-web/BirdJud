@@ -42,7 +42,8 @@ DECLARE
     'ItemDeChecklist',
     'Representante',
     'EntradaDeExtrato',
-    'ContratoDeHonorarios'
+    'ContratoDeHonorarios',
+    'ModeloDeDocumento'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

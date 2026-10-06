@@ -184,3 +184,20 @@ describe("a qualificacao que entra na peca", () => {
     expect(qualificacao(r, { cidade: "Salvador" })).toContain("Feira de Santana, BA");
   });
 });
+
+describe("CPF na qualificacao", () => {
+  // Quem digitou so numeros nao pode ver "52998224725" impresso na procuracao.
+  it("sai pontuado mesmo quando foi digitado sem pontos", () => {
+    const texto = qualificacao({
+      nome: "Ana Souza",
+      cpf: "52998224725",
+      rg: null,
+      nacionalidade: null,
+      estadoCivil: null,
+      profissao: null,
+      endereco: null,
+      mesmoEnderecoDaEmpresa: false,
+    });
+    expect(texto).toBe("Ana Souza, inscrito no CPF sob o nº 529.982.247-25");
+  });
+});

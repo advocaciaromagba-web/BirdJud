@@ -14,6 +14,7 @@ import {
   rotuloDaCategoria,
   vencimentoNaCompetencia,
 } from "@/lib/financeiro";
+import { numeroPorExtenso, porExtenso } from "@/lib/dinheiro";
 
 describe("catalogo de categorias", () => {
   it("nao repete categoria entre despesa e receita", () => {
@@ -164,5 +165,41 @@ describe("vencimento da despesa fixa", () => {
     expect(vencimentoNaCompetencia("setembro", 10)).toBeNull();
     expect(vencimentoNaCompetencia("2026-09", 0)).toBeNull();
     expect(vencimentoNaCompetencia("2026-09", 32)).toBeNull();
+  });
+});
+
+describe("valor por extenso", () => {
+  // No contrato, o valor por extenso prevalece sobre o numero quando os dois
+  // discordam. Errar aqui e errar o preco.
+  it("escreve o que se escreve em contrato", () => {
+    expect(porExtenso(100)).toBe("um real");
+    expect(porExtenso(200)).toBe("dois reais");
+    expect(porExtenso(300_000)).toBe("tres mil reais");
+    expect(porExtenso(150_000)).toBe("mil e quinhentos reais");
+    expect(porExtenso(29_990)).toBe("duzentos e noventa e nove reais e noventa centavos");
+    expect(porExtenso(1)).toBe("um centavo");
+    expect(porExtenso(0)).toBe("zero real");
+  });
+
+  // "cem" sozinho, "cento" acompanhado: cem reais, cento e um reais.
+  it("cem e cento", () => {
+    expect(numeroPorExtenso(100)).toBe("cem");
+    expect(numeroPorExtenso(101)).toBe("cento e um");
+    expect(numeroPorExtenso(199)).toBe("cento e noventa e nove");
+  });
+
+  it("o 'e' cai onde cai na fala", () => {
+    expect(numeroPorExtenso(1000)).toBe("mil");
+    expect(numeroPorExtenso(1500)).toBe("mil e quinhentos");
+    expect(numeroPorExtenso(2030)).toBe("dois mil e trinta");
+    expect(numeroPorExtenso(1234)).toBe("mil duzentos e trinta e quatro");
+    expect(numeroPorExtenso(100_000)).toBe("cem mil");
+    expect(numeroPorExtenso(1_000_000)).toBe("um milhao");
+    expect(numeroPorExtenso(2_000_000)).toBe("dois milhoes");
+  });
+
+  it("centavos nao viram reais", () => {
+    expect(porExtenso(99)).toBe("noventa e nove centavos");
+    expect(porExtenso(101)).toBe("um real e um centavo");
   });
 });

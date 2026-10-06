@@ -302,6 +302,23 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("modelo de documento de um escritorio nao vaza para o outro", async () => {
+    await comEscritorio(alfaP, (db) =>
+      db.modeloDeDocumento.create({
+        data: semEscritorio({
+          especie: "PROCURACAO",
+          nomeDoArquivo: "procuracao-timbrada-de-alfa.docx",
+          tamanhoBytes: 1234,
+          hash: "nao-importa",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.modeloDeDocumento.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("o calendario de um escritorio nao vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({

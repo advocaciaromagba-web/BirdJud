@@ -13,7 +13,7 @@
  * dado e onde nasce a divergencia: um codigo le so a tabela, outro le so os
  * campos, e a peca sai com um representante a menos.
  */
-import { cpfValido, digitosDe } from "./documentos";
+import { cpfValido, digitosDe, formatarDocumento } from "./documentos";
 
 export type Endereco = {
   rua?: string | null;
@@ -207,7 +207,9 @@ export function qualificacao(
     r.estadoCivil,
     r.profissao,
     r.rg ? `portador do RG nº ${r.rg}` : null,
-    `inscrito no CPF sob o nº ${r.cpf}`,
+    // Pontuado aqui, nao no cadastro: a peca pede CPF por extenso, e o que
+    // foi digitado so com numeros nao pode sair assim em procuracao.
+    `inscrito no CPF sob o nº ${formatarDocumento(r.cpf)}`,
     enderecoEmLinha(endereco) ? `residente e domiciliado em ${enderecoEmLinha(endereco)}` : null,
   ].filter(Boolean);
   return `${r.nome}, ${partes.join(", ")}`;

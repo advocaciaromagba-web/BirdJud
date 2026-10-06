@@ -79,6 +79,7 @@ model Escritorio {
   representantes    Representante[]
   entradasDeExtrato EntradaDeExtrato[]
   contratos         ContratoDeHonorarios[]
+  modelos           ModeloDeDocumento[]
 }
 
 model ModuloContratado {
@@ -302,6 +303,32 @@ model Fatura {
   @@unique([escritorioId, competencia])
   @@index([escritorioId, status])
   @@index([status, vencimento])
+}
+
+/// Modelo de documento do escritorio: o papel dele, com os campos marcados.
+///
+/// O arquivo mora no armazenamento, com o id desta linha como nome. Ver
+/// src/lib/modelos.ts.
+model ModeloDeDocumento {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  especie       String // CONTRATO | PROCURACAO | DECLARACAO
+  nomeDoArquivo String
+  tamanhoBytes  Int
+  hash          String
+  /// { usados: string[], desconhecidos: string[] }
+  campos        Json?
+  ativo         Boolean   @default(true)
+  enviadoPor    String?
+  criadoEm      DateTime  @default(now())
+  substituidoEm DateTime?
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  // O "um ativo por especie" e um indice unico PARCIAL, que o Prisma nao sabe
+  // declarar (ver 28_modelos). Declarar @@unique aqui seria mentira: proibiria
+  // tambem dois inativos da mesma especie, que e justamente o historico.
+  @@index([escritorioId])
 }
 
 model OperadorPlataforma {
