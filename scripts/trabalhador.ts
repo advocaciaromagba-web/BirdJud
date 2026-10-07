@@ -6,6 +6,7 @@
 // um trabalho por escritorio vale entre todos eles.
 import { concluir, destravar, falhar, reclamar } from "../src/lib/fila";
 import { EXECUTORES } from "../src/lib/trabalhos";
+import { ligarGuarda } from "../src/lib/guarda-do-site";
 
 const ESPERA_VAZIA = 5_000;
 const INTERVALO_DESTRAVE = 60_000;
@@ -21,6 +22,13 @@ for (const sinal of ["SIGINT", "SIGTERM"] as const) {
 
 async function main(): Promise<void> {
   console.log("Trabalhador no ar.");
+
+  // A guarda do site mora aqui porque este processo e outro servico: quando a
+  // aplicacao cai, ele continua de pe. Nao depende do banco nem da fila — e
+  // um relogio proprio, e uma rodada lenta nao atrasa trabalho nenhum.
+  // Devolve null quando a volta automatica nao esta configurada, que e um
+  // estado valido: o trabalhador segue igual.
+  const desligarGuarda = ligarGuarda();
   let ultimoDestrave = 0;
 
   while (rodando) {
@@ -50,6 +58,7 @@ async function main(): Promise<void> {
     }
   }
 
+  desligarGuarda?.();
   console.log("Trabalhador encerrado.");
 }
 

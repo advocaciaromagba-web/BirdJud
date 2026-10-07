@@ -339,6 +339,23 @@ function conferirOpcionais() {
     );
   }
 
+  // A guarda do site: quatro variaveis que so servem juntas. Elas vivem no
+  // TRABALHADOR, nao aqui — esta conferencia roda na aplicacao, que nao
+  // precisa delas. Confere mesmo assim porque conjunto pela metade e sempre
+  // sinal de configuracao interrompida no meio.
+  const daGuarda = [
+    "RAILWAY_TOKEN_GUARDA",
+    "RAILWAY_PROJETO_ID",
+    "RAILWAY_AMBIENTE_ID",
+    "RAILWAY_SERVICO_APP_ID",
+  ].filter((nome) => process.env[nome]);
+  if (daGuarda.length > 0 && daGuarda.length < 4) {
+    alerta(
+      "guarda do site",
+      `so ${daGuarda.length} das 4 variaveis estao definidas: a volta automatica nao liga`,
+    );
+  }
+
   // Aviso pelo mesmo motivo das duas conferencias acima: integracao pela
   // metade degrada um recurso, nao fura o isolamento, e nao justifica
   // impedir a aplicacao de subir.
