@@ -12,6 +12,7 @@ import {
   preencher,
   textoDoDocumento,
 } from "../src/lib/modelos";
+import { MODELO_PADRAO } from "../src/lib/modelos-padrao";
 import {
   advogadosDaPeca,
   cidadeEData,
@@ -247,5 +248,70 @@ describe("quem assina a peca", () => {
 
   it("escritorio sem advogado nenhum continua sem", () => {
     expect(advogadosDaPeca([], ["a"])).toEqual([]);
+  });
+});
+
+describe("a numeracao do contrato que ja vem no sistema", () => {
+  const linhas = MODELO_PADRAO.CONTRATO.map((l) => l.texto);
+  const CLAUSULA = /^CLAUSULA (\d+)ª — /;
+  const ITEM = /^(\d+)\.(\d+)\. /;
+
+  it("as clausulas vao de 1 a N, sem pular e sem repetir", () => {
+    // Renumerar clausula a mao e exatamente o que sai errado calado: um
+    // contrato com duas "CLAUSULA 3ª" so e descoberto por quem le o papel.
+    const numeros = linhas
+      .map((t) => CLAUSULA.exec(t)?.[1])
+      .filter(Boolean)
+      .map(Number);
+    expect(numeros.length).toBeGreaterThan(5);
+    expect(numeros).toEqual(numeros.map((_, i) => i + 1));
+  });
+
+  it("cada item esta sob a clausula do proprio numero, em sequencia", () => {
+    let clausula = 0;
+    let esperado = 1;
+    for (const t of linhas) {
+      const nova = CLAUSULA.exec(t);
+      if (nova) {
+        clausula = Number(nova[1]);
+        esperado = 1;
+        continue;
+      }
+      const item = ITEM.exec(t);
+      if (!item) continue;
+      expect([Number(item[1]), Number(item[2])]).toEqual([clausula, esperado]);
+      esperado += 1;
+    }
+  });
+
+  it("toda remissao a um item aponta para um item que existe", () => {
+    // "o previsto no item 3.2" depois de uma renumeracao aponta para outra
+    // coisa — e continua sendo uma frase perfeitamente legivel.
+    const existentes = new Set(
+      linhas.map((t) => ITEM.exec(t)).filter(Boolean).map((m) => `${m![1]}.${m![2]}`),
+    );
+    const citados = linhas.flatMap((t) => [...t.matchAll(/item (\d+\.\d+)/g)].map((m) => m[1]));
+    expect(citados.length).toBeGreaterThan(0);
+    for (const c of citados) expect(existentes).toContain(c);
+  });
+
+  it("a clausula da natureza alimentar cita a lei que a criou", () => {
+    // A Lei 15.472/2026 alterou os artigos 22 e 24 do Estatuto da Advocacia.
+    // Citar o dispositivo e o que poupa a discussao sobre a classificacao do
+    // credito na hora da cobranca.
+    const texto = linhas.join("\n");
+    expect(texto).toContain("CLAUSULA 2ª — DA NATUREZA ALIMENTAR DOS HONORARIOS");
+    expect(texto).toContain("Lei nº 15.472, de 21 de julho de 2026");
+    expect(texto).toContain("artigo 22, § 9º, da Lei nº 8.906/94");
+    expect(texto).toContain("artigo 24 da Lei nº 8.906/94");
+    expect(texto).toContain("natureza alimentar");
+    expect(texto).toContain("credito privilegiado");
+  });
+
+  it("continua citando o artigo do CPC que esta em vigor, e nao o revogado", () => {
+    const texto = linhas.join("\n");
+    expect(texto).toContain("artigo 784, inciso III");
+    // O 585, II e do CPC de 1973. Modelo de escritorio ainda carrega esse erro.
+    expect(texto).not.toContain("585");
   });
 });

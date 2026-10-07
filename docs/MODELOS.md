@@ -70,6 +70,44 @@ III** — "o documento particular assinado pelo devedor e por 2 (duas)
 testemunhas" —, que e exatamente por que o contrato pede duas testemunhas no
 pe. O modelo do sistema cita o artigo vigente.
 
+### A clausula da natureza alimentar (Lei 15.472/2026)
+
+A **CLAUSULA 2ª — DA NATUREZA ALIMENTAR DOS HONORARIOS** nao estava no modelo
+de origem: entrou porque a lei mudou.
+
+A [Lei nº 15.472, de 21 de julho de
+2026](https://www2.camara.leg.br/legin/fed/lei/2026/lei-15472-21-julho-2026-799661-publicacaooriginal-180555-pl.html)
+alterou os artigos 22 e 24 do Estatuto da Advocacia (Lei nº 8.906/94) para
+dizer na letra da lei o que antes se discutia caso a caso:
+
+- **art. 22, § 9º** — os honorarios, contratados, fixados, arbitrados ou de
+  sucumbencia, tem **natureza alimentar** e gozam dos mesmos privilegios dos
+  creditos da legislacao trabalhista;
+- **art. 24** — o contrato escrito que estipula honorarios e **titulo
+  executivo** e constitui **credito privilegiado** na falencia, na recuperacao
+  judicial e extrajudicial, no concurso de credores, na insolvencia civil e na
+  liquidacao extrajudicial.
+
+Por que a clausula existe, se a lei vale de todo jeito: porque na cobranca e na
+execucao quem discute a classificacao do credito discute com o que esta escrito
+no titulo. A clausula ja cita o dispositivo, e deixa o CLIENTE ciente do regime
+desde a assinatura.
+
+A clausula do titulo executivo (hoje a 9ª) passou a citar os **dois**
+fundamentos: o art. 784, III, do CPC — que exige as duas testemunhas — e o art.
+24 do Estatuto, que da forca executiva **independentemente** de testemunha. As
+duas testemunhas continuam no pe do contrato: dois fundamentos valem mais que
+um, e tira-las so para encurtar o papel seria jogar fora o caminho do CPC em
+troca de nada.
+
+Entrar com uma clausula no meio **renumerou da 2ª a 8ª para 3ª a 9ª**, com os
+itens e as remissoes internas. Renumerar a mao e o tipo de coisa que sai errada
+calada — um contrato com duas "CLAUSULA 3ª", ou um "o previsto no item 3.2" que
+depois da mudanca aponta para outra coisa e continua sendo uma frase
+perfeitamente legivel. Por isso ha teste: as clausulas tem de ir de 1 a N sem
+pular nem repetir, cada item tem de estar sob a clausula do proprio numero, e
+toda remissao tem de apontar para um item que existe.
+
 ## Onde se gera
 
 Na ficha do cliente, em **Gerar documentos**: marca-se o que precisa e sai de
