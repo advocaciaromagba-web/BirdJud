@@ -10,7 +10,6 @@
 import { createServer, type Server } from "node:http";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
-import { salvarIntegracao } from "../src/lib/integracao";
 import { tratarMensagem } from "../src/lib/entrada-whatsapp";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
@@ -49,6 +48,8 @@ d("resposta recebida no WhatsApp", () => {
     await new Promise<void>((ok) => servidor.listen(0, "127.0.0.1", ok));
     const porta = (servidor.address() as { port: number }).port;
     process.env.META_BASE_URL = `http://127.0.0.1:${porta}`;
+    process.env.WHATSAPP_NUMERO_ID = "111";
+    process.env.WHATSAPP_TOKEN = "tok";
 
     const sufixo = `${Date.now()}`;
     const a = await prismaPlataforma().escritorio.create({
@@ -59,10 +60,6 @@ d("resposta recebida no WhatsApp", () => {
     });
     alfa = a.id;
     beta = b.id;
-
-    for (const id of [alfa, beta]) {
-      await salvarIntegracao(id, "WHATSAPP_META", { numeroId: "123", token: "t" }, "OK");
-    }
 
     const comp = await comEscritorio(alfa, (db) =>
       db.compromisso.create({
@@ -88,6 +85,8 @@ d("resposta recebida no WhatsApp", () => {
 
   afterAll(async () => {
     delete process.env.META_BASE_URL;
+    delete process.env.WHATSAPP_NUMERO_ID;
+    delete process.env.WHATSAPP_TOKEN;
     // A linha sem dono nao cai no cascade do escritorio: nao e de nenhum.
     await prismaPlataforma()
       .respostaDeWhatsapp.deleteMany({ where: { telefone: TELEFONE } })

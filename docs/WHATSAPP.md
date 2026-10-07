@@ -1,26 +1,86 @@
 # WhatsApp (Cloud API da Meta)
 
-O escritorio avisa a propria equipe pelo **numero dele**, nao por um numero da
-plataforma. A Meta exige que a mensagem saia de quem tem relacao com o
-destinatario, e a nota de qualidade do numero seria dividida entre escritorios
-que nao se conhecem.
+**Um numero so, da plataforma, num aplicativo da Meta criado para isto.** Nao
+e um numero por escritorio.
+
+## O que este numero e, e o que ele nao e
+
+Ele **notifica**. Audiencia, pericia, prazo, tarefa designada, recibo,
+documento gerado — tudo o que o sistema precisa dizer sai por aqui, com o nome
+do escritorio na frente.
+
+Ele **nao atende**. Nao e canal de conversa com o cliente. Quem precisa falar
+com a banca liga para a banca, e **o telefone dela vai escrito em toda
+mensagem**. A unica coisa que o numero le de volta e a confirmacao de presenca
+("1" ou "2") — e mesmo nessa resposta ele repete que nao atende.
+
+### O que isso resolve
+
+O escritorio **nao abre conta na Meta**. Era a maior barreira para entrar no
+sistema: verificacao de empresa, aplicativo, numero dedicado, modelos
+submetidos um a um. Agora a plataforma faz isso uma vez.
+
+### O que isso custa, dito na cara
+
+A **nota de qualidade do numero e uma so**. Um escritorio que dispara demais,
+ou que avisa quem nao quer ser avisado, derruba a entrega de todos. E por isso
+que o bloqueio por pedido da pessoa (responder "parar") deixa de ser cortesia e
+vira defesa do sistema — e por isso toda mensagem diz como parar de receber.
 
 ## O fato que manda em tudo
 
 Fora da janela de 24 horas aberta por uma mensagem **do destinatario**, a Meta
 so entrega **modelo aprovado por ela**. Aviso do sistema e sempre proativo —
-ninguem escreveu para o escritorio pedindo o resumo do dia. Por isso o modulo
-nao tem funcao de "mandar texto livre": ela funcionaria nos testes e falharia
-em producao, e o escritorio descobriria isso no dia do prazo.
+ninguem escreveu pedindo o resumo do dia. Por isso o envio comum e sempre de
+modelo. A unica excecao e a resposta automatica a quem acabou de escrever: ali
+a janela esta comprovadamente aberta, e so ali sai texto livre.
 
-**Sem os modelos aprovados na conta do escritorio, nao sai aviso nenhum pelo
-WhatsApp.** O e-mail continua saindo normalmente.
+**Sem os modelos aprovados no aplicativo da plataforma, nao sai aviso nenhum
+pelo WhatsApp.** O e-mail continua saindo normalmente.
+
+## Duas coisas em todo modelo
+
+1. **O nome do escritorio no comeco.** Quem recebe nao conhece este numero: ele
+   e da plataforma, nao da banca. Sem o nome na primeira linha, a mensagem
+   chega como numero desconhecido falando de audiencia.
+2. **O telefone do escritorio no fim**, depois da frase que diz que este numero
+   nao recebe mensagens. Sem ela, a pessoa responde aqui e acha que falou com o
+   advogado.
+
+O telefone fica **antes de um ponto final**, nunca como ultimo caractere: a
+Meta recusa modelo que termina em parametro. O teste
+`nenhum modelo termina em parametro` em `testes/resposta-whatsapp.test.ts`
+guarda isso, junto com a contagem e a ordem dos `{{n}}`.
+
+## Configuracao (da plataforma, uma vez)
+
+| Variavel | O que e |
+|---|---|
+| `WHATSAPP_NUMERO_ID` | o *Phone number ID* do numero no WhatsApp Manager |
+| `WHATSAPP_TOKEN` | token permanente do usuario de sistema do aplicativo |
+| `WHATSAPP_VERIFICACAO` | qualquer segredo, para a Meta ligar o webhook |
+| `WHATSAPP_APP_SECRET` | o *App Secret*, que assina cada chamada do webhook |
+
+As duas primeiras andam juntas, e as duas ultimas tambem: `conferir-producao`
+trata "so uma das duas" como ERRO, porque configuracao pela metade so se
+descobre no dia do aviso.
+
+Em **Integracoes**, o escritorio **nao** ve mais o WhatsApp — e nao precisa
+ver. Linhas gravadas de quando era por escritorio ficam no banco, inertes.
 
 ## Os modelos para aprovar
 
 No **WhatsApp Manager > Modelos de mensagem > Criar modelo**, categoria
 **Utilidade** (nao Marketing: aviso de prazo e utilidade, e a taxa e menor),
-idioma **Portugues (BR)**.
+idioma **Portugues (BR)**. Quem submete e a plataforma, uma vez.
+
+> **O texto exato de cada modelo vive em `src/lib/modelos-whatsapp.ts`.** Os
+> blocos abaixo mostram a forma; antes de submeter, copie do codigo — e ele que
+> o sistema manda, e um `{{n}}` fora de ordem entre os dois faz o sistema
+> mandar a hora no lugar do nome do cliente.
+>
+> Todos terminam com: *"Este numero so envia avisos e nao recebe mensagens.
+> Para falar com o escritorio, ligue para {{n}}."*
 
 ### 1. `birdjud_resumo_publicacoes`
 

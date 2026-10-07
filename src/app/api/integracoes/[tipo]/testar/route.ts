@@ -27,6 +27,14 @@ export async function POST(
     }
 
     const conector = CONECTORES[tipo];
+    // Tipo que existe no banco mas nao e mais configuravel pelo escritorio —
+    // o WHATSAPP_META, que virou numero unico da plataforma.
+    if (!conector) {
+      return NextResponse.json(
+        { erro: "Esta integracao nao e mais configurada pelo escritorio." },
+        { status: 404 },
+      );
+    }
     let dados: Record<string, string>;
     try {
       dados = await obterIntegracao<Record<string, string>>(

@@ -1,4 +1,4 @@
-// WhatsApp pela Cloud API da Meta, com o numero do proprio escritorio.
+// WhatsApp pela Cloud API da Meta, pelo numero UNICO da plataforma.
 //
 // UM FATO MANDA EM TODO O RESTO: fora da janela de 24 horas aberta por uma
 // mensagem do destinatario, a Meta so entrega MODELO APROVADO por ela. Aviso
@@ -12,12 +12,27 @@
 // resposta automatica ao lembrete de audiencia (src/lib/resposta-whatsapp.ts).
 // Fora desse caminho, nao se chama essa funcao.
 //
-// O numero e o token sao do escritorio (Integracoes). A plataforma nao tem
-// numero proprio para emprestar: a Meta exige que a mensagem saia de quem tem
-// relacao com o destinatario, e a nota de qualidade seria dividida entre
-// escritorios que nao se conhecem.
+// O NUMERO E UM SO, da plataforma, num aplicativo da Meta criado para isto —
+// e nao um numero por escritorio. A decisao e do dono do produto, e muda o
+// desenho inteiro:
+//
+//   - a credencial vem do ambiente (WHATSAPP_NUMERO_ID, WHATSAPP_TOKEN), nao
+//     de Integracoes. Escritorio nenhum precisa abrir conta na Meta, que era a
+//     maior barreira para entrar no sistema;
+//   - a mensagem tem de se apresentar: quem recebe nao conhece este numero, e
+//     precisa ler o nome do escritorio na primeira linha;
+//   - o webhook de entrada passa a ter um dono so, o que torna a assinatura
+//     conferivel com um unico segredo.
+//
+// O QUE ESTE NUMERO NAO E: canal de atendimento. Ele NOTIFICA. Quem precisa
+// falar com o escritorio liga para o escritorio — e o telefone dele vai
+// escrito na propria mensagem. Toda resposta automatica repete isso.
+//
+// O custo disso, dito na cara: a nota de qualidade do numero e UMA SO. Um
+// escritorio que dispara demais, ou que avisa quem nao quer ser avisado,
+// derruba a entrega de todos. E por isso que o bloqueio por pedido da pessoa
+// (ver entrada-whatsapp.ts) deixa de ser cortesia e vira defesa do sistema.
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { obterIntegracao, IntegracaoAusente } from "./integracao";
 import { buscarComLimite, descreverFalha } from "./conectores/tipos";
 
 export type CredencialWhatsapp = {
@@ -28,7 +43,9 @@ export type CredencialWhatsapp = {
 export class SemNumeroDeWhatsapp extends Error {
   readonly status = 503;
   constructor() {
-    super("O escritorio ainda nao conectou o WhatsApp em Integracoes.");
+    super(
+      "O WhatsApp da plataforma nao esta configurado (WHATSAPP_NUMERO_ID e WHATSAPP_TOKEN).",
+    );
     this.name = "SemNumeroDeWhatsapp";
   }
 }
@@ -49,20 +66,18 @@ function baseMeta(): string {
   return process.env.META_BASE_URL ?? "https://graph.facebook.com/v21.0";
 }
 
-export async function credencialDoEscritorio(
-  escritorioId: string,
-): Promise<CredencialWhatsapp> {
-  try {
-    const dados = await obterIntegracao<CredencialWhatsapp>(
-      escritorioId,
-      "WHATSAPP_META",
-    );
-    if (!dados.numeroId || !dados.token) throw new SemNumeroDeWhatsapp();
-    return dados;
-  } catch (erro) {
-    if (erro instanceof IntegracaoAusente) throw new SemNumeroDeWhatsapp();
-    throw erro;
-  }
+/**
+ * A credencial da plataforma.
+ *
+ * Nao recebe escritorio de proposito: o numero e o mesmo para todos, e uma
+ * assinatura que aceitasse escritorio convidaria, mais tarde, a alguem
+ * reintroduzir numero por escritorio sem perceber.
+ */
+export function credencialDaPlataforma(): CredencialWhatsapp {
+  const numeroId = process.env.WHATSAPP_NUMERO_ID;
+  const token = process.env.WHATSAPP_TOKEN;
+  if (!numeroId || !token) throw new SemNumeroDeWhatsapp();
+  return { numeroId, token };
 }
 
 /**
@@ -113,10 +128,9 @@ export type ResultadoDoEnvio = {
  * terceira tentativa; limite de taxa e queda de rede, sim.
  */
 export async function enviarModelo(
-  escritorioId: string,
   envio: EnvioDeModelo,
 ): Promise<ResultadoDoEnvio> {
-  const credencial = await credencialDoEscritorio(escritorioId);
+  const credencial = credencialDaPlataforma();
 
   const corpo = {
     messaging_product: "whatsapp",
@@ -217,11 +231,10 @@ function ehDefinitivo(codigo: number, status: number): boolean {
  * nao chega — e o pior e que o sistema teria achado que respondeu.
  */
 export async function responderTexto(
-  escritorioId: string,
   para: string,
   texto: string,
 ): Promise<ResultadoDoEnvio> {
-  const credencial = await credencialDoEscritorio(escritorioId);
+  const credencial = credencialDaPlataforma();
 
   let resposta: Response;
   try {

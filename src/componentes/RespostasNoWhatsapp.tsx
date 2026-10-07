@@ -15,9 +15,12 @@ export type RespostaNaCaixa = {
  *
  * Existe porque a alternativa e pior do que parece: sem esta caixa, a pessoa
  * que respondeu ao lembrete com um audio, ou com "doutor, eu nao vou conseguir
- * chegar as 14h, da para atrasar?", teria escrito para o vazio. O sistema
- * respondeu a ela que alguem do escritorio vai ler — e esta e a tela onde
- * alguem le.
+ * chegar as 14h, da para atrasar?", teria escrito para o vazio.
+ *
+ * O sistema JA RESPONDEU a ela que este numero nao atende e que ligue para o
+ * escritorio — nao prometeu leitura, porque promessa de atendimento num numero
+ * que nao atende e pior do que silencio. Mas o que a pessoa escreveu importa, e
+ * e aqui que alguem ve.
  *
  * So aparece quando ha algo. Caixa vazia todo dia e caixa que ninguem olha.
  */
@@ -40,9 +43,9 @@ export function RespostasNoWhatsapp({ respostas }: { respostas: RespostaNaCaixa[
         Respostas no WhatsApp que ninguem leu ({respostas.length})
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        O sistema nao entendeu estas respostas e ja avisou a pessoa de que
-        alguem do escritorio vai ler. &quot;1&quot; e &quot;2&quot; ele entende
-        sozinho e ja anota na agenda.
+        O sistema nao entendeu estas respostas. Quem escreveu ja recebeu de
+        volta o telefone do escritorio — este numero so avisa, nao atende.
+        &quot;1&quot; e &quot;2&quot; ele entende sozinho e ja anota na agenda.
       </p>
       <ul className="mt-3 space-y-2">
         {respostas.map((r) => (

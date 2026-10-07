@@ -266,6 +266,14 @@ function conferirOpcionais() {
       "sem ele, a baixa das faturas da plataforma e manual",
     ],
     [
+      "WHATSAPP_NUMERO_ID",
+      "sem ele, nenhum aviso sai por WhatsApp — o numero e da plataforma, nao do escritorio",
+    ],
+    [
+      "WHATSAPP_TOKEN",
+      "sem ele, nenhum aviso sai por WhatsApp",
+    ],
+    [
       "WHATSAPP_APP_SECRET",
       "sem ele, o webhook do WhatsApp responde 503 e a resposta do cliente ao lembrete se perde",
     ],
@@ -288,6 +296,17 @@ function conferirOpcionais() {
     erro(
       "WhatsApp de entrada",
       "so uma das duas variaveis esta definida: o webhook nao funciona pela metade",
+    );
+  }
+
+  // Mesma logica na saida: numero sem token, ou token sem numero, e
+  // configuracao pela metade que so se descobre no dia do aviso.
+  const temNumero = Boolean(process.env.WHATSAPP_NUMERO_ID);
+  const temToken = Boolean(process.env.WHATSAPP_TOKEN);
+  if (temNumero !== temToken) {
+    erro(
+      "WhatsApp de saida",
+      "so uma das duas variaveis esta definida: nenhum aviso sai",
     );
   }
 

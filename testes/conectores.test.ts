@@ -14,7 +14,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { conectorEmail } from "../src/lib/conectores/email";
 import { conectorAsaas } from "../src/lib/conectores/asaas";
 import { conectorAutentique } from "../src/lib/conectores/autentique";
-import { conectorWhatsapp } from "../src/lib/conectores/whatsapp";
 import {
   avaliarValidade,
   conectorCertificado,
@@ -209,40 +208,19 @@ describe("conector Autentique", () => {
   });
 });
 
-describe("conector WhatsApp", () => {
-  it("consulta o numero e mostra nome e qualidade", async () => {
-    rota = (url, cabecalhos) => {
-      expect(url.pathname).toBe("/1234567890");
-      expect(cabecalhos["authorization"]).toBe("Bearer tok-meta");
-      return {
-        status: 200,
-        json: { verified_name: "Alfa Advogados", quality_rating: "GREEN" },
-      };
-    };
-
-    const resultado = await conectorWhatsapp.testar({
-      numeroId: "1234567890",
-      token: "tok-meta",
-    });
-    expect(resultado).toEqual({
-      ok: true,
-      detalhe: "Alfa Advogados · qualidade GREEN.",
-    });
+describe("o WhatsApp saiu dos conectores do escritorio", () => {
+  it("nao e mais oferecido na tela de Integracoes", () => {
+    // O numero e UM SO, da plataforma, e a credencial vem do ambiente. Deixar
+    // o campo na tela faria cada escritorio abrir conta na Meta para um numero
+    // que ele nao usa — e achar que precisa disso para receber os avisos.
+    expect(CONECTORES.WHATSAPP_META).toBeUndefined();
+    expect(ehTipoDeIntegracao("WHATSAPP_META")).toBe(false);
   });
 
-  it("repassa a mensagem de erro da Meta", async () => {
-    rota = () => ({
-      status: 400,
-      json: { error: { message: "Unsupported get request." } },
-    });
-    const resultado = await conectorWhatsapp.testar({
-      numeroId: "9",
-      token: "ruim",
-    });
-    expect(resultado).toEqual({
-      ok: false,
-      detalhe: "Unsupported get request.",
-    });
+  it("os outros continuam de pe", () => {
+    for (const tipo of ["SMTP", "ASAAS", "AUTENTIQUE", "NFSE_CERT"]) {
+      expect(ehTipoDeIntegracao(tipo)).toBe(true);
+    }
   });
 });
 

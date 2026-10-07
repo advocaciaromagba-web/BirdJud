@@ -4,6 +4,7 @@
 // posso" como confirmacao nao da erro nenhum — da uma cadeira vazia na frente
 // do juiz, e quem responde por isso e o advogado.
 import { describe, expect, it } from "vitest";
+import { MODELOS } from "../src/lib/modelos-whatsapp";
 import {
   aQualLembreteResponde,
   interpretar,
@@ -79,7 +80,12 @@ describe("o que a pessoa quis dizer", () => {
 });
 
 describe("o que o sistema responde", () => {
-  const d = { nomeEscritorio: "Escritorio Modelo", titulo: "Audiencia de instrucao", quando: "10/11/2026 as 14h" };
+  const d = {
+    nomeEscritorio: "Escritorio Modelo",
+    telefoneDoEscritorio: "(77) 3611-0000",
+    titulo: "Audiencia de instrucao",
+    quando: "10/11/2026 as 14h",
+  };
 
   it("confirmando, diz o que foi registrado", () => {
     expect(textoDaResposta("CONFIRMA", d)).toContain("confirmada");
@@ -91,7 +97,23 @@ describe("o que o sistema responde", () => {
     // deixaria de ir a uma audiencia que continua marcada.
     const texto = textoDaResposta("DESMARCA", d);
     expect(texto).toContain("NAO foi desmarcado");
-    expect(texto).toContain("Alguem do escritorio vai falar");
+  });
+
+  it("TODA resposta diz que este numero nao atende, e para onde ligar", () => {
+    // O numero e da plataforma e so notifica. Quem escrever aqui esperando o
+    // advogado esperaria para sempre.
+    for (const i of ["CONFIRMA", "DESMARCA", "NAO_ENTENDI"] as const) {
+      const texto = textoDaResposta(i, d);
+      expect(texto, i).toContain("nao recebe mensagens");
+      expect(texto, i).toContain("(77) 3611-0000");
+    }
+  });
+
+  it("sem telefone cadastrado, manda procurar o escritorio em vez de deixar buraco", () => {
+    const texto = textoDaResposta("CONFIRMA", { nomeEscritorio: "Banca" });
+    expect(texto).toContain("procure o escritorio");
+    expect(texto).not.toContain("undefined");
+    expect(texto).not.toContain("null");
   });
 
   it("sem compromisso ligado, fala em termos gerais e nao inventa", () => {
@@ -100,8 +122,12 @@ describe("o que o sistema responde", () => {
     expect(texto).not.toContain("undefined");
   });
 
-  it("no que nao entendeu, ensina o atalho", () => {
-    expect(textoDaResposta("NAO_ENTENDI", d)).toContain("responda 1");
+  it("no que nao entendeu, ensina o atalho e NAO promete leitura", () => {
+    // Prometer "alguem vai ler" num numero que nao atende e pior do que nao
+    // responder nada.
+    const texto = textoDaResposta("NAO_ENTENDI", d);
+    expect(texto).toContain("responda 1");
+    expect(texto).not.toContain("vai ler");
   });
 });
 
@@ -155,5 +181,45 @@ describe("a qual lembrete a resposta responde", () => {
 
   it("sem candidato, nenhum", () => {
     expect(aQualLembreteResponde([]).tipo).toBe("NENHUM");
+  });
+});
+
+describe("o contrato dos modelos aprovados na Meta", () => {
+  // A ordem dos parametros e um contrato com a Meta. Trocar {{2}} por {{3}}
+  // aqui sem trocar la faz o sistema mandar a hora no lugar do nome do
+  // cliente — e ninguem percebe ate alguem receber.
+  const modelos = Object.entries(MODELOS);
+
+  it("cada {{n}} tem um parametro, e os numeros vao de 1 a N sem pular", () => {
+    for (const [chave, m] of modelos) {
+      const numeros = [...m.texto.matchAll(/\{\{(\d+)\}\}/g)].map((x) => Number(x[1]));
+      expect(numeros.length, chave).toBe(m.parametros.length);
+      expect(numeros, chave).toEqual(numeros.map((_, i) => i + 1));
+    }
+  });
+
+  it("nenhum modelo termina em parametro — a Meta recusa", () => {
+    for (const [chave, m] of modelos) {
+      expect(m.texto.trim().endsWith("}}"), chave).toBe(false);
+    }
+  });
+
+  it("todo modelo se apresenta e diz que o numero nao atende", () => {
+    // O numero e da plataforma, nao da banca: quem recebe nao o conhece. Sem
+    // o nome do escritorio e sem o telefone dele, a mensagem chega como numero
+    // desconhecido falando de audiencia.
+    for (const [chave, m] of modelos) {
+      expect(m.texto, chave).toContain("nao recebe mensagens");
+      expect(m.parametros, chave).toContain("telefone do escritorio");
+      expect(m.parametros.some((p) => p.includes("escritorio")), chave).toBe(true);
+    }
+  });
+
+  it("o telefone e sempre o ultimo parametro", () => {
+    // E o que deixa avisos.ts acrescentar o telefone no fim de cada lista sem
+    // ter de saber de que modelo se trata.
+    for (const [chave, m] of modelos) {
+      expect(m.parametros[m.parametros.length - 1], chave).toBe("telefone do escritorio");
+    }
   });
 });

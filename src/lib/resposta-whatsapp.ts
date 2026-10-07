@@ -140,6 +140,8 @@ export function interpretar(bruto: string | null | undefined): Intencao {
 
 export type DadosDaResposta = {
   nomeEscritorio: string;
+  /** O telefone do escritorio — este numero nao atende. */
+  telefoneDoEscritorio?: string | null;
   /** O que foi lembrado, quando ha um compromisso ligado a resposta. */
   titulo?: string | null;
   quando?: string | null;
@@ -152,34 +154,41 @@ export type DadosDaResposta = {
  * texto livre — e esta e a unica hora em que este sistema manda texto livre.
  *
  * A resposta NUNCA promete o que o sistema nao faz: nao diz "remarcado", nao
- * diz "o advogado vai la". Diz o que foi registrado e que uma pessoa vai
- * olhar. Prometer em nome do escritorio e pior que nao responder.
+ * diz "o advogado vai la", e NAO DIZ QUE ALGUEM VAI LER. Este numero e so de
+ * aviso — quem precisa falar com o escritorio liga para o escritorio, e o
+ * telefone dele vai escrito aqui. Prometer atendimento num numero que nao
+ * atende e pior do que nao responder nada.
  */
 export function textoDaResposta(intencao: Intencao, d: DadosDaResposta): string {
   const oQue = d.titulo && d.quando ? `${d.titulo}, em ${d.quando}` : "o compromisso";
+  const ondeFalar = d.telefoneDoEscritorio?.trim()
+    ? `ligue para o escritorio: ${d.telefoneDoEscritorio.trim()}.`
+    : `procure o escritorio pelos canais de sempre.`;
+  // Em TODA resposta, inclusive na que confirma: este numero notifica e nao
+  // atende. Quem escrever aqui esperando o advogado esperaria para sempre.
+  const naoAtende = `Este numero so envia avisos e nao recebe mensagens — para falar com alguem, ${ondeFalar}`;
 
   if (intencao === "CONFIRMA") {
     return (
-      `${d.nomeEscritorio}: presenca confirmada em ${oQue}. ` +
-      `Obrigado. Se algo mudar, e so responder por aqui.`
+      `${d.nomeEscritorio}: presenca confirmada em ${oQue}. Obrigado. ${naoAtende}`
     );
   }
   if (intencao === "DESMARCA") {
     return (
       `${d.nomeEscritorio}: anotamos que voce NAO podera comparecer a ${oQue}. ` +
-      `Alguem do escritorio vai falar com voce. O compromisso NAO foi desmarcado ` +
-      `no processo — so o escritorio pode fazer isso.`
+      `O compromisso NAO foi desmarcado no processo — so o escritorio pode fazer isso. ` +
+      naoAtende
     );
   }
   if (intencao === "PARAR") {
     return (
       `${d.nomeEscritorio}: voce nao recebera mais avisos por WhatsApp. ` +
-      `Para voltar a receber, fale com o escritorio.`
+      `Para voltar a receber, ${ondeFalar}`
     );
   }
   return (
-    `${d.nomeEscritorio}: recebemos a sua mensagem e alguem do escritorio vai ler. ` +
-    `Para confirmar presenca responda 1, e para avisar que nao podera ir responda 2.`
+    `${d.nomeEscritorio}: para confirmar presenca responda 1, e para avisar que ` +
+    `nao podera ir responda 2. ${naoAtende}`
   );
 }
 

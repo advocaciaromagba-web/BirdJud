@@ -69,16 +69,22 @@ export async function gerarAvisos(
 ): Promise<ResultadoDaGeracao> {
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
-    select: { nome: true, slug: true },
+    select: { nome: true, slug: true, telefoneAtendimento: true },
   });
   const dominio = dominioDaPlataforma();
   const endereco = `https://${escritorio.slug}.${dominio}`;
 
   const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
 
+  // O telefone do escritorio entra em TODA mensagem: este numero notifica e
+  // nao recebe. Sem telefone cadastrado, a frase diz para procurar o
+  // escritorio — melhor que um travessao no meio de "ligue para —".
+  const telefone = escritorio.telefoneAtendimento?.trim() || "o escritorio";
+
   const resumos = await gerarResumos(
     escritorioId,
     escritorio.nome,
+    telefone,
     endereco,
     agora,
     comWhatsapp,
@@ -86,6 +92,7 @@ export async function gerarAvisos(
   const lembretes = await gerarLembretes(
     escritorioId,
     escritorio.nome,
+    telefone,
     endereco,
     agora,
     comWhatsapp,
@@ -97,6 +104,7 @@ export async function gerarAvisos(
 async function gerarResumos(
   escritorioId: string,
   nomeEscritorio: string,
+  telefoneDoEscritorio: string,
   endereco: string,
   agora: Date,
   comWhatsapp: boolean,
@@ -168,6 +176,7 @@ async function gerarResumos(
 async function gerarLembretes(
   escritorioId: string,
   nomeEscritorio: string,
+  telefoneDoEscritorio: string,
   endereco: string,
   agora: Date,
   comWhatsapp: boolean,
@@ -241,6 +250,7 @@ async function gerarLembretes(
                 ? `Processo ${dados.numeroProcesso}`
                 : null),
           ),
+          limparParametro(telefoneDoEscritorio),
         ],
       });
       if (criadoZap) criados += 1;
@@ -295,6 +305,7 @@ async function gerarLembretes(
             dados.local ??
               (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null),
           ),
+          limparParametro(telefoneDoEscritorio),
         ],
       });
       if (criadoZapDele) criados += 1;
@@ -319,7 +330,7 @@ export async function gerarResumoDoDia(
 ): Promise<number> {
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
-    select: { nome: true, slug: true },
+    select: { nome: true, slug: true, telefoneAtendimento: true },
   });
   const endereco = `https://${escritorio.slug}.${dominioDaPlataforma()}`;
 
@@ -364,7 +375,11 @@ export async function gerarResumoDoDia(
       // No WhatsApp vai a linha, nao o corpo: o corpo e HTML.
       corpo: resumo.linha,
       modelo: modelo.nome,
-      parametros: [limparParametro(escritorio.nome), limparParametro(resumo.linha)],
+      parametros: [
+        limparParametro(escritorio.nome),
+        limparParametro(resumo.linha),
+        limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritorio"),
+      ],
     });
     if (criadoZap) criados += 1;
   }
@@ -594,7 +609,7 @@ export async function enviarAvisosNoWhatsapp(
     }
 
     try {
-      await enviarModelo(escritorioId, {
+      await enviarModelo({
         para: aviso.destino,
         modelo: aviso.modelo,
         parametros,
@@ -609,7 +624,8 @@ export async function enviarAvisosNoWhatsapp(
     } catch (erro) {
       if (erro instanceof SemNumeroDeWhatsapp) {
         // Configuracao que falta, nao falha do aviso: os pendentes ficam de pe
-        // e saem no dia em que o escritorio conectar o numero.
+        // e saem no dia em que a PLATAFORMA configurar o numero. Nao e algo
+        // que o escritorio resolva — o numero e um so, e e nosso.
         return { enviados, falhas, semNumero: true };
       }
       if (!(erro instanceof FalhaNoWhatsapp)) throw erro;

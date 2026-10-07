@@ -5,16 +5,25 @@ import { conectorEmail } from "./email";
 import { conectorAsaas } from "./asaas";
 import { conectorInfinitePay } from "./infinitepay";
 import { conectorAutentique } from "./autentique";
-import { conectorWhatsapp } from "./whatsapp";
 import { conectorCertificado } from "./certificado";
 import { conectorGoogle, conectorMicrosoft } from "./pendentes";
 
-export const CONECTORES: Record<TipoIntegracao, Conector> = {
+/**
+ * Os conectores que o ESCRITORIO configura.
+ *
+ * WHATSAPP_META saiu daqui de proposito: o numero do WhatsApp e UM SO, da
+ * plataforma, e a credencial vem do ambiente (ver src/lib/whatsapp.ts). Deixar
+ * o campo na tela faria cada escritorio abrir conta na Meta para um numero que
+ * ele nao usa — e, pior, acharia que precisa disso para receber os avisos.
+ *
+ * O tipo continua existindo em TipoIntegracao porque ha linhas gravadas de
+ * quando era por escritorio. Elas ficam no banco, inertes.
+ */
+export const CONECTORES: Partial<Record<TipoIntegracao, Conector>> = {
   SMTP: conectorEmail,
   ASAAS: conectorAsaas,
   INFINITEPAY: conectorInfinitePay,
   AUTENTIQUE: conectorAutentique,
-  WHATSAPP_META: conectorWhatsapp,
   NFSE_CERT: conectorCertificado,
   MICROSOFT: conectorMicrosoft,
   GOOGLE: conectorGoogle,

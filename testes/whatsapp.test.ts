@@ -198,12 +198,9 @@ d("avisos pelo WhatsApp", () => {
       });
     });
 
-    await salvarIntegracao(
-      alfa,
-      "WHATSAPP_META",
-      { numeroId: "111", token: "tok" },
-      "OK",
-    );
+    // A credencial e da PLATAFORMA, do ambiente — nao mais do escritorio.
+    process.env.WHATSAPP_NUMERO_ID = "111";
+    process.env.WHATSAPP_TOKEN = "tok";
   });
 
   afterAll(async () => {
@@ -232,7 +229,7 @@ d("avisos pelo WhatsApp", () => {
   });
 
   it("manda modelo aprovado, nunca texto livre", async () => {
-    await enviarModelo(alfa, {
+    await enviarModelo({
       para: "5571999998888",
       modelo: "birdjud_resumo_publicacoes",
       parametros: ["Alfa Zap", "3", "1"],
@@ -338,7 +335,13 @@ d("avisos pelo WhatsApp", () => {
     expect(zap?.tentativas).toBe(1);
   });
 
-  it("numero nao conectado deixa os avisos de pe, sem gastar tentativa", async () => {
+  it("plataforma sem numero deixa os avisos de pe, sem gastar tentativa", async () => {
+    // Nao e algo que o escritorio resolva: o numero e um so, e e nosso. Os
+    // pendentes esperam o dia em que a plataforma configurar.
+    const numeroId = process.env.WHATSAPP_NUMERO_ID;
+    const token = process.env.WHATSAPP_TOKEN;
+    delete process.env.WHATSAPP_NUMERO_ID;
+    delete process.env.WHATSAPP_TOKEN;
     const semNumero = await prismaPlataforma().escritorio.create({
       data: { slug: `zap-c-${marca}`, nome: "Sem numero" },
     });
@@ -378,13 +381,11 @@ d("avisos pelo WhatsApp", () => {
       expect(zap?.tentativas).toBe(0);
 
       await expect(
-        enviarModelo(semNumero.id, {
-          para: "5571999990000",
-          modelo: "x",
-          parametros: ["y"],
-        }),
+        enviarModelo({ para: "5571999990000", modelo: "x", parametros: ["y"] }),
       ).rejects.toBeInstanceOf(SemNumeroDeWhatsapp);
     } finally {
+      process.env.WHATSAPP_NUMERO_ID = numeroId;
+      process.env.WHATSAPP_TOKEN = token;
       await prismaPlataforma()
         .escritorio.delete({ where: { id: semNumero.id } })
         .catch(() => {});
@@ -444,7 +445,7 @@ d("avisos pelo WhatsApp", () => {
 
   it("falha de rede nao e definitiva", async () => {
     await expect(
-      enviarModelo(alfa, {
+      enviarModelo({
         para: "5571999998888",
         modelo: "birdjud_resumo_publicacoes",
         parametros: ["a", "b", "c"],
@@ -455,7 +456,7 @@ d("avisos pelo WhatsApp", () => {
       status: 500,
       json: { error: { message: "Internal" } },
     });
-    const erro = await enviarModelo(alfa, {
+    const erro = await enviarModelo({
       para: "5571999998888",
       modelo: "birdjud_resumo_publicacoes",
       parametros: ["a", "b", "c"],

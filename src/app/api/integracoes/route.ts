@@ -67,6 +67,12 @@ export async function POST(req: Request) {
     }
 
     const conector = CONECTORES[corpo.data.tipo as TipoIntegracao];
+    if (!conector) {
+      return NextResponse.json(
+        { erro: "Esta integracao nao e mais configurada pelo escritorio." },
+        { status: 404 },
+      );
+    }
     if (
       conector.modulo &&
       !(await moduloAtivo(escritorioId, conector.modulo))

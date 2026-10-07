@@ -133,11 +133,12 @@ export async function tratarMensagem(
 
   const escritorio = await prismaPlataforma().escritorio.findFirst({
     where: { id: escritorioId },
-    select: { nome: true },
+    select: { nome: true, telefoneAtendimento: true },
   });
 
   const respondeu = await responder(escritorioId, telefone, intencao, {
     nomeEscritorio: escritorio?.nome ?? "O escritorio",
+    telefoneDoEscritorio: escritorio?.telefoneAtendimento ?? null,
     titulo: compromisso?.titulo ?? null,
     quando: compromisso ? dataHoraBR.format(compromisso.inicio) : null,
   });
@@ -200,10 +201,15 @@ async function responder(
   escritorioId: string,
   telefone: string,
   intencao: Intencao,
-  dados: { nomeEscritorio: string; titulo: string | null; quando: string | null },
+  dados: {
+    nomeEscritorio: string;
+    telefoneDoEscritorio: string | null;
+    titulo: string | null;
+    quando: string | null;
+  },
 ): Promise<boolean> {
   try {
-    await responderTexto(escritorioId, telefone, textoDaResposta(intencao, dados));
+    await responderTexto(telefone, textoDaResposta(intencao, dados));
     return true;
   } catch (erro) {
     // Nao responder e ruim; devolver erro para a Meta e pior, porque ela
