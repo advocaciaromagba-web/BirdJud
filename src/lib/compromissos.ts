@@ -15,6 +15,10 @@
 export const TIPOS_DE_COMPROMISSO = [
   "COMPROMISSO",
   "AUDIENCIA",
+  // PERICIA e tipo proprio, e nao "compromisso": ela tem regua de lembrete
+  // igual a da audiencia (3 dias, 24 horas, 1 hora) porque o cliente precisa
+  // ESTAR la, e faltar a pericia custa o mesmo que faltar a audiencia.
+  "PERICIA",
   "PRAZO",
   "TAREFA",
 ] as const;

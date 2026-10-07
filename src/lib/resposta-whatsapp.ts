@@ -202,21 +202,39 @@ export type OrigemDoAviso = {
 /**
  * De qual lembrete veio a chave.
  *
- * As chaves sao `zap:lembrete:<compromisso>:<usuario>` e
- * `zap:participante:<compromisso>:<participante>` (ver avisos.ts). Ler a chave
- * e o que liga a resposta ao compromisso sem precisar de uma coluna nova no
- * Aviso — e a chave ja e estavel, porque e ela que impede o aviso repetido.
+ * As chaves sao `zap:lembrete:[<marco>:]<compromisso>:<usuario>` e
+ * `zap:participante:[<marco>:]<compromisso>:<participante>` (ver avisos.ts).
+ * Ler a chave e o que liga a resposta ao compromisso sem precisar de uma
+ * coluna nova no Aviso — e a chave ja e estavel, porque e ela que impede o
+ * aviso repetido.
+ *
+ * O marco e OPCIONAL na leitura porque o de 24 horas nao o escreve: e a chave
+ * de antes da regua, e ha avisos gravados assim. Resposta a um lembrete antigo
+ * precisa continuar encontrando o compromisso dela.
  */
-export function origemDaChave(chave: string): OrigemDoAviso | null {
-  const lembrete = /^zap:lembrete:([^:]+):([^:]+)$/.exec(chave);
-  if (lembrete) {
-    return { compromissoId: lembrete[1], participanteId: null, usuarioId: lembrete[2] };
+const MARCOS_NA_CHAVE = new Set(["3d", "24h", "1h"]);
+
+function partirChave(chave: string, prefixo: string): [string, string] | null {
+  if (!chave.startsWith(`${prefixo}:`)) return null;
+  const partes = chave.slice(prefixo.length + 1).split(":");
+  // Com marco sao tres pedacos; sem marco, dois.
+  if (partes.length === 3 && MARCOS_NA_CHAVE.has(partes[0])) {
+    return [partes[1], partes[2]];
   }
-  const participante = /^zap:participante:([^:]+):([^:]+)$/.exec(chave);
+  if (partes.length === 2) return [partes[0], partes[1]];
+  return null;
+}
+
+export function origemDaChave(chave: string): OrigemDoAviso | null {
+  const lembrete = partirChave(chave, "zap:lembrete");
+  if (lembrete) {
+    return { compromissoId: lembrete[0], participanteId: null, usuarioId: lembrete[1] };
+  }
+  const participante = partirChave(chave, "zap:participante");
   if (participante) {
     return {
-      compromissoId: participante[1],
-      participanteId: participante[2],
+      compromissoId: participante[0],
+      participanteId: participante[1],
       usuarioId: null,
     };
   }

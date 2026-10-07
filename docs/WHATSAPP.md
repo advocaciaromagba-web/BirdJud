@@ -141,9 +141,45 @@ texto tem significado declarado.
 - Numero nao conectado nao e falha: os avisos ficam pendentes e saem no dia em
   que o escritorio conectar.
 
+## Quando o aviso sai: a regua
+
+Tres marcos, e nao um: **3 dias**, **24 horas** e **1 hora** antes.
+
+Um aviso so, 24 horas antes, tem um problema pratico: nessa altura o cliente ja
+nao consegue pedir folga no trabalho, nem remarcar a viagem, nem avisar que nao
+vai — e o escritorio descobre a ausencia no dia. Tres dias antes da para se
+organizar; 24 horas antes da para confirmar; uma hora antes da para sair de
+casa.
+
+**Cada marco so vale na sua faixa.** Sem faixa, um compromisso marcado para
+amanha dispararia tambem o "faltam 3 dias", porque "faltam 3 dias ou menos"
+tambem e verdade para ele — e o cliente receberia os dois avisos no mesmo
+minuto.
+
+| Tipo | Marcos |
+|---|---|
+| AUDIENCIA, PERICIA, COMPROMISSO | os tres |
+| PRAZO, TAREFA | so o de 24 horas |
+
+Encontro e lugar onde alguem precisa ESTAR, e tres avisos sao tres chances de
+nao faltar. Prazo e tarefa sao trabalho do escritorio: tres avisos de cada
+tarefa enchem o WhatsApp da equipe e ensinam todo mundo a ignorar o aviso, que
+e o contrario do que se quer no dia do prazo.
+
+A data na mensagem vem com quanto falta junto — "10/11/2026, 14:00 — e amanha"
+—, porque "10/11" sozinho obriga quem le a fazer a conta.
+
+Quem roda isso e o cron `cron-horario` (`LEMBRAR`), de hora em hora: marco de
+uma hora com rotina diaria nunca dispararia. A chave de idempotencia leva o
+marco, entao rodar de novo na mesma hora nao repete nada.
+
+> O marco de 24 horas **nao** escreve o marco na chave, de proposito: e a chave
+> que ja existia antes da regua. Se ganhasse prefixo, todo compromisso ja
+> avisado ontem seria avisado de novo no primeiro dia depois do deploy.
+
 ## A resposta de quem recebe
 
-O lembrete da audiencia sai sozinho, 24 horas antes. Ate aqui a resposta caia
+O lembrete da audiencia sai sozinho. Ate aqui a resposta caia
 no vazio: o escritorio so sabia que o cliente nao viria quando a cadeira ficava
 vazia na frente do juiz.
 

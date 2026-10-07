@@ -145,6 +145,15 @@ describe("de qual lembrete veio", () => {
     });
   });
 
+  it("le a chave com o marco da regua junto", () => {
+    expect(origemDaChave("zap:participante:3d:comp1:part9")).toEqual({
+      compromissoId: "comp1",
+      participanteId: "part9",
+      usuarioId: null,
+    });
+    expect(origemDaChave("zap:lembrete:1h:comp1:user7")?.usuarioId).toBe("user7");
+  });
+
   it("chave de outro tipo de aviso nao vira compromisso", () => {
     expect(origemDaChave("zap:resumo:2026-10-07")).toBeNull();
     expect(origemDaChave("lembrete:comp1:user7")).toBeNull();

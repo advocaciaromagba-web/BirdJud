@@ -253,11 +253,11 @@ d("avisos do escritorio", () => {
           local: "Forum Central",
         }),
       });
-      // Fora da janela: nao deve gerar nada.
+      // Alem do marco mais distante (3 dias): nao deve gerar nada ainda.
       await db.compromisso.create({
         data: semEscritorio({
           titulo: "Reuniao distante",
-          inicio: new Date(agora.getTime() + (ANTECEDENCIA_HORAS + 48) * HORA),
+          inicio: new Date(agora.getTime() + 200 * HORA),
         }),
       });
     });
@@ -269,6 +269,89 @@ d("avisos do escritorio", () => {
       db.aviso.findFirstOrThrow({ where: { tipo: "LEMBRETE_COMPROMISSO" } }),
     );
     expect(aviso.assunto).toContain("Audiencia de instrucao");
+    // O assunto diz quanto falta, nao so quando e.
+    expect(aviso.assunto).toContain("e amanha");
+  });
+
+  it("a regua manda tres vezes na audiencia, e uma so na tarefa", async () => {
+    // Tres avisos de cada tarefa enchem o WhatsApp da equipe e ensinam todo
+    // mundo a ignorar — o contrario do que se quer no dia do prazo.
+    const agora = new Date();
+    const daqui = (h: number) => new Date(agora.getTime() + h * HORA);
+
+    // Tudo que existir depois deste ponto e deste caso, e sai junto no fim:
+    // rodar a geracao em datas futuras cria tambem o resumo daqueles dias, e
+    // os testes seguintes contam os pendentes do escritorio inteiro.
+    const jaExistiam = new Set(
+      (
+        await comEscritorio(escritorio, (db) => db.aviso.findMany({ select: { id: true } }))
+      ).map((a) => a.id),
+    );
+
+    const audiencia = await comEscritorio(escritorio, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo: "Audiencia da regua",
+          tipo: "AUDIENCIA",
+          inicio: daqui(70),
+        }),
+      }),
+    );
+    await comEscritorio(escritorio, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo: "Tarefa da regua",
+          tipo: "TAREFA",
+          inicio: daqui(70),
+        }),
+      }),
+    );
+
+    const chaves = async () =>
+      (
+        await comEscritorio(escritorio, (db) =>
+          db.aviso.findMany({ where: { chave: { contains: audiencia.id } } }),
+        )
+      ).map((a) => a.chave);
+
+    // A 70 horas: so o marco de 3 dias, e so para a audiencia.
+    await gerarAvisos(escritorio, agora);
+    expect((await chaves()).some((c) => c.includes("3d:"))).toBe(true);
+
+    // Rodar de novo na mesma hora nao repete nada.
+    const antes = (await chaves()).length;
+    await gerarAvisos(escritorio, agora);
+    expect((await chaves()).length).toBe(antes);
+
+    // Vinte horas antes: entra o marco de 24 horas.
+    await gerarAvisos(escritorio, new Date(daqui(70).getTime() - 20 * HORA));
+    expect((await chaves()).some((c) => !c.includes("3d:") && !c.includes("1h:"))).toBe(
+      true,
+    );
+
+    // Meia hora antes: entra o de 1 hora.
+    await gerarAvisos(
+      escritorio,
+      new Date(daqui(70).getTime() - 0.5 * HORA),
+    );
+    expect((await chaves()).some((c) => c.includes("1h:"))).toBe(true);
+
+    // A tarefa, no mesmo horario, teve um aviso so.
+    const daTarefa = await comEscritorio(escritorio, (db) =>
+      db.aviso.findMany({ where: { assunto: { contains: "Tarefa da regua" } } }),
+    );
+    const semCanal = new Set(daTarefa.map((a) => a.chave.replace(/^zap:/, "")));
+    expect(semCanal.size).toBe(1);
+
+    await comEscritorio(escritorio, async (db) => {
+      const todos = await db.aviso.findMany({ select: { id: true } });
+      await db.aviso.deleteMany({
+        where: { id: { in: todos.map((a) => a.id).filter((id) => !jaExistiam.has(id)) } },
+      });
+      await db.compromisso.deleteMany({
+        where: { titulo: { in: ["Audiencia da regua", "Tarefa da regua"] } },
+      });
+    });
   });
 
   it("sem e-mail conectado, os avisos ficam esperando", async () => {

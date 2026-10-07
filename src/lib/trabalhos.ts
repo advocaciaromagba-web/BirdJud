@@ -253,8 +253,29 @@ async function gerarContasAPagar({ escritorioId }: Contexto): Promise<void> {
   }
 }
 
+/**
+ * So os lembretes de compromisso, de hora em hora.
+ *
+ * Por que separado de AVISAR: a regua tem um marco de UMA HORA, e um marco de
+ * uma hora com rotina diaria nunca dispara. Mas rodar o AVISAR inteiro de hora
+ * em hora arrastaria junto o resumo do dia e o financeiro, que sao do dia e
+ * nao da hora — e qualquer um deles falhando derrubaria o lembrete da
+ * audiencia que comeca em quarenta minutos.
+ *
+ * Gerar e enviar e barato e idempotente: a chave do aviso ja impede o
+ * repetido, e o envio so olha o que esta pendente.
+ */
+async function lembrar({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("LEMBRAR exige escritorio.");
+
+  await gerarAvisos(escritorioId);
+  await enviarAvisosPendentes(escritorioId);
+  await enviarAvisosNoWhatsapp(escritorioId);
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
+  LEMBRAR: lembrar,
   SINCRONIZAR_COBRANCAS: sincronizarCobrancasDoEscritorio,
   EMITIR_HONORARIOS: emitirHonorarios,
   GERAR_CONTAS_A_PAGAR: gerarContasAPagar,
@@ -276,6 +297,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   // Escritorio que nao contratou publicacoes nao gera trabalho de captura.
   CAPTURAR_PUBLICACOES: "PUBLICACOES_DJEN",
   AVISAR: "EMAIL",
+  LEMBRAR: "EMAIL",
   SINCRONIZAR_COBRANCAS: "COBRANCAS",
   EMITIR_HONORARIOS: "COBRANCAS",
   GERAR_CONTAS_A_PAGAR: "FINANCEIRO",

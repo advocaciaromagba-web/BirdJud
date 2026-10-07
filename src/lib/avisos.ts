@@ -20,6 +20,12 @@ import {
 import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
 import { dataHoraBR } from "./datas";
 import {
+  MAIOR_ANTECEDENCIA_HORAS,
+  marcoAgora,
+  quandoComMarco,
+  type Marco,
+} from "./regua-de-lembretes";
+import {
   assuntoDoLembrete,
   assuntoDoLembreteAoParticipante,
   assuntoDoResumo,
@@ -38,8 +44,25 @@ import {
 
 const HORA = 60 * 60 * 1000;
 
-/** Antecedencia do lembrete de compromisso. */
+/**
+ * Antecedencia do lembrete de compromisso.
+ *
+ * Mantida por compatibilidade: a regua de verdade vive em
+ * regua-de-lembretes.ts, com tres marcos (3 dias, 24 horas, 1 hora).
+ */
 export const ANTECEDENCIA_HORAS = 24;
+
+/**
+ * O pedaco do marco dentro da chave do aviso.
+ *
+ * O marco de 24 HORAS devolve string vazia DE PROPOSITO: e a chave que ja
+ * existia antes da regua. Se ele ganhasse prefixo, todo compromisso ja avisado
+ * ontem seria avisado de novo no primeiro dia depois do deploy — o cliente
+ * receberia duas vezes, e ninguem ligaria uma coisa a outra.
+ */
+function pedacoDoMarco(marco: Marco): string {
+  return marco.chave === "24h" ? "" : `${marco.chave}:`;
+}
 
 /** Tentativas de envio antes de o aviso parar em FALHOU. */
 export const MAX_TENTATIVAS = 3;
@@ -181,7 +204,7 @@ async function gerarLembretes(
   agora: Date,
   comWhatsapp: boolean,
 ): Promise<number> {
-  const limite = new Date(agora.getTime() + ANTECEDENCIA_HORAS * HORA);
+  const limite = new Date(agora.getTime() + MAIOR_ANTECEDENCIA_HORAS * HORA);
 
   const { compromissos, usuarios } = await comEscritorio(
     escritorioId,
@@ -205,6 +228,13 @@ async function gerarLembretes(
 
   let criados = 0;
   for (const compromisso of compromissos) {
+    // Um marco por rodada. A rotina roda de hora em hora e a chave guarda o
+    // que ja saiu, entao quem esta a 50 horas recebe o de 3 dias hoje e o de
+    // 24 horas amanha sem que isto aqui precise saber disso.
+    const marco = marcoAgora(compromisso.tipo, compromisso.inicio, agora);
+    if (!marco) continue;
+    const m = pedacoDoMarco(marco);
+
     const dados = {
       titulo: compromisso.titulo,
       tipo: compromisso.tipo,
@@ -212,7 +242,7 @@ async function gerarLembretes(
       local: compromisso.local,
       numeroProcesso: compromisso.processo?.numero ?? null,
     };
-    const assunto = assuntoDoLembrete(dados);
+    const assunto = `${assuntoDoLembrete(dados)} (${marco.rotulo})`;
     const corpo = corpoDoLembrete(nomeEscritorio, dados, endereco);
 
     for (const usuario of usuarios) {
@@ -220,8 +250,8 @@ async function gerarLembretes(
         usuarioId: usuario.id,
         canal: "EMAIL",
         tipo: "LEMBRETE_COMPROMISSO",
-        // Um lembrete por compromisso e por pessoa, para sempre.
-        chave: `lembrete:${compromisso.id}:${usuario.id}`,
+        // Um lembrete por marco, por compromisso e por pessoa, para sempre.
+        chave: `lembrete:${m}${compromisso.id}:${usuario.id}`,
         destino: usuario.email,
         assunto,
         corpo,
@@ -235,7 +265,7 @@ async function gerarLembretes(
         usuarioId: usuario.id,
         canal: "WHATSAPP",
         tipo: "LEMBRETE_COMPROMISSO",
-        chave: `zap:lembrete:${compromisso.id}:${usuario.id}`,
+        chave: `zap:lembrete:${m}${compromisso.id}:${usuario.id}`,
         destino: telefone,
         assunto,
         corpo,
@@ -243,7 +273,7 @@ async function gerarLembretes(
         parametros: [
           limparParametro(nomeEscritorio),
           limparParametro(dados.titulo),
-          limparParametro(quando.format(dados.inicio)),
+          limparParametro(quandoComMarco(quando.format(dados.inicio), marco)),
           limparParametro(
             dados.local ??
               (dados.numeroProcesso
@@ -264,7 +294,7 @@ async function gerarLembretes(
     // recebe o seu.
     const { avisar } = await paraAvisarNoCompromisso(escritorioId, compromisso.id);
     for (const pessoa of avisar) {
-      const assuntoDele = assuntoDoLembreteAoParticipante(nomeEscritorio, dados);
+      const assuntoDele = `${assuntoDoLembreteAoParticipante(nomeEscritorio, dados)} (${marco.rotulo})`;
       const corpoDele = corpoDoLembreteAoParticipante(
         nomeEscritorio,
         pessoa.nome,
@@ -276,7 +306,7 @@ async function gerarLembretes(
           usuarioId: null,
           canal: "EMAIL",
           tipo: "LEMBRETE_AO_PARTICIPANTE",
-          chave: `participante:${compromisso.id}:${pessoa.participanteId}`,
+          chave: `participante:${m}${compromisso.id}:${pessoa.participanteId}`,
           destino: pessoa.email,
           assunto: assuntoDele,
           corpo: corpoDele,
@@ -291,7 +321,7 @@ async function gerarLembretes(
         usuarioId: null,
         canal: "WHATSAPP",
         tipo: "LEMBRETE_AO_PARTICIPANTE",
-        chave: `zap:participante:${compromisso.id}:${pessoa.participanteId}`,
+        chave: `zap:participante:${m}${compromisso.id}:${pessoa.participanteId}`,
         destino: pessoa.telefone,
         assunto: assuntoDele,
         corpo: corpoDele,
@@ -300,7 +330,7 @@ async function gerarLembretes(
           limparParametro(pessoa.nome),
           limparParametro(nomeEscritorio),
           limparParametro(dados.titulo),
-          limparParametro(quando.format(dados.inicio)),
+          limparParametro(quandoComMarco(quando.format(dados.inicio), marco)),
           limparParametro(
             dados.local ??
               (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null),

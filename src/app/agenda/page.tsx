@@ -12,6 +12,7 @@ import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 const TIPOS = [
   { valor: "COMPROMISSO", rotulo: "Compromisso" },
   { valor: "AUDIENCIA", rotulo: "Audiencia" },
+  { valor: "PERICIA", rotulo: "Pericia" },
   { valor: "PRAZO", rotulo: "Prazo" },
   { valor: "TAREFA", rotulo: "Tarefa" },
 ];
@@ -19,6 +20,7 @@ const TIPOS = [
 const ETIQUETA_DO_TIPO: Record<string, string> = {
   PRAZO: "etiqueta-erro",
   AUDIENCIA: "etiqueta-atencao",
+  PERICIA: "etiqueta-atencao",
   TAREFA: "etiqueta-neutra",
   COMPROMISSO: "etiqueta-marca",
 };

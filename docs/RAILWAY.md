@@ -126,6 +126,17 @@ do Railway, nao a mao — o que esta aqui e o retrato do que foi criado.
 | `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN, contas a pagar do mes e, em seguida, os avisos — nessa ordem |
 | `cron-diario` | `0 9 * * *` (06h de Brasilia) | consumo, regua de cobranca, sincronizacao de cobrancas e emissao de parcela de honorarios |
 | `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados |
+| `cron-horario` | `7 * * * *` (de hora em hora) | `LEMBRAR`: so os lembretes de compromisso |
+
+**Por que existe um cron de hora em hora.** A regua de lembretes tem um marco
+de UMA HORA antes (ver `src/lib/regua-de-lembretes.ts`), e marco de uma hora
+com rotina diaria nunca dispara. O `LEMBRAR` e so a geracao e o envio dos
+lembretes: rodar o `AVISAR` inteiro de hora em hora arrastaria junto o resumo
+do dia e o financeiro, que sao do dia e nao da hora — e qualquer um deles
+falhando derrubaria o lembrete da audiencia que comeca em quarenta minutos.
+
+O minuto 7, e nao o 0, e de proposito: no minuto cheio todo mundo agenda, e a
+fila do provedor atrasa.
 
 Os horarios do cron do Railway sao em **UTC**; os da tabela ja estao
 convertidos.
