@@ -97,6 +97,7 @@ export default async function PaginaPublicacoes() {
     oab: p.oab,
     data: data.format(p.dataDisponibilizacao),
     urgente: p.urgente,
+    repeticao: p.vereditoDeRepeticao,
     prazoDias: p.prazoDias,
     lida: p.lida,
     temIA: modulos.includes("IA"),

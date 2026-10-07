@@ -737,6 +737,16 @@ model Publicacao {
 
   lida      Boolean  @default(false)
   arquivada Boolean  @default(false)
+
+  /// De qual publicacao esta e repeticao. Ver src/lib/duplicados.ts.
+  duplicataDe         String?
+  /// REPETIDA | PARECE_REPETIDA
+  vereditoDeRepeticao String?
+  /// Quando alguem olhou e disse que NAO e repeticao.
+  repeticaoNegadaEm   DateTime?
+
+  original   Publicacao?  @relation("RepeticaoDePublicacao", fields: [duplicataDe], references: [id], onDelete: SetNull)
+  repeticoes Publicacao[] @relation("RepeticaoDePublicacao")
   criadoEm  DateTime @default(now())
 
   escritorio Escritorio  @relation(fields: [escritorioId], references: [id], onDelete: Cascade)

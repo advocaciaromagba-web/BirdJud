@@ -4,6 +4,10 @@ import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import { paraCentavos } from "@/lib/dinheiro";
+import {
+  conferirClienteRepetido,
+  mensagemDoConflito,
+} from "@/lib/duplicados-do-escritorio";
 import { salvarContrato } from "@/lib/honorarios-do-escritorio";
 import type { Forma } from "@/lib/cobrancas";
 
@@ -23,6 +27,11 @@ const novoCliente = z.object({
   honPrimeiroVencimento: z.string().max(10).optional(),
   honForma: z.string().max(20).optional(),
   honDescricao: z.string().max(120).optional(),
+
+  // Quem cadastra viu o aviso de nome repetido e disse que e outra pessoa.
+  // So vale para nome: documento igual e a mesma pessoa, e isso nao se
+  // confirma, se corrige.
+  confirmarHomonimo: z.boolean().optional(),
 });
 
 const DIA = /^\d{4}-\d{2}-\d{2}$/;
@@ -55,6 +64,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
     }
     const d = corpo.data;
+
+    const conflito = await conferirClienteRepetido(escritorioId, {
+      nome: d.nome,
+      documento: d.documento,
+    });
+    if (conflito && !(conflito.motivo === "NOME" && d.confirmarHomonimo)) {
+      return NextResponse.json(
+        {
+          erro: mensagemDoConflito(conflito),
+          // A tela precisa saber se da para confirmar: documento igual, nao.
+          podeConfirmar: conflito.motivo === "NOME",
+          existenteId: conflito.existente.id,
+        },
+        { status: 409 },
+      );
+    }
 
     const valorCentavos = d.honValor?.trim() ? paraCentavos(d.honValor) : null;
     const entradaCentavos = d.honEntrada?.trim() ? paraCentavos(d.honEntrada) : null;

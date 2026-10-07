@@ -61,6 +61,9 @@ export function FormularioCriar({
 }) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
+  // Nome repetido nao barra: mostra quem ja existe e pede confirmacao. Ver
+  // src/lib/duplicados.ts.
+  const [confirmavel, setConfirmavel] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [aberto, setAberto] = useState(!recolhivel);
   const [valores, setValores] = useState<Record<string, string>>({});
@@ -81,10 +84,14 @@ export function FormularioCriar({
     });
   }
 
-  async function enviar(evento: React.FormEvent<HTMLFormElement>) {
+  async function enviar(
+    evento: React.FormEvent<HTMLFormElement>,
+    confirmando = false,
+  ) {
     evento.preventDefault();
     setEnviando(true);
     setErro(null);
+    if (!confirmando) setConfirmavel(null);
 
     const corpo: Record<string, unknown> = {};
     for (const campo of campos) {
@@ -113,6 +120,7 @@ export function FormularioCriar({
       chaveDaCobranca.current ??= crypto.randomUUID();
       corpo.chaveOperacao = chaveDaCobranca.current;
     }
+    if (confirmando) corpo.confirmarHomonimo = true;
 
     const resposta = await fetch(rota, {
       method: "POST",
@@ -124,12 +132,16 @@ export function FormularioCriar({
     if (resposta.ok) {
       chaveDaCobranca.current = null;
       setValores({});
+      setConfirmavel(null);
       if (recolhivel) setAberto(false);
       router.refresh();
       return;
     }
     const json = await resposta.json().catch(() => ({}));
     setErro(json.erro ?? "Nao foi possivel gravar.");
+    // So da para confirmar o que o servidor disse que da: documento igual e a
+    // mesma pessoa, e isso nao se confirma, se corrige.
+    setConfirmavel(json.podeConfirmar ? (json.erro ?? "") : null);
   }
 
   if (!aberto) {
@@ -296,6 +308,18 @@ export function FormularioCriar({
           <button type="submit" disabled={enviando} className="botao-principal">
             {enviando ? "Gravando..." : textoBotao}
           </button>
+          {confirmavel !== null ? (
+            <button
+              type="button"
+              disabled={enviando}
+              onClick={(e) =>
+                enviar(e as unknown as React.FormEvent<HTMLFormElement>, true)
+              }
+              className="botao-secundario"
+            >
+              E outra pessoa, cadastrar assim mesmo
+            </button>
+          ) : null}
           {recolhivel ? (
             <button
               type="button"

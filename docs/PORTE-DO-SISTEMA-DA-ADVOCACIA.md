@@ -121,7 +121,7 @@ abaixo e a que sobrou.
 | ✔ **Resumo diario** (`resumo-diario`) | O que vence hoje, chegou hoje, precisa de alguem — e a regra de nao mandar quando nao ha nada. |
 | ✔ **Participantes** em evento | Compromisso com mais de uma pessoa, cliente ou nao, cada uma avisada no contato dela. Quem nao da para avisar aparece na tela, com o motivo. |
 | **Lembretes e auto-resposta de WhatsApp** | Confirmacao de audiencia sem alguem lembrar de mandar. |
-| **Duplicados** (`clientes-duplicados`, `publicacoes-duplicadas`) | Cadastro repetido e publicacao repetida. |
+| ✔ **Duplicados** (`clientes-duplicados`, `publicacoes-duplicadas`) | Documento igual barra; nome igual avisa e deixa confirmar (homonimo existe). Publicacao repetida e MARCADA, nunca apagada, e a faixa de duvida espera uma pessoa. |
 | **Permissoes por area** (`permissoes`, `area-auth`, `areas`) | O BirdJud tem tres papeis; la ha permissao por area. |
 
 ### Depois: captacao e IA

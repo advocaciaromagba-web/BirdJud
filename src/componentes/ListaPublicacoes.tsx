@@ -20,6 +20,8 @@ export type PublicacaoNaTela = {
   urgente: boolean;
   prazoDias: number | null;
   lida: boolean;
+  /** REPETIDA | PARECE_REPETIDA | null. Ver src/lib/duplicados.ts. */
+  repeticao: string | null;
 };
 
 export function ListaPublicacoes({
@@ -99,6 +101,16 @@ function Cartao({ publicacao }: { publicacao: PublicacaoNaTela }) {
         {publicacao.prazoDias !== null ? (
           <span className="rounded bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
             prazo sugerido: {publicacao.prazoDias} dia(s)
+          </span>
+        ) : null}
+        {publicacao.repeticao === "REPETIDA" ? (
+          <span className="rounded bg-slate-200 px-2 py-0.5 font-semibold text-slate-700">
+            repeticao de outra ja na lista
+          </span>
+        ) : null}
+        {publicacao.repeticao === "PARECE_REPETIDA" ? (
+          <span className="rounded bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
+            parece repeticao — confira antes de descartar
           </span>
         ) : null}
         {publicacao.lida ? (

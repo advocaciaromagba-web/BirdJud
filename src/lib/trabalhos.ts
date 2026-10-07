@@ -15,6 +15,7 @@ import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
 import { emitirParcelasDevidas } from "./honorarios-do-escritorio";
 import { gerarContasDoMes } from "./contas-do-escritorio";
+import { marcarPublicacoesRepetidas } from "./duplicados-do-escritorio";
 import {
   enviarAvisosNoWhatsapp,
   enviarAvisosPendentes,
@@ -83,9 +84,25 @@ async function purgar(): Promise<void> {
  * Falha de uma OAB nao interrompe as outras (ver publicacoes.ts); o que chega
  * aqui como erro e falha do trabalho inteiro, e a fila cuida da retentativa.
  */
+/**
+ * Depois de capturar, procura o mesmo ato repetido.
+ *
+ * Aqui e nao em outro trabalho porque a repeticao so existe depois da captura,
+ * e deixar para o dia seguinte seria mostrar o prazo em dobro por um dia.
+ */
 async function capturar({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("CAPTURAR_PUBLICACOES exige escritorio.");
   const resultado = await capturarPublicacoes(escritorioId);
+
+  // Antes de levantar a falha de alguma OAB: o que entrou, entrou, e marcar a
+  // repeticao do que entrou nao depende de as outras OABs terem dado certo.
+  const repetidas = await marcarPublicacoesRepetidas(escritorioId);
+  if (repetidas.repetidas > 0 || repetidas.pareceRepetida > 0) {
+    console.log(
+      `CAPTURAR_PUBLICACOES ${escritorioId}: ${repetidas.repetidas} repetida(s), ` +
+        `${repetidas.pareceRepetida} a conferir.`,
+    );
+  }
 
   if (resultado.falhas.length > 0) {
     const nomes = resultado.falhas
