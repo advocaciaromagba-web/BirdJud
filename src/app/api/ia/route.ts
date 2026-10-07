@@ -11,9 +11,7 @@ import {
   SemChaveDeIA,
 } from "@/lib/ia";
 import {
-  entradaDaAnalise,
   entradaDaMinuta,
-  SISTEMA_ANALISE,
   SISTEMA_MINUTA,
 } from "@/lib/prompts-ia";
 
@@ -32,11 +30,11 @@ const POR_ESCRITORIO = 120;
 const POR_PESSOA = 60;
 const JANELA = 60 * 60;
 
+// ANALISE_PUBLICACAO saiu daqui: a leitura da publicacao agora acontece
+// sozinha, na captura, e vira sugestao de agendamento ou tarefa (ver
+// src/lib/triagem-do-escritorio.ts). Um botao de "ler com IA" so fazia
+// sentido quando a leitura dependia de alguem lembrar de pedir.
 const pedido = z.discriminatedUnion("tipo", [
-  z.object({
-    tipo: z.literal("ANALISE_PUBLICACAO"),
-    publicacaoId: z.string().min(1),
-  }),
   z.object({
     tipo: z.literal("MINUTA_MANIFESTACAO"),
     publicacaoId: z.string().min(1),
@@ -100,22 +98,14 @@ export async function POST(req: Request) {
       usuarioId,
       tipo: corpo.data.tipo,
       publicacaoId: publicacao.id,
-      ...(corpo.data.tipo === "ANALISE_PUBLICACAO"
-        ? {
-            sistema: SISTEMA_ANALISE,
-            entrada: entradaDaAnalise(base),
-            esforco: "low" as const,
-          }
-        : {
-            sistema: SISTEMA_MINUTA,
-            entrada: entradaDaMinuta({
-              ...base,
-              instrucao: corpo.data.instrucao,
-              cliente: publicacao.processo?.cliente?.nome ?? null,
-            }),
-            // Redigir peca merece mais esforco do que triar uma publicacao.
-            esforco: "high" as const,
-          }),
+      sistema: SISTEMA_MINUTA,
+      entrada: entradaDaMinuta({
+        ...base,
+        instrucao: corpo.data.instrucao,
+        cliente: publicacao.processo?.cliente?.nome ?? null,
+      }),
+      // Redigir peca merece mais esforco do que triar uma publicacao.
+      esforco: "high",
     });
 
     return NextResponse.json({ analise });

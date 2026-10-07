@@ -22,28 +22,11 @@ Regras que valem sempre:
 - Nao repita o texto recebido por inteiro; trabalhe sobre ele.
 `.trim();
 
-export const SISTEMA_ANALISE = `
-${REGRAS_DA_CASA}
-
-Sua tarefa agora: ler uma publicacao de diario oficial e devolver uma leitura
-curta, para o advogado decidir o que fazer em poucos segundos.
-
-Responda exatamente nesta estrutura, sem preambulo:
-
-RESUMO
-Uma ou duas frases, em linguagem direta, do que o juizo determinou.
-
-PRAZO
-O prazo que o texto indica e a partir de quando parece correr, ou "nao
-identificado". Termine sempre com: (conferir nos autos).
-
-PROVIDENCIA
-Ate tres itens, começando com verbo, do que precisa ser feito.
-
-ATENCAO
-So preencha se houver risco de perda de direito, valor a pagar, audiencia
-designada ou ato pessoal do cliente. Caso contrario, escreva "nada a destacar".
-`.trim();
+// SISTEMA_ANALISE saiu daqui. A leitura da publicacao agora e a TRIAGEM
+// (SISTEMA_TRIAGEM, mais abaixo): ela acontece sozinha na captura e devolve
+// algo que vira compromisso com um clique. Um resumo bonito que ninguem
+// transforma em prazo nao ajudava ninguem — e dependia de alguem lembrar de
+// pedir, justamente nos dias cheios em que ninguem lembra.
 
 export const SISTEMA_MINUTA = `
 ${REGRAS_DA_CASA}

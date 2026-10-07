@@ -105,6 +105,18 @@ async function capturar({ escritorioId }: Contexto): Promise<void> {
     );
   }
 
+  // A LEITURA VEM JUNTO COM A CAPTURA, e nao num passo depois: a publicacao
+  // precisa chegar na tela ja com a sugestao de agendamento ou tarefa. Leitura
+  // que depende de um segundo trabalho — ou de alguem clicar — e leitura que
+  // nao acontece nos dias cheios, que sao os dias em que o prazo escapa.
+  //
+  // Antes da falha de OAB, de proposito: o que entrou, entrou, e ler o que
+  // entrou nao depende de as outras OABs terem dado certo.
+  const triadas = await triarPendentes(escritorioId);
+  if (triadas > 0) {
+    console.log(`CAPTURAR_PUBLICACOES ${escritorioId}: ${triadas} lida(s) pela IA.`);
+  }
+
   if (resultado.falhas.length > 0) {
     const nomes = resultado.falhas
       .map((f) => `${f.oab}: ${f.motivo}`)

@@ -96,10 +96,22 @@ ninguem acha.
 
 ## Quando roda
 
-`TRIAR_PUBLICACOES`, no `cron-noturno`, logo depois da captura: a publicacao
-que chega as 3h tem de estar na tela com sugestao quando o escritorio abrir.
-Triagem que depende de alguem clicar e triagem que nao acontece nos dias
-cheios — que sao justamente os dias em que o prazo escapa.
+**Junto com a captura**, dentro do mesmo trabalho: a publicacao que chega as
+3h esta na tela com a sugestao quando o escritorio abre. Nao ha botao de "ler
+com IA", e nao ha um segundo passo — leitura que depende de alguem clicar e
+leitura que nao acontece nos dias cheios, que sao justamente os dias em que o
+prazo escapa.
+
+`TRIAR_PUBLICACOES` continua no `cron-noturno` como rede: pega o que a captura
+nao pegou. E a publicacao que esta na tela sem leitura — a que entrou antes de
+a triagem existir — **le a si mesma** quando alguem abre a tela, uma vez, em
+chamadas escalonadas para que vinte publicacoes nao virem vinte chamadas no
+mesmo segundo.
+
+> A analise avulsa (`ANALISE_PUBLICACAO`) foi removida. Era um resumo bonito
+> que ninguem transformava em prazo, e dependia de alguem lembrar de pedir. A
+> triagem substitui: devolve menos texto e algo que vira compromisso com um
+> clique.
 
 E idempotente: uma triagem por publicacao (indice unico), refazer substitui a
 sugestao, e sugestao ja **aceita** nunca e mexida — o compromisso ja existe, e

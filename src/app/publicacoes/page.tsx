@@ -65,14 +65,7 @@ export default async function PaginaPublicacoes() {
         where: { arquivada: false },
         orderBy: [{ urgente: "desc" }, { dataDisponibilizacao: "desc" }],
         take: 200,
-        include: {
-          analises: {
-            where: { tipo: "ANALISE_PUBLICACAO" },
-            orderBy: { criadoEm: "desc" },
-            take: 1,
-          },
-          triagem: true,
-        },
+        include: { triagem: true },
       }),
       oabs: await db.oabMonitorada.findMany({ orderBy: { criadoEm: "asc" } }),
       equipe: await db.usuario.findMany({
@@ -108,7 +101,6 @@ export default async function PaginaPublicacoes() {
     prazoDias: p.prazoDias,
     lida: p.lida,
     temIA: modulos.includes("IA"),
-    analise: p.analises[0]?.resultado ?? null,
     triagem: p.triagem
       ? {
           id: p.triagem.id,

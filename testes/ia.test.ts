@@ -21,7 +21,7 @@ import {
 import {
   entradaDaAnalise,
   entradaDaMinuta,
-  SISTEMA_ANALISE,
+  SISTEMA_TRIAGEM,
   SISTEMA_MINUTA,
 } from "../src/lib/prompts-ia";
 import { consumoDoMes } from "../src/lib/consumo";
@@ -31,15 +31,18 @@ const d = temBanco ? describe : describe.skip;
 
 describe("instrucoes da IA", () => {
   it("proibem inventar fundamentacao — a regra que mais importa aqui", () => {
-    for (const sistema of [SISTEMA_ANALISE, SISTEMA_MINUTA]) {
+    for (const sistema of [SISTEMA_TRIAGEM, SISTEMA_MINUTA]) {
       expect(sistema).toContain("NUNCA invente numero de lei");
       expect(sistema).toContain("RASCUNHO");
     }
   });
 
-  it("tratam prazo como indicacao a conferir, nunca como afirmacao", () => {
-    expect(SISTEMA_ANALISE).toContain("(conferir nos autos)");
-    expect(SISTEMA_ANALISE).toContain("nunca afirmacao");
+  it("a triagem e proibida de calcular data de prazo", () => {
+    // A linha que nao se cruza: a IA diz quantos DIAS o texto menciona; quem
+    // diz que DIA isso e, com feriado e dia util, e o sistema.
+    expect(SISTEMA_TRIAGEM).toContain("VOCE NAO CALCULA DATA DE PRAZO");
+    expect(SISTEMA_TRIAGEM).toContain("ponha null");
+    expect(SISTEMA_TRIAGEM).toContain("Quem transforma dias em data e o sistema");
   });
 
   it("a entrada da analise leva o contexto do processo junto do texto", () => {
@@ -145,14 +148,14 @@ beforeEach(() => {
 
 describe("chamada ao modelo", () => {
   it("manda o modelo, o teto de saida e o esforco pedido", async () => {
-    await pedir(SISTEMA_ANALISE, "Publicacao qualquer", "low");
+    await pedir(SISTEMA_TRIAGEM, "Publicacao qualquer", "low");
     expect(recebido?.corpo.model).toBe("claude-opus-5");
     expect(recebido?.corpo.max_tokens).toBe(16000);
     expect(recebido?.corpo.output_config).toMatchObject({ effort: "low" });
   });
 
   it("liga o fallback de recusa", async () => {
-    await pedir(SISTEMA_ANALISE, "Publicacao qualquer");
+    await pedir(SISTEMA_TRIAGEM, "Publicacao qualquer");
     // Texto de processo criminal ou de familia toca assunto pesado; sem o
     // fallback, o advogado veria o sistema simplesmente falhar.
     expect(recebido?.corpo.fallbacks).toBe("default");
@@ -162,7 +165,7 @@ describe("chamada ao modelo", () => {
   });
 
   it("marca o sistema para cache: ele nao muda entre chamadas", async () => {
-    await pedir(SISTEMA_ANALISE, "Publicacao qualquer");
+    await pedir(SISTEMA_TRIAGEM, "Publicacao qualquer");
     const sistema = recebido?.corpo.system as { cache_control?: unknown }[];
     expect(sistema[0]?.cache_control).toEqual({ type: "ephemeral" });
   });
@@ -177,7 +180,7 @@ describe("chamada ao modelo", () => {
         },
       });
 
-    const resultado = await pedir(SISTEMA_ANALISE, "Publicacao");
+    const resultado = await pedir(SISTEMA_TRIAGEM, "Publicacao");
     expect(resultado.texto).toContain("RESUMO");
     // Token lido do cache custa menos, mas nao e de graca: entra na conta.
     expect(resultado.tokensEntrada).toBe(1200);
@@ -186,7 +189,7 @@ describe("chamada ao modelo", () => {
 
   it("registra o modelo que REALMENTE respondeu", async () => {
     responder = () => respostaDoModelo("Ok.", { model: "claude-opus-4-8" });
-    const resultado = await pedir(SISTEMA_ANALISE, "Publicacao");
+    const resultado = await pedir(SISTEMA_TRIAGEM, "Publicacao");
     // Com fallback, quem responde pode nao ser quem foi pedido — e a peca
     // precisa poder ser auditada.
     expect(resultado.modelo).toBe("claude-opus-4-8");
@@ -207,14 +210,14 @@ describe("chamada ao modelo", () => {
       },
     });
 
-    await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toBeInstanceOf(
+    await expect(pedir(SISTEMA_TRIAGEM, "Publicacao")).rejects.toBeInstanceOf(
       IARecusou,
     );
   });
 
   it("entrada longa demais e barrada ANTES de virar chamada paga", async () => {
     const gigante = "a".repeat(LIMITE_DE_CARACTERES + 1);
-    await expect(pedir(SISTEMA_ANALISE, gigante)).rejects.toBeInstanceOf(
+    await expect(pedir(SISTEMA_TRIAGEM, gigante)).rejects.toBeInstanceOf(
       EntradaLongaDemais,
     );
     expect(recebido).toBeNull();
@@ -227,11 +230,11 @@ describe("sem chave configurada", () => {
     delete process.env.ANTHROPIC_API_KEY;
     recebido = null;
     try {
-      await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toBeInstanceOf(
+      await expect(pedir(SISTEMA_TRIAGEM, "Publicacao")).rejects.toBeInstanceOf(
         SemChaveDeIA,
       );
       // Falta de configuracao da plataforma e 503, nao erro de quem pediu.
-      await expect(pedir(SISTEMA_ANALISE, "Publicacao")).rejects.toMatchObject({
+      await expect(pedir(SISTEMA_TRIAGEM, "Publicacao")).rejects.toMatchObject({
         status: 503,
       });
       expect(recebido).toBeNull();
@@ -283,7 +286,7 @@ d("analise gravada e medida", () => {
       escritorioId: escritorio,
       usuarioId,
       tipo: "ANALISE_PUBLICACAO",
-      sistema: SISTEMA_ANALISE,
+      sistema: SISTEMA_TRIAGEM,
       entrada: "Publicacao",
     });
     expect(analise.texto).toContain("RESUMO");
@@ -313,7 +316,7 @@ d("analise gravada e medida", () => {
       escritorioId: escritorio,
       usuarioId,
       tipo: "ANALISE_PUBLICACAO",
-      sistema: SISTEMA_ANALISE,
+      sistema: SISTEMA_TRIAGEM,
       entrada: "Outra publicacao",
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export type TriagemNaTela = {
@@ -25,7 +25,6 @@ export type TriagemNaTela = {
 
 export type PublicacaoNaTela = {
   temIA: boolean;
-  analise: string | null;
   id: string;
   numeroProcesso: string | null;
   numeroFormatado: string | null;
@@ -65,8 +64,13 @@ export function ListaPublicacoes({
 
   return (
     <ul className="mt-6 grid gap-4">
-      {publicacoes.map((publicacao) => (
-        <Cartao key={publicacao.id} publicacao={publicacao} equipe={equipe} />
+      {publicacoes.map((publicacao, i) => (
+        <Cartao
+          key={publicacao.id}
+          publicacao={publicacao}
+          equipe={equipe}
+          posicao={i}
+        />
       ))}
     </ul>
   );
@@ -96,14 +100,17 @@ function paraCampo(iso: string | null): string {
 function Cartao({
   publicacao,
   equipe,
+  posicao,
 }: {
   publicacao: PublicacaoNaTela;
   equipe: PessoaDaEquipe[];
+  /** Posicao na lista, para escalonar a leitura automatica. */
+  posicao: number;
 }) {
   const router = useRouter();
   const [aberta, setAberta] = useState(false);
   const [ocupado, setOcupado] = useState(false);
-  const [analise, setAnalise] = useState<string | null>(publicacao.analise);
+  const [lendo, setLendo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
@@ -114,26 +121,44 @@ function Cartao({
   const [titulo, setTitulo] = useState(t?.titulo ?? "");
   const [responsavelId, setResponsavelId] = useState("");
 
-  async function analisar() {
-    setOcupado(true);
-    setErro(null);
-    const resposta = await fetch("/api/ia", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tipo: "ANALISE_PUBLICACAO",
-        publicacaoId: publicacao.id,
-      }),
-    });
-    const json = await resposta.json().catch(() => ({}));
-    setOcupado(false);
-    if (resposta.ok) {
-      setAnalise(json.analise.texto);
-      router.refresh();
-      return;
-    }
-    setErro(json.erro ?? "Nao foi possivel analisar.");
-  }
+  /**
+   * Publicacao sem leitura le a si mesma, uma vez.
+   *
+   * Nao e para substituir a rotina da captura — e para a publicacao que
+   * entrou ANTES de a triagem existir, e para o caso raro de a rotina ter
+   * falhado naquela linha. Sem isto, a unica saida era esperar as 3h da
+   * manha, e quem abre a tela hoje nao tem o que fazer com a publicacao.
+   *
+   * `pedido` guarda que ja pediu: o React monta o componente duas vezes em
+   * desenvolvimento, e sem a trava a mesma publicacao seria lida em dobro —
+   * duas chamadas pagas para o mesmo resultado.
+   */
+  const pedido = useRef(false);
+  useEffect(() => {
+    if (publicacao.triagem || pedido.current || !publicacao.temIA) return;
+    pedido.current = true;
+    setLendo(true);
+    // Escalonado pela posicao na lista: vinte publicacoes sem leitura nao
+    // podem virar vinte chamadas no mesmo segundo.
+    const relogio = setTimeout(
+      () => {
+        void (async () => {
+          try {
+            const r = await fetch(`/api/publicacoes/${publicacao.id}/triagem`, {
+              method: "POST",
+            });
+            if (r.ok) router.refresh();
+          } finally {
+            setLendo(false);
+          }
+        })();
+      },
+      400 + posicao * 1200,
+    );
+    return () => clearTimeout(relogio);
+    // Roda uma vez por publicacao, e o `pedido` e quem garante isso.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function triarDeNovo() {
     setOcupado(true);
@@ -399,35 +424,16 @@ function Cartao({
 
       {!t ? (
         <p className="mt-3 text-xs text-slate-500">
-          Sem sugestao ainda — a triagem roda de madrugada, com a captura.{" "}
-          <button type="button" className="botao-discreto" onClick={triarDeNovo}>
-            triar agora
-          </button>
+          {lendo
+            ? "Lendo a publicacao..."
+            : "Ainda sem leitura. A publicacao e lida na captura; esta e de antes disso."}
         </p>
       ) : null}
 
-      {analise ? (
-        <div className="mt-3 rounded border border-slate-200 bg-slate-50 p-3 text-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Leitura da IA · rascunho, confira nos autos
-          </p>
-          <p className="mt-2 whitespace-pre-line">{analise}</p>
-        </div>
-      ) : null}
       {erro ? <p className="mt-2 text-sm text-red-700">{erro}</p> : null}
       {aviso ? <p className="mt-2 text-sm text-emerald-700">{aviso}</p> : null}
 
       <div className="mt-3 flex flex-wrap gap-2 text-sm">
-        {publicacao.temIA && !analise ? (
-          <button
-            type="button"
-            disabled={ocupado}
-            onClick={analisar}
-            className="rounded border border-marca px-3 py-2 font-semibold text-marca disabled:opacity-60"
-          >
-            {ocupado ? "Lendo..." : "Leitura completa com IA"}
-          </button>
-        ) : null}
         {!publicacao.lida ? (
           <button
             type="button"
