@@ -291,28 +291,40 @@ function conferirOpcionais() {
   // Um sem o outro e o pior dos mundos: a Meta liga o webhook e as mensagens
   // chegam, mas todas batem em 503 — e o cliente que respondeu "1" nunca
   // aparece como confirmado.
+  //
+  // AVISO, e nao erro, de proposito. Esta conferencia roda no start do
+  // container: um erro aqui impede a aplicacao inteira de subir. Isolamento
+  // furado merece isso; WhatsApp pela metade, nao. O webhook ja se protege
+  // sozinho (sem segredo ele responde 503 e nao processa nada), e a Meta
+  // reentrega por horas, entao nada se perde enquanto falta a outra metade.
+  // Derrubar o site por isso ja aconteceu uma vez, durante a configuracao na
+  // Meta, quando so uma das duas variaveis tinha chegado.
   const temUm = Boolean(process.env.WHATSAPP_APP_SECRET);
   const temOutro = Boolean(process.env.WHATSAPP_VERIFICACAO);
   if (temUm !== temOutro) {
-    erro(
+    alerta(
       "WhatsApp de entrada",
-      "so uma das duas variaveis esta definida: o webhook nao funciona pela metade",
+      "so uma das duas variaveis esta definida: o webhook nao processa mensagem ate a outra chegar",
     );
   }
 
   // Mesma logica na saida: numero sem token, ou token sem numero, e
-  // configuracao pela metade que so se descobre no dia do aviso.
+  // configuracao pela metade que so se descobre no dia do aviso. Tambem
+  // aviso, e pelo mesmo motivo: sem credencial o envio apenas nao acontece.
   const temNumero = Boolean(process.env.WHATSAPP_NUMERO_ID);
   const temToken = Boolean(process.env.WHATSAPP_TOKEN);
   if (temNumero !== temToken) {
-    erro(
+    alerta(
       "WhatsApp de saida",
-      "so uma das duas variaveis esta definida: nenhum aviso sai",
+      "so uma das duas variaveis esta definida: nenhum aviso sai ate a outra chegar",
     );
   }
 
+  // Aviso pelo mesmo motivo das duas conferencias acima: integracao pela
+  // metade degrada um recurso, nao fura o isolamento, e nao justifica
+  // impedir a aplicacao de subir.
   if (process.env.DJEN_RELE_URL && !process.env.DJEN_RELE_TOKEN) {
-    erro(
+    alerta(
       "DJEN_RELE_TOKEN",
       "o rele esta configurado mas sem token: toda consulta volta 401",
     );
