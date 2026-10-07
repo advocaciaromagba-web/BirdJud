@@ -20,8 +20,18 @@
 //      liga para a banca. Sem essa linha, a pessoa responde aqui e acha que
 //      falou com o advogado.
 //
-// O telefone fica ANTES de um ponto final, nunca como ultimo caractere: a Meta
-// recusa modelo que termina em parametro.
+// TRES REGRAS DA META QUE DERRUBAM O MODELO NA APROVACAO, e nenhuma delas
+// aparece como erro no codigo — so na recusa, dias depois:
+//
+//   - o corpo NAO pode COMECAR com parametro. "{{1}}: voce tem..." e recusado;
+//     "Aviso do escritorio {{1}}: voce tem..." passa;
+//   - o corpo NAO pode TERMINAR com parametro. Por isso o telefone tem texto
+//     fixo depois dele, e nao so um ponto;
+//   - dois parametros nao podem ficar COLADOS, sem texto entre eles.
+//
+// A razao e sempre a mesma: modelo que e quase so variavel pode virar
+// qualquer coisa depois de aprovado, e a revisao nao teria servido para nada.
+// O teste em testes/resposta-whatsapp.test.ts guarda as tres.
 
 export type ModeloDeAviso = {
   nome: string;
@@ -33,7 +43,8 @@ export type ModeloDeAviso = {
 };
 
 /** A frase que fecha toda mensagem. O {{n}} e o telefone do escritorio. */
-const RODAPE = "Este numero so envia avisos e nao recebe mensagens. Para falar com o escritorio, ligue para {{N}}.";
+const RODAPE =
+  "Este numero so envia avisos e nao recebe mensagens. Em caso de duvida, ligue para {{N}}, que e o telefone do escritorio.";
 
 const TELEFONE_DO_ESCRITORIO = "telefone do escritorio";
 
@@ -46,7 +57,8 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     nome: "birdjud_resumo_publicacoes",
     idioma: "pt_BR",
     texto: comRodape(
-      "{{1}}: voce tem {{2}} publicacao(oes) nova(s), sendo {{3}} urgente(s). " +
+      "Aviso do escritorio {{1}}: voce tem {{2}} publicacao(oes) nova(s), sendo " +
+        "{{3}} urgente(s). " +
         "Abra o sistema para ler o texto completo. O prazo indicado e leitura " +
         "automatica e serve como alerta — confira sempre nos autos.",
       4,
@@ -57,7 +69,8 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     nome: "birdjud_resumo_do_dia",
     idioma: "pt_BR",
     texto: comRodape(
-      "{{1}}: o seu dia tem {{2}} Abra o sistema para ver os detalhes. " +
+      "Resumo do dia no escritorio {{1}}: o seu dia tem {{2}} Abra o sistema para " +
+        "ver os detalhes. " +
         "Esta mensagem so e enviada quando ha algo no dia.",
       3,
     ),
@@ -67,7 +80,7 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     nome: "birdjud_lembrete_participante",
     idioma: "pt_BR",
     texto: comRodape(
-      "{{1}}, o escritorio {{2}} lembra: {{3}} em {{4}}. {{5}}. " +
+      "Ola, {{1}}. O escritorio {{2}} lembra: {{3}} em {{4}}. {{5}}. " +
         "Responda 1 para confirmar presenca ou 2 para avisar que nao podera ir.",
       6,
     ),
@@ -84,7 +97,8 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     nome: "birdjud_tarefa_designada",
     idioma: "pt_BR",
     texto: comRodape(
-      "{{1}}: {{2}} ficou para voce. {{3}}. {{4}}. Abra o sistema para ver os detalhes.",
+      "No escritorio {{1}}, a tarefa {{2}} ficou para voce. Quando: {{3}}. " +
+        "Sobre: {{4}}. Abra o sistema para ver os detalhes.",
       5,
     ),
     parametros: [
@@ -99,7 +113,7 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     nome: "birdjud_compromisso_marcado",
     idioma: "pt_BR",
     texto: comRodape(
-      "{{1}}, o escritorio {{2}} marcou {{3}} para {{4}}. {{5}}. " +
+      "Ola, {{1}}. O escritorio {{2}} marcou {{3}} para {{4}}. {{5}}. " +
         "Voce recebera lembretes 3 dias antes, 1 dia antes e 1 hora antes.",
       6,
     ),
@@ -119,7 +133,7 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     nome: "birdjud_documento",
     idioma: "pt_BR",
     texto: comRodape(
-      "{{1}}, o escritorio {{2}} enviou {{3}} em anexo. {{4}}.",
+      "Ola, {{1}}. O escritorio {{2}} enviou em anexo: {{3}}. {{4}}.",
       5,
     ),
     parametros: [
@@ -134,7 +148,8 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
     nome: "birdjud_lembrete_compromisso",
     idioma: "pt_BR",
     texto: comRodape(
-      "{{1}}: lembrete de {{2}} em {{3}}. {{4}}. Confira a agenda no sistema.",
+      "Agenda do escritorio {{1}}: lembrete de {{2}} em {{3}}. {{4}}. " +
+        "Confira a agenda no sistema.",
       5,
     ),
     parametros: [

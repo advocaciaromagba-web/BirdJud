@@ -207,9 +207,18 @@ describe("o contrato dos modelos aprovados na Meta", () => {
     }
   });
 
-  it("nenhum modelo termina em parametro — a Meta recusa", () => {
+  it("nenhum modelo comeca, termina ou cola parametros — a Meta recusa os tres", () => {
+    // Nenhuma das tres aparece como erro no codigo. So na recusa, dias depois
+    // de submeter — e a razao e sempre a mesma: modelo que e quase so
+    // variavel pode virar qualquer coisa depois de aprovado.
     for (const [chave, m] of modelos) {
-      expect(m.texto.trim().endsWith("}}"), chave).toBe(false);
+      const texto = m.texto.trim();
+      expect(texto.startsWith("{{"), `${chave} comeca com parametro`).toBe(false);
+      expect(texto.endsWith("}}"), `${chave} termina com parametro`).toBe(false);
+      expect(
+        /\}\}\s*\{\{/.test(texto),
+        `${chave} tem dois parametros colados`,
+      ).toBe(false);
     }
   });
 
