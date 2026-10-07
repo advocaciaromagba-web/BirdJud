@@ -27,6 +27,7 @@ import {
   RepresentantesDoCliente,
   type RepresentanteNaTela,
 } from "@/componentes/RepresentantesDoCliente";
+import { enviosDoCliente } from "@/lib/assinatura-do-escritorio";
 import { PecasDoCliente } from "@/componentes/PecasDoCliente";
 
 const COR = {
@@ -54,6 +55,15 @@ export default async function FichaCliente({
       select: { id: true, nome: true, oab: true },
     }),
   );
+  // A assinatura eletronica so aparece quando o escritorio contratou o modulo
+  // E ligou o Autentique. Mostrar um botao que vai dar erro e pior que nao
+  // mostrar: quem clica acha que o sistema falhou.
+  const assinaturaLigada =
+    modulos.includes("ASSINATURA") &&
+    (await comEscritorio(contexto.escritorioId, (db) =>
+      db.integracao.count({ where: { tipo: "AUTENTIQUE", status: { not: "ERRO" } } }),
+    )) > 0;
+
   const cliente = await comEscritorio(contexto.escritorioId, (db) =>
     db.cliente.findFirst({
       where: { id },
@@ -76,6 +86,10 @@ export default async function FichaCliente({
   // Cliente de outro escritorio nao e "proibido", e inexistente: a extensao
   // ja filtrou. Dizer "proibido" contaria que aquele id existe em algum lugar.
   if (!cliente) notFound();
+
+  const envios = assinaturaLigada
+    ? await enviosDoCliente(contexto.escritorioId, cliente.id)
+    : [];
 
   const pendencias = pendenciasDoCliente(cliente, modulos, {
     arquivos: cliente.arquivos.length,
@@ -267,6 +281,20 @@ export default async function FichaCliente({
         clienteId={cliente.id}
         advogados={advogados}
         escolhidosNoCliente={cliente.advogadosIds}
+        assinaturaLigada={assinaturaLigada}
+        envios={envios.map((e) => ({
+          id: e.id,
+          especie: e.especie,
+          situacao: e.situacao,
+          criadoEm: e.criadoEm.toISOString(),
+          signatarios: e.signatarios.map((s) => ({
+            nome: s.nome,
+            email: s.email,
+            link: s.link ?? null,
+            assinadoEm: s.assinadoEm ?? null,
+            recusadoEm: s.recusadoEm ?? null,
+          })),
+        }))}
       />
 
       <section className="cartao mt-6">

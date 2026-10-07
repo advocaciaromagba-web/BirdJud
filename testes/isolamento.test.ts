@@ -319,6 +319,27 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("peca mandada para assinatura nao vaza para o outro escritorio", async () => {
+    // O registro carrega e-mail de cliente e link de assinatura. Vazado, o
+    // escritorio vizinho veria para quem o outro manda contrato — e o link
+    // abre o documento.
+    await comEscritorio(alfaP, (db) =>
+      db.envioParaAssinatura.create({
+        data: semEscritorio({
+          clienteId: "cliente-de-alfa",
+          especie: "CONTRATO",
+          idNoProvedor: "doc-de-alfa",
+          nomeDoArquivo: "contrato-de-alfa.pdf",
+          signatarios: [{ nome: "Cliente de Alfa", email: "cliente@alfa.test" }],
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.envioParaAssinatura.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("a meta de um escritorio nao aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.meta.create({

@@ -87,6 +87,7 @@ model Escritorio {
   metas             Meta[]
   participantes     ParticipanteDeCompromisso[]
   permissoesDeArea  PermissaoDeArea[]
+  enviosParaAssinatura EnvioParaAssinatura[]
 }
 
 model ModuloContratado {
@@ -354,6 +355,34 @@ model ModeloDeDocumento {
   // declarar (ver 28_modelos). Declarar @@unique aqui seria mentira: proibiria
   // tambem dois inativos da mesma especie, que e justamente o historico.
   @@index([escritorioId])
+}
+
+/// Peca mandada para assinatura eletronica. Ver src/lib/autentique.ts.
+///
+/// O registro existe por dois motivos. O primeiro e saber onde esta cada peca
+/// sem abrir o site do provedor. O segundo e nao mandar duas vezes: cada envio
+/// custa ao escritorio, e dois cliques no mesmo botao mandariam dois contratos
+/// ao mesmo cliente.
+model EnvioParaAssinatura {
+  id            String   @id @default(cuid())
+  escritorioId  String
+  clienteId     String
+  especie       String
+  provedor      String   @default("AUTENTIQUE")
+  /// Id do documento no provedor.
+  idNoProvedor  String
+  nomeDoArquivo String
+  /// [{ nome, email, acao, link, assinadoEm, recusadoEm }]
+  signatarios   Json
+  /// ENVIADO | PARCIAL | ASSINADO | RECUSADO
+  situacao      String   @default("ENVIADO")
+  enviadoPor    String?
+  criadoEm      DateTime @default(now())
+  conferidoEm   DateTime?
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, clienteId])
 }
 
 /// Meta de faturamento do ano. Ver src/lib/metas.ts.

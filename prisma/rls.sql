@@ -46,7 +46,8 @@ DECLARE
     'ModeloDeDocumento',
     'Meta',
     'ParticipanteDeCompromisso',
-    'PermissaoDeArea'
+    'PermissaoDeArea',
+    'EnvioParaAssinatura'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

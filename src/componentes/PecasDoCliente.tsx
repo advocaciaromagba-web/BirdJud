@@ -38,6 +38,43 @@ type Conferida = {
 
 export type AdvogadoEscolhivel = { id: string; nome: string; oab: string | null };
 
+export type SignatarioNaTela = {
+  nome: string;
+  email: string;
+  link: string | null;
+  assinadoEm: string | null;
+  recusadoEm: string | null;
+};
+
+export type EnvioNaTela = {
+  id: string;
+  especie: string;
+  situacao: string;
+  criadoEm: string;
+  signatarios: SignatarioNaTela[];
+};
+
+/** Quem assina cada especie, por padrao. Igual a ASSINA_POR_PADRAO do servidor. */
+const ASSINA_POR_PADRAO: Record<string, "CLIENTE" | "ESCRITORIO" | "AMBOS"> = {
+  CONTRATO: "AMBOS",
+  PROCURACAO: "CLIENTE",
+  DECLARACAO: "CLIENTE",
+  RECIBO: "ESCRITORIO",
+};
+
+const QUEM_ASSINA = [
+  { chave: "CLIENTE", rotulo: "so o cliente" },
+  { chave: "ESCRITORIO", rotulo: "so o escritorio" },
+  { chave: "AMBOS", rotulo: "cliente e escritorio" },
+];
+
+const SITUACAO: Record<string, { rotulo: string; cor: string }> = {
+  ENVIADO: { rotulo: "aguardando assinatura", cor: "text-slate-600" },
+  PARCIAL: { rotulo: "assinado em parte", cor: "text-amber-700" },
+  ASSINADO: { rotulo: "assinado", cor: "text-emerald-700" },
+  RECUSADO: { rotulo: "recusado", cor: "text-red-700" },
+};
+
 /**
  * Gerar os documentos deste cliente.
  *
@@ -55,12 +92,17 @@ export function PecasDoCliente({
   clienteId,
   advogados,
   escolhidosNoCliente,
+  assinaturaLigada = false,
+  envios = [],
 }: {
   clienteId: string;
   /** Quem assina pecas no escritorio. */
   advogados: AdvogadoEscolhivel[];
   /** A escolha gravada neste cliente. Vazio = todos. */
   escolhidosNoCliente: string[];
+  /** Modulo contratado E Autentique conectado. */
+  assinaturaLigada?: boolean;
+  envios?: EnvioNaTela[];
 }) {
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
   // PDF por padrao: e o que se assina, o que se imprime igual em qualquer
@@ -75,6 +117,9 @@ export function PecasDoCliente({
   const [quemAssina, setQuemAssina] = useState<Set<string>>(
     new Set(escolhidosNoCliente),
   );
+  const [enviados, setEnviados] = useState<EnvioNaTela[]>(envios);
+  const [enviando, setEnviando] = useState<string | null>(null);
+  const [assinam, setAssinam] = useState<Record<string, string>>({});
 
   const todosAssinam = quemAssina.size === 0;
   function alternarAdvogado(id: string) {
@@ -253,6 +298,65 @@ export function PecasDoCliente({
       return;
     }
     janela.addEventListener("load", () => janela.print());
+  }
+
+  /** Manda a peca para assinatura. Cada envio custa ao escritorio. */
+  async function mandarAssinar(c: Conferida, mesmoAssim = false) {
+    setEnviando(c.chave);
+    setErro(null);
+    try {
+      const resposta = await fetch(`/api/modelos/${c.chave}/assinatura`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          clienteId,
+          advogadoIds: [...quemAssina],
+          quemAssina: assinam[c.chave] ?? ASSINA_POR_PADRAO[c.chave],
+          mesmoAssim,
+        }),
+      });
+      const det = await resposta.json().catch(() => null);
+
+      if (resposta.status === 409 && det?.envioId && !mesmoAssim) {
+        // Nao e erro: e a pergunta. O envio anterior ainda esta de pe, e
+        // mandar de novo manda outro e-mail e custa outro documento.
+        const outra = window.confirm(
+          `${det.erro}\nO envio anterior esta ${
+            SITUACAO[det.situacao]?.rotulo ?? det.situacao
+          }.\n\nMandar assim mesmo? Sai outro e-mail para o cliente, e o provedor cobra outro documento.`,
+        );
+        if (outra) await mandarAssinar(c, true);
+        return;
+      }
+      if (!resposta.ok) {
+        setErro(`${c.rotulo}: ${det?.erro ?? "nao consegui mandar para assinatura."}`);
+        return;
+      }
+      setEnviados((atual) => [det.envio as EnvioNaTela, ...atual]);
+    } catch {
+      setErro("Nao consegui falar com o servidor.");
+    } finally {
+      setEnviando(null);
+    }
+  }
+
+  /** Pergunta ao provedor em que pe esta. */
+  async function conferirEnvio(id: string) {
+    setEnviando(id);
+    setErro(null);
+    try {
+      const resposta = await fetch(`/api/assinaturas/${id}/conferir`, { method: "POST" });
+      const det = await resposta.json().catch(() => null);
+      if (!resposta.ok) {
+        setErro(det?.erro ?? "nao consegui conferir.");
+        return;
+      }
+      setEnviados((atual) =>
+        atual.map((e) => (e.id === id ? (det.envio as EnvioNaTela) : e)),
+      );
+    } finally {
+      setEnviando(null);
+    }
   }
 
   const quantosFormatos = FORMATOS.filter((f) => formatos.has(f.chave)).length;
@@ -514,8 +618,109 @@ export function PecasDoCliente({
               abrir em outra aba
             </a>
           </div>
+
+          {assinaturaLigada ? (
+            <div className="mt-3 rounded border border-slate-200 p-3">
+              <p className="text-sm font-medium">Mandar para assinatura</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Sai pelo Autentique, com o plano do escritorio. O e-mail para
+                quem assina sai na hora e nao da para desfazer — e cada
+                documento e cobrado do escritorio. Vai este PDF, o mesmo que
+                esta ai em cima.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <label className="text-xs text-slate-600" htmlFor={`assina-${c.chave}`}>
+                  Quem assina:
+                </label>
+                <select
+                  id={`assina-${c.chave}`}
+                  className="campo w-auto py-1 text-sm"
+                  value={assinam[c.chave] ?? ASSINA_POR_PADRAO[c.chave]}
+                  onChange={(e) => setAssinam({ ...assinam, [c.chave]: e.target.value })}
+                >
+                  {QUEM_ASSINA.map((q) => (
+                    <option key={q.chave} value={q.chave}>
+                      {q.rotulo}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={enviando !== null}
+                  className="botao-secundario disabled:opacity-50"
+                  onClick={() => mandarAssinar(c)}
+                >
+                  {enviando === c.chave ? "mandando..." : "Enviar para assinatura"}
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">
+                O padrao de cada peca ja vem escolhido: a procuracao e a
+                declaracao sao atos do cliente e so ele assina; o recibo e do
+                escritorio, que e quem da quitacao; o contrato e dos dois.
+              </p>
+            </div>
+          ) : null}
         </div>
       ))}
+
+      {enviados.length > 0 ? (
+        <div className="mt-6 border-t border-slate-200 pt-4">
+          <h3 className="text-sm font-semibold">Mandados para assinatura</h3>
+          <ul className="mt-2 space-y-3">
+            {enviados.map((e) => {
+              const s = SITUACAO[e.situacao] ?? {
+                rotulo: e.situacao,
+                cor: "text-slate-600",
+              };
+              return (
+                <li key={e.id} className="rounded border border-slate-200 p-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">
+                      {ESPECIES.find((x) => x.chave === e.especie)?.rotulo ?? e.especie}
+                    </span>
+                    <span className={`text-xs ${s.cor}`}>{s.rotulo}</span>
+                    <span className="text-xs text-slate-500">
+                      {new Date(e.criadoEm).toLocaleDateString("pt-BR")}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={enviando !== null}
+                      className="botao-discreto disabled:opacity-50"
+                      onClick={() => conferirEnvio(e.id)}
+                    >
+                      {enviando === e.id ? "..." : "conferir"}
+                    </button>
+                  </div>
+                  <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                    {e.signatarios.map((a) => (
+                      <li key={a.email || a.nome}>
+                        {a.nome} — {a.email}{" "}
+                        {a.recusadoEm ? (
+                          <span className="text-red-700">recusou</span>
+                        ) : a.assinadoEm ? (
+                          <span className="text-emerald-700">assinou</span>
+                        ) : (
+                          <span className="text-slate-500">ainda nao assinou</span>
+                        )}
+                        {a.link && !a.assinadoEm && !a.recusadoEm ? (
+                          <a
+                            className="ml-2 underline"
+                            href={a.link}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            link de assinatura
+                          </a>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }

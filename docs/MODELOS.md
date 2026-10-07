@@ -171,6 +171,63 @@ verdade.
 A CSP precisou de `frame-src 'self' blob:` por causa desse quadro. Nao e
 abertura para terceiro: `blob:` so existe dentro da propria origem.
 
+## Mandar para assinatura
+
+Da propria conferencia, pelo **Autentique**, com o plano do escritorio — a
+integracao fica em Integracoes e o modulo e o de assinatura eletronica. O botao
+so aparece quando as duas coisas existem: mostrar um botao que vai dar erro e
+pior que nao mostrar, porque quem clica acha que o sistema falhou.
+
+O que sobe e **o mesmo PDF que esta na tela**, gerado no mesmo caminho do
+download. Nao ha uma segunda montagem: se houvesse, um dia o que foi conferido
+e o que foi assinado seriam documentos diferentes.
+
+### Quem assina cada peca
+
+Nao e detalhe de tela — e de quem e a assinatura que o documento precisa ter
+para valer:
+
+| Peca | Assina | Por que |
+|---|---|---|
+| Procuracao | so o cliente | e ato do OUTORGANTE; o advogado nao assina a propria procuracao |
+| Declaracao de hipossuficiencia | so o cliente | e declaracao dele, sob a responsabilidade dele |
+| Recibo | so o escritorio | quem da quitacao e quem recebeu |
+| Contrato de honorarios | os dois | e bilateral |
+
+A tela deixa mudar. O padrao e o que esta certo na maioria das vezes, nao uma
+regra imposta.
+
+Quem aparece dos dois lados — o advogado que tambem e o contato do cliente —
+entra **uma vez so**: o provedor cobra por signatario, e a pessoa receberia dois
+e-mails para assinar o mesmo papel.
+
+### Duas coisas que mudam o desenho
+
+1. **Cada envio custa ao escritorio.** O plano do Autentique e dele, cobrado por
+   documento. Dois cliques no mesmo botao nao podem virar dois contratos na
+   caixa de entrada do cliente — por isso o registro em `EnvioParaAssinatura`
+   com indice unico por documento do provedor, e por isso a peca repetida **com
+   envio ainda em aberto** para no 409 e pergunta. Nao e proibicao: contrato
+   corrigido se manda de novo mesmo, e peca ja assinada ou recusada nem
+   pergunta.
+2. **O envio e irreversivel** do ponto de vista do cliente: o e-mail sai na
+   hora. Por isso tudo que da para conferir e conferido ANTES — signatario sem
+   e-mail, e-mail torto, peca com campo em branco — e os impedimentos saem
+   TODOS de uma vez, nao um por tentativa.
+
+### O que ainda e so promessa
+
+O caminho foi provado de ponta a ponta contra um **Autentique de mentira** que
+fala o mesmo protocolo: o PDF sobe como arquivo (nao dentro do JSON), a lista
+de signatarios sai certa por especie, o reenvio para, a consulta atualiza quem
+ja assinou. **Nao foi provado contra o Autentique de verdade** — isso depende de
+um token de escritorio, e o primeiro envio real e que vai dizer. GraphQL
+responde 200 mesmo quando recusa, entao o corpo e lido sempre, e a mensagem do
+provedor chega inteira a tela.
+
+Nao ha webhook: a situacao se atualiza quando alguem clica em **conferir**. Um
+webhook por escritorio e o passo seguinte.
+
 ## Historico
 
 Modelo trocado vira inativo em vez de sumir. A peca que saiu ontem saiu daquele
@@ -187,7 +244,9 @@ Quem troca o modelo e so o ADMIN do escritorio. Baixar, qualquer usuario pode.
 - O PDF nao traz imagem do modelo (timbre), tabela nem fonte propria do
   escritorio — ver acima. Para um PDF identico ao papel da banca: baixar o
   `.docx` e exportar do Word.
-- Nao ha envio para assinatura eletronica a partir da peca ainda. O conector do
-  Autentique existe e e testado em Integracoes, mas so valida o token.
+- O envio para assinatura nao foi exercitado contra o Autentique de verdade,
+  so contra um de mentira que fala o mesmo protocolo — ver acima.
+- Sem webhook do provedor: a situacao do documento so muda quando alguem pede
+  para conferir.
 - Campo dentro de caixa de texto ou de tabela aninhada em desenho pode nao ser
   alcancado, pelo mesmo motivo: fica fora do corpo do documento.
