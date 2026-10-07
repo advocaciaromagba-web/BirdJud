@@ -13,6 +13,7 @@ import {
   textoDoDocumento,
 } from "../src/lib/modelos";
 import {
+  advogadosDaPeca,
   cidadeEData,
   qualificacaoDoAdvogado,
   qualificacaoDoEscritorio,
@@ -220,5 +221,31 @@ describe("qualificacao na peca", () => {
     expect(cidadeEData("Guariba", new Date("2026-10-07T12:00:00Z"))).toBe(
       "Guariba, 7 de outubro de 2026",
     );
+  });
+});
+
+describe("quem assina a peca", () => {
+  const TODOS = [{ id: "a" }, { id: "b" }, { id: "c" }];
+
+  // Em banca de um ou dois a resposta e sempre "todos", e ninguem deveria
+  // precisar marcar nada.
+  it("vazio significa todos", () => {
+    expect(advogadosDaPeca(TODOS, [])).toHaveLength(3);
+    expect(advogadosDaPeca(TODOS, null)).toHaveLength(3);
+    expect(advogadosDaPeca(TODOS, undefined)).toHaveLength(3);
+  });
+
+  it("escolhidos saem na ordem do escritorio, so eles", () => {
+    expect(advogadosDaPeca(TODOS, ["c", "a"]).map((x) => x.id)).toEqual(["a", "c"]);
+  });
+
+  // Uma procuracao sem outorgado nao e um documento incompleto: e um
+  // documento que nao serve para nada.
+  it("escolha que nao casa com ninguem cai em todos, nao em nenhum", () => {
+    expect(advogadosDaPeca(TODOS, ["desligado"])).toHaveLength(3);
+  });
+
+  it("escritorio sem advogado nenhum continua sem", () => {
+    expect(advogadosDaPeca([], ["a"])).toEqual([]);
   });
 });

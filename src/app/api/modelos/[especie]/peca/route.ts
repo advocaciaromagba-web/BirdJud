@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
 import { paraCentavos } from "@/lib/dinheiro";
+import { advogadosDaPeca } from "@/lib/qualificacao";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import { ehEspecie, gerarPeca } from "@/lib/modelos-do-escritorio";
@@ -23,6 +24,11 @@ const pedido = z.object({
   reciboReferenteA: z.string().max(200).nullish(),
   reciboForma: z.string().max(40).nullish(),
   reciboData: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+  // Quais advogados saem nesta peca. Vazio ou ausente: os do cliente; e se o
+  // cliente nao tem escolha gravada, todos.
+  advogadoIds: z.array(z.string().min(1)).max(50).optional(),
+  // Guardar a escolha como o padrao deste cliente, para a proxima vez.
+  guardarAdvogados: z.boolean().optional(),
   // Previa devolve texto e avisos; sem ela, devolve o arquivo.
   previa: z.boolean().optional(),
 });
@@ -107,6 +113,7 @@ export async function POST(
           where: { ativo: true, papel: "ADVOGADO", assinaPecas: true },
           orderBy: { criadoEm: "asc" },
           select: {
+            id: true,
             nome: true,
             oab: true,
             cpf: true,
@@ -171,11 +178,27 @@ export async function POST(
       }
     }
 
+    // Vazio significa todos. Ver advogadosDaPeca.
+    const escolhidos =
+      corpo.data.advogadoIds && corpo.data.advogadoIds.length > 0
+        ? corpo.data.advogadoIds
+        : cliente.advogadosIds;
+    const assinam = advogadosDaPeca(advogados, escolhidos);
+
+    if (corpo.data.guardarAdvogados && corpo.data.advogadoIds) {
+      await comEscritorio(escritorioId, (db) =>
+        db.cliente.update({
+          where: { id: clienteId },
+          data: { advogadosIds: corpo.data.advogadoIds },
+        }),
+      );
+    }
+
     const peca = await gerarPeca(escritorioId, especie, {
       cliente,
       representantes,
       escritorio,
-      advogados,
+      advogados: assinam,
       contrato,
       processo,
       recibo,

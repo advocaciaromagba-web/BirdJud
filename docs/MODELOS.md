@@ -86,6 +86,26 @@ formulario. Se o contrato falhar, o cliente fica cadastrado do mesmo jeito —
 perder o cadastro inteiro por causa de um campo de honorario seria pior que
 ficar sem o contrato, que da para lancar depois na ficha.
 
+## Quem assina a peca
+
+Em banca de um ou dois advogados a resposta e sempre "todos", e a tela nem
+mostra a escolha. Com mais de um, aparecem caixas de marcar: **sem marcar
+ninguem, saem todos**.
+
+Marcar importa no escritorio maior. Uma procuracao outorgando poderes a dez
+advogados quando dois vao atuar da poder a mais gente do que o cliente quis — e
+a procuracao e o documento em que isso custa mais caro, porque qualquer um dos
+outorgados pode transigir, receber e dar quitacao.
+
+A escolha fica guardada **no cliente**: ha cliente que e so de uma das
+sociedades, e perguntar de novo a cada peca seria pedir que alguem errasse uma
+vez. Vazio continua significando todos, entao nenhum cliente ja cadastrado
+mudou de ideia quando o recurso entrou.
+
+Escolha que nao casa com ninguem — advogado desligado, por exemplo — **cai no
+padrao, que e todos**. Uma procuracao sem outorgado nao e um documento
+incompleto: e um documento que nao serve para nada.
+
 ## Como se contrata
 
 Duas dimensoes independentes, e nao uma lista de tipos:

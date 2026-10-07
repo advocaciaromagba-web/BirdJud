@@ -28,12 +28,41 @@ type Previa = {
  * campo sem valor no cadastro, campo que nao existe — tem de aparecer enquanto
  * ainda da para arrumar, nao no papel que o cliente ja assinou.
  */
-export function PecasDoCliente({ clienteId }: { clienteId: string }) {
+export type AdvogadoEscolhivel = { id: string; nome: string; oab: string | null };
+
+export function PecasDoCliente({
+  clienteId,
+  advogados,
+  escolhidosNoCliente,
+}: {
+  clienteId: string;
+  /** Quem assina pecas no escritorio. */
+  advogados: AdvogadoEscolhivel[];
+  /** A escolha gravada neste cliente. Vazio = todos. */
+  escolhidosNoCliente: string[];
+}) {
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [previas, setPrevias] = useState<Previa[]>([]);
   const [recibo, setRecibo] = useState({ valor: "", referenteA: "", forma: "", data: "" });
+  // Vazio significa todos: e assim que esta gravado, e e assim que a tela
+  // comeca. Marcar os dez para dizer "todos" seria trabalho sem ganho.
+  const [quemAssina, setQuemAssina] = useState<Set<string>>(
+    new Set(escolhidosNoCliente),
+  );
+
+  const todosAssinam = quemAssina.size === 0;
+  function alternarAdvogado(id: string) {
+    setQuemAssina((atual) => {
+      const novo = new Set(atual);
+      // Primeira marcacao a partir de "todos": comeca so com o escolhido.
+      if (novo.size === 0) return new Set([id]);
+      if (novo.has(id)) novo.delete(id);
+      else novo.add(id);
+      return novo;
+    });
+  }
 
   const quer = (e: string) => marcadas.has(e);
   function alternar(e: string) {
@@ -49,6 +78,9 @@ export function PecasDoCliente({ clienteId }: { clienteId: string }) {
     return JSON.stringify({
       clienteId,
       previa,
+      advogadoIds: [...quemAssina],
+      // Gravar a escolha so quando ela sai de verdade, nao na conferencia.
+      guardarAdvogados: !previa && quemAssina.size > 0,
       ...(especie === "RECIBO"
         ? {
             reciboValor: recibo.valor || null,
@@ -144,6 +176,51 @@ export function PecasDoCliente({ clienteId }: { clienteId: string }) {
           </label>
         ))}
       </div>
+
+      {advogados.length > 1 ? (
+        <div className="mt-3 rounded border border-slate-200 p-3">
+          <p className="text-sm font-medium">Quem assina</p>
+          <p className="mt-1 text-xs text-slate-600">
+            Sem marcar ninguem, saem todos — que e o certo na maioria das
+            bancas. Marque quando a peca for so de alguns: uma procuracao
+            outorgando poderes a dez advogados quando dois vao atuar da poder a
+            mais gente do que o cliente quis. A escolha fica guardada neste
+            cliente para a proxima vez.
+          </p>
+          <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+            {advogados.map((a) => (
+              <li key={a.id}>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={todosAssinam || quemAssina.has(a.id)}
+                    onChange={() => alternarAdvogado(a.id)}
+                  />
+                  {a.nome}
+                  {a.oab ? (
+                    <span className="text-xs text-slate-500">{a.oab}</span>
+                  ) : null}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-slate-500">
+            {todosAssinam
+              ? `Todos os ${advogados.length} assinam.`
+              : `${quemAssina.size} de ${advogados.length} assinam.`}
+            {!todosAssinam ? (
+              <button
+                type="button"
+                className="botao-discreto ml-2"
+                onClick={() => setQuemAssina(new Set())}
+              >
+                voltar para todos
+              </button>
+            ) : null}
+          </p>
+        </div>
+      ) : null}
 
       {quer("RECIBO") ? (
         <div className="mt-3 grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-2">

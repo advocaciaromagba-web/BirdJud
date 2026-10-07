@@ -200,6 +200,9 @@ model Cliente {
   // um cadastro novo a cada cobranca. Nao e dado nosso: some junto com o
   // cliente e nao vale entre escritorios.
   idNoAsaas    String?
+  /// Advogados em nome de quem saem as pecas deste cliente. VAZIO = TODOS os
+  /// que assinam. Ver src/lib/qualificacao.ts.
+  advogadosIds String[] @default([])
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 

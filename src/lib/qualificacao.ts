@@ -174,3 +174,27 @@ export function cidadeEData(cidade: string | null | undefined, quando: Date): st
   const onde = limpo(cidade);
   return onde ? `${onde}, ${data}` : data;
 }
+
+/**
+ * Quais advogados entram nesta peca.
+ *
+ * VAZIO SIGNIFICA TODOS. Em banca de um ou dois a resposta e sempre essa, e
+ * ninguem deveria precisar marcar nada; a escolha existe para o escritorio
+ * maior, onde uma procuracao outorgando poderes a dez advogados quando dois
+ * vao atuar e uma procuracao que da poder a mais gente do que o cliente quis.
+ *
+ * Escolha que nao casa com ninguem — advogado desligado, id de outro
+ * escritorio — NAO deixa a peca sair sem advogado: cai no padrao, que e todos.
+ * Uma procuracao sem outorgado nao e um documento incompleto, e um documento
+ * que nao serve para nada, e isso tem de aparecer antes, na tela de advogados,
+ * nao depois.
+ */
+export function advogadosDaPeca<T extends { id: string }>(
+  todos: T[],
+  escolhidos: string[] | null | undefined,
+): T[] {
+  if (!escolhidos || escolhidos.length === 0) return todos;
+  const querem = new Set(escolhidos);
+  const filtrados = todos.filter((a) => querem.has(a.id));
+  return filtrados.length > 0 ? filtrados : todos;
+}

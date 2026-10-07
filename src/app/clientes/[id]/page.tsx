@@ -44,6 +44,16 @@ export default async function FichaCliente({
   const { id } = await params;
 
   const modulos = await modulosAtivos(contexto.escritorioId);
+
+  // Quem assina peca no escritorio. So importa quando ha mais de um: em banca
+  // de um advogado a escolha nao existe, e a tela nem mostra.
+  const advogados = await comEscritorio(contexto.escritorioId, (db) =>
+    db.usuario.findMany({
+      where: { ativo: true, papel: "ADVOGADO", assinaPecas: true },
+      orderBy: { criadoEm: "asc" },
+      select: { id: true, nome: true, oab: true },
+    }),
+  );
   const cliente = await comEscritorio(contexto.escritorioId, (db) =>
     db.cliente.findFirst({
       where: { id },
@@ -253,7 +263,11 @@ export default async function FichaCliente({
         />
       </div>
 
-      <PecasDoCliente clienteId={cliente.id} />
+      <PecasDoCliente
+        clienteId={cliente.id}
+        advogados={advogados}
+        escolhidosNoCliente={cliente.advogadosIds}
+      />
 
       <section className="cartao mt-6">
         <h2 className="font-semibold">Documentos deste cliente</h2>
