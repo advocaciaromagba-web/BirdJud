@@ -5,9 +5,9 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "npm run migrar && npm run rls:aplicar && npm run conferir-producao && exec node_modules/.bin/next start",
+    "startCommand": "npm run esperar-banco && npm run migrar && npm run rls:aplicar && npm run conferir-producao && exec node_modules/.bin/next start",
     "healthcheckPath": "/api/saude",
-    "healthcheckTimeout": 120,
+    "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

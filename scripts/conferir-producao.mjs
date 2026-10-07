@@ -10,6 +10,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import pg from "pg";
+import { tentar } from "./lib/tentar.mjs";
 
 const resultados = [];
 const anotar = (nivel, item, detalhe) =>
@@ -123,9 +124,27 @@ const TABELAS_COM_RLS = [
 async function conferirBanco() {
   if (!process.env.DATABASE_URL) return;
 
-  const cliente = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  // Repete antes de desistir: esta conferencia roda no start, e "nao conecta"
+  // e erro — ou seja, derruba o deploy. Um banco que ainda esta subindo nao
+  // pode custar o site.
+  let cliente;
   try {
-    await cliente.connect();
+    cliente = await tentar(
+      async () => {
+        const tentativa = new pg.Client({
+          connectionString: process.env.DATABASE_URL,
+          connectionTimeoutMillis: 5_000,
+        });
+        try {
+          await tentativa.connect();
+        } catch (falha) {
+          await tentativa.end().catch(() => {});
+          throw falha;
+        }
+        return tentativa;
+      },
+      { rotulo: "conferencia: conexao da aplicacao" },
+    );
   } catch (falha) {
     erro("banco", `a aplicacao nao conecta: ${falha.message}`);
     return;

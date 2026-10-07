@@ -369,6 +369,86 @@ O CI (`.github/workflows/ci.yml`) roda `npm run teste:isolamento` contra um
 PostgreSQL de verdade, com os tres papeis. **Deploy com a bateria vermelha nao
 acontece.** Em Settings > Deploy, deixe o deploy condicionado ao CI verde.
 
+## 6b. Nao derrubar o sistema
+
+Em 07/10/2026 `birdjud.com.br` ficou oito minutos fora do ar porque uma
+variavel de ambiente foi gravada pela metade. O que esta escrito aqui saiu
+daquele dia e vale como regra, nao como conselho.
+
+### Por que uma variavel consegue derrubar o site
+
+O comando de partida roda quatro coisas **antes** de ligar o servidor:
+
+```
+esperar-banco && migrar && rls:aplicar && conferir-producao && exec next start
+```
+
+Qualquer uma que termine com codigo diferente de zero impede o `exec`. O
+container nao serve nada, reprova no healthcheck, e o deploy vai a FAILED.
+Como o servico da aplicacao tem **volume montado** (`/dados/arquivos`), o
+Railway nao consegue manter a versao antiga rodando em paralelo com a nova:
+ele para a antiga para soltar o volume. Entao um deploy que falha na partida
+nao e "a versao nova nao entrou" — e o site fora do ar ate alguem agir.
+
+Isso tambem significa que **todo deploy tem uma janela de indisponibilidade**
+de algumas dezenas de segundos. Acabar com ela exige tirar os arquivos do
+volume e por em armazenamento de objetos; enquanto isso nao acontece, a
+janela existe e e conhecida.
+
+### Regras ao mexer em variaveis de producao
+
+1. **Nunca grave um conjunto pela metade.** Variaveis que so fazem sentido
+   juntas (`WHATSAPP_VERIFICACAO` + `WHATSAPP_APP_SECRET`,
+   `WHATSAPP_NUMERO_ID` + `WHATSAPP_TOKEN`, `DJEN_RELE_URL` +
+   `DJEN_RELE_TOKEN`) vao na mesma escrita. Se falta uma, espere — nao grave
+   a outra "por enquanto".
+2. **Varios servicos, um deploy.** Use `skipDeploys: true` no
+   `variableCollectionUpsert` de todos os servicos e dispare um
+   `serviceInstanceDeploy` no fim. Cada upsert sem isso e um deploy, e cada
+   deploy e uma janela.
+3. **Rode a conferencia antes.** `npm run conferir-producao` com o conjunto
+   final de variaveis diz, em segundos, o que o container diria em cinco
+   minutos.
+
+### O que pode e o que nao pode derrubar a partida
+
+`conferir-producao` separa as duas coisas, e `testes/partida.test.ts` trava a
+separacao:
+
+| Derruba (`erro`) | Apenas avisa (`alerta`) |
+| --- | --- |
+| `SEGREDO_CHAVE` com tamanho errado | WhatsApp de entrada pela metade |
+| aplicacao nao conecta no banco | WhatsApp de saida pela metade |
+| usuario da aplicacao com BYPASSRLS | `DJEN_RELE_TOKEN` faltando |
+| papeis do banco iguais | qualquer opcional ausente |
+| RLS desligado em alguma tabela | |
+| migracao pendente | |
+| `RAIZ_ARQUIVOS` sem escrita | |
+
+O criterio: **so derruba o que torna inseguro servir.** Recurso configurado
+pela metade degrada o recurso — o webhook sem segredo responde 503 e nao
+processa nada, e a Meta reentrega por horas; sem credencial de saida o aviso
+simplesmente nao e enviado. Nada disso justifica recusar servir o sistema
+inteiro.
+
+### Falha passageira nao custa o site
+
+As tres operacoes de banco do start repetem com espera crescente (1s, 2s, 4s,
+8s, 16s — `scripts/lib/tentar.mjs`), e `esperar-banco` roda antes de todas.
+Um Postgres que ainda esta subindo, um reinicio do provedor ou uma rede
+engasgada passam sozinhos. Falha de verdade — migracao quebrada, senha
+errada — falha nas seis tentativas e continua falhando, que e o desejado. O
+`healthcheckTimeout` subiu para 300s para caber essa espera.
+
+### Quando o deploy falhar mesmo assim
+
+1. `deployments(first: 5, ...)` para achar o ultimo `SUCCESS`.
+2. `buildLogs` e `deploymentLogs` daquele `FAILED` dizem onde parou: build,
+   uma das quatro etapas da partida, ou healthcheck.
+3. Para voltar ao ar **antes** de investigar, use `deploymentRollback` (ou
+   `deploymentRedeploy`) no ultimo `SUCCESS`. Diagnostico depois; site de pe
+   primeiro.
+
 ## 7. Backup
 
 O backup do Railway e do banco inteiro, com todos os escritorios juntos. Ele

@@ -5,6 +5,7 @@
 // cada deploy, depois das migracoes.
 import { readFileSync } from "node:fs";
 import pg from "pg";
+import { tentar } from "./lib/tentar.mjs";
 
 const url = process.env.DATABASE_URL_MIGRACAO;
 if (!url) {
@@ -13,15 +14,23 @@ if (!url) {
 }
 
 const sql = readFileSync(new URL("../prisma/rls.sql", import.meta.url), "utf8");
-const cliente = new pg.Client({ connectionString: url });
+
+// Repete pelo mesmo motivo da migracao: roda no start, e banco indisponivel
+// por alguns segundos nao pode custar o site.
+async function aplicar() {
+  const cliente = new pg.Client({ connectionString: url });
+  try {
+    await cliente.connect();
+    await cliente.query(sql);
+  } finally {
+    await cliente.end().catch(() => {});
+  }
+}
 
 try {
-  await cliente.connect();
-  await cliente.query(sql);
+  await tentar(aplicar, { rotulo: "RLS" });
   console.log("RLS aplicado.");
 } catch (erro) {
   console.error("Falha ao aplicar o RLS:", erro.message);
   process.exitCode = 1;
-} finally {
-  await cliente.end();
 }

@@ -18,7 +18,7 @@
     "teste": "vitest run",
     "teste:isolamento": "vitest run testes/isolamento.test.ts",
     "migrar": "node scripts/migrar.mjs",
-    "start:producao": "npm run migrar && npm run rls:aplicar && npm run conferir-producao && exec node_modules/.bin/next start",
+    "start:producao": "npm run esperar-banco && npm run migrar && npm run rls:aplicar && npm run conferir-producao && exec node_modules/.bin/next start",
     "trabalhador": "tsx scripts/trabalhador.ts",
     "espalhar": "tsx scripts/espalhar-trabalho.ts",
     "criar-operador": "tsx scripts/criar-operador.ts",
@@ -33,7 +33,8 @@
     "conferir-recuperacao": "node scripts/conferir-recuperacao.mjs",
     "backup:banco": "tsx scripts/backup-banco.mjs",
     "vigia": "tsx scripts/vigia.mjs",
-    "restaurar-copia": "tsx scripts/restaurar-copia.mjs"
+    "restaurar-copia": "tsx scripts/restaurar-copia.mjs",
+    "esperar-banco": "node scripts/esperar-banco.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",
