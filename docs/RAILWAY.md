@@ -440,6 +440,26 @@ engasgada passam sozinhos. Falha de verdade — migracao quebrada, senha
 errada — falha nas seis tentativas e continua falhando, que e o desejado. O
 `healthcheckTimeout` subiu para 300s para caber essa espera.
 
+### railway.json nao manda sozinho
+
+`startCommand` gravado no servico pela API **tem precedencia sobre o
+`railway.json`**. Em 07/10/2026 o comando de partida foi mudado no arquivo,
+o deploy passou SUCCESS, e o `esperar-banco` simplesmente nao rodou — o
+Railway usou o comando antigo, do servico. O `healthcheckTimeout` do mesmo
+commit pegou, porque esse nunca tinha sido gravado por API; so a linha
+sobrescrita ficou para tras.
+
+Entao: ao mexer no comando de partida, **mude nos dois lugares** e confira
+no log do deploy que a primeira etapa apareceu.
+
+```
+serviceInstance(environmentId: ..., serviceId: ...) { startCommand }
+serviceInstanceUpdate(environmentId: ..., serviceId: ..., input: { startCommand: "..." })
+```
+
+Vale a regra geral: deploy SUCCESS nao prova que a mudanca entrou. Prova
+que o container subiu. O que entrou se confere no `deploymentLogs`.
+
 ### Quando o deploy falhar mesmo assim
 
 1. `deployments(first: 5, ...)` para achar o ultimo `SUCCESS`.
