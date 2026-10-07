@@ -460,4 +460,13 @@ describe("politica de seguranca de conteudo", () => {
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");
   });
+
+  it("deixa a propria pagina mostrar o PDF da conferencia, e so ela", () => {
+    // frame-src precisa de blob: para o <iframe> da conferencia da peca. O que
+    // NAO pode entrar e http:, https: ou *, que abririam quadro de terceiro.
+    const frameSrc = montarCSP("n", true)
+      .split("; ")
+      .find((d) => d.startsWith("frame-src"));
+    expect(frameSrc).toBe("frame-src 'self' blob:");
+  });
 });

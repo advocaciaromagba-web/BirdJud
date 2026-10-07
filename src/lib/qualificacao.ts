@@ -42,10 +42,31 @@ function limpo(v: unknown): string | null {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
+/**
+ * O CEP como se escreve em documento: 47800-000, nao 47800000.
+ *
+ * O cadastro guarda so os digitos, que e o certo para buscar e comparar. Mas a
+ * peca e um documento: um CEP sem o hifen no meio de uma qualificacao parece
+ * numero digitado errado.
+ */
+export function cepEmTexto(valor: string | null | undefined): string {
+  const digitos = (valor ?? "").replace(/\D/g, "");
+  return digitos.length === 8
+    ? `CEP ${digitos.slice(0, 5)}-${digitos.slice(5)}`
+    : (limpo(valor) ?? "");
+}
+
 export function enderecoEmLinha(e: Endereco | null | undefined): string {
   if (!e) return "";
   const rua = [limpo(e.logradouro), limpo(e.numero)].filter(Boolean).join(", nº ");
-  return [rua, limpo(e.complemento), limpo(e.bairro), limpo(e.cidade), limpo(e.uf), limpo(e.cep)]
+  return [
+    rua,
+    limpo(e.complemento),
+    limpo(e.bairro),
+    limpo(e.cidade),
+    limpo(e.uf),
+    cepEmTexto(e.cep),
+  ]
     .filter(Boolean)
     .join(", ");
 }

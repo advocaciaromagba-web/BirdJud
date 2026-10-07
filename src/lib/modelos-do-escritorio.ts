@@ -28,11 +28,14 @@ import {
 } from "./docx";
 import {
   camposDoModelo,
+  estruturaDoDocumento,
   preencher,
   textoDoDocumento,
   ESPECIES,
+  NOME_DA_ESPECIE,
   type Especie,
 } from "./modelos";
+import { montarPdf } from "./pdf";
 import { MODELO_PADRAO, nomeDoArquivoPadrao } from "./modelos-padrao";
 
 export { DocxInvalido };
@@ -410,15 +413,44 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
   };
 }
 
+/** Em que arquivo a peca sai. */
+export const FORMATOS = ["DOCX", "PDF"] as const;
+export type Formato = (typeof FORMATOS)[number];
+
+export function ehFormato(valor: string): valor is Formato {
+  return (FORMATOS as readonly string[]).includes(valor);
+}
+
+export const TIPO_DO_FORMATO: Record<Formato, string> = {
+  DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  PDF: "application/pdf",
+};
+
 export type PecaPronta = {
   arquivo: Buffer;
   nomeDoArquivo: string;
+  formato: Formato;
   doEscritorio: boolean;
   semValor: string[];
   desconhecidos: string[];
   /** Texto corrido da peca, para a previa na tela. */
   texto: string;
+  /**
+   * O modelo tem imagem — quase sempre o timbre.
+   *
+   * Importa so no PDF: o .docx sai com a imagem porque e o arquivo do
+   * escritorio intocado; o PDF e desenhado aqui e nao a traz. Quem gera precisa
+   * ser avisado disso ANTES de mandar o PDF para o cliente.
+   */
+  temImagem: boolean;
+  /** So no PDF: caracteres que a fonte nao escreve e sairam como "?". */
+  caracteresTrocados: string[];
+  /** So no PDF. */
+  paginas: number | null;
 };
+
+/** Imagem dentro do .docx, nas duas formas que o Word usa. */
+const TEM_IMAGEM = /<a:blip|<v:imagedata|<pic:pic/;
 
 /**
  * A peca pronta: o modelo vigente com os campos trocados.
@@ -431,6 +463,7 @@ export async function gerarPeca(
   escritorioId: string,
   especie: Especie,
   dados: DadosDaPeca,
+  formato: Formato = "DOCX",
 ): Promise<PecaPronta> {
   const { conteudo, doEscritorio } = await arquivoDoModelo(escritorioId, especie);
   const valores = valoresDaPeca(dados);
@@ -448,8 +481,6 @@ export async function gerarPeca(
     r.semValor.forEach((s) => semValor.add(s));
     r.desconhecidos.forEach((d) => desconhecidos.add(d));
   }
-  const arquivo = await trocarTextos(conteudo, novas);
-
   const limpo = dados.cliente.nome
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -458,12 +489,28 @@ export async function gerarPeca(
     .toLowerCase()
     .slice(0, 40);
 
+  const temImagem = Object.values(partes).some((xml) => TEM_IMAGEM.test(xml));
+
+  // O PDF e desenhado a partir do MESMO XML ja preenchido. Nao ha um segundo
+  // caminho de preenchimento: se houvesse, um dia o .docx e o PDF da mesma peca
+  // diriam valores diferentes, e ninguem saberia qual foi assinado.
+  const pdf =
+    formato === "PDF"
+      ? await montarPdf(estruturaDoDocumento(novas[CAMINHO_DO_TEXTO]), {
+          titulo: `${NOME_DA_ESPECIE[especie]} - ${dados.cliente.nome}`,
+        })
+      : null;
+
   return {
-    arquivo,
-    nomeDoArquivo: `${especie.toLowerCase()}-${limpo || "cliente"}.docx`,
+    arquivo: pdf ? pdf.arquivo : await trocarTextos(conteudo, novas),
+    nomeDoArquivo: `${especie.toLowerCase()}-${limpo || "cliente"}.${formato.toLowerCase()}`,
+    formato,
     doEscritorio,
     semValor: [...semValor].sort(),
     desconhecidos: [...desconhecidos].sort(),
     texto: textoDoDocumento(novas[CAMINHO_DO_TEXTO]),
+    temImagem,
+    caracteresTrocados: pdf?.caracteresTrocados ?? [],
+    paginas: pdf?.paginas ?? null,
   };
 }

@@ -128,6 +128,49 @@ QUATRO cobrancas, nao tres.
 A forma de pagamento — boleto, Pix, cartao, ou o cliente escolhe — e do
 contrato e entra na peca.
 
+## Em que formato sai, e a conferencia antes de sair
+
+Na tela de **Gerar documentos** marca-se tambem o formato: **PDF**, **Word
+(.docx)**, ou os dois.
+
+| | O que e |
+|---|---|
+| `.docx` | o arquivo do escritorio, inteiro: timbre, fonte e formatacao como estao no modelo. So o texto dos campos foi mexido. |
+| PDF | o MESMO texto, com os mesmos valores, desenhado pelo BirdJud em A4 com as margens do modelo (`src/lib/pdf.ts`). |
+
+**O PDF nao e uma conversao do .docx.** Nao existe Word aqui dentro, e nao
+existe LibreOffice no servidor. O PDF e desenhado a partir do mesmo XML ja
+preenchido — nao ha um segundo caminho de preenchimento, porque se houvesse, um
+dia o .docx e o PDF da mesma peca diriam valores diferentes e ninguem saberia
+qual foi assinado.
+
+O que atravessa: o texto, os valores, o negrito, o alinhamento (incluindo
+justificado), as quebras de linha e os paragrafos em branco entre as clausulas.
+O que **nao** atravessa: imagem — o timbre, quase sempre —, tabela, recuo
+especial e a fonte propria do escritorio. Quando o modelo tem imagem, a tela
+avisa em amarelo e diz o caminho: baixar o `.docx` e exportar o PDF pelo Word.
+
+A fonte do PDF e a Times padrao, que escreve WinAnsi — todo o portugues cabe.
+Caractere de outra tabela, que entra por copiar e colar de outro programa, sai
+como `?` **e a tela diz qual foi**: um quadrado preto no meio de uma clausula
+nao pode passar calado.
+
+### A conferencia
+
+**Conferir na tela** monta a peca e mostra o PDF ali mesmo, num quadro, antes
+de qualquer download. Dali se baixa o PDF, se baixa o Word, se imprime ou se
+abre em outra aba. Os avisos aparecem acima do quadro: campo sem valor no
+cadastro, campo que o sistema nao conhece, modelo com imagem, caractere
+trocado.
+
+A ordem importa: o que a peca tem de errado tem de aparecer enquanto ainda da
+para arrumar, nao no papel que o cliente ja assinou. Conferir **nao** grava a
+escolha de quem assina — so o download grava, porque so ele e a peca saindo de
+verdade.
+
+A CSP precisou de `frame-src 'self' blob:` por causa desse quadro. Nao e
+abertura para terceiro: `blob:` so existe dentro da propria origem.
+
 ## Historico
 
 Modelo trocado vira inativo em vez de sumir. A peca que saiu ontem saiu daquele
@@ -139,7 +182,12 @@ Quem troca o modelo e so o ADMIN do escritorio. Baixar, qualquer usuario pode.
 ## Limites conhecidos
 
 - Cabecalho e rodape **sao** preenchidos (`header*.xml`, `footer*.xml`), que e
-  onde costuma morar o timbre. A previa na tela mostra so o corpo.
-- Saida em `.docx`. Nao ha conversao para PDF aqui.
+  onde costuma morar o timbre — e saem assim no `.docx`. O PDF desenha so o
+  corpo: um timbre escrito no cabecalho do modelo nao aparece no PDF.
+- O PDF nao traz imagem do modelo (timbre), tabela nem fonte propria do
+  escritorio — ver acima. Para um PDF identico ao papel da banca: baixar o
+  `.docx` e exportar do Word.
+- Nao ha envio para assinatura eletronica a partir da peca ainda. O conector do
+  Autentique existe e e testado em Integracoes, mas so valida o token.
 - Campo dentro de caixa de texto ou de tabela aninhada em desenho pode nao ser
   alcancado, pelo mesmo motivo: fica fora do corpo do documento.

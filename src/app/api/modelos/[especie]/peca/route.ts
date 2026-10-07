@@ -5,13 +5,15 @@ import { paraCentavos } from "@/lib/dinheiro";
 import { advogadosDaPeca } from "@/lib/qualificacao";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
-import { ehEspecie, gerarPeca } from "@/lib/modelos-do-escritorio";
+import {
+  TIPO_DO_FORMATO,
+  ehEspecie,
+  ehFormato,
+  gerarPeca,
+} from "@/lib/modelos-do-escritorio";
 import { respostaDoDominio } from "@/lib/modelos-respostas";
 
 export const dynamic = "force-dynamic";
-
-const TIPO_DOCX =
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const pedido = z.object({
   clienteId: z.string().min(1),
@@ -29,6 +31,10 @@ const pedido = z.object({
   advogadoIds: z.array(z.string().min(1)).max(50).optional(),
   // Guardar a escolha como o padrao deste cliente, para a proxima vez.
   guardarAdvogados: z.boolean().optional(),
+  // Em que arquivo a peca sai: PDF para assinar, imprimir ou mandar; DOCX para
+  // editar no Word. Quem quer os dois pede duas vezes — sao dois arquivos, e
+  // cada um vai para um lugar diferente.
+  formato: z.enum(["DOCX", "PDF"]).optional(),
   // Previa devolve texto e avisos; sem ela, devolve o arquivo.
   previa: z.boolean().optional(),
 });
@@ -194,6 +200,11 @@ export async function POST(
       );
     }
 
+    const formato = corpo.data.formato ?? "DOCX";
+    if (!ehFormato(formato)) {
+      return NextResponse.json({ erro: "Formato invalido." }, { status: 400 });
+    }
+
     const peca = await gerarPeca(escritorioId, especie, {
       cliente,
       representantes,
@@ -202,7 +213,7 @@ export async function POST(
       contrato,
       processo,
       recibo,
-    });
+    }, formato);
 
     if (corpo.data.previa) {
       return NextResponse.json({
@@ -210,16 +221,27 @@ export async function POST(
         semValor: peca.semValor,
         desconhecidos: peca.desconhecidos,
         doEscritorio: peca.doEscritorio,
+        temImagem: peca.temImagem,
+        caracteresTrocados: peca.caracteresTrocados,
+        paginas: peca.paginas,
       });
     }
 
     return new NextResponse(new Uint8Array(peca.arquivo), {
       headers: {
-        "content-type": TIPO_DOCX,
-        "content-disposition": `attachment; filename="${peca.nomeDoArquivo}"`,
-        // O que ficou sem valor vai no cabecalho tambem: a tela avisa mesmo
-        // quando o download foi direto.
+        "content-type": TIPO_DO_FORMATO[formato],
+        // `inline` porque a conferencia abre o PDF na propria tela; o download
+        // o navegador faz pelo nome que o link pede, nao por este cabecalho.
+        "content-disposition": `inline; filename="${peca.nomeDoArquivo}"`,
+        // Os avisos vao no cabecalho tambem: a tela precisa deles mesmo quando
+        // o que voltou foi o arquivo, nao JSON.
+        "x-nome-do-arquivo": peca.nomeDoArquivo,
         "x-campos-sem-valor": peca.semValor.join(","),
+        "x-campos-desconhecidos": peca.desconhecidos.join(","),
+        "x-modelo-do-escritorio": peca.doEscritorio ? "1" : "0",
+        "x-modelo-tem-imagem": peca.temImagem ? "1" : "0",
+        "x-caracteres-trocados": encodeURIComponent(peca.caracteresTrocados.join("")),
+        "x-paginas": peca.paginas === null ? "" : String(peca.paginas),
         "cache-control": "no-store",
       },
     });

@@ -27,6 +27,11 @@ export function montarCSP(
     "img-src 'self' data: https:",
     "font-src 'self'",
     "connect-src 'self'",
+    // A conferencia da peca mostra o PDF em um <iframe> com URL blob:, gerada
+    // pela propria pagina a partir da resposta da nossa API. Sem blob: aqui, o
+    // navegador barra o quadro e ninguem confere nada antes de assinar. Nao e
+    // abertura para terceiro: blob: so existe dentro desta origem.
+    "frame-src 'self' blob:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
