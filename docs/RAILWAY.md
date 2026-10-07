@@ -138,6 +138,14 @@ falhando derrubaria o lembrete da audiencia que comeca em quarenta minutos.
 O minuto 7, e nao o 0, e de proposito: no minuto cheio todo mundo agenda, e a
 fila do provedor atrasa.
 
+> **Servico criado pela API precisa de gatilho do GitHub a parte.** O
+> `serviceCreate` aceita `source.repo` e monta o servico, mas NAO cria o
+> `deploymentTrigger` — e sem ele o cron roda para sempre o codigo do dia em
+> que nasceu, sem erro nenhum e sem ninguem notar. Depois de criar:
+> `deploymentTriggerCreate(input: {projectId, environmentId, serviceId,
+> provider: "github", repository, branch})`. Conferir com
+> `service(id).repoTriggers` — lista vazia quer dizer servico orfao.
+
 Os horarios do cron do Railway sao em **UTC**; os da tabela ja estao
 convertidos.
 
