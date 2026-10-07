@@ -65,7 +65,7 @@ export async function POST(
       return NextResponse.json({ erro: "Cliente nao encontrado." }, { status: 404 });
     }
 
-    const [representantes, contrato, processo, escritorio] = await Promise.all([
+    const [representantes, contrato, processo, escritorio, advogados] = await Promise.all([
       comEscritorio(escritorioId, (db) =>
         db.representante.findMany({ where: { clienteId }, orderBy: { ordem: "asc" } }),
       ),
@@ -89,7 +89,33 @@ export async function POST(
       comEscritorio(escritorioId, (db) =>
         db.escritorio.findFirst({
           where: { id: escritorioId },
-          select: { nome: true, cidade: true, telefoneAtendimento: true },
+          select: {
+            nome: true,
+            cidade: true,
+            telefoneAtendimento: true,
+            razaoSocial: true,
+            cnpj: true,
+            registroOab: true,
+            enderecos: true,
+          },
+        }),
+      ),
+      // Quem assina pelo escritorio: advogado ativo que entra na peca. Um
+      // advogado que nao atua mais fica no sistema e sai do papel.
+      comEscritorio(escritorioId, (db) =>
+        db.usuario.findMany({
+          where: { ativo: true, papel: "ADVOGADO", assinaPecas: true },
+          orderBy: { criadoEm: "asc" },
+          select: {
+            nome: true,
+            oab: true,
+            cpf: true,
+            rg: true,
+            nacionalidade: true,
+            estadoCivil: true,
+            sociedade: true,
+            sociedadeCnpj: true,
+          },
         }),
       ),
     ]);
@@ -149,6 +175,7 @@ export async function POST(
       cliente,
       representantes,
       escritorio,
+      advogados,
       contrato,
       processo,
       recibo,

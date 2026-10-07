@@ -1,13 +1,14 @@
 // Os modelos que ja vem no sistema.
 //
-// NAO sao a peca pronta do escritorio: sao o ponto de partida. Cada banca tem
-// a sua redacao, o seu timbre e as suas clausulas, e e por isso que o caminho
-// normal e baixar, editar no Word e devolver. O que vem aqui existe para que
-// um escritorio novo consiga emitir a primeira procuracao no primeiro dia.
+// O texto base veio de contratos, procuracoes e declaracoes REAIS de
+// escritorio — a estrutura, as clausulas e a redacao de uso corrente. NENHUM
+// DADO VEIO JUNTO: nome de cliente, CPF, CNPJ, OAB, valor e objeto da acao
+// sairam todos, e no lugar deles ficaram os campos que o sistema preenche com
+// os dados de CADA escritorio.
 //
-// ANTES DE USAR COMO ESTA: o advogado responsavel le e adapta. O texto abaixo
-// e redacao de uso corrente, nao parecer juridico, e nenhuma clausula aqui foi
-// escrita olhando o caso de ninguem.
+// NAO SAO A PECA PRONTA DE NINGUEM. Sao o ponto de partida, para um escritorio
+// novo conseguir emitir no primeiro dia. Antes de usar como esta, o advogado
+// responsavel le e adapta: a redacao e a responsabilidade sao do escritorio.
 import type { Linha } from "./docx";
 import { NOME_DA_ESPECIE, type Especie } from "./modelos";
 
@@ -18,124 +19,247 @@ const TITULO = (texto: string): Linha => ({
   centro: true,
   espacoDepois: true,
 });
-const FECHO: Linha[] = [
-  { texto: "", espacoDepois: true },
-  { texto: "{{data.cidade_e_data}}", centro: true, espacoDepois: true },
-  { texto: "", espacoDepois: true },
-  { texto: "_______________________________", centro: true },
-  { texto: "{{cliente.nome}}", centro: true },
+const SUB = (texto: string): Linha => ({ texto, negrito: true, espacoDepois: true });
+const BRANCO: Linha = { texto: "", espacoDepois: true };
+const CENTRO = (texto: string): Linha => ({ texto, centro: true });
+
+const ASSINA_CLIENTE: Linha[] = [
+  BRANCO,
+  CENTRO("_______________________________"),
+  CENTRO("{{cliente.nome}}"),
 ];
 
+// ---------------------------------------------------------------------------
+
 const PROCURACAO: Linha[] = [
-  TITULO("PROCURACAO"),
+  TITULO("INSTRUMENTO PARTICULAR DE PROCURACAO"),
   T(
-    "{{cliente.qualificacao}}, pelo presente instrumento particular de procuracao, " +
-      "nomeia e constitui seu bastante procurador {{escritorio.nome}}, a quem confere " +
-      "amplos poderes para o foro em geral, com a clausula ad judicia et extra, em " +
-      "qualquer juizo, instancia ou tribunal, podendo propor contra quem de direito as " +
-      "acoes competentes e defende-lo nas contrarias, seguindo umas e outras ate final " +
-      "decisao, usando os recursos legais e acompanhando-os, conferindo-lhe, ainda, " +
-      "poderes especiais para confessar, desistir, transigir, firmar compromissos ou " +
-      "acordos, receber e dar quitacao, agindo em conjunto ou separadamente, podendo " +
-      "ainda substabelecer esta a outrem, com ou sem reservas de iguais poderes, para " +
-      "agir em conjunto ou separadamente com o substabelecido.",
+    "{{cliente.qualificacao}}, pelo presente instrumento de Procuracao, nomeia e " +
+      "constitui seu bastante procurador {{escritorio.qualificacao}}, representado " +
+      "por {{advogados.qualificacao}}, a quem confere amplos poderes para " +
+      "representacao em geral, em qualquer orgao, juizo, instancia ou tribunal, " +
+      "podendo pelo outorgante assinar, firmar acordos e compromissos, receber e dar " +
+      "quitacao ate final decisao, usando os meios e poderes legais que este " +
+      "instrumento lhe confere, agindo em conjunto ou separadamente, podendo " +
+      "substabelecer esta em outra, com ou sem reservas de iguais poderes, e em " +
+      "especial para atuar em {{honorarios.descricao}}, ratificando todos os atos " +
+      "necessarios para o bom e cabal desempenho.",
   ),
-  T("Objeto: {{honorarios.descricao}}."),
-  ...FECHO,
+  BRANCO,
+  CENTRO("{{data.cidade_e_data}}"),
+  ...ASSINA_CLIENTE,
 ];
 
 const DECLARACAO: Linha[] = [
   TITULO("DECLARACAO DE HIPOSSUFICIENCIA"),
   T(
-    "{{cliente.qualificacao}}, DECLARA, para os devidos fins de direito, " +
-      "especialmente para instruir acao judicial, que nao tem condicoes de arcar com as " +
-      "custas e despesas do processo e com os honorarios advocaticios sem prejuizo do " +
-      "proprio sustento e do de sua familia, nos termos do artigo 98 do Codigo de " +
-      "Processo Civil e do artigo 5º, inciso LXXIV, da Constituicao Federal.",
+    "{{cliente.qualificacao}}, DECLARO, para os devidos fins de direito, " +
+      "especialmente para instruir acao judicial, que sou pobre na acepcao juridica " +
+      "do termo, nao tendo condicoes de pagar as custas e as despesas do processo sem " +
+      "sacrificio do proprio sustento e do de minha familia, nos termos do artigo 98 " +
+      "do Codigo de Processo Civil e do artigo 5º, inciso LXXIV, da Constituicao " +
+      "Federal.",
   ),
-  T("Por ser a expressao da verdade, firma a presente declaracao."),
-  ...FECHO,
+  T("Por ser a expressao da verdade, assino a presente declaracao."),
+  BRANCO,
+  CENTRO("{{data.cidade_e_data}}"),
+  ...ASSINA_CLIENTE,
 ];
 
 const CONTRATO: Linha[] = [
   TITULO("CONTRATO DE PRESTACAO DE SERVICOS ADVOCATICIOS"),
+
+  SUB("CONTRATADO:"),
   T(
-    "CONTRATANTE: {{cliente.qualificacao}}, doravante denominado simplesmente " +
-      "CONTRATANTE.",
+    "{{escritorio.qualificacao}}, representado por {{advogados.qualificacao}}, " +
+      "doravante denominado simplesmente ADVOGADO.",
+  ),
+
+  SUB("CONTRATANTE:"),
+  T("{{cliente.qualificacao}}, doravante denominado simplesmente CLIENTE."),
+
+  SUB("I — PREAMBULO"),
+  T(
+    "A duracao da presente acao ou processo administrativo nao tem prazo determinado, " +
+      "tendo em vista que o seu termino se condiciona aos recursos porventura " +
+      "interpostos pelas partes, ao andamento do processo nos juizos e tribunais e a " +
+      "demais fatores que impedem a fixacao de duracao da acao.",
+  ),
+  T("Este contrato se refere a atuacao em {{honorarios.descricao}}."),
+  T(
+    "O ADVOGADO, face ao mandato judicial e extrajudicial que lhe foi outorgado, " +
+      "obriga-se a prestar seus servicos profissionais na defesa dos direitos do " +
+      "CLIENTE, em qualquer juizo, instancia ou tribunal, desempenhando com zelo a " +
+      "atividade do seu cargo.",
+  ),
+
+  SUB("II — CLAUSULAS CONTRATUAIS"),
+
+  SUB("CLAUSULA 1ª — DOS HONORARIOS ADVOCATICIOS"),
+  T(
+    "1.1. Os honorarios do presente contrato ficam fixados em {{honorarios.valor}} " +
+      "({{honorarios.valor_por_extenso}}), contratados {{honorarios.contratacao}}, " +
+      "com o primeiro vencimento em {{honorarios.primeiro_vencimento}} e os demais no " +
+      "mesmo dia dos meses seguintes, pagos por {{honorarios.forma}}.",
   ),
   T(
-    "CONTRATADO: {{escritorio.nome}}, com atendimento em {{escritorio.cidade}}, " +
-      "doravante denominado simplesmente CONTRATADO.",
+    "1.2. Em caso de renuncia, substabelecimento ou desistencia da acao por parte do " +
+      "CLIENTE antes do julgamento em primeira instancia, sera devido, a titulo de " +
+      "multa, percentual do valor total do contrato, devidamente corrigido e acrescido " +
+      "de juros legais, conforme ajustado entre as partes.",
   ),
   T(
-    "CLAUSULA 1ª — DO OBJETO. O CONTRATADO prestara ao CONTRATANTE os servicos " +
-      "advocaticios relativos a {{honorarios.descricao}}, compreendidos o estudo do " +
-      "caso, a elaboracao das pecas necessarias e o acompanhamento ate decisao final na " +
-      "instancia contratada.",
-  ),
-  T(
-    "CLAUSULA 2ª — DOS HONORARIOS. Pelos servicos contratados, o CONTRATANTE pagara ao " +
-      "CONTRATADO a quantia de {{honorarios.valor}} ({{honorarios.valor_por_extenso}}), " +
-      "contratada {{honorarios.contratacao}}, vencendo a primeira em " +
-      "{{honorarios.primeiro_vencimento}} e as demais no mesmo dia dos meses seguintes, " +
-      "pagas por {{honorarios.forma}}.",
-  ),
-  T(
-    "Paragrafo unico. Havendo exito, sera devido ao CONTRATADO o percentual de " +
+    "1.3. Havendo exito, sera devido ao ADVOGADO o percentual de " +
       "{{honorarios.percentual}} sobre o proveito economico obtido, suprimindo-se esta " +
       "clausula quando a contratacao for apenas por valor fixo.",
   ),
   T(
-    "CLAUSULA 3ª — DOS HONORARIOS DE SUCUMBENCIA. Os honorarios de sucumbencia " +
-      "pertencem ao CONTRATADO, nos termos do artigo 23 da Lei nº 8.906/94, e nao se " +
-      "confundem com os honorarios contratados nesta avenca.",
+    "1.4. Ao ADVOGADO reserva-se o direito de aplicar, na cobranca dos honorarios, a " +
+      "tabela fixada pela Ordem dos Advogados do Brasil caso o CLIENTE transija com a " +
+      "parte contraria em valores manifestamente inferiores aos que tinha direito em " +
+      "virtude da acao. Nesse caso, o valor total dos honorarios sera fixado de acordo " +
+      "com a quantidade de atos processuais praticados, acrescidos de juros legais e " +
+      "correcao monetaria.",
   ),
   T(
-    "CLAUSULA 4ª — DAS DESPESAS. Custas, taxas judiciarias, emolumentos, honorarios " +
-      "periciais e despesas de deslocamento correm por conta do CONTRATANTE, e serao " +
-      "previamente informadas sempre que possivel.",
+    "1.5. O total dos honorarios previstos nos itens anteriores, independentemente de " +
+      "qual parte tenha dado causa, podera ser exigido imediatamente se houver " +
+      "composicao, substabelecimento ou desistencia por qualquer das partes " +
+      "litigantes, dentro ou fora do processo, por quaisquer circunstancias nao " +
+      "determinadas pelo ADVOGADO, inclusive caso fortuito ou forca maior, ou ainda se " +
+      "lhe for cassado o mandato sem culpa sua.",
   ),
   T(
-    "CLAUSULA 5ª — DAS OBRIGACOES DO CONTRATANTE. O CONTRATANTE fornecera ao CONTRATADO " +
-      "os documentos e as informacoes necessarias, respondendo pela veracidade do que " +
-      "declarar, e mantera atualizados os seus dados de contato: {{cliente.telefone}} e " +
-      "{{cliente.email}}.",
+    "Paragrafo unico. No caso de improcedencia da acao, o CLIENTE ficara responsavel " +
+      "pelo pagamento das despesas processuais, custas e demais encargos.",
+  ),
+
+  SUB("CLAUSULA 2ª — DA ATUALIZACAO DE ENDERECO E DOS DOCUMENTOS"),
+  T(
+    "2.1. E de inteira responsabilidade do CLIENTE manter seu endereco e seus contatos " +
+      "atualizados junto ao escritorio contratado.",
   ),
   T(
-    "CLAUSULA 6ª — DA RESCISAO. O contrato pode ser rescindido por qualquer das partes " +
-      "mediante comunicacao escrita, ficando devidos os honorarios proporcionais aos " +
-      "servicos ja prestados ate a data da rescisao.",
+    "2.2. As atualizacoes devem ser feitas junto ao escritorio, no horario de " +
+      "funcionamento, e so serao aceitas mediante requerimento do CLIENTE devidamente " +
+      "assinado.",
   ),
   T(
-    "CLAUSULA 7ª — DO FORO. Fica eleito o foro da comarca de {{escritorio.cidade}} para " +
-      "dirimir as questoes oriundas deste contrato.",
+    "2.3. Qualquer prejuizo advindo do descumprimento dos itens anteriores desobriga o " +
+      "ADVOGADO de eventual indenizacao ao CLIENTE.",
   ),
-  T("E, por estarem justas e contratadas, as partes firmam o presente instrumento."),
+  T(
+    "2.4. O CLIENTE devera fornecer ao ADVOGADO todos os documentos e informacoes " +
+      "necessarios ao bom e rapido andamento da acao, ou para satisfazer exigencias " +
+      "processuais e extrajudiciais, dentro dos prazos legais.",
+  ),
+
+  SUB("CLAUSULA 3ª — DO COMPARECIMENTO AS AUDIENCIAS"),
+  T(
+    "3.1. E responsabilidade do ADVOGADO informar a data e o horario das audiencias " +
+      "designadas, com antecedencia minima de 72 (setenta e duas) horas, por telefone, " +
+      "mensagem, correio eletronico ou via postal.",
+  ),
+  T(
+    "3.2. Fica ressalvado que qualquer prejuizo processual decorrente da falta do " +
+      "CLIENTE as audiencias nao obriga o ADVOGADO a ressarcir qualquer valor a titulo " +
+      "de indenizacao.",
+  ),
+  T(
+    "3.3. Em caso de forca maior que impossibilite o comparecimento, o fato devera ser " +
+      "comunicado com a devida antecedencia e mediante comprovante; o descumprimento " +
+      "deste item sujeita o CLIENTE ao previsto no item 3.2.",
+  ),
+  T("3.4. A locomocao do CLIENTE ate o local das audiencias nao e responsabilidade do ADVOGADO."),
+
+  SUB("CLAUSULA 4ª — DO SUBSTABELECIMENTO"),
+  T(
+    "4.1. Em caso de urgencia ou forca maior, pode o ADVOGADO substabelecer, com " +
+      "reservas de iguais poderes, a presente acao, quando necessaria a pratica de ato " +
+      "especifico.",
+  ),
+  T(
+    "4.2. No caso de substabelecimento definitivo, sem reservas de poderes, o ADVOGADO " +
+      "devera comunicar o CLIENTE em 10 (dez) dias, por escrito. Os honorarios " +
+      "contratados, independentemente de qual parte tenha tido a iniciativa, serao " +
+      "cobrados conforme o previsto na Clausula 1ª.",
+  ),
+
+  SUB("CLAUSULA 5ª — DOS GASTOS E DESPESAS COMPLEMENTARES"),
+  T(
+    "5.1. Todos os gastos com pericias, laudos, honorarios de contador, extracao de " +
+      "carta de sentenca e congeneres, quando contratados com a aprovacao do CLIENTE, " +
+      "sao de responsabilidade dele, contra a apresentacao de comprovantes.",
+  ),
+  T(
+    "5.2. Eventual multa por litigancia de ma-fe decorrente de documentos ou " +
+      "informacoes prestadas pelo CLIENTE desobriga o ADVOGADO de qualquer especie de " +
+      "ressarcimento.",
+  ),
+
+  SUB("CLAUSULA 6ª — DOS HONORARIOS SUCUMBENCIAIS"),
+  T(
+    "6.1. Os honorarios advindos da sucumbencia pertencem ao ADVOGADO, nos termos do " +
+      "artigo 23 da Lei nº 8.906/94.",
+  ),
+  T(
+    "6.2. Os honorarios sucumbenciais nao excluem o direito do ADVOGADO de receber os " +
+      "honorarios contratados previstos na Clausula 1ª.",
+  ),
+
+  SUB("CLAUSULA 7ª — DO ADITAMENTO"),
+  T("7.1. As partes, de comum acordo, podem promover o aditamento do presente contrato."),
+
+  SUB("CLAUSULA 8ª — DA RESCISAO E DA ELEICAO DE FORO"),
+  T(
+    // ATENCAO: o artigo e o 784, III, do CPC de 2015 — "documento particular " +
+    // assinado pelo devedor e por 2 (duas) testemunhas". O artigo 585, II,
+    // que aparece em modelos antigos, e do CPC de 1973, revogado. E por isso
+    // que este contrato pede DUAS testemunhas: sem elas, ele nao e titulo
+    // executivo extrajudicial.
+    "8.1. O presente contrato constitui titulo executivo extrajudicial, nos termos do " +
+      "artigo 784, inciso III, do Codigo de Processo Civil, por ser documento " +
+      "particular assinado pelo devedor e por duas testemunhas.",
+  ),
+  T(
+    "8.2. O descumprimento das obrigacoes assumidas neste contrato importa em rescisao " +
+      "extrajudicial do mesmo.",
+  ),
+  T("8.3. Fica eleito o foro da comarca de {{escritorio.cidade}} para dirimir as questoes oriundas deste contrato."),
+
+  T(
+    "E, por estarem assim justas e contratadas, as partes firmam o presente " +
+      "instrumento em 02 (duas) vias de igual teor, na presenca de duas testemunhas.",
+  ),
+
+  BRANCO,
+  CENTRO("{{data.cidade_e_data}}"),
+  BRANCO,
+  CENTRO("_______________________________"),
+  CENTRO("{{cliente.nome}} — CONTRATANTE"),
   { texto: "", espacoDepois: true },
-  { texto: "{{data.cidade_e_data}}", centro: true, espacoDepois: true },
+  CENTRO("{{advogados.assinaturas}}"),
   { texto: "", espacoDepois: true },
-  { texto: "_______________________________", centro: true },
-  { texto: "{{cliente.nome}} — CONTRATANTE", centro: true, espacoDepois: true },
-  { texto: "_______________________________", centro: true },
-  { texto: "{{escritorio.nome}} — CONTRATADO", centro: true },
+  { texto: "TESTEMUNHAS:", espacoDepois: true },
+  { texto: "1) _____________________________  Nome:                        CPF:", espacoDepois: true },
+  { texto: "2) _____________________________  Nome:                        CPF:" },
 ];
 
 const RECIBO: Linha[] = [
   TITULO("RECIBO DE PAGAMENTO DE HONORARIOS"),
   T("Valor: {{recibo.valor}} ({{recibo.valor_por_extenso}})"),
   T(
-    "Recebi de {{cliente.qualificacao}}, a quantia acima, referente a " +
+    "Recebi de {{cliente.qualificacao}} a quantia acima, referente a " +
       "{{recibo.referente_a}}, paga por {{recibo.forma}} em {{recibo.data}}.",
   ),
   T(
-    "Para clareza, firmo o presente recibo, dando plena e geral quitacao do " +
-      "valor ora recebido, e somente dele.",
+    "Para clareza, firmo o presente recibo, dando plena e geral quitacao do valor ora " +
+      "recebido, e somente dele.",
   ),
-  { texto: "", espacoDepois: true },
-  { texto: "{{data.cidade_e_data}}", centro: true, espacoDepois: true },
-  { texto: "", espacoDepois: true },
-  { texto: "_______________________________", centro: true },
-  { texto: "{{escritorio.nome}}", centro: true },
+  BRANCO,
+  CENTRO("{{data.cidade_e_data}}"),
+  BRANCO,
+  CENTRO("{{advogados.assinaturas}}"),
 ];
 
 export const MODELO_PADRAO: Record<Especie, Linha[]> = {

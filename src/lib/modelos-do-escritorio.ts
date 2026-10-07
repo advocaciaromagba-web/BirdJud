@@ -11,6 +11,15 @@ import { formatarDocumento } from "./documentos";
 import { enderecoEmLinha, ehPessoaJuridica, qualificacao } from "./representantes";
 import { comoSeContrata, percentualEmTexto, planoDoContrato } from "./honorarios";
 import {
+  cidadeEData,
+  enderecoEmLinha as enderecoDaSede,
+  linhasDeAssinatura,
+  qualificacaoDoEscritorio,
+  qualificacaoDosAdvogados,
+  sedeDe,
+  type AdvogadoParaQualificar,
+} from "./qualificacao";
+import {
   lerTextos,
   montarDocx,
   trocarTextos,
@@ -286,7 +295,17 @@ export function qualificacaoDoCliente(
 export type DadosDaPeca = {
   cliente: Cliente;
   representantes?: RepresentanteDoBanco[];
-  escritorio: { nome: string; cidade: string | null; telefoneAtendimento: string | null };
+  escritorio: {
+    nome: string;
+    cidade: string | null;
+    telefoneAtendimento: string | null;
+    razaoSocial?: string | null;
+    cnpj?: string | null;
+    registroOab?: string | null;
+    enderecos?: unknown;
+  };
+  /** Quem assina a peca pelo escritorio. */
+  advogados?: AdvogadoParaQualificar[];
   processo?: { numero: string; vara: string | null; tribunal: string | null } | null;
   contrato?: {
     forma?: string;
@@ -346,6 +365,17 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     "escritorio.nome": d.escritorio.nome,
     "escritorio.cidade": d.escritorio.cidade,
     "escritorio.telefone": d.escritorio.telefoneAtendimento,
+    "escritorio.qualificacao": qualificacaoDoEscritorio(d.escritorio),
+    "escritorio.cnpj": d.escritorio.cnpj ? formatarDocumento(d.escritorio.cnpj) : null,
+    "escritorio.endereco": enderecoDaSede(sedeDe(d.escritorio.enderecos)) || null,
+    "advogados.qualificacao": (d.advogados ?? []).length
+      ? qualificacaoDosAdvogados(d.advogados!)
+      : null,
+    "advogados.assinaturas": (d.advogados ?? []).length
+      ? linhasDeAssinatura(d.advogados!)
+          .map((a) => `_______________________________\n${a.nome}${a.oab ? `\n${a.oab}` : ""}`)
+          .join("\n\n")
+      : null,
     "processo.numero": d.processo?.numero ?? null,
     "processo.vara": d.processo?.vara ?? null,
     "processo.tribunal": d.processo?.tribunal ?? null,
@@ -376,7 +406,7 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     "recibo.forma": d.recibo?.forma ?? null,
     "recibo.data": d.recibo ? emDia(d.recibo.quando) : null,
     "data.hoje": porExtensoData(hoje),
-    "data.cidade_e_data": `${d.escritorio.cidade ?? ""}, ${porExtensoData(hoje)}`.replace(/^, /, ""),
+    "data.cidade_e_data": cidadeEData(d.escritorio.cidade, hoje),
   };
 }
 

@@ -51,10 +51,24 @@ fim de um paragrafo nao pode casar com um `}}` de outro e comer o texto do meio.
 `src/lib/modelos-padrao.ts`, em texto legivel, nao em binario — para poder ser
 lido e revisado como qualquer outro codigo.
 
+O texto base veio de contrato, procuracao e declaracao REAIS de escritorio — a
+estrutura, as clausulas e a redacao de uso corrente. **Nenhum dado veio junto:**
+nome de cliente, CPF, CNPJ, OAB, valor e objeto da acao sairam todos, e no lugar
+deles ficaram os campos que o sistema preenche com os dados de CADA escritorio.
+
 **Nao e a peca pronta de ninguem.** E o ponto de partida, para um escritorio
 novo conseguir emitir no primeiro dia. Antes de usar como esta, o advogado
 responsavel le e adapta: a redacao e a responsabilidade sao do escritorio, e a
 tela diz isso.
+
+### Uma correcao que o modelo de origem precisava
+
+O modelo real dizia que o contrato e titulo executivo extrajudicial "nos termos
+do artigo 585, inciso II, do Codigo de Processo Civil". Esse artigo e do **CPC
+de 1973, revogado**. No CPC de 2015 o dispositivo e o **artigo 784, inciso
+III** — "o documento particular assinado pelo devedor e por 2 (duas)
+testemunhas" —, que e exatamente por que o contrato pede duas testemunhas no
+pe. O modelo do sistema cita o artigo vigente.
 
 ## Onde se gera
 

@@ -12,6 +12,11 @@ import {
   preencher,
   textoDoDocumento,
 } from "../src/lib/modelos";
+import {
+  cidadeEData,
+  qualificacaoDoAdvogado,
+  qualificacaoDoEscritorio,
+} from "../src/lib/qualificacao";
 
 /** Um paragrafo de .docx, com o texto repartido como o Word reparte. */
 function paragrafo(...pedacos: string[]): string {
@@ -155,5 +160,65 @@ describe("cabecalho e rodape", () => {
       "escritorio.cidade": "Sao Paulo",
     });
     expect(textoDoDocumento(r.xml)).toBe("Advocacia Modelo — Sao Paulo");
+  });
+});
+
+describe("qualificacao na peca", () => {
+  // "Ana Paula Martins, brasileira, casada, advogado, inscrito na OAB" e um
+  // erro que salta aos olhos de quem assina.
+  it("concorda com o genero que a propria pessoa cadastrou", () => {
+    const dela = qualificacaoDoAdvogado({
+      nome: "Ana", oab: "SP 1", cpf: "52998224725", nacionalidade: "brasileira", estadoCivil: "casada",
+    });
+    expect(dela).toContain("advogada, inscrita");
+    expect(dela).toContain("portadora do CPF");
+
+    const dele = qualificacaoDoAdvogado({
+      nome: "Bruno", oab: "SP 2", cpf: "11144477735", nacionalidade: "brasileiro", estadoCivil: "solteiro",
+    });
+    expect(dele).toContain("advogado, inscrito");
+    expect(dele).toContain("portador do CPF");
+  });
+
+  // Nome nao diz genero, e errar o genero de alguem em um documento que ela
+  // assina e pior do que o masculino por falta de dado.
+  it("sem dado nenhum fica no masculino, que e a forma do cargo em lei", () => {
+    expect(qualificacaoDoAdvogado({ nome: "Alguem", oab: "SP 3" })).toContain("advogado, inscrito");
+  });
+
+  it("o que nao foi preenchido nao aparece", () => {
+    const q = qualificacaoDoAdvogado({ nome: "Alguem", oab: "SP 3" });
+    expect(q).not.toContain("RG");
+    expect(q).not.toContain("CPF");
+  });
+
+  it("sociedade unipessoal vem antes, e ele representa ela", () => {
+    const q = qualificacaoDoAdvogado({
+      nome: "Ana", oab: "SP 1", nacionalidade: "brasileira",
+      sociedade: "Ana Sociedade Unipessoal de Advocacia", sociedadeCnpj: "11444777000161",
+    });
+    expect(q.startsWith("Ana Sociedade Unipessoal de Advocacia")).toBe(true);
+    expect(q).toContain("11.444.777/0001-61");
+    expect(q).toContain("representada por Ana");
+  });
+
+  it("o escritorio sai com CNPJ, registro na OAB e sede", () => {
+    const q = qualificacaoDoEscritorio({
+      nome: "Marca", razaoSocial: "Alfa Sociedade Unipessoal de Advocacia",
+      cnpj: "11222333000181", registroOab: "99999",
+      enderecos: [{ logradouro: "Rua A", numero: "10", cidade: "Ribeirao Preto", uf: "SP" }],
+    });
+    expect(q.startsWith("Alfa Sociedade Unipessoal de Advocacia")).toBe(true);
+    expect(q).toContain("11.222.333/0001-81");
+    expect(q).toContain("Registro de Sociedade de Advocacia nº 99999");
+    expect(q).toContain("com sede a Rua A, nº 10");
+  });
+
+  // Inventar a comarca de alguem e pior que a peca sair com um campo a menos.
+  it("sem cidade, o fecho leva so a data", () => {
+    expect(cidadeEData(null, new Date("2026-10-07T12:00:00Z"))).toBe("7 de outubro de 2026");
+    expect(cidadeEData("Guariba", new Date("2026-10-07T12:00:00Z"))).toBe(
+      "Guariba, 7 de outubro de 2026",
+    );
   });
 });

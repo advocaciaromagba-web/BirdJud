@@ -20,7 +20,11 @@ model Escritorio {
   id     String  @id @default(cuid())
   slug   String  @unique // subdominio: <slug>.birdjud.com.br
   nome   String
+  /// Razao social, quando o nome do escritorio e marca e nao o registro.
+  razaoSocial String?
   cnpj   String?
+  /// Registro de Sociedade de Advocacia na OAB. Entra na qualificacao da peca.
+  registroOab String?
   status String  @default("TESTE") // TESTE | ATIVO | INADIMPLENTE | SUSPENSO | ENCERRADO
   faixa  String  @default("ATE_1") // ATE_1 | ATE_3 | ATE_10 | ATE_25 | ATE_50
 
@@ -138,6 +142,16 @@ model Usuario {
   senhaHash    String
   papel        String    @default("USUARIO") // ADMIN | ADVOGADO | USUARIO
   oab          String?
+  /// Qualificacao do advogado, para a peca — nao e cadastro de RH.
+  cpf           String?
+  rg            String?
+  nacionalidade String?
+  estadoCivil   String?
+  /// Sociedade unipessoal propria, comum em banca de dois socios.
+  sociedade     String?
+  sociedadeCnpj String?
+  /// Entra na peca? Advogado que nao atua mais fica no sistema e sai do papel.
+  assinaPecas   Boolean @default(true)
   advogado     Boolean   @default(false) // conta na faixa de advogados
   ativo        Boolean   @default(true)
   doisFatores  String? // segredo TOTP, so quando ativado
