@@ -23,7 +23,28 @@ export type ParticipanteNaTela = {
   email: string | null;
   papel: string | null;
   avisar: boolean;
+  /** O que a pessoa respondeu ao lembrete pelo WhatsApp. */
+  confirmadoEm: Date | null;
+  recusadoEm: Date | null;
 };
+
+/**
+ * Quem e a mesma pessoa entre a lista velha e a nova.
+ *
+ * Cliente pelo id; quem nao e cliente, pelo telefone ou pelo e-mail. Nome nao
+ * serve: "Maria" e "Maria Helena" sao a mesma pessoa redigitada, e duas
+ * testemunhas podem ter o mesmo primeiro nome.
+ */
+function mesmaPessoa(p: {
+  clienteId?: string | null;
+  telefone?: string | null;
+  email?: string | null;
+}): string | null {
+  if (p.clienteId) return `cliente:${p.clienteId}`;
+  if (p.telefone) return `tel:${p.telefone}`;
+  if (p.email) return `email:${p.email.toLowerCase()}`;
+  return null;
+}
 
 /**
  * Troca a lista inteira de participantes do compromisso.
@@ -31,6 +52,12 @@ export type ParticipanteNaTela = {
  * Apaga e grava de novo, como os representantes: a lista e pequena e vem
  * inteira da tela, e tentar casar linha a linha so inventaria casos de borda
  * sem ganhar nada.
+ *
+ * COM UMA EXCECAO, e ela custou para aparecer: a resposta do cliente pelo
+ * WhatsApp fica gravada NO PARTICIPANTE. Apagar e regravar jogaria fora a
+ * confirmacao de presenca toda vez que alguem mexesse na lista — e o
+ * escritorio veria a audiencia voltar para "aguardando" sem nada ter
+ * acontecido. Entao o que a pessoa respondeu atravessa a troca.
  */
 export async function salvarParticipantes(
   escritorioId: string,
@@ -56,6 +83,25 @@ export async function salvarParticipantes(
   );
   if (!doEscritorio) throw new ParticipanteInvalido("Compromisso nao encontrado.");
 
+  const antigos = await comEscritorio(escritorioId, (db) =>
+    db.participanteDeCompromisso.findMany({
+      where: { compromissoId },
+      select: {
+        clienteId: true,
+        telefone: true,
+        email: true,
+        confirmadoEm: true,
+        recusadoEm: true,
+      },
+    }),
+  );
+  const respostas = new Map(
+    antigos
+      .filter((a) => a.confirmadoEm || a.recusadoEm)
+      .map((a) => [mesmaPessoa(a), a] as const)
+      .filter(([chave]) => chave !== null),
+  );
+
   await comEscritorio(escritorioId, (db) =>
     db.participanteDeCompromisso.deleteMany({ where: { compromissoId } }),
   );
@@ -63,7 +109,15 @@ export async function salvarParticipantes(
 
   await comEscritorio(escritorioId, (db) =>
     db.participanteDeCompromisso.createMany({
-      data: limpos.map((p) => semEscritorio({ ...p, compromissoId })),
+      data: limpos.map((p) => {
+        const antes = respostas.get(mesmaPessoa(p));
+        return semEscritorio({
+          ...p,
+          compromissoId,
+          confirmadoEm: antes?.confirmadoEm ?? null,
+          recusadoEm: antes?.recusadoEm ?? null,
+        });
+      }),
     }),
   );
   return limpos.length;
@@ -96,6 +150,8 @@ export async function participantesDoCompromisso(
     email: p.email ?? p.cliente?.email ?? null,
     papel: p.papel,
     avisar: p.avisar,
+    confirmadoEm: p.confirmadoEm,
+    recusadoEm: p.recusadoEm,
   }));
 }
 

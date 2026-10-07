@@ -5,6 +5,7 @@
 // nao vira aviso perdido, erro que a Meta ja disse ser definitivo nao vira
 // tres tentativas, o mesmo aviso nao sai duas vezes, e um canal nao atrapalha
 // o outro.
+import { createHmac } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import {
   afterAll,
@@ -24,6 +25,7 @@ import { salvarIntegracao } from "../src/lib/integracao";
 import { consumoDoMes } from "../src/lib/consumo";
 import { enviarAvisosNoWhatsapp, gerarAvisos } from "../src/lib/avisos";
 import {
+  assinaturaConfere,
   enviarModelo,
   explicar,
   FalhaNoWhatsapp,
@@ -460,5 +462,41 @@ d("avisos pelo WhatsApp", () => {
     }).catch((e) => e);
     expect(erro).toBeInstanceOf(FalhaNoWhatsapp);
     expect((erro as FalhaNoWhatsapp).definitivo).toBe(false);
+  });
+});
+
+describe("a assinatura do webhook da Meta", () => {
+  const SEGREDO = "segredo-do-app";
+  const corpo = '{"entry":[{"changes":[]}]}';
+  const assinar = (texto: string, segredo = SEGREDO) =>
+    `sha256=${createHmac("sha256", segredo).update(texto, "utf8").digest("hex")}`;
+
+  it("aceita o que a Meta assinou", () => {
+    expect(assinaturaConfere(corpo, assinar(corpo), SEGREDO)).toBe(true);
+  });
+
+  it("recusa corpo trocado, mesmo com assinatura bem formada", () => {
+    expect(assinaturaConfere('{"entry":[]}', assinar(corpo), SEGREDO)).toBe(false);
+  });
+
+  it("recusa assinatura de outro segredo", () => {
+    expect(assinaturaConfere(corpo, assinar(corpo, "outro"), SEGREDO)).toBe(false);
+  });
+
+  it("recusa quando nao vem assinatura nenhuma", () => {
+    // Sem isso, qualquer um confirmaria a audiencia de qualquer cliente.
+    expect(assinaturaConfere(corpo, null, SEGREDO)).toBe(false);
+    expect(assinaturaConfere(corpo, "", SEGREDO)).toBe(false);
+  });
+
+  it("recusa assinatura sem o prefixo sha256=", () => {
+    const so = assinar(corpo).slice("sha256=".length);
+    expect(assinaturaConfere(corpo, so, SEGREDO)).toBe(false);
+  });
+
+  it("um espaco a mais no corpo ja derruba a conta", () => {
+    // E por isso que a rota le o corpo CRU: JSON.parse + JSON.stringify muda
+    // espaco e ordem, e a assinatura deixaria de fechar.
+    expect(assinaturaConfere(`${corpo} `, assinar(corpo), SEGREDO)).toBe(false);
   });
 });

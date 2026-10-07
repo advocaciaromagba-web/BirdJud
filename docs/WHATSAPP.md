@@ -81,6 +81,94 @@ texto tem significado declarado.
 - Numero nao conectado nao e falha: os avisos ficam pendentes e saem no dia em
   que o escritorio conectar.
 
+## A resposta de quem recebe
+
+O lembrete da audiencia sai sozinho, 24 horas antes. Ate aqui a resposta caia
+no vazio: o escritorio so sabia que o cliente nao viria quando a cadeira ficava
+vazia na frente do juiz.
+
+Agora quem recebe responde, e o sistema le.
+
+| O que a pessoa escreve | O que o sistema faz |
+|---|---|
+| `1`, `sim`, `ok`, `confirmo`, 👍 | marca **presenca confirmada** no participante e responde confirmando |
+| `2`, `nao`, `nao posso`, `desmarcar`, 👎 | marca **nao podera ir** e responde que alguem do escritorio vai falar com ele |
+| `parar`, `sair`, `descadastrar` | grava o bloqueio e **nao manda mais WhatsApp** para aquele numero, deste escritorio |
+| qualquer outra coisa, inclusive audio | nao mexe em nada, responde que alguem vai ler, e aparece na **Agenda** em "Respostas no WhatsApp que ninguem leu" |
+
+### As tres regras que importam
+
+**1. A assimetria.** Marcar errado "nao vai" custa um telefonema. Marcar errado
+"confirmado" custa uma audiencia em que o cliente nao aparece — e quem responde
+por isso e o advogado, na frente do juiz. As duas leituras erradas nao tem o
+mesmo preco, entao a duvida sempre cai para o lado de NAO confirmar:
+
+- **negacao vence**: "nao confirmo" contem "confirmo", e uma busca ingenua por
+  palavra marcaria a audiencia como confirmada;
+- **mensagem comprida nunca confirma sozinha**: "vou tentar chegar no horario"
+  e gente falando, e vai para uma pessoa ler.
+
+**2. A resposta nao promete o que o sistema nao faz.** Quem diz que nao pode ir
+recebe "anotamos; alguem do escritorio vai falar com voce; **o compromisso NAO
+foi desmarcado**". Prometer em nome do escritorio e pior do que nao responder:
+o cliente deixaria de ir a uma audiencia que continua marcada.
+
+**3. Dois escritorios no mesmo telefone.** O mesmo numero pode ser cliente de
+duas bancas da plataforma. Se as duas mandaram lembrete na mesma janela, o
+sistema **nao age e nao responde**: dizer "confirmada a sua audiencia" a quem
+nao e da banca certa contaria a um escritorio que aquela pessoa e cliente do
+outro, e isso nao se desfaz. A mensagem fica guardada sem dono, invisivel para
+os dois, e visivel so para o suporte da plataforma.
+
+A resposta e ligada ao **lembrete que ela responde** — nao ao numero que
+recebeu. E o que faz a conta fechar igual se um dia o WhatsApp virar um numero
+unico da plataforma.
+
+### Parar de receber
+
+Nao basta desligar o aviso do compromisso de hoje: a audiencia do mes que vem
+geraria outro lembrete, e o pedido da pessoa teria durado tres semanas. O
+bloqueio e por telefone e por escritorio, e e conferido na GERACAO do aviso —
+nao na hora de enviar, senao o aviso ficaria para sempre na fila somando
+tentativa. **O e-mail continua**: o pedido foi sobre o WhatsApp.
+
+### Ligar o webhook
+
+Duas variaveis, e as duas andam juntas (`conferir-producao` reclama se so uma
+estiver definida):
+
+| Variavel | O que e |
+|---|---|
+| `WHATSAPP_VERIFICACAO` | qualquer segredo. A Meta devolve uma vez, ao ligar o webhook, e so aceita o endereco se bater. |
+| `WHATSAPP_APP_SECRET` | o **App Secret** do aplicativo na Meta. Confere a assinatura de cada chamada. |
+
+Endereco a cadastrar na Meta, em **Configuracao > Webhooks**, campo
+`messages`:
+
+```
+https://<dominio>/api/webhooks/whatsapp
+```
+
+AO CONTRARIO do webhook da InfinitePay, este e **assinado**: a Meta manda
+`X-Hub-Signature-256` com o HMAC do corpo cru. Por isso da para confiar no que
+chegou e agir na hora, sem uma segunda consulta. Sem o segredo configurado a
+rota responde 503 — processar chamada nao assinada deixaria qualquer um
+confirmar a audiencia de qualquer cliente.
+
+A Meta **reentrega** o mesmo evento quando a nossa resposta demora. O id da
+mensagem tem indice unico, e a linha e gravada ANTES de qualquer acao: quem
+perde a corrida descobre na hora, e o cliente nao recebe a resposta automatica
+duas vezes.
+
+### O limite de hoje
+
+A credencial de WhatsApp e **de cada escritorio** (Integracoes), mas o webhook
+de entrada e **um so**, com um unico `WHATSAPP_APP_SECRET` — o do aplicativo da
+plataforma na Meta. Escritorio que usa aplicativo PROPRIO na Meta assina com
+outro segredo, e a chamada dele seria recusada. Enquanto a entrada for assim, o
+caminho completo (lembrete sai, cliente responde, agenda atualiza) depende de o
+numero estar sob o aplicativo da plataforma.
+
 ## Custo
 
 A Meta cobra por conversa iniciada pelo escritorio, na categoria do modelo

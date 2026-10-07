@@ -120,7 +120,7 @@ abaixo e a que sobrou.
 | --- | --- |
 | ✔ **Resumo diario** (`resumo-diario`) | O que vence hoje, chegou hoje, precisa de alguem — e a regra de nao mandar quando nao ha nada. |
 | ✔ **Participantes** em evento | Compromisso com mais de uma pessoa, cliente ou nao, cada uma avisada no contato dela. Quem nao da para avisar aparece na tela, com o motivo. |
-| **Lembretes e auto-resposta de WhatsApp** | Confirmacao de audiencia sem alguem lembrar de mandar. |
+| ✔ **Lembretes e auto-resposta de WhatsApp** (`lembretes`, `auto-resposta`) | O lembrete ja saia sozinho 24h antes; agora a RESPOSTA e lida. "1" confirma a presenca na agenda, "2" marca que nao vai, "parar" bloqueia o numero. Negacao vence e mensagem comprida nunca confirma sozinha — errar para "confirmado" custa uma cadeira vazia na frente do juiz. Telefone de dois escritorios: nao age e nao responde. |
 | ✔ **Duplicados** (`clientes-duplicados`, `publicacoes-duplicadas`) | Documento igual barra; nome igual avisa e deixa confirmar (homonimo existe). Publicacao repetida e MARCADA, nunca apagada, e a faixa de duvida espera uma pessoa. |
 | ✔ **Permissoes por area** (`permissoes`, `area-auth`, `areas`) | Terceira camada, depois do modulo e do papel. O dinheiro e subdividido; quase tudo nasce aberto; esconde do menu E barra o endereco. |
 

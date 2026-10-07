@@ -4,6 +4,8 @@ import { diaEmBrasilia, diaPorExtensoBR, horaBR } from "@/lib/datas";
 import { modulosAtivos } from "@/lib/modulos";
 import { Estrutura } from "@/componentes/Estrutura";
 import { ParticipantesDoCompromisso } from "@/componentes/ParticipantesDoCompromisso";
+import { RespostasNoWhatsapp } from "@/componentes/RespostasNoWhatsapp";
+import { respostasParaLer } from "@/lib/entrada-whatsapp";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 
@@ -64,6 +66,12 @@ export default async function PaginaAgenda() {
   }
   const hoje = diaEmBrasilia(new Date());
 
+  // Nao e so enfeite: o sistema prometeu a quem escreveu que alguem do
+  // escritorio ia ler. Esta e a tela onde se le.
+  const naCaixa = modulos.includes("WHATSAPP")
+    ? await respostasParaLer(contexto.escritorioId)
+    : [];
+
   return (
     <Estrutura
       nomeEscritorio={contexto.marca.nome}
@@ -74,6 +82,15 @@ export default async function PaginaAgenda() {
       titulo="Agenda"
       chamada="Compromissos de hoje em diante, agrupados por dia."
     >
+      <RespostasNoWhatsapp
+        respostas={naCaixa.map((r) => ({
+          id: r.id,
+          telefone: r.telefone,
+          texto: r.texto,
+          criadoEm: r.criadoEm.toISOString(),
+        }))}
+      />
+
       <FormularioCriar
         rota="/api/compromissos"
         recolhivel
@@ -174,6 +191,11 @@ export default async function PaginaAgenda() {
                           email: p.email ?? "",
                           papel: p.papel ?? "",
                           avisar: p.avisar,
+                        }))}
+                        respostas={compromisso.participantes.map((p) => ({
+                          nome: p.cliente?.nome ?? p.nome ?? "(sem nome)",
+                          confirmou: p.confirmadoEm !== null,
+                          recusou: p.recusadoEm !== null,
                         }))}
                       />
                     </div>

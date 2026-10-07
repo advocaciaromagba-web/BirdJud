@@ -15,6 +15,13 @@ export type ParticipanteNaLista = {
 
 export type ClienteEscolhivel = { id: string; nome: string };
 
+/** O que a pessoa respondeu ao lembrete, pelo WhatsApp. */
+export type RespostaDoParticipante = {
+  nome: string;
+  confirmou: boolean;
+  recusou: boolean;
+};
+
 const VAZIO: ParticipanteNaLista = {
   clienteId: null,
   nome: "",
@@ -36,16 +43,23 @@ export function ParticipantesDoCompromisso({
   compromissoId,
   titulo,
   iniciais,
+  respostas = [],
   clientes,
   comWhatsapp,
 }: {
   compromissoId: string;
   titulo: string;
   iniciais: ParticipanteNaLista[];
+  /** Quem ja respondeu ao lembrete. Vazio quando ninguem respondeu. */
+  respostas?: RespostaDoParticipante[];
   clientes: ClienteEscolhivel[];
   comWhatsapp: boolean;
 }) {
   const router = useRouter();
+  // So quem respondeu alguma coisa: "aguardando" e o estado de todo mundo o
+  // tempo todo, e uma lista cheia de "aguardando" esconde as duas que
+  // importam.
+  const respondeu = respostas.filter((r) => r.confirmou || r.recusou);
   const [aberto, setAberto] = useState(false);
   const [lista, setLista] = useState<ParticipanteNaLista[]>(iniciais);
   const [ocupado, setOcupado] = useState(false);
@@ -118,6 +132,20 @@ export function ParticipantesDoCompromisso({
             Pode ser um cliente do escritorio ou alguem de fora — testemunha,
             conjuge, preposto. Quem e de fora NAO entra na lista de clientes.
           </p>
+
+          {respondeu.length > 0 ? (
+            <p className="mt-2 text-xs">
+              <span className="text-slate-500">Respostas ao lembrete: </span>
+              {respondeu.map((r, i) => (
+                <span key={r.nome + i}>
+                  {i > 0 ? " · " : ""}
+                  <span className={r.confirmou ? "text-emerald-700" : "text-red-700"}>
+                    {r.nome} {r.confirmou ? "confirmou" : "NAO podera ir"}
+                  </span>
+                </span>
+              ))}
+            </p>
+          ) : null}
 
           <ul className="mt-3 grid gap-3">
             {lista.map((p, i) => (

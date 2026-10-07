@@ -114,6 +114,8 @@ const TABELAS_COM_RLS = [
   "Meta",
   "ParticipanteDeCompromisso",
   "EnvioParaAssinatura",
+  "BloqueioDeWhatsapp",
+  "RespostaDeWhatsapp",
   "PermissaoDeArea",
 ];
 
@@ -263,10 +265,30 @@ function conferirOpcionais() {
       "ASAAS_WEBHOOK_TOKEN",
       "sem ele, a baixa das faturas da plataforma e manual",
     ],
+    [
+      "WHATSAPP_APP_SECRET",
+      "sem ele, o webhook do WhatsApp responde 503 e a resposta do cliente ao lembrete se perde",
+    ],
+    [
+      "WHATSAPP_VERIFICACAO",
+      "sem ele, a Meta nao consegue ligar o webhook do WhatsApp",
+    ],
   ];
   for (const [nome, consequencia] of opcionais) {
     if (process.env[nome]) ok(nome, "definida");
     else alerta(nome, consequencia);
+  }
+
+  // Um sem o outro e o pior dos mundos: a Meta liga o webhook e as mensagens
+  // chegam, mas todas batem em 503 — e o cliente que respondeu "1" nunca
+  // aparece como confirmado.
+  const temUm = Boolean(process.env.WHATSAPP_APP_SECRET);
+  const temOutro = Boolean(process.env.WHATSAPP_VERIFICACAO);
+  if (temUm !== temOutro) {
+    erro(
+      "WhatsApp de entrada",
+      "so uma das duas variaveis esta definida: o webhook nao funciona pela metade",
+    );
   }
 
   if (process.env.DJEN_RELE_URL && !process.env.DJEN_RELE_TOKEN) {

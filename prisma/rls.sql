@@ -47,7 +47,8 @@ DECLARE
     'Meta',
     'ParticipanteDeCompromisso',
     'PermissaoDeArea',
-    'EnvioParaAssinatura'
+    'EnvioParaAssinatura',
+    'BloqueioDeWhatsapp'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP
@@ -71,6 +72,18 @@ ALTER TABLE "Trabalho" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Trabalho" FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "isolamento_Trabalho" ON "Trabalho";
 CREATE POLICY "isolamento_Trabalho" ON "Trabalho"
+  USING ("escritorioId" = current_setting('app.escritorio_id', true))
+  WITH CHECK ("escritorioId" = current_setting('app.escritorio_id', true));
+
+-- RespostaDeWhatsapp tem escritorioId NULO quando a mensagem que chegou nao
+-- pode ser atribuida: numero desconhecido, ou numero que recebeu lembrete de
+-- DOIS escritorios na mesma janela. Mesma politica do Trabalho — NULL nao e
+-- visivel para escritorio nenhum. Contar a um escritorio que aquela pessoa
+-- tambem e cliente de outro seria vazamento, e nao se desfaz.
+ALTER TABLE "RespostaDeWhatsapp" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "RespostaDeWhatsapp" FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "isolamento_RespostaDeWhatsapp" ON "RespostaDeWhatsapp";
+CREATE POLICY "isolamento_RespostaDeWhatsapp" ON "RespostaDeWhatsapp"
   USING ("escritorioId" = current_setting('app.escritorio_id', true))
   WITH CHECK ("escritorioId" = current_setting('app.escritorio_id', true));
 

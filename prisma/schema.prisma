@@ -88,6 +88,8 @@ model Escritorio {
   participantes     ParticipanteDeCompromisso[]
   permissoesDeArea  PermissaoDeArea[]
   enviosParaAssinatura EnvioParaAssinatura[]
+  respostasDeWhatsapp  RespostaDeWhatsapp[]
+  bloqueiosDeWhatsapp  BloqueioDeWhatsapp[]
 }
 
 model ModuloContratado {
@@ -357,6 +359,55 @@ model ModeloDeDocumento {
   @@index([escritorioId])
 }
 
+/// Mensagem que CHEGOU pelo WhatsApp. Ver src/lib/resposta-whatsapp.ts.
+///
+/// `escritorioId` e NULO quando a mensagem nao pode ser atribuida a um
+/// escritorio — numero desconhecido, ou numero que recebeu lembrete de DOIS
+/// escritorios na mesma janela. Mensagem assim fica guardada e invisivel para
+/// todos eles: dizer a um escritorio que aquela pessoa tambem e cliente de
+/// outro seria vazamento, e nao se desfaz.
+model RespostaDeWhatsapp {
+  id             String    @id @default(cuid())
+  escritorioId   String?
+  /// Id da mensagem na Meta. A Meta reentrega o mesmo evento; e por aqui que
+  /// a resposta nao e processada duas vezes.
+  idNaMeta       String    @unique
+  telefone       String
+  texto          String
+  /// CONFIRMA | DESMARCA | PARAR | NAO_ENTENDI
+  intencao       String
+  /// O lembrete que esta sendo respondido, quando foi possivel achar.
+  avisoId        String?
+  compromissoId  String?
+  participanteId String?
+  /// Por que nao deu para atribuir: SEM_LEMBRETE | DOIS_ESCRITORIOS
+  semDono        String?
+  /// Quando o sistema respondeu de volta.
+  respondidoEm   DateTime?
+  /// Quando alguem do escritorio leu — so vale para o que o sistema nao entendeu.
+  lidaEm         DateTime?
+  criadoEm       DateTime  @default(now())
+
+  escritorio Escritorio? @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, criadoEm])
+  @@index([escritorioId, compromissoId])
+}
+
+/// Quem pediu para parar de receber WhatsApp deste escritorio.
+model BloqueioDeWhatsapp {
+  id           String   @id @default(cuid())
+  escritorioId String
+  /// Ja em E.164, como o aviso e enviado.
+  telefone     String
+  motivo       String   @default("PEDIDO_DA_PESSOA")
+  criadoEm     DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, telefone])
+}
+
 /// Peca mandada para assinatura eletronica. Ver src/lib/autentique.ts.
 ///
 /// O registro existe por dois motivos. O primeiro e saber onde esta cada peca
@@ -413,6 +464,9 @@ model ParticipanteDeCompromisso {
   email         String?
   papel         String?
   avisar        Boolean  @default(true)
+  /// Respondeu ao lembrete pelo WhatsApp. Ver src/lib/resposta-whatsapp.ts.
+  confirmadoEm  DateTime?
+  recusadoEm    DateTime?
   criadoEm      DateTime @default(now())
 
   escritorio  Escritorio  @relation(fields: [escritorioId], references: [id], onDelete: Cascade)

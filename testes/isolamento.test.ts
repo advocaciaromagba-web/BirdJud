@@ -340,6 +340,65 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("quem pediu para parar de receber WhatsApp so parou naquele escritorio", async () => {
+    await comEscritorio(alfaP, (db) =>
+      db.bloqueioDeWhatsapp.create({
+        data: semEscritorio({ telefone: "5577988880000" }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.bloqueioDeWhatsapp.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
+  it("resposta de WhatsApp de um escritorio nao vaza para o outro", async () => {
+    // Carrega telefone e o texto que o cliente escreveu ao advogado.
+    await comEscritorio(alfaP, (db) =>
+      db.respostaDeWhatsapp.create({
+        data: semEscritorio({
+          idNaMeta: `wamid.isolamento.${Date.now()}`,
+          telefone: "5577988881111",
+          texto: "nao posso ir, estou no hospital",
+          intencao: "DESMARCA",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.respostaDeWhatsapp.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
+  it("resposta SEM DONO nao e visivel para escritorio nenhum", async () => {
+    // Mensagem de telefone que recebeu lembrete de duas bancas fica guardada
+    // com escritorioId nulo. Mostra-la a qualquer uma das duas contaria que
+    // aquela pessoa tambem e cliente da outra.
+    const idNaMeta = `wamid.semdono.${Date.now()}`;
+    await prismaPlataforma().respostaDeWhatsapp.create({
+      data: {
+        escritorioId: null,
+        idNaMeta,
+        telefone: "5577988882222",
+        texto: "sim",
+        intencao: "CONFIRMA",
+        semDono: "DOIS_ESCRITORIOS",
+      },
+    });
+    for (const quem of [alfaP, betaP]) {
+      const visiveis = await comEscritorio(quem, (db) =>
+        db.respostaDeWhatsapp.findMany({ where: { idNaMeta } }),
+      );
+      expect(visiveis).toHaveLength(0);
+    }
+    // A plataforma ve, que e quem precisa para o suporte.
+    const daPlataforma = await prismaPlataforma().respostaDeWhatsapp.findMany({
+      where: { idNaMeta },
+    });
+    expect(daPlataforma).toHaveLength(1);
+    await prismaPlataforma().respostaDeWhatsapp.deleteMany({ where: { idNaMeta } });
+  });
+
   it("a meta de um escritorio nao aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.meta.create({

@@ -441,6 +441,18 @@ async function criarAviso(
     });
     if (existente) return false;
 
+    // Quem respondeu "parar" no WhatsApp nao recebe mais por WhatsApp — e a
+    // conferencia e AQUI, na geracao, e nao na hora de enviar: um aviso
+    // pendente que nunca sai ficaria para sempre na fila, somando tentativa.
+    // O e-mail continua: o pedido foi sobre o WhatsApp.
+    if (aviso.canal === "WHATSAPP") {
+      const bloqueado = await db.bloqueioDeWhatsapp.findFirst({
+        where: { telefone: aviso.destino },
+        select: { id: true },
+      });
+      if (bloqueado) return false;
+    }
+
     await db.aviso.create({
       data: semEscritorio({
         ...aviso,
