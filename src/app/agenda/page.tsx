@@ -29,7 +29,7 @@ export default async function PaginaAgenda() {
   const contexto = await contextoDaPagina(undefined, "AGENDA");
 
   const modulos = await modulosAtivos(contexto.escritorioId);
-  const { compromissos, processos, clientes } = await comEscritorio(
+  const { compromissos, processos, clientes, equipe } = await comEscritorio(
     contexto.escritorioId,
     async (db) => ({
       compromissos: await db.compromisso.findMany({
@@ -39,6 +39,7 @@ export default async function PaginaAgenda() {
         include: {
           processo: { select: { numero: true } },
           cliente: { select: { nome: true } },
+          responsavel: { select: { nome: true } },
           participantes: {
             orderBy: { criadoEm: "asc" },
             include: { cliente: { select: { nome: true, telefone: true, email: true } } },
@@ -48,6 +49,12 @@ export default async function PaginaAgenda() {
       processos: await db.processo.findMany({
         orderBy: { criadoEm: "desc" },
         take: 500,
+      }),
+      equipe: await db.usuario.findMany({
+        where: { ativo: true },
+        orderBy: { nome: "asc" },
+        select: { id: true, nome: true, papel: true },
+        take: 200,
       }),
       clientes: await db.cliente.findMany({
         orderBy: { nome: "asc" },
@@ -108,6 +115,20 @@ export default async function PaginaAgenda() {
             obrigatorio: true,
           },
           { nome: "tipo", rotulo: "Tipo", tipo: "select", opcoes: TIPOS },
+          {
+            nome: "responsavelId",
+            rotulo: "Responsavel",
+            tipo: "select",
+            opcoes: [
+              { valor: "", rotulo: "Sem responsavel (e do escritorio)" },
+              ...equipe.map((p) => ({
+                valor: p.id,
+                rotulo: `${p.nome} (${p.papel.toLowerCase()})`,
+              })),
+            ],
+            ajuda:
+              "Quem fica com isto. A pessoa recebe o aviso na hora, por e-mail e por WhatsApp. Sem responsavel, o compromisso e do escritorio e aparece para todos.",
+          },
           {
             nome: "clienteId",
             rotulo: "Cliente",
@@ -170,6 +191,9 @@ export default async function PaginaAgenda() {
                     <span className="font-semibold">{compromisso.titulo}</span>
                     <span className="text-slate-500">
                       {[
+                        compromisso.responsavel
+                          ? `com ${compromisso.responsavel.nome}`
+                          : null,
                         compromisso.cliente?.nome,
                         compromisso.processo
                           ? formatarNumeroProcesso(compromisso.processo.numero)

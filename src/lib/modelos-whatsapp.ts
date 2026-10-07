@@ -80,6 +80,38 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
       TELEFONE_DO_ESCRITORIO,
     ],
   },
+  TAREFA_DESIGNADA: {
+    nome: "birdjud_tarefa_designada",
+    idioma: "pt_BR",
+    texto: comRodape(
+      "{{1}}: {{2}} ficou para voce. {{3}}. {{4}}. Abra o sistema para ver os detalhes.",
+      5,
+    ),
+    parametros: [
+      "nome do escritorio",
+      "o que e",
+      "quando",
+      "cliente ou processo",
+      TELEFONE_DO_ESCRITORIO,
+    ],
+  },
+  COMPROMISSO_MARCADO: {
+    nome: "birdjud_compromisso_marcado",
+    idioma: "pt_BR",
+    texto: comRodape(
+      "{{1}}, o escritorio {{2}} marcou {{3}} para {{4}}. {{5}}. " +
+        "Voce recebera lembretes 3 dias antes, 1 dia antes e 1 hora antes.",
+      6,
+    ),
+    parametros: [
+      "nome de quem recebe",
+      "nome do escritorio",
+      "o que e",
+      "quando",
+      "onde, ou o processo",
+      TELEFONE_DO_ESCRITORIO,
+    ],
+  },
   LEMBRETE_COMPROMISSO: {
     nome: "birdjud_lembrete_compromisso",
     idioma: "pt_BR",

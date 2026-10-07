@@ -184,6 +184,7 @@ model Usuario {
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
 
   permissoesDeArea PermissaoDeArea[]
+  compromissosSobSuaResponsabilidade Compromisso[] @relation("CompromissosDoResponsavel")
 
   prazos Prazo[]
 
@@ -271,11 +272,14 @@ model Compromisso {
   local        String?
   observacoes  String?
   concluido    Boolean   @default(false)
+  /// Quem no escritorio ficou com isto. Nulo = e de todos.
+  responsavelId String?
   criadoEm     DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: Cascade)
   cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  responsavel Usuario?  @relation("CompromissosDoResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
 
   participantes ParticipanteDeCompromisso[]
 

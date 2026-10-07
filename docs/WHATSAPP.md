@@ -141,6 +141,29 @@ texto tem significado declarado.
 - Numero nao conectado nao e falha: os avisos ficam pendentes e saem no dia em
   que o escritorio conectar.
 
+## O que o sistema avisa
+
+| Quando | Para quem | Modelo |
+|---|---|---|
+| tarefa ou compromisso **designado a alguem** | so a pessoa designada | `birdjud_tarefa_designada` |
+| audiencia, pericia ou compromisso **marcado** | quem vai comparecer | `birdjud_compromisso_marcado` |
+| 3 dias, 24h e 1h antes | equipe e quem vai comparecer | `birdjud_lembrete_*` |
+| publicacoes novas | equipe que quis receber | `birdjud_resumo_publicacoes` |
+| o dia que tem algo | equipe que quis receber | `birdjud_resumo_do_dia` |
+
+Os dois primeiros saem **na hora**, nao na proxima rodada da fila: quem ficou
+com a tarefa precisa saber agora. Sao gravados como qualquer outro aviso e a
+rota enfileira um `LEMBRAR` logo atras, que o trabalhador pega em segundos.
+
+**O aviso de designacao vai so para quem foi designado.** Tarefa que chega
+para o escritorio inteiro e tarefa que cada um acha que e do outro — que e
+exatamente o problema que ter responsavel resolve. E quem designa para si
+mesmo nao recebe nada: acabou de digitar.
+
+**O aviso de "marcado" costuma sair na tela de participantes**, nao na de
+criar: ao criar, o compromisso ainda nao tem participante nenhum. A chave leva
+o participante, entao mexer na lista depois nao reavisa quem ja foi avisado.
+
 ## Quando o aviso sai: a regua
 
 Tres marcos, e nao um: **3 dias**, **24 horas** e **1 hora** antes.

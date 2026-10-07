@@ -13,6 +13,8 @@ import { salvarIntegracao } from "../src/lib/integracao";
 import { gerarHash } from "../src/lib/senhas";
 import {
   ANTECEDENCIA_HORAS,
+  avisarAgendamento,
+  avisarDesignacao,
   diaDaChave,
   enviarAvisosPendentes,
   gerarAvisos,
@@ -480,5 +482,133 @@ d("avisos do escritorio", () => {
 describe("erro de remetente", () => {
   it("SemRemetente diz o que fazer", () => {
     expect(new SemRemetente().message).toContain("Integracoes");
+  });
+});
+
+d("avisos que saem na hora", () => {
+  // A regua avisa do que VAI acontecer. Estes avisam do que ACABOU de
+  // acontecer, e por isso nao podem esperar a proxima rodada da fila.
+  let escritorio = "";
+
+  beforeAll(async () => {
+    const e = await prismaPlataforma().escritorio.create({
+      data: { slug: `nahora-${Date.now()}`, nome: "Banca do Agora" },
+    });
+    escritorio = e.id;
+  });
+
+  afterAll(async () => {
+    if (escritorio) {
+      await prismaPlataforma()
+        .escritorio.delete({ where: { id: escritorio } })
+        .catch(() => {});
+    }
+  });
+
+  it("a tarefa designada avisa so quem ficou com ela", async () => {
+    const dono = await comEscritorio(escritorio, (db) =>
+      db.usuario.create({
+        data: semEscritorio({
+          nome: "Estagiario Novo",
+          email: `estagiario-${Date.now()}@teste.br`,
+          senhaHash: "x",
+          papel: "USUARIO",
+        }),
+      }),
+    );
+    const tarefa = await comEscritorio(escritorio, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo: "Protocolar a peticao",
+          tipo: "TAREFA",
+          inicio: new Date(Date.now() + 5 * HORA),
+          responsavelId: dono.id,
+        }),
+      }),
+    );
+
+    expect(await avisarDesignacao(escritorio, tarefa.id)).toBeGreaterThan(0);
+
+    const avisos = await comEscritorio(escritorio, (db) =>
+      db.aviso.findMany({ where: { tipo: "TAREFA_DESIGNADA" } }),
+    );
+    // So o designado. Mandar para o escritorio inteiro faria cada um achar
+    // que e do outro — que e o problema que ter responsavel resolve.
+    expect(new Set(avisos.map((a) => a.usuarioId))).toEqual(new Set([dono.id]));
+    expect(avisos[0].assunto).toContain("Protocolar a peticao");
+
+    // De novo nao repete.
+    expect(await avisarDesignacao(escritorio, tarefa.id)).toBe(0);
+
+    // Quem designa para si mesmo acabou de digitar: nao recebe aviso.
+    const outra = await comEscritorio(escritorio, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo: "Minha propria tarefa",
+          tipo: "TAREFA",
+          inicio: new Date(Date.now() + 5 * HORA),
+          responsavelId: dono.id,
+        }),
+      }),
+    );
+    expect(await avisarDesignacao(escritorio, outra.id, dono.id)).toBe(0);
+
+    await comEscritorio(escritorio, async (db) => {
+      await db.aviso.deleteMany({ where: { tipo: "TAREFA_DESIGNADA" } });
+      await db.compromisso.deleteMany({ where: { id: { in: [tarefa.id, outra.id] } } });
+      await db.usuario.delete({ where: { id: dono.id } });
+    });
+  });
+
+  it("o agendamento avisa quem vai comparecer — e tarefa nao avisa ninguem", async () => {
+    const audiencia = await comEscritorio(escritorio, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo: "Audiencia marcada agora",
+          tipo: "AUDIENCIA",
+          inicio: new Date(Date.now() + 40 * 24 * HORA),
+        }),
+      }),
+    );
+    const tarefa = await comEscritorio(escritorio, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo: "Tarefa com gente junto",
+          tipo: "TAREFA",
+          inicio: new Date(Date.now() + 40 * 24 * HORA),
+        }),
+      }),
+    );
+    for (const c of [audiencia, tarefa]) {
+      await comEscritorio(escritorio, (db) =>
+        db.participanteDeCompromisso.create({
+          data: semEscritorio({
+            compromissoId: c.id,
+            nome: "Testemunha",
+            email: "testemunha@exemplo.test",
+          }),
+        }),
+      );
+    }
+
+    // A audiencia e daqui a 40 dias: nenhum marco da regua alcanca. O aviso
+    // de "marcado" sai assim mesmo, porque e a PRIMEIRA noticia.
+    expect(await avisarAgendamento(escritorio, audiencia.id)).toBeGreaterThan(0);
+    // Tarefa e trabalho do escritorio: quem esta de fora nao tem o que fazer
+    // com esse aviso.
+    expect(await avisarAgendamento(escritorio, tarefa.id)).toBe(0);
+
+    const avisos = await comEscritorio(escritorio, (db) =>
+      db.aviso.findMany({ where: { tipo: "COMPROMISSO_MARCADO" } }),
+    );
+    expect(avisos).toHaveLength(1);
+    expect(avisos[0].corpo).toContain("3 dias antes");
+
+    await comEscritorio(escritorio, async (db) => {
+      await db.aviso.deleteMany({ where: { tipo: "COMPROMISSO_MARCADO" } });
+      await db.compromisso.deleteMany({
+        where: { id: { in: [audiencia.id, tarefa.id] } },
+      });
+    });
   });
 });

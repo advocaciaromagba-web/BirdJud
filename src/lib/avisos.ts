@@ -21,11 +21,16 @@ import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
 import { dataHoraBR } from "./datas";
 import {
   MAIOR_ANTECEDENCIA_HORAS,
+  TIPOS_COM_REGUA,
   marcoAgora,
   quandoComMarco,
   type Marco,
 } from "./regua-de-lembretes";
 import {
+  assuntoDaDesignacao,
+  assuntoDoAgendamento,
+  corpoDaDesignacao,
+  corpoDoAgendamento,
   assuntoDoLembrete,
   assuntoDoLembreteAoParticipante,
   assuntoDoResumo,
@@ -689,4 +694,210 @@ async function marcarFalha(
       },
     }),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Avisos que saem NA HORA, e nao pela regua
+// ---------------------------------------------------------------------------
+//
+// A regua avisa do que vai acontecer. Estes dois avisam do que ACABOU de
+// acontecer: uma tarefa ficou com alguem, um compromisso foi marcado. Quem
+// precisa saber precisa saber agora — nao na proxima rodada da fila.
+//
+// Sao gravados como qualquer outro aviso, com chave de idempotencia, e saem
+// pelo mesmo caminho. Quem chama enfileira um LEMBRAR logo em seguida, e o
+// trabalhador entrega em segundos.
+
+/** Dados do compromisso como os textos e os modelos esperam. */
+async function paraOTexto(escritorioId: string, compromissoId: string) {
+  const c = await comEscritorio(escritorioId, (db) =>
+    db.compromisso.findFirst({
+      where: { id: compromissoId },
+      include: {
+        processo: { select: { numero: true } },
+        cliente: { select: { nome: true } },
+      },
+    }),
+  );
+  if (!c) return null;
+  return {
+    compromisso: c,
+    dados: {
+      titulo: c.titulo,
+      tipo: c.tipo,
+      inicio: c.inicio,
+      local: c.local,
+      numeroProcesso: c.processo?.numero ?? null,
+    },
+  };
+}
+
+async function daBanca(escritorioId: string) {
+  const e = await prismaPlataforma().escritorio.findUniqueOrThrow({
+    where: { id: escritorioId },
+    select: { nome: true, slug: true, telefoneAtendimento: true },
+  });
+  return {
+    nome: e.nome,
+    telefone: e.telefoneAtendimento?.trim() || "o escritorio",
+    endereco: `https://${e.slug}.${dominioDaPlataforma()}`,
+  };
+}
+
+/**
+ * Avisa quem ficou com a tarefa.
+ *
+ * So a pessoa designada. Mandar para o escritorio inteiro faria cada um achar
+ * que e do outro — que e exatamente o problema que ter responsavel resolve.
+ */
+export async function avisarDesignacao(
+  escritorioId: string,
+  compromissoId: string,
+  designadoPor: string | null = null,
+): Promise<number> {
+  const achado = await paraOTexto(escritorioId, compromissoId);
+  if (!achado?.compromisso.responsavelId) return 0;
+
+  const responsavel = await comEscritorio(escritorioId, (db) =>
+    db.usuario.findFirst({
+      where: { id: achado.compromisso.responsavelId!, ativo: true },
+      select: { id: true, nome: true, email: true, telefone: true, recebeWhatsapp: true },
+    }),
+  );
+  if (!responsavel) return 0;
+
+  // Quem designou para si mesmo nao precisa de aviso: acabou de digitar.
+  if (designadoPor && designadoPor === responsavel.id) return 0;
+
+  const quemDesignou = designadoPor
+    ? ((
+        await comEscritorio(escritorioId, (db) =>
+          db.usuario.findFirst({ where: { id: designadoPor }, select: { nome: true } }),
+        )
+      )?.nome ?? null)
+    : null;
+
+  const banca = await daBanca(escritorioId);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
+  const { dados } = achado;
+  // A chave leva o responsavel: redesignar para outra pessoa avisa a nova, e
+  // devolver para a primeira nao a avisa de novo.
+  const chave = `designado:${compromissoId}:${responsavel.id}`;
+  let criados = 0;
+
+  if (
+    await criarAviso(escritorioId, {
+      usuarioId: responsavel.id,
+      canal: "EMAIL",
+      tipo: "TAREFA_DESIGNADA",
+      chave,
+      destino: responsavel.email,
+      assunto: assuntoDaDesignacao(dados),
+      corpo: corpoDaDesignacao(banca.nome, quemDesignou, dados, banca.endereco),
+    })
+  ) {
+    criados += 1;
+  }
+
+  const modelo = modeloDoTipo("TAREFA_DESIGNADA");
+  const telefone = telefoneDoUsuario(responsavel, comWhatsapp);
+  if (telefone && modelo) {
+    const criadoZap = await criarAviso(escritorioId, {
+      usuarioId: responsavel.id,
+      canal: "WHATSAPP",
+      tipo: "TAREFA_DESIGNADA",
+      chave: `zap:${chave}`,
+      destino: telefone,
+      assunto: assuntoDaDesignacao(dados),
+      corpo: corpoDaDesignacao(banca.nome, quemDesignou, dados, banca.endereco),
+      modelo: modelo.nome,
+      parametros: [
+        limparParametro(banca.nome),
+        limparParametro(dados.titulo),
+        limparParametro(dataHoraBR.format(dados.inicio)),
+        limparParametro(
+          achado.compromisso.cliente?.nome ??
+            (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null),
+        ),
+        limparParametro(banca.telefone),
+      ],
+    });
+    if (criadoZap) criados += 1;
+  }
+
+  return criados;
+}
+
+/**
+ * Avisa quem vai comparecer de que o compromisso foi marcado.
+ *
+ * E a PRIMEIRA noticia, nao o lembrete — por isso sai na hora de marcar, e
+ * nao tres dias antes. Quem e marcado para uma audiencia daqui a dois meses
+ * precisa saber hoje, nao daqui a oito semanas.
+ */
+export async function avisarAgendamento(
+  escritorioId: string,
+  compromissoId: string,
+): Promise<number> {
+  const achado = await paraOTexto(escritorioId, compromissoId);
+  if (!achado) return 0;
+  // So encontro: tarefa e prazo sao trabalho do escritorio, e quem esta de
+  // fora nao tem o que fazer com esse aviso.
+  if (!TIPOS_COM_REGUA.has(achado.compromisso.tipo)) return 0;
+
+  const banca = await daBanca(escritorioId);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
+  const modelo = modeloDoTipo("COMPROMISSO_MARCADO");
+  const { dados } = achado;
+
+  const { avisar } = await paraAvisarNoCompromisso(escritorioId, compromissoId);
+  let criados = 0;
+
+  for (const pessoa of avisar) {
+    const chave = `marcado:${compromissoId}:${pessoa.participanteId}`;
+    const assunto = assuntoDoAgendamento(banca.nome, dados);
+    const corpo = corpoDoAgendamento(banca.nome, pessoa.nome, dados);
+
+    if (pessoa.email) {
+      if (
+        await criarAviso(escritorioId, {
+          usuarioId: null,
+          canal: "EMAIL",
+          tipo: "COMPROMISSO_MARCADO",
+          chave,
+          destino: pessoa.email,
+          assunto,
+          corpo,
+        })
+      ) {
+        criados += 1;
+      }
+    }
+
+    if (!pessoa.telefone || !comWhatsapp || !modelo) continue;
+    const criadoZap = await criarAviso(escritorioId, {
+      usuarioId: null,
+      canal: "WHATSAPP",
+      tipo: "COMPROMISSO_MARCADO",
+      chave: `zap:${chave}`,
+      destino: pessoa.telefone,
+      assunto,
+      corpo,
+      modelo: modelo.nome,
+      parametros: [
+        limparParametro(pessoa.nome),
+        limparParametro(banca.nome),
+        limparParametro(dados.titulo),
+        limparParametro(dataHoraBR.format(dados.inicio)),
+        limparParametro(
+          dados.local ??
+            (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null),
+        ),
+        limparParametro(banca.telefone),
+      ],
+    });
+    if (criadoZap) criados += 1;
+  }
+
+  return criados;
 }

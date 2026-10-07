@@ -137,3 +137,77 @@ export function assuntoDoLembreteAoParticipante(
 ): string {
   return `${nomeEscritorio}: lembrete de ${compromisso.titulo.toLowerCase()}`;
 }
+
+// ---------------------------------------------------------------------------
+// Avisos que saem NA HORA, e nao pela regua
+// ---------------------------------------------------------------------------
+
+/**
+ * A tarefa que acabou de ficar com alguem.
+ *
+ * Vai para a pessoa designada, e so para ela. Tarefa que chega para o
+ * escritorio inteiro e tarefa que cada um acha que e do outro.
+ */
+export function assuntoDaDesignacao(compromisso: CompromissoNoLembrete): string {
+  return `Ficou com voce: ${compromisso.titulo}`;
+}
+
+export function corpoDaDesignacao(
+  nomeEscritorio: string,
+  nomeDeQuemDesignou: string | null,
+  compromisso: CompromissoNoLembrete,
+  endereco: string,
+): string {
+  const linhas = [
+    `${nomeEscritorio} — ${nomeDeQuemDesignou ? `${nomeDeQuemDesignou} designou` : "foi designado"} para voce:`,
+    "",
+    compromisso.titulo,
+    `${compromisso.tipo} · ${dataHora.format(compromisso.inicio)}`,
+  ];
+
+  if (compromisso.local) linhas.push(`Local: ${compromisso.local}`);
+  if (compromisso.numeroProcesso) {
+    linhas.push(`Processo: ${formatarNumeroProcesso(compromisso.numeroProcesso)}`);
+  }
+
+  linhas.push("", "Abra o sistema:", endereco);
+  return linhas.join("\n");
+}
+
+/**
+ * O agendamento que acabou de ser marcado, para quem vai comparecer.
+ *
+ * Nao e lembrete: e a PRIMEIRA noticia. Por isso diz quando sao os lembretes
+ * — quem recebe precisa saber que vai ser lembrado, senao fica com a data na
+ * cabeca e nada mais.
+ */
+export function assuntoDoAgendamento(
+  nomeEscritorio: string,
+  compromisso: CompromissoNoLembrete,
+): string {
+  return `${nomeEscritorio}: ${compromisso.titulo.toLowerCase()} marcada`;
+}
+
+export function corpoDoAgendamento(
+  nomeEscritorio: string,
+  nomeDoParticipante: string,
+  compromisso: CompromissoNoLembrete,
+): string {
+  const linhas = [
+    `${nomeDoParticipante}, o escritorio ${nomeEscritorio} marcou:`,
+    "",
+    `${compromisso.titulo} — ${dataHora.format(compromisso.inicio)}`,
+  ];
+
+  if (compromisso.local) linhas.push(`Local: ${compromisso.local}`);
+  if (compromisso.numeroProcesso) {
+    linhas.push(`Processo: ${formatarNumeroProcesso(compromisso.numeroProcesso)}`);
+  }
+
+  linhas.push(
+    "",
+    "Voce recebera lembretes 3 dias antes, 1 dia antes e 1 hora antes.",
+    "Em caso de duvida, fale com o escritorio.",
+  );
+  return linhas.join("\n");
+}

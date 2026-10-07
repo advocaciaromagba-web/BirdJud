@@ -5,6 +5,8 @@ import { exigirSessao } from "@/lib/sessao";
 import { TIPOS_DE_COMPROMISSO, faltaParaGravar } from "@/lib/compromissos";
 import { formatarDocumento } from "@/lib/documentos";
 import { tratarErro } from "@/lib/respostas";
+import { avisarAgendamento, avisarDesignacao } from "@/lib/avisos";
+import { enfileirar } from "@/lib/fila";
 
 const novoCompromisso = z.object({
   titulo: z.string().min(2).max(200),
@@ -25,6 +27,8 @@ const novoCompromisso = z.object({
     })
     .optional(),
   observacoes: z.string().max(2000).optional(),
+  /** Quem no escritorio fica com isto. Vazio = e de todos, como sempre foi. */
+  responsavelId: z.string().min(1).optional().or(z.literal("")),
 });
 
 export async function GET() {
@@ -46,7 +50,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirSessao();
+    const { escritorioId, usuarioId } = await exigirSessao();
     const corpo = novoCompromisso.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
@@ -61,7 +65,7 @@ export async function POST(req: Request) {
     const falta = faltaParaGravar(corpo.data);
     if (falta) return NextResponse.json({ erro: falta }, { status: 400 });
 
-    const { clienteNovo, ...campos } = corpo.data;
+    const { clienteNovo, responsavelId, ...campos } = corpo.data;
 
     const resultado = await comEscritorio(escritorioId, async (db) => {
       if (campos.processoId) {
@@ -75,6 +79,14 @@ export async function POST(req: Request) {
           where: { id: campos.clienteId },
         });
         if (!cliente) return { erro: "Cliente nao encontrado." };
+      }
+      if (responsavelId) {
+        // Usuario de outro escritorio nao vira responsavel: a extensao ja
+        // filtra, mas o aviso iria para alguem de fora.
+        const pessoa = await db.usuario.findFirst({
+          where: { id: responsavelId, ativo: true },
+        });
+        if (!pessoa) return { erro: "Responsavel nao encontrado." };
       }
 
       let clienteId = campos.clienteId;
@@ -93,7 +105,12 @@ export async function POST(req: Request) {
       }
 
       const compromisso = await db.compromisso.create({
-        data: semEscritorio({ ...campos, clienteId, inicio }),
+        data: semEscritorio({
+          ...campos,
+          clienteId,
+          inicio,
+          responsavelId: responsavelId || null,
+        }),
         include: { cliente: { select: { id: true, nome: true } } },
       });
       return { compromisso };
@@ -102,6 +119,24 @@ export async function POST(req: Request) {
     if ("erro" in resultado) {
       return NextResponse.json({ erro: resultado.erro }, { status: 400 });
     }
+
+    // Os avisos DO MOMENTO: quem ficou com a tarefa, e quem vai comparecer.
+    // Gravados aqui e entregues pelo trabalhador em segundos — e por isso o
+    // LEMBRAR vai para a fila logo atras. Falha em avisar nao desfaz o
+    // compromisso: ele esta gravado, e o aviso pendente sai na proxima rodada.
+    try {
+      const avisos =
+        (await avisarDesignacao(escritorioId, resultado.compromisso.id, usuarioId)) +
+        (await avisarAgendamento(escritorioId, resultado.compromisso.id));
+      if (avisos > 0) await enfileirar("LEMBRAR", escritorioId);
+    } catch (falha) {
+      console.log(
+        `compromisso ${resultado.compromisso.id}: aviso nao gerado ${
+          falha instanceof Error ? falha.message : ""
+        }`.slice(0, 300),
+      );
+    }
+
     return NextResponse.json(resultado, { status: 201 });
   } catch (erro) {
     return tratarErro(erro);
