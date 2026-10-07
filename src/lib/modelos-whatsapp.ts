@@ -112,6 +112,24 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
       TELEFONE_DO_ESCRITORIO,
     ],
   },
+  // ATENCAO: este modelo precisa ser aprovado na Meta COM CABECALHO DO TIPO
+  // DOCUMENTO. Um modelo so de texto recebendo um PDF no cabecalho e recusado,
+  // e a mensagem de erro da Meta nao diz que o problema e esse.
+  DOCUMENTO: {
+    nome: "birdjud_documento",
+    idioma: "pt_BR",
+    texto: comRodape(
+      "{{1}}, o escritorio {{2}} enviou {{3}} em anexo. {{4}}.",
+      5,
+    ),
+    parametros: [
+      "nome de quem recebe",
+      "nome do escritorio",
+      "o que e o documento",
+      "o que fazer com ele",
+      TELEFONE_DO_ESCRITORIO,
+    ],
+  },
   LEMBRETE_COMPROMISSO: {
     nome: "birdjud_lembrete_compromisso",
     idioma: "pt_BR",

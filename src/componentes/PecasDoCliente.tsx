@@ -93,6 +93,8 @@ export function PecasDoCliente({
   advogados,
   escolhidosNoCliente,
   assinaturaLigada = false,
+  whatsappLigado = false,
+  telefoneDoCliente = null,
   envios = [],
 }: {
   clienteId: string;
@@ -102,6 +104,10 @@ export function PecasDoCliente({
   escolhidosNoCliente: string[];
   /** Modulo contratado E Autentique conectado. */
   assinaturaLigada?: boolean;
+  /** Modulo de WhatsApp contratado. */
+  whatsappLigado?: boolean;
+  /** Telefone do CADASTRO. Nao ha campo para digitar outro, de proposito. */
+  telefoneDoCliente?: string | null;
   envios?: EnvioNaTela[];
 }) {
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
@@ -110,6 +116,7 @@ export function PecasDoCliente({
   const [formatos, setFormatos] = useState<Set<string>>(new Set(["PDF"]));
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [conferidas, setConferidas] = useState<Conferida[]>([]);
   const [recibo, setRecibo] = useState({ valor: "", referenteA: "", forma: "", data: "" });
   // Vazio significa todos: e assim que esta gravado, e e assim que a tela
@@ -340,6 +347,41 @@ export function PecasDoCliente({
     }
   }
 
+  /** Manda o PDF para o WhatsApp do cliente. */
+  async function mandarNoWhatsapp(c: Conferida) {
+    setEnviando(`zap:${c.chave}`);
+    setErro(null);
+    setAviso(null);
+    try {
+      const resposta = await fetch(`/api/modelos/${c.chave}/whatsapp`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          clienteId,
+          advogadoIds: [...quemAssina],
+          ...(c.chave === "RECIBO"
+            ? {
+                reciboValor: recibo.valor || null,
+                reciboReferenteA: recibo.referenteA || null,
+                reciboForma: recibo.forma || null,
+                reciboData: recibo.data || null,
+              }
+            : {}),
+        }),
+      });
+      const det = await resposta.json().catch(() => null);
+      if (!resposta.ok) {
+        setErro(`${c.rotulo}: ${det?.erro ?? "nao consegui mandar."}`);
+        return;
+      }
+      setAviso(`${c.rotulo} enviada para ${det.mandado.telefone} no WhatsApp.`);
+    } catch {
+      setErro("Nao consegui falar com o servidor.");
+    } finally {
+      setEnviando(null);
+    }
+  }
+
   /** Pergunta ao provedor em que pe esta. */
   async function conferirEnvio(id: string) {
     setEnviando(id);
@@ -548,6 +590,7 @@ export function PecasDoCliente({
       </div>
 
       {erro ? <p className="aviso-erro mt-3">{erro}</p> : null}
+      {aviso ? <p className="mt-3 text-sm text-emerald-700">{aviso}</p> : null}
 
       {conferidas.map((c) => (
         <div key={c.chave} className="mt-4 border-t border-slate-200 pt-4">
@@ -609,6 +652,21 @@ export function PecasDoCliente({
             <button type="button" className="botao-secundario" onClick={() => imprimir(c)}>
               Imprimir
             </button>
+            {whatsappLigado ? (
+              <button
+                type="button"
+                disabled={enviando !== null || !telefoneDoCliente}
+                className="botao-secundario disabled:opacity-50"
+                title={
+                  telefoneDoCliente
+                    ? `Manda o PDF para ${telefoneDoCliente}`
+                    : "O cliente esta sem telefone no cadastro"
+                }
+                onClick={() => mandarNoWhatsapp(c)}
+              >
+                {enviando === `zap:${c.chave}` ? "mandando..." : "Mandar no WhatsApp"}
+              </button>
+            ) : null}
             <a
               className="botao-discreto"
               href={c.url}
@@ -618,6 +676,14 @@ export function PecasDoCliente({
               abrir em outra aba
             </a>
           </div>
+
+          {whatsappLigado ? (
+            <p className="mt-1 text-xs text-slate-500">
+              {telefoneDoCliente
+                ? `Vai para ${telefoneDoCliente}, o telefone do cadastro — nao ha onde digitar outro, de proposito.`
+                : "Sem telefone no cadastro, nao da para mandar: mandar documento de um cliente para o numero de outro nao se desfaz."}
+            </p>
+          ) : null}
 
           {assinaturaLigada ? (
             <div className="mt-3 rounded border border-slate-200 p-3">

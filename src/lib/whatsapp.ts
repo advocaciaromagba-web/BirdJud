@@ -302,3 +302,131 @@ export function assinaturaConfere(
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
+
+/**
+ * Sobe um arquivo para a Meta e devolve o id dele.
+ *
+ * A Meta nao aceita o PDF dentro da mensagem: sobe-se primeiro, manda-se o id
+ * depois. O id vale por 30 dias e so serve para este numero.
+ */
+export async function subirDocumento(
+  arquivo: Buffer,
+  nomeDoArquivo: string,
+): Promise<string> {
+  const credencial = credencialDaPlataforma();
+
+  const corpo = new FormData();
+  corpo.set("messaging_product", "whatsapp");
+  corpo.set("type", "application/pdf");
+  corpo.set(
+    "file",
+    new Blob([new Uint8Array(arquivo)], { type: "application/pdf" }),
+    nomeDoArquivo,
+  );
+
+  let resposta: Response;
+  try {
+    resposta = await buscarComLimite(
+      `${baseMeta()}/${encodeURIComponent(credencial.numeroId)}/media`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${credencial.token}` },
+        body: corpo,
+      },
+    );
+  } catch (erro) {
+    throw new FalhaNoWhatsapp(descreverFalha(erro), false);
+  }
+
+  const json = (await resposta.json().catch(() => null)) as {
+    id?: string;
+    error?: { message?: string; code?: number };
+  } | null;
+
+  if (!resposta.ok || !json?.id) {
+    const codigo = json?.error?.code ?? 0;
+    throw new FalhaNoWhatsapp(
+      explicar(codigo, json?.error?.message ?? `A Meta respondeu ${resposta.status}.`),
+      ehDefinitivo(codigo, resposta.status),
+    );
+  }
+  return json.id;
+}
+
+export type EnvioComDocumento = EnvioDeModelo & {
+  documento: { id: string; nomeDoArquivo: string };
+};
+
+/**
+ * Manda um modelo que leva um PDF no cabecalho.
+ *
+ * O modelo tem de estar aprovado na Meta COM cabecalho do tipo documento. Um
+ * modelo so de texto recebendo um cabecalho de documento e recusado — e a
+ * mensagem de erro da Meta nao diz que o problema e esse.
+ */
+export async function enviarModeloComDocumento(
+  envio: EnvioComDocumento,
+): Promise<ResultadoDoEnvio> {
+  const credencial = credencialDaPlataforma();
+
+  const corpo = {
+    messaging_product: "whatsapp",
+    to: envio.para,
+    type: "template",
+    template: {
+      name: envio.modelo,
+      language: { code: envio.idioma ?? "pt_BR" },
+      components: [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "document",
+              document: {
+                id: envio.documento.id,
+                filename: envio.documento.nomeDoArquivo,
+              },
+            },
+          ],
+        },
+        {
+          type: "body",
+          parameters: envio.parametros.map((texto) => ({ type: "text", text: texto })),
+        },
+      ],
+    },
+  };
+
+  let resposta: Response;
+  try {
+    resposta = await buscarComLimite(
+      `${baseMeta()}/${encodeURIComponent(credencial.numeroId)}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${credencial.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(corpo),
+      },
+    );
+  } catch (erro) {
+    throw new FalhaNoWhatsapp(descreverFalha(erro), false);
+  }
+
+  const json = (await resposta.json().catch(() => null)) as {
+    messages?: { id?: string }[];
+    error?: { message?: string; code?: number };
+  } | null;
+
+  if (!resposta.ok) {
+    const codigo = json?.error?.code ?? 0;
+    throw new FalhaNoWhatsapp(
+      explicar(codigo, json?.error?.message ?? `A Meta respondeu ${resposta.status}.`),
+      ehDefinitivo(codigo, resposta.status),
+    );
+  }
+  const id = json?.messages?.[0]?.id;
+  if (!id) throw new FalhaNoWhatsapp("A Meta aceitou sem devolver o id da mensagem.", false);
+  return { idNaMeta: id };
+}

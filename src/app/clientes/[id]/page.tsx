@@ -282,6 +282,8 @@ export default async function FichaCliente({
         advogados={advogados}
         escolhidosNoCliente={cliente.advogadosIds}
         assinaturaLigada={assinaturaLigada}
+        whatsappLigado={modulos.includes("WHATSAPP")}
+        telefoneDoCliente={cliente.telefone}
         envios={envios.map((e) => ({
           id: e.id,
           especie: e.especie,

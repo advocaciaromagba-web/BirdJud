@@ -150,6 +150,7 @@ texto tem significado declarado.
 | 3 dias, 24h e 1h antes | equipe e quem vai comparecer | `birdjud_lembrete_*` |
 | publicacoes novas | equipe que quis receber | `birdjud_resumo_publicacoes` |
 | o dia que tem algo | equipe que quis receber | `birdjud_resumo_do_dia` |
+| **documento gerado** (contrato, procuracao, declaracao, recibo) | o cliente, em PDF | `birdjud_documento` |
 
 Os dois primeiros saem **na hora**, nao na proxima rodada da fila: quem ficou
 com a tarefa precisa saber agora. Sao gravados como qualquer outro aviso e a
@@ -163,6 +164,31 @@ mesmo nao recebe nada: acabou de digitar.
 **O aviso de "marcado" costuma sair na tela de participantes**, nao na de
 criar: ao criar, o compromisso ainda nao tem participante nenhum. A chave leva
 o participante, entao mexer na lista depois nao reavisa quem ja foi avisado.
+
+## Mandar o documento pelo WhatsApp
+
+Da propria conferencia da peca (ver `docs/MODELOS.md`): o PDF que esta na tela
+sobe para a Meta e chega como anexo no celular do cliente.
+
+O numero vem do **cadastro do cliente** e nao ha onde digitar outro, de
+proposito: mandar a procuracao de uma pessoa para o telefone de outra nao da
+erro nenhum, chega instantaneo e **nao se desfaz**. Cliente sem telefone, ou
+com telefone que o sistema nao consegue ler, e recusado **antes** de subir o
+arquivo — nao gasta mensagem nem sobe documento.
+
+**Recibo com campo em branco nao sai.** Baixar um recibo com `[ --- ]` no
+valor ja e ruim; manda-lo ao cliente e pior, porque sai da mao de quem
+conferiria. Em branco, o valor vem da ultima cobranca paga — o mesmo caminho
+da tela de gerar a peca, para que o recibo baixado e o mandado nunca digam
+coisas diferentes.
+
+Quem pediu para parar de receber **nao recebe nem documento**: o pedido vale
+para tudo, e documento e a mensagem mais invasiva que o sistema manda.
+
+Tecnicamente: o PDF nao vai dentro da mensagem. Sobe-se primeiro
+(`POST /{numero}/media`), manda-se o id depois, num modelo aprovado **com
+cabecalho do tipo documento** — modelo so de texto recebendo um PDF e
+recusado, e a mensagem de erro da Meta nao diz que o problema e esse.
 
 ## Quando o aviso sai: a regua
 
