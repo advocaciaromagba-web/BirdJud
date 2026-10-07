@@ -11,7 +11,7 @@ import {
 } from "@/componentes/PainelConciliacao";
 
 export default async function PaginaConciliacao() {
-  const contexto = await contextoDaPagina("COBRANCAS");
+  const contexto = await contextoDaPagina("COBRANCAS", "CONCILIACAO");
   const modulos = await modulosAtivos(contexto.escritorioId);
 
   const [{ entradas, abertas }, integracao] = await Promise.all([
@@ -61,6 +61,7 @@ export default async function PaginaConciliacao() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Conferir o extrato"
       chamada={

@@ -7,7 +7,7 @@ import { Estrutura } from "@/componentes/Estrutura";
 import { PainelModelos, type ModeloNaTela } from "@/componentes/PainelModelos";
 
 export default async function PaginaModelos() {
-  const contexto = await contextoDaPagina();
+  const contexto = await contextoDaPagina(undefined, "MODELOS");
   const modulos = await modulosAtivos(contexto.escritorioId);
   const vigentes = await modelosVigentes(contexto.escritorioId);
 
@@ -28,6 +28,7 @@ export default async function PaginaModelos() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Modelos de documento"
       chamada={

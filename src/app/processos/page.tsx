@@ -7,7 +7,7 @@ import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 
 export default async function PaginaProcessos() {
-  const contexto = await contextoDaPagina();
+  const contexto = await contextoDaPagina(undefined, "PROCESSOS");
 
   const modulos = await modulosAtivos(contexto.escritorioId);
   const { processos, clientes } = await comEscritorio(
@@ -30,6 +30,7 @@ export default async function PaginaProcessos() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Processos"
       chamada={`${processos.length} cadastrado(s).`}

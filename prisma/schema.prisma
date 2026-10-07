@@ -82,6 +82,7 @@ model Escritorio {
   modelos           ModeloDeDocumento[]
   metas             Meta[]
   participantes     ParticipanteDeCompromisso[]
+  permissoesDeArea  PermissaoDeArea[]
 }
 
 model ModuloContratado {
@@ -164,6 +165,8 @@ model Usuario {
   criadoEm DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  permissoesDeArea PermissaoDeArea[]
 
   prazos Prazo[]
 
@@ -371,6 +374,22 @@ model ParticipanteDeCompromisso {
   cliente     Cliente?    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
 
   @@index([compromissoId])
+  @@index([escritorioId])
+}
+
+/// Quem o escritorio deixa entrar em cada area. Ver src/lib/areas.ts.
+model PermissaoDeArea {
+  id           String   @id @default(cuid())
+  escritorioId String
+  usuarioId    String
+  area         String
+  permitido    Boolean
+  atualizadoEm DateTime @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  usuario    Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, area])
   @@index([escritorioId])
 }
 

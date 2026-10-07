@@ -143,6 +143,7 @@ export default async function FichaCliente({
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo={cliente.nome}
       chamada={`${cliente.processos.length} processo(s) · ${cliente.arquivos.length} documento(s) · ${cliente._count.cobrancas} cobranca(s)`}

@@ -113,6 +113,7 @@ const TABELAS_COM_RLS = [
   "ModeloDeDocumento",
   "Meta",
   "ParticipanteDeCompromisso",
+  "PermissaoDeArea",
 ];
 
 async function conferirBanco() {

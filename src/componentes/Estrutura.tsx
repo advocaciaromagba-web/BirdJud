@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Modulo } from "@/lib/modulos";
+import { AREA_DO_ENDERECO } from "@/lib/areas";
 import { Icone, type NomeDeIcone } from "./Icone";
 import { MenuLateral } from "./MenuLateral";
 import { CampoDeBusca } from "./CampoDeBusca";
@@ -124,16 +125,20 @@ const TITULO_DO_GRUPO: Record<Area["grupo"], string> = {
  * A estrutura de toda tela de dentro do sistema: menu lateral com a marca do
  * escritorio, barra de cima com busca, e o conteudo.
  *
- * As duas camadas de permissao do menu continuam iguais: area de modulo nao
- * contratado nao aparece para escritorio nenhum, e area de admin nao aparece
- * para quem nao e admin. Some do menu e, na rota, responde 403 — as duas
- * coisas, nunca so uma.
+ * TRES camadas de permissao, e sempre as tres: modulo nao contratado nao
+ * aparece para escritorio nenhum; area de admin nao aparece para quem nao e
+ * admin; e area que ESTE escritorio fechou para ESTA pessoa tambem nao
+ * aparece (src/lib/areas.ts).
+ *
+ * Some do menu E, na rota, responde 403. As duas coisas, nunca so uma: menu
+ * escondido e teatro — quem souber o endereco entra do mesmo jeito.
  */
 export function Estrutura({
   nomeEscritorio,
   logoUrl,
   papel,
   modulos,
+  acesso,
   titulo,
   chamada,
   acao,
@@ -145,6 +150,12 @@ export function Estrutura({
   logoUrl?: string | null;
   papel: string;
   modulos: Modulo[];
+  /**
+   * Area -> pode entrar. Sem isto, o menu mostra o que o modulo e o papel
+   * deixam — o comportamento de antes, para a tela que ainda nao passa o
+   * mapa nao esconder nada por engano.
+   */
+  acesso?: Record<string, boolean>;
   titulo: string;
   chamada?: string;
   /** Botao principal da tela, no canto direito do cabecalho. */
@@ -157,7 +168,8 @@ export function Estrutura({
   const areas = AREAS.filter(
     (area) =>
       (!area.modulo || contratados.has(area.modulo)) &&
-      (!area.soAdmin || papel === "ADMIN"),
+      (!area.soAdmin || papel === "ADMIN") &&
+      (!acesso || !AREA_DO_ENDERECO[area.href] || acesso[AREA_DO_ENDERECO[area.href]] === true),
   );
 
   const grupos = (["trabalho", "dinheiro", "escritorio"] as const)

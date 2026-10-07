@@ -22,7 +22,7 @@ const ETIQUETA_DO_TIPO: Record<string, string> = {
 };
 
 export default async function PaginaAgenda() {
-  const contexto = await contextoDaPagina();
+  const contexto = await contextoDaPagina(undefined, "AGENDA");
 
   const modulos = await modulosAtivos(contexto.escritorioId);
   const { compromissos, processos, clientes } = await comEscritorio(
@@ -69,6 +69,7 @@ export default async function PaginaAgenda() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Agenda"
       chamada="Compromissos de hoje em diante, agrupados por dia."

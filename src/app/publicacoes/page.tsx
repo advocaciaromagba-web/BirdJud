@@ -43,7 +43,7 @@ const UFS = [
 export default async function PaginaPublicacoes() {
   let contexto;
   try {
-    contexto = await contextoDaPagina("PUBLICACOES_DJEN");
+    contexto = await contextoDaPagina("PUBLICACOES_DJEN", "PUBLICACOES");
   } catch (erro) {
     if (erro instanceof ModuloNaoContratado) {
       return (
@@ -109,6 +109,7 @@ export default async function PaginaPublicacoes() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Publicacoes"
     >

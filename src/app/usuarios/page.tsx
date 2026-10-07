@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
 import { Estrutura } from "@/componentes/Estrutura";
+import { AreasDoUsuario } from "@/componentes/AreasDoUsuario";
+import { areasDistribuiveis } from "@/lib/areas";
+import { acessoDeTodos } from "@/lib/areas-do-escritorio";
 import { temRemetenteDaPlataforma } from "@/lib/email-plataforma";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 
@@ -37,6 +40,8 @@ export default async function PaginaUsuarios() {
 
   const modulos = await modulosAtivos(contexto.escritorioId);
   const uso = await usoDaFaixa(contexto.escritorioId);
+  const acessos = await acessoDeTodos(contexto.escritorioId);
+  const distribuiveis = areasDistribuiveis(modulos);
   const usuarios = await comEscritorio(contexto.escritorioId, (db) =>
     db.usuario.findMany({
       orderBy: { nome: "asc" },
@@ -57,6 +62,7 @@ export default async function PaginaUsuarios() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Usuarios"
     >
@@ -127,6 +133,19 @@ export default async function PaginaUsuarios() {
               {usuario.doisFatores ? " · 2FA ativo" : ""}
               {usuario.ativo ? "" : " · inativo"}
             </p>
+            {contexto.papel === "ADMIN" ? (
+              <AreasDoUsuario
+                usuarioId={usuario.id}
+                nome={usuario.nome}
+                ehAdmin={usuario.papel === "ADMIN"}
+                ehVoce={usuario.id === contexto.usuarioId}
+                areas={distribuiveis.map((a) => ({
+                  chave: a.chave,
+                  nome: a.nome,
+                  permitido: acessos.get(usuario.id)?.[a.chave] === true,
+                }))}
+              />
+            ) : null}
           </li>
         ))}
       </ul>

@@ -14,11 +14,18 @@ import { SemDestravar, SemSenhaDeAdministracao } from "./administracao";
 import { SemPermissao } from "./papeis";
 import type { Modulo } from "./modulos";
 
-export async function contextoDaPagina(modulo?: Modulo): Promise<ContextoRota> {
+export async function contextoDaPagina(
+  modulo?: Modulo,
+  area?: string,
+): Promise<ContextoRota> {
   try {
-    return await exigirSessao(modulo);
+    return await exigirSessao(modulo, area);
   } catch (erro) {
     if (erro instanceof SemSessao) redirect("/login");
+    // Area fechada nao e erro de sistema: e uma decisao do escritorio. A tela
+    // diz isso, com o nome da area, em vez de um 403 seco que faz a pessoa
+    // achar que quebrou.
+    if (erro instanceof SemPermissao) redirect(`/sem-acesso?motivo=${encodeURIComponent(erro.message)}`);
     throw erro;
   }
 }

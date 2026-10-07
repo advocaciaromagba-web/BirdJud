@@ -26,6 +26,7 @@ export default async function PaginaDoPlano() {
         nomeEscritorio={contexto.marca.nome}
         logoUrl={contexto.marca.logoUrl}
         papel={contexto.papel}
+      acesso={contexto.acesso}
         modulos={modulos}
         titulo="Plano"
       >

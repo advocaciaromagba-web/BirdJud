@@ -13,7 +13,7 @@ import {
 export default async function PaginaCobrancas() {
   let contexto;
   try {
-    contexto = await contextoDaPagina("COBRANCAS");
+    contexto = await contextoDaPagina("COBRANCAS", "COBRANCAS");
   } catch (erro) {
     if (erro instanceof ModuloNaoContratado) {
       return (
@@ -76,6 +76,7 @@ export default async function PaginaCobrancas() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Cobrancas"
     >

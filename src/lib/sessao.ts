@@ -9,8 +9,9 @@ import { getServerSession } from "next-auth";
 import { opcoesAuth } from "./auth";
 import { STATUS_QUE_ENTRAM } from "./auth-comum";
 import { escritorioPorSlug, type Marca } from "./escritorio";
-import { exigirModulo, type Modulo } from "./modulos";
-import { SemPermissao } from "./papeis";
+import { exigirModulo, modulosAtivos, type Modulo } from "./modulos";
+import { SemPermissao, type Papel } from "./papeis";
+import { areaPorChave, mapaDeAcesso } from "./areas";
 import { CABECALHO_SLUG } from "./subdominio";
 import {
   COOKIE as COOKIE_ADM,
@@ -34,6 +35,15 @@ export type ContextoRota = {
   usuarioId: string;
   papel: string;
   marca: Marca;
+  /**
+   * Area -> esta pessoa pode entrar.
+   *
+   * Vem junto com a sessao, e nao buscado por cada tela, porque o menu precisa
+   * dele em TODA tela: deixar cada pagina lembrar de pedir seria garantir que
+   * uma esquecesse, e area fechada continuaria aparecendo no menu de alguem.
+   */
+  acesso: Record<string, boolean>;
+  modulos: Modulo[];
 };
 
 /** Escritorio do endereco atual, sem exigir sessao (tela de login). */
@@ -45,9 +55,15 @@ export async function escritorioDoEndereco(): Promise<Marca | null> {
 
 /**
  * Exige sessao valida PARA O ESCRITORIO DESTE ENDERECO.
- * Opcionalmente exige tambem um modulo contratado.
+ *
+ * Opcionalmente exige tambem um modulo contratado e uma area liberada. A
+ * conferencia da area e AQUI, no servidor, e nao so no menu: menu escondido e
+ * teatro — quem souber o endereco entra do mesmo jeito.
  */
-export async function exigirSessao(modulo?: Modulo): Promise<ContextoRota> {
+export async function exigirSessao(
+  modulo?: Modulo,
+  area?: string,
+): Promise<ContextoRota> {
   const marca = await escritorioDoEndereco();
   if (!marca?.id) throw new SemSessao("Endereco sem escritorio.");
   if (!marca.status || !STATUS_QUE_ENTRAM.has(marca.status)) {
@@ -77,11 +93,31 @@ export async function exigirSessao(modulo?: Modulo): Promise<ContextoRota> {
 
   if (modulo) await exigirModulo(marca.id, modulo);
 
+  // Buscado uma vez e usado duas: para barrar esta area e para o menu saber o
+  // que esconder.
+  const [gravadas, modulos] = await Promise.all([
+    comEscritorio(marca.id, (db) =>
+      db.permissaoDeArea.findMany({
+        where: { usuarioId: sessao.usuarioId },
+        select: { area: true, permitido: true },
+      }),
+    ),
+    modulosAtivos(marca.id),
+  ]);
+  const acesso = mapaDeAcesso(sessao.papel as Papel, gravadas, modulos);
+
+  if (area && acesso[area] !== true) {
+    const nome = areaPorChave(area)?.nome ?? area;
+    throw new SemPermissao(`Seu acesso a ${nome} esta fechado neste escritorio.`);
+  }
+
   return {
     escritorioId: marca.id,
     usuarioId: sessao.usuarioId,
     papel: sessao.papel,
     marca,
+    acesso,
+    modulos,
   };
 }
 
@@ -116,6 +152,7 @@ export function motivoParaRecusar(
     return "Sessao de outro escritorio.";
   return null;
 }
+
 
 /** Exige sessao e papel de administrador do escritorio. */
 export async function exigirAdmin(modulo?: Modulo): Promise<ContextoRota> {

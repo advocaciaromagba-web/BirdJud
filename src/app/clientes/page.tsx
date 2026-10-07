@@ -7,7 +7,7 @@ import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { pendenciasDoCliente, quantasImpedem } from "@/lib/clientes";
 
 export default async function PaginaClientes() {
-  const contexto = await contextoDaPagina();
+  const contexto = await contextoDaPagina(undefined, "CLIENTES");
 
   const modulos = await modulosAtivos(contexto.escritorioId);
   const clientes = await comEscritorio(contexto.escritorioId, (db) =>
@@ -31,6 +31,7 @@ export default async function PaginaClientes() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Clientes"
       chamada={`${clientes.length} cadastrado(s).`}

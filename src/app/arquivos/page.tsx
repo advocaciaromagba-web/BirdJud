@@ -17,7 +17,7 @@ import {
 export default async function PaginaArquivos() {
   let contexto;
   try {
-    contexto = await contextoDaPagina("NUVEM");
+    contexto = await contextoDaPagina("NUVEM", "ARQUIVOS");
   } catch (erro) {
     if (erro instanceof ModuloNaoContratado) {
       return (
@@ -76,6 +76,7 @@ export default async function PaginaArquivos() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Arquivos"
     >

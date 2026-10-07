@@ -9,7 +9,7 @@ import { PainelNotas, type NotaNaTela } from "@/componentes/PainelNotas";
 export default async function PaginaNotas() {
   let contexto;
   try {
-    contexto = await contextoDaPagina("NFSE");
+    contexto = await contextoDaPagina("NFSE", "NOTAS");
   } catch (erro) {
     if (erro instanceof ModuloNaoContratado) {
       return (
@@ -63,6 +63,7 @@ export default async function PaginaNotas() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Notas fiscais"
     >

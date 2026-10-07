@@ -70,6 +70,7 @@ export default async function Painel() {
       nomeEscritorio={marca.nome}
       logoUrl={marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={painel.modulos}
       titulo="Hoje"
       chamada="O que pede atencao agora, em uma tela."

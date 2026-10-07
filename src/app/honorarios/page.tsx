@@ -35,7 +35,7 @@ function resumoDoContrato(c: {
 }
 
 export default async function PaginaHonorarios() {
-  const contexto = await contextoDaPagina("COBRANCAS");
+  const contexto = await contextoDaPagina("COBRANCAS", "COBRANCAS");
   const modulos = await modulosAtivos(contexto.escritorioId);
 
   const [contratos, clientes, integracao] = await Promise.all([
@@ -92,6 +92,7 @@ export default async function PaginaHonorarios() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Honorarios"
       chamada={

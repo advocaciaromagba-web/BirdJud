@@ -75,6 +75,7 @@ export default async function PaginaAdministracao() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Administracao"
     >

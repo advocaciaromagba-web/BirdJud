@@ -14,7 +14,7 @@ import { PainelPrazos, type PrazoNaTela } from "@/componentes/PainelPrazos";
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export default async function PaginaPrazos() {
-  const contexto = await contextoDaPagina();
+  const contexto = await contextoDaPagina(undefined, "PRAZOS");
   const modulos = await modulosAtivos(contexto.escritorioId);
   const hojeISO = hoje();
 
@@ -82,6 +82,7 @@ export default async function PaginaPrazos() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Prazos"
       chamada={

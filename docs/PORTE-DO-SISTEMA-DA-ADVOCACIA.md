@@ -122,7 +122,7 @@ abaixo e a que sobrou.
 | ✔ **Participantes** em evento | Compromisso com mais de uma pessoa, cliente ou nao, cada uma avisada no contato dela. Quem nao da para avisar aparece na tela, com o motivo. |
 | **Lembretes e auto-resposta de WhatsApp** | Confirmacao de audiencia sem alguem lembrar de mandar. |
 | ✔ **Duplicados** (`clientes-duplicados`, `publicacoes-duplicadas`) | Documento igual barra; nome igual avisa e deixa confirmar (homonimo existe). Publicacao repetida e MARCADA, nunca apagada, e a faixa de duvida espera uma pessoa. |
-| **Permissoes por area** (`permissoes`, `area-auth`, `areas`) | O BirdJud tem tres papeis; la ha permissao por area. |
+| ✔ **Permissoes por area** (`permissoes`, `area-auth`, `areas`) | Terceira camada, depois do modulo e do papel. O dinheiro e subdividido; quase tudo nasce aberto; esconde do menu E barra o endereco. |
 
 ### Depois: captacao e IA
 

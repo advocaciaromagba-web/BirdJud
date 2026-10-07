@@ -64,6 +64,7 @@ export default async function PaginaIntegracoes() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      acesso={contexto.acesso}
       modulos={modulos}
       titulo="Integracoes"
     >
