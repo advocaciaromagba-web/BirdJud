@@ -23,6 +23,7 @@ import {
   gerarAvisosFinanceiros,
   gerarResumoDoDia,
 } from "./avisos";
+import { triarPendentes } from "./triagem-do-escritorio";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -273,6 +274,22 @@ async function lembrar({ escritorioId }: Contexto): Promise<void> {
   await enviarAvisosNoWhatsapp(escritorioId);
 }
 
+/**
+ * Toda publicacao passa pela triagem.
+ *
+ * Roda logo depois da captura, na mesma madrugada: a publicacao que chega as
+ * 3h tem de estar na tela com sugestao quando o escritorio abrir. Triagem que
+ * depende de alguem clicar e triagem que nao acontece nos dias cheios — que
+ * sao justamente os dias em que o prazo escapa.
+ */
+async function triar({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("TRIAR_PUBLICACOES exige escritorio.");
+  const feitas = await triarPendentes(escritorioId);
+  if (feitas > 0) {
+    console.log(`TRIAR_PUBLICACOES ${escritorioId}: ${feitas} publicacao(oes).`);
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   LEMBRAR: lembrar,
@@ -280,6 +297,7 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   EMITIR_HONORARIOS: emitirHonorarios,
   GERAR_CONTAS_A_PAGAR: gerarContasAPagar,
   CAPTURAR_PUBLICACOES: capturar,
+  TRIAR_PUBLICACOES: triar,
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
   PURGAR_ENCERRADOS: purgar,
@@ -296,6 +314,7 @@ export const TRABALHOS_DA_PLATAFORMA = new Set([
 const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   // Escritorio que nao contratou publicacoes nao gera trabalho de captura.
   CAPTURAR_PUBLICACOES: "PUBLICACOES_DJEN",
+  TRIAR_PUBLICACOES: "PUBLICACOES_DJEN",
   AVISAR: "EMAIL",
   LEMBRAR: "EMAIL",
   SINCRONIZAR_COBRANCAS: "COBRANCAS",

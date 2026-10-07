@@ -287,3 +287,51 @@ export function diasUteisAte(
 export function paraBR(iso: string | null | undefined): string {
   return iso && dataValida(iso) ? iso.split("-").reverse().join("/") : "";
 }
+
+/**
+ * A data que fica N dias uteis ANTES do vencimento, sem cair em dia morto.
+ *
+ * Serve para a antecedencia com que o escritorio quer tratar o prazo: o fatal
+ * e do juizo, mas quem trabalha quer a peca pronta alguns dias antes.
+ *
+ * Dias UTEIS, e nao corridos, por um motivo pratico: tres dias corridos antes
+ * de uma segunda-feira cai na sexta — mas tres dias corridos antes de uma
+ * quarta cai no domingo, e aviso marcado para domingo e aviso que ninguem ve.
+ *
+ * Nunca devolve data anterior a `piso` (em geral, hoje). Publicacao lida com
+ * atraso tem fatal daqui a dois dias; recuar tres dias uteis cairia ONTEM, e o
+ * sistema estaria sugerindo trabalho para uma data que ja passou.
+ */
+export function recuarDiasUteis(
+  vencimentoISO: string,
+  dias: number,
+  piso?: string,
+  calendario?: Calendario,
+): string {
+  if (!dataValida(vencimentoISO)) {
+    throw new PrazoInvalido("Data de vencimento invalida.");
+  }
+  if (!Number.isInteger(dias) || dias < 0 || dias > 365) {
+    throw new PrazoInvalido("A antecedencia precisa ser de 0 a 365 dias.");
+  }
+
+  let d = new Date(`${vencimentoISO}T00:00:00Z`);
+  let andados = 0;
+  while (andados < dias) {
+    d = somaDias(d, -1);
+    if (ehDiaUtil(d, calendario)) andados++;
+  }
+  // O proprio vencimento pode cair em dia sem expediente quando a antecedencia
+  // e zero; e quando ha recuo, o laco ja para em dia util.
+  if (!ehDiaUtil(d, calendario)) d = proximoDiaUtil(d, calendario);
+
+  const recuada = chave(d);
+  if (!piso) return recuada;
+  if (!dataValida(piso)) throw new PrazoInvalido("Data de piso invalida.");
+
+  if (recuada >= piso) return recuada;
+  // Ja passou: o mais cedo possivel e o proximo dia util a partir do piso —
+  // nunca depois do proprio vencimento.
+  const doPiso = chave(proximoDiaUtil(new Date(`${piso}T00:00:00Z`), calendario));
+  return doPiso > vencimentoISO ? vencimentoISO : doPiso;
+}

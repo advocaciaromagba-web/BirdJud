@@ -399,6 +399,37 @@ d("isolamento dos prazos", () => {
     await prismaPlataforma().respostaDeWhatsapp.deleteMany({ where: { idNaMeta } });
   });
 
+  it("a triagem de uma publicacao nao vaza para o outro escritorio", async () => {
+    // Carrega o resumo do que o juizo determinou e o prazo fatal do processo
+    // alheio — e, pelo numero do processo, diz de quem o outro escritorio e
+    // advogado.
+    const pub = await comEscritorio(alfaP, (db) =>
+      db.publicacao.create({
+        data: semEscritorio({
+          idExterno: `pub-isolamento-${Date.now()}`,
+          texto: "Citada para contestar.",
+          dataDisponibilizacao: new Date(),
+        }),
+      }),
+    );
+    await comEscritorio(alfaP, (db) =>
+      db.triagemDePublicacao.create({
+        data: semEscritorio({
+          publicacaoId: pub.id,
+          especie: "TAREFA",
+          tipo: "TAREFA",
+          titulo: "Contestacao de Alfa",
+          resumo: "Prazo para contestar.",
+          confianca: "ALTA",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) =>
+      db.triagemDePublicacao.findMany(),
+    );
+    expect(deBeta).toHaveLength(0);
+  });
+
   it("a meta de um escritorio nao aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.meta.create({

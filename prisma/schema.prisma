@@ -89,6 +89,7 @@ model Escritorio {
   permissoesDeArea  PermissaoDeArea[]
   enviosParaAssinatura EnvioParaAssinatura[]
   respostasDeWhatsapp  RespostaDeWhatsapp[]
+  triagens             TriagemDePublicacao[]
   bloqueiosDeWhatsapp  BloqueioDeWhatsapp[]
 }
 
@@ -361,6 +362,50 @@ model ModeloDeDocumento {
   // declarar (ver 28_modelos). Declarar @@unique aqui seria mentira: proibiria
   // tambem dois inativos da mesma especie, que e justamente o historico.
   @@index([escritorioId])
+}
+
+/// O que fazer com uma publicacao. Ver src/lib/triagem-de-publicacao.ts.
+///
+/// Uma por publicacao. A SUGESTAO fica aqui ate alguem aceitar; o compromisso
+/// so nasce quando uma pessoa clica. Sistema que cria prazo sozinho na agenda
+/// do escritorio e sistema em que ninguem confia na agenda.
+model TriagemDePublicacao {
+  id            String   @id @default(cuid())
+  escritorioId  String
+  publicacaoId  String   @unique
+  /// AGENDAMENTO | TAREFA
+  especie       String
+  /// AUDIENCIA | PERICIA | COMPROMISSO | TAREFA
+  tipo          String
+  titulo        String
+  resumo        String
+  /// Dias que o TEXTO menciona. A data quem calcula e prazos.ts.
+  prazoDias     Int?
+  /// UTEIS | CORRIDOS
+  contagem      String?
+  /// Data fatal, calculada pelo sistema com o calendario do escritorio.
+  prazoFatal    DateTime?
+  /// Tres dias uteis antes do fatal: quando o escritorio deve tratar.
+  prazoSugerido DateTime?
+  /// Data e hora do ato, quando o proprio texto marca.
+  dataDoAto     DateTime?
+  /// ALTA | MEDIA | BAIXA
+  confianca     String
+  atencao       String?
+  /// Como o prazo foi contado, em linguagem de gente.
+  explicacao    String?
+  /// Vazio quando saiu de palavra-chave, sem IA.
+  modelo        String?
+  /// Preenchido quando alguem aceitou e o compromisso nasceu.
+  compromissoId String?
+  aceitaEm      DateTime?
+  recusadaEm    DateTime?
+  criadoEm      DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  publicacao Publicacao @relation(fields: [publicacaoId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, criadoEm])
 }
 
 /// Mensagem que CHEGOU pelo WhatsApp. Ver src/lib/resposta-whatsapp.ts.
@@ -875,6 +920,7 @@ model Publicacao {
   escritorio Escritorio  @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processo   Processo?   @relation(fields: [processoId], references: [id], onDelete: SetNull)
   analises   AnaliseIA[]
+  triagem    TriagemDePublicacao?
 
   @@unique([escritorioId, idExterno])
   @@index([escritorioId, lida, arquivada])

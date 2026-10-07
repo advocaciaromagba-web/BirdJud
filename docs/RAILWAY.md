@@ -123,7 +123,7 @@ do Railway, nao a mao — o que esta aqui e o retrato do que foi criado.
 | `postgres` | PostgreSQL 16 (imagem oficial do Railway, com SSL) | volume proprio em `/var/lib/postgresql/data`; banco `birdjud` pertencente a `birdjud_owner` |
 | `aplicacao` | a aplicacao web, do repositorio, branch `main` | volume em `/dados/arquivos`; healthcheck em `/api/saude`; start `npm run start:producao` |
 | `trabalhador` | consome a fila | start `npm run trabalhador`, reinicio sempre |
-| `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN, contas a pagar do mes e, em seguida, os avisos — nessa ordem |
+| `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN, **triagem das publicacoes**, contas a pagar do mes e, em seguida, os avisos — nessa ordem |
 | `cron-diario` | `0 9 * * *` (06h de Brasilia) | consumo, regua de cobranca, sincronizacao de cobrancas e emissao de parcela de honorarios |
 | `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados |
 | `cron-horario` | `7 * * * *` (de hora em hora) | `LEMBRAR`: so os lembretes de compromisso |

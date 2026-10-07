@@ -116,6 +116,7 @@ const TABELAS_COM_RLS = [
   "EnvioParaAssinatura",
   "BloqueioDeWhatsapp",
   "RespostaDeWhatsapp",
+  "TriagemDePublicacao",
   "PermissaoDeArea",
 ];
 

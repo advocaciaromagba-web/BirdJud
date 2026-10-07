@@ -71,9 +71,16 @@ export default async function PaginaPublicacoes() {
             orderBy: { criadoEm: "desc" },
             take: 1,
           },
+          triagem: true,
         },
       }),
       oabs: await db.oabMonitorada.findMany({ orderBy: { criadoEm: "asc" } }),
+      equipe: await db.usuario.findMany({
+        where: { ativo: true },
+        orderBy: { nome: "asc" },
+        select: { id: true, nome: true, papel: true },
+        take: 200,
+      }),
       naoLidas: await db.publicacao.count({
         where: { arquivada: false, lida: false },
       }),
@@ -102,6 +109,25 @@ export default async function PaginaPublicacoes() {
     lida: p.lida,
     temIA: modulos.includes("IA"),
     analise: p.analises[0]?.resultado ?? null,
+    triagem: p.triagem
+      ? {
+          id: p.triagem.id,
+          especie: p.triagem.especie,
+          tipo: p.triagem.tipo,
+          titulo: p.triagem.titulo,
+          resumo: p.triagem.resumo,
+          prazoFatal: p.triagem.prazoFatal ? data.format(p.triagem.prazoFatal) : null,
+          prazoSugerido: p.triagem.prazoSugerido
+            ? p.triagem.prazoSugerido.toISOString()
+            : null,
+          dataDoAto: p.triagem.dataDoAto ? p.triagem.dataDoAto.toISOString() : null,
+          confianca: p.triagem.confianca,
+          atencao: p.triagem.atencao,
+          explicacao: p.triagem.explicacao,
+          aceita: p.triagem.aceitaEm !== null,
+          recusada: p.triagem.recusadaEm !== null,
+        }
+      : null,
   }));
 
   return (
@@ -170,7 +196,13 @@ export default async function PaginaPublicacoes() {
         </details>
       ) : null}
 
-      <ListaPublicacoes publicacoes={publicacoes} />
+      <ListaPublicacoes
+        publicacoes={publicacoes}
+        equipe={dados.equipe.map((p) => ({
+          id: p.id,
+          nome: `${p.nome} (${p.papel.toLowerCase()})`,
+        }))}
+      />
     </Estrutura>
   );
 }
