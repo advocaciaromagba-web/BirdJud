@@ -34,7 +34,8 @@
     "backup:banco": "tsx scripts/backup-banco.mjs",
     "vigia": "tsx scripts/vigia.mjs",
     "restaurar-copia": "tsx scripts/restaurar-copia.mjs",
-    "esperar-banco": "node scripts/esperar-banco.mjs"
+    "esperar-banco": "node scripts/esperar-banco.mjs",
+    "preparar-papeis": "node scripts/preparar-papeis.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

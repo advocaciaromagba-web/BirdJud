@@ -145,6 +145,11 @@ fila do provedor atrasa.
 > `deploymentTriggerCreate(input: {projectId, environmentId, serviceId,
 > provider: "github", repository, branch})`. Conferir com
 > `service(id).repoTriggers` — lista vazia quer dizer servico orfao.
+>
+> Correcao de 08/10/2026: `serviceCreate` cria o gatilho SIM, desde que
+> receba `branch` ao lado de `source.repo`. Sem `branch`, nao cria — foi o
+> caso do cron-horario. De qualquer modo, a conferencia por `repoTriggers`
+> continua valendo: e ela que diz qual dos dois caminhos aconteceu.
 
 Os horarios do cron do Railway sao em **UTC**; os da tabela ja estao
 convertidos.
