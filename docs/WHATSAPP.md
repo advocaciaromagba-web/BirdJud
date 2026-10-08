@@ -62,8 +62,17 @@ guarda isso, junto com a contagem e a ordem dos `{{n}}`.
 | `WHATSAPP_APP_SECRET` | o *App Secret*, que assina cada chamada do webhook |
 
 As duas primeiras andam juntas, e as duas ultimas tambem: `conferir-producao`
-trata "so uma das duas" como ERRO, porque configuracao pela metade so se
-descobre no dia do aviso.
+AVISA quando so uma das duas esta definida. Era erro ate 07/10/2026, e
+derrubou o site: a conferencia roda no start, e erro ali impede a aplicacao
+de subir. Configuracao pela metade degrada um recurso, nao fura o
+isolamento — ver `docs/RAILWAY.md`, 6b.
+
+**Onde cada variavel precisa existir.** Os crons so enfileiram; quem ENVIA
+lembrete, resumo e documento e o `trabalhador`. Entao o par de saida
+(`WHATSAPP_NUMERO_ID` + `WHATSAPP_TOKEN`) vive na aplicacao E no trabalhador.
+O par de entrada (`WHATSAPP_VERIFICACAO` + `WHATSAPP_APP_SECRET`) so na
+aplicacao, que e quem a Meta chama. Em 08/10 o trabalhador ficou um dia sem
+o par de saida e nenhum lembrete teria saido — sem erro em lugar nenhum.
 
 Em **Integracoes**, o escritorio **nao** ve mais o WhatsApp — e nao precisa
 ver. Linhas gravadas de quando era por escritorio ficam no banco, inertes.
@@ -117,16 +126,61 @@ percebe ate alguem receber. Os textos acima estao tambem em
 `src/lib/modelos-whatsapp.ts`, e ha um teste que confere se cada `{{n}}` do
 texto tem significado declarado.
 
-## Conectar
+## Conectar — o registro do que existe (08/10/2026)
 
-1. Meta: **WhatsApp > Configuracao da API** — anote o **ID do numero de
-   telefone** e gere um **token de acesso permanente** (token temporario de 24h
-   serve so para experimentar).
-2. No BirdJud, **Integracoes > WhatsApp (Cloud API)**: ID do numero e token. O
-   teste de conexao mostra o nome verificado e a nota de qualidade do numero.
-3. Cada pessoa, em **Minha conta**, informa o telefone e marca "Receber tambem
-   no WhatsApp". Telefone que o sistema nao consegue ler e recusado ali, com a
-   pessoa olhando para o campo — melhor que virar aviso perdido.
+| O que | Valor |
+|---|---|
+| Portfolio Meta Business | **Birdjud** (`112124864865169`) — era "Procedente", renomeado |
+| App na Meta | **BIRDJUD** (`1121369087026978`), caso de uso "Conectar-se com clientes pelo WhatsApp", **publicado** |
+| Conta do WhatsApp Business (WABA) real | **Birdjud** (`2087330425240199`), fuso America/Sao_Paulo, verificada |
+| Numero de producao | **+55 16 99799-8152**, nome de exibicao "Birdjud", *Phone number ID* `1405514119307343` |
+| Token | permanente, do usuario de sistema `birdjud-sistema` (Admin), permissoes `whatsapp_business_messaging` + `whatsapp_business_management`, nunca expira |
+| Webhook | `https://birdjud.com.br/api/webhooks/whatsapp`, campos `messages` e `message_template_status_update` |
+| Templates | os 7 de `src/lib/modelos-whatsapp.ts`, criados pela API na WABA real, em analise |
+
+### A licao que custou uma tarde
+
+Ao criar o app, a Meta cria junto uma **"Test WhatsApp Business Account"**
+com um numero de teste (+1 555...). Essa conta:
+
+- **nao aceita numero de producao** — a API responde "exclua um numero
+  existente ou peca numeros adicionais", que e uma mensagem errada para o
+  problema real;
+- **nao deixa excluir o numero de teste**;
+- **nao e a conta onde o numero real vai parar.**
+
+O numero de producao entra **pela tela** (Business Suite > Contas do
+WhatsApp > Adicionar, ou Configuracao da API > Adicionar numero), e isso
+cria uma **segunda** WABA — a real. A de teste fica la, inerte. Depois disso
+a API funciona normalmente **contra a WABA real**: registrar numero, criar
+template, assinar o app (`POST /{WABA}/subscribed_apps`).
+
+Consequencias praticas:
+
+1. **Templates sao por WABA.** Os 7 criados na conta de teste nao valem na
+   real; foram recriados la. Quem olhar a conta de teste vai ver 7 templates
+   orfaos — ignore.
+2. **O webhook e por app, mas a WABA precisa estar assinada no app.** Sem o
+   `subscribed_apps`, a Meta valida o endereco e nunca entrega mensagem.
+3. **Token de 24h gerado na Configuracao da API vence as 8h do dia seguinte**
+   (horario da Meta). Serve para experimentar; producao e sempre o
+   permanente do usuario de sistema.
+4. Para o usuario de sistema gerar token com permissoes de WhatsApp, ele
+   precisa ter o app E a WABA em **Ativos atribuidos**, e a tela de
+   permissoes pode demorar alguns minutos para refletir isso.
+
+### Para conferir sem abrir a Meta
+
+```
+GET /{WABA}/phone_numbers?fields=display_phone_number,verified_name,code_verification_status
+GET /{WABA}/message_templates?fields=name,status
+GET /{WABA}/subscribed_apps
+GET /{APP_ID}/subscriptions?access_token={APP_ID}|{APP_SECRET}
+```
+
+Cada pessoa, em **Minha conta**, informa o telefone e marca "Receber tambem
+no WhatsApp". Telefone que o sistema nao consegue ler e recusado ali, com a
+pessoa olhando para o campo — melhor que virar aviso perdido.
 
 ## Como o envio se comporta
 
