@@ -238,7 +238,7 @@ export function PainelTarefas({
         <button
           type="submit"
           disabled={ocupado === "formulario"}
-          className="botao-primario"
+          className="botao-principal"
         >
           {ocupado === "formulario" ? "Salvando..." : "Salvar tarefa"}
         </button>
@@ -276,7 +276,7 @@ export function PainelTarefas({
             <button
               type="button"
               onClick={() => setCriando(true)}
-              className="botao-primario"
+              className="botao-principal"
             >
               Nova tarefa
             </button>

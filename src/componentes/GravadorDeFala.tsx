@@ -259,7 +259,7 @@ export function GravadorDeFala({
           <button
             type="button"
             onClick={ouvindo ? parar : comecar}
-            className={ouvindo ? "botao-secundario text-xs" : "botao-primario text-xs"}
+            className={ouvindo ? "botao-secundario text-xs" : "botao-principal text-xs"}
           >
             {ouvindo ? "Parar de ouvir" : "Transcrever a conversa"}
           </button>

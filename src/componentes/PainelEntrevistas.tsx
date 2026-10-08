@@ -181,7 +181,7 @@ export function PainelEntrevistas({
             <button
               type="submit"
               disabled={ocupado === "nova"}
-              className="botao-primario"
+              className="botao-principal"
             >
               {ocupado === "nova" ? "Abrindo..." : "Abrir entrevista"}
             </button>
@@ -199,7 +199,7 @@ export function PainelEntrevistas({
           <button
             type="button"
             onClick={() => setCriando(true)}
-            className="botao-primario"
+            className="botao-principal"
           >
             Nova entrevista
           </button>
@@ -339,7 +339,7 @@ export function PainelEntrevistas({
                           curta ||
                           texto !== e.transcricao
                         }
-                        className="botao-primario text-xs"
+                        className="botao-principal text-xs"
                       >
                         {ocupado === `${e.id}:organizar`
                           ? "Organizando..."

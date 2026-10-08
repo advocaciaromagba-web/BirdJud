@@ -51,7 +51,8 @@ DECLARE
     'BloqueioDeWhatsapp',
     'TriagemDePublicacao',
     'Entrevista',
-    'Tarefa'
+    'Tarefa',
+    'CompromissoExcluido'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

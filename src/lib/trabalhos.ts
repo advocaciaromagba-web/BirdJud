@@ -13,6 +13,7 @@ import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
+import { arquivarVencidos } from "./agenda-do-escritorio";
 import { emitirParcelasDevidas } from "./honorarios-do-escritorio";
 import { gerarContasDoMes } from "./contas-do-escritorio";
 import { marcarPublicacoesRepetidas } from "./duplicados-do-escritorio";
@@ -302,6 +303,20 @@ async function triar({ escritorioId }: Contexto): Promise<void> {
   }
 }
 
+/**
+ * Arquiva o que venceu na agenda: sai da tela, entra na auditoria.
+ *
+ * Roda uma vez por dia, para todo escritorio — nao depende de modulo: a
+ * agenda e do sistema base. Ver arquivarVencidos para o que sai e o que fica.
+ */
+async function arquivarAgenda({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("ARQUIVAR_AGENDA exige escritorio.");
+  const r = await arquivarVencidos(escritorioId);
+  if (r.arquivados > 0) {
+    console.log(`ARQUIVAR_AGENDA ${escritorioId}: ${r.arquivados} — ${r.titulos.join(" | ")}`);
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   LEMBRAR: lembrar,
@@ -314,6 +329,7 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   REGUA_DE_COBRANCA: ruaDeCobranca,
   PURGAR_ENCERRADOS: purgar,
   LIMPAR_VENCIDOS: limparVencidos,
+  ARQUIVAR_AGENDA: arquivarAgenda,
 };
 
 /** Trabalhos que rodam uma vez para a plataforma toda, nao por escritorio. */
@@ -335,6 +351,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   APURAR_CONSUMO: undefined,
   REGUA_DE_COBRANCA: undefined,
   LIMPAR_VENCIDOS: undefined,
+  ARQUIVAR_AGENDA: undefined,
 };
 
 /**

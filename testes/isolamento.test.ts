@@ -492,6 +492,26 @@ d("isolamento dos prazos", () => {
     expect(await comEscritorio(betaP, (db) => db.tarefa.count())).toBe(0);
   });
 
+  it("a auditoria da agenda de um escritorio nao aparece para o outro", async () => {
+    // O que saiu da agenda ainda diz quem e cliente, que processo e com
+    // quem — vaza tanto quanto o compromisso vivo.
+    await comEscritorio(alfaP, (db) =>
+      db.compromissoExcluido.create({
+        data: semEscritorio({
+          compromissoId: "c-de-alfa",
+          titulo: "Audiencia de Alfa",
+          tipo: "AUDIENCIA",
+          inicio: new Date("2026-10-01T13:00:00Z"),
+          nomeDoCliente: "Cliente de Alfa",
+          participantes: ["Cliente de Alfa"],
+          motivo: "VENCIDO",
+        }),
+      }),
+    );
+    expect(await comEscritorio(betaP, (db) => db.compromissoExcluido.count())).toBe(0);
+    expect(await comEscritorio(alfaP, (db) => db.compromissoExcluido.count())).toBe(1);
+  });
+
   it("a meta de um escritorio nao aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.meta.create({

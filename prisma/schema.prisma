@@ -60,6 +60,7 @@ model Escritorio {
   clientes          Cliente[]
   processos         Processo[]
   compromissos      Compromisso[]
+  compromissosExcluidos CompromissoExcluido[]
   oabs              OabMonitorada[]
   publicacoes       Publicacao[]
   analises          AnaliseIA[]
@@ -277,6 +278,9 @@ model Compromisso {
   inicio       DateTime
   fim          DateTime?
   local        String?
+  /// Sala virtual: o link que o tribunal mandou (Teams, Zoom, Webex) ou o
+  /// Meet da reuniao. Vai no aviso ao participante junto com o endereco.
+  link         String?
   observacoes  String?
   concluido    Boolean   @default(false)
   /// Quem no escritorio ficou com isto. Nulo = e de todos.
@@ -289,10 +293,43 @@ model Compromisso {
   responsavel Usuario?  @relation("CompromissosDoResponsavel", fields: [responsavelId], references: [id], onDelete: SetNull)
 
   participantes ParticipanteDeCompromisso[]
+  /// Todo aviso que saiu por causa deste compromisso — a prova de que a
+  /// pessoa foi avisada. Fica mesmo depois que o compromisso sai da agenda.
+  avisos        Aviso[]
 
   @@index([escritorioId])
   @@index([escritorioId, inicio])
   @@index([escritorioId, clienteId])
+}
+
+/// Compromisso que saiu da agenda — apagado por alguem ou arquivado por ter
+/// vencido. E registro de auditoria: so se consulta, nada aqui volta.
+model CompromissoExcluido {
+  id               String   @id @default(cuid())
+  escritorioId     String
+  /// O id que o compromisso tinha; casa com Aviso.compromissoId (que vira
+  /// nulo quando a linha some) e com o historico de respostas.
+  compromissoId    String
+  titulo           String
+  tipo             String
+  inicio           DateTime
+  fim              DateTime?
+  local            String?
+  link             String?
+  numeroProcesso   String?
+  nomeDoCliente    String?
+  nomeDoResponsavel String?
+  /// Nomes de quem estava marcado, para a auditoria dizer quem foi avisado.
+  participantes    String[]
+  /// VENCIDO (arquivado pela rotina) | EXCLUIDO (alguem apagou)
+  motivo           String
+  excluidoPorId    String?
+  nomeDeQuemExcluiu String?
+  excluidoEm       DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, excluidoEm])
 }
 
 // ---------------------------------------------------------------------------
@@ -1058,17 +1095,24 @@ model Aviso {
   modelo     String?
   parametros Json?
 
-  estado     String    @default("PENDENTE") // PENDENTE | ENVIADO | FALHOU
+  /// De que compromisso o aviso veio, quando veio de um. Nulo nos resumos e
+  /// nos avisos financeiros, e vira nulo quando o compromisso e apagado — o
+  /// aviso fica, porque e a prova de que foi mandado.
+  compromissoId String?
+
+  estado     String    @default("PENDENTE") // PENDENTE | ENVIADO | FALHOU | CANCELADO
   tentativas Int       @default(0)
   erro       String?
   enviadoEm  DateTime?
   criadoEm   DateTime  @default(now())
 
-  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
-  usuario    Usuario?   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  usuario     Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  compromisso Compromisso? @relation(fields: [compromissoId], references: [id], onDelete: SetNull)
 
   @@unique([escritorioId, chave])
   @@index([escritorioId, estado])
+  @@index([escritorioId, compromissoId])
 }
 
 // ---------------------------------------------------------------------------

@@ -49,6 +49,10 @@ export function FormularioCriar({
   recolhivel = false,
   textoAbrir,
   leitura,
+  metodo = "POST",
+  valoresIniciais,
+  aoConcluir,
+  aoCancelar,
 }: {
   rota: string;
   campos: Campo[];
@@ -58,6 +62,14 @@ export function FormularioCriar({
   textoAbrir?: string;
   /** Perfil de leitura de documento; ausente, o leitor nao aparece. */
   leitura?: Perfil;
+  /** PATCH quando o formulario edita um registro que ja existe. */
+  metodo?: "POST" | "PATCH";
+  /** O que ja esta gravado, na edicao. */
+  valoresIniciais?: Record<string, string>;
+  /** Chamado depois de gravar, alem do refresh da pagina. */
+  aoConcluir?: () => void;
+  /** Quando existe, aparece um "Cancelar" mesmo sem `recolhivel`. */
+  aoCancelar?: () => void;
 }) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
@@ -66,7 +78,9 @@ export function FormularioCriar({
   const [confirmavel, setConfirmavel] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [aberto, setAberto] = useState(!recolhivel);
-  const [valores, setValores] = useState<Record<string, string>>({});
+  const [valores, setValores] = useState<Record<string, string>>(
+    valoresIniciais ?? {},
+  );
   const chaveDaCobranca = useRef<string | null>(null);
 
   function mudar(nome: string, valor: string) {
@@ -123,7 +137,7 @@ export function FormularioCriar({
     if (confirmando) corpo.confirmarHomonimo = true;
 
     const resposta = await fetch(rota, {
-      method: "POST",
+      method: metodo,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(corpo),
     });
@@ -135,6 +149,7 @@ export function FormularioCriar({
       setConfirmavel(null);
       if (recolhivel) setAberto(false);
       router.refresh();
+      aoConcluir?.();
       return;
     }
     const json = await resposta.json().catch(() => ({}));
@@ -320,10 +335,13 @@ export function FormularioCriar({
               E outra pessoa, cadastrar assim mesmo
             </button>
           ) : null}
-          {recolhivel ? (
+          {recolhivel || aoCancelar ? (
             <button
               type="button"
-              onClick={() => setAberto(false)}
+              onClick={() => {
+                setAberto(false);
+                aoCancelar?.();
+              }}
               className="botao-secundario"
             >
               Cancelar

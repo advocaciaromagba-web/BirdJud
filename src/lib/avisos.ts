@@ -21,6 +21,7 @@ import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
 import { dataHoraBR } from "./datas";
 import {
   MAIOR_ANTECEDENCIA_HORAS,
+  MARCOS,
   TIPOS_COM_REGUA,
   marcoAgora,
   quandoComMarco,
@@ -39,6 +40,8 @@ import {
   corpoDoResumo,
 } from "./textos-aviso";
 import { paraAvisarNoCompromisso } from "./participantes-do-escritorio";
+import { CompromissoNaoEncontrado } from "./agenda-do-escritorio";
+import { type AvisoManual as Manual } from "./avisos-manuais";
 import { dominioDaPlataforma } from "./dominio";
 import { contasParaAvisar } from "./contas-do-escritorio";
 import { fatosDoDia } from "./resumo-do-escritorio";
@@ -255,6 +258,7 @@ async function gerarLembretes(
         usuarioId: usuario.id,
         canal: "EMAIL",
         tipo: "LEMBRETE_COMPROMISSO",
+        compromissoId: compromisso.id,
         // Um lembrete por marco, por compromisso e por pessoa, para sempre.
         chave: `lembrete:${m}${compromisso.id}:${usuario.id}`,
         destino: usuario.email,
@@ -270,6 +274,7 @@ async function gerarLembretes(
         usuarioId: usuario.id,
         canal: "WHATSAPP",
         tipo: "LEMBRETE_COMPROMISSO",
+        compromissoId: compromisso.id,
         chave: `zap:lembrete:${m}${compromisso.id}:${usuario.id}`,
         destino: telefone,
         assunto,
@@ -311,6 +316,7 @@ async function gerarLembretes(
           usuarioId: null,
           canal: "EMAIL",
           tipo: "LEMBRETE_AO_PARTICIPANTE",
+          compromissoId: compromisso.id,
           chave: `participante:${m}${compromisso.id}:${pessoa.participanteId}`,
           destino: pessoa.email,
           assunto: assuntoDele,
@@ -326,6 +332,7 @@ async function gerarLembretes(
         usuarioId: null,
         canal: "WHATSAPP",
         tipo: "LEMBRETE_AO_PARTICIPANTE",
+        compromissoId: compromisso.id,
         chave: `zap:participante:${m}${compromisso.id}:${pessoa.participanteId}`,
         destino: pessoa.telefone,
         assunto: assuntoDele,
@@ -477,6 +484,8 @@ type NovoAviso = {
   corpo: string;
   modelo?: string;
   parametros?: string[];
+  /** O compromisso que gerou o aviso — e a prova de que a pessoa foi avisada. */
+  compromissoId?: string;
 };
 
 /** Devolve false quando o aviso ja existia — e o que torna a rotina repetivel. */
@@ -790,6 +799,7 @@ export async function avisarDesignacao(
       usuarioId: responsavel.id,
       canal: "EMAIL",
       tipo: "TAREFA_DESIGNADA",
+      compromissoId,
       chave,
       destino: responsavel.email,
       assunto: assuntoDaDesignacao(dados),
@@ -806,6 +816,7 @@ export async function avisarDesignacao(
       usuarioId: responsavel.id,
       canal: "WHATSAPP",
       tipo: "TAREFA_DESIGNADA",
+      compromissoId,
       chave: `zap:${chave}`,
       destino: telefone,
       assunto: assuntoDaDesignacao(dados),
@@ -864,6 +875,7 @@ export async function avisarAgendamento(
           usuarioId: null,
           canal: "EMAIL",
           tipo: "COMPROMISSO_MARCADO",
+          compromissoId,
           chave,
           destino: pessoa.email,
           assunto,
@@ -879,6 +891,7 @@ export async function avisarAgendamento(
       usuarioId: null,
       canal: "WHATSAPP",
       tipo: "COMPROMISSO_MARCADO",
+      compromissoId,
       chave: `zap:${chave}`,
       destino: pessoa.telefone,
       assunto,
@@ -900,4 +913,122 @@ export async function avisarAgendamento(
   }
 
   return criados;
+}
+
+export { AVISOS_MANUAIS, ROTULO_DO_AVISO_MANUAL, type AvisoManual } from "./avisos-manuais";
+
+export type ResultadoDoAvisoManual = {
+  /** Quantos avisos foram gravados para sair. */
+  criados: number;
+  /** Quem nao tem telefone nem e-mail. */
+  semContato: string[];
+  /** Quem so tem telefone, num escritorio sem WhatsApp. */
+  soPorWhatsappDesligado: string[];
+};
+
+/**
+ * Manda AGORA, a pedido de alguem do escritorio, o aviso que a regua mandaria
+ * sozinha — a confirmacao ou um dos lembretes — para todos os participantes.
+ *
+ * A chave leva a hora do pedido: cada clique e um envio novo, de proposito.
+ * Quem clica em "Avisar" quer que a pessoa receba de novo, nao que o sistema
+ * responda "ja foi". E cada envio fica na auditoria como mais um aviso.
+ *
+ * Grava e deixa para o trabalhador entregar (LEMBRAR na fila), como os
+ * outros: a tela nao espera a Meta nem o SMTP.
+ */
+export async function avisarAgora(
+  escritorioId: string,
+  compromissoId: string,
+  qual: Manual,
+): Promise<ResultadoDoAvisoManual> {
+  const achado = await paraOTexto(escritorioId, compromissoId);
+  if (!achado) throw new CompromissoNaoEncontrado();
+
+  const banca = await daBanca(escritorioId);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
+  const { dados } = achado;
+  const { avisar, semContato, soPorWhatsappDesligado } =
+    await paraAvisarNoCompromisso(escritorioId, compromissoId);
+
+  const marco = MARCOS.find((m) => m.chave === (qual === "LEMBRETE_1H" ? "1h" : "24h"))!;
+  const carimbo = Date.now();
+  let criados = 0;
+
+  for (const pessoa of avisar) {
+    const base = `manual:${qual}:${carimbo}:${compromissoId}:${pessoa.participanteId}`;
+    const texto =
+      qual === "AGENDADO"
+        ? {
+            tipo: "COMPROMISSO_MARCADO",
+            assunto: assuntoDoAgendamento(banca.nome, dados),
+            corpo: corpoDoAgendamento(banca.nome, pessoa.nome, dados),
+            modelo: modeloDoTipo("COMPROMISSO_MARCADO"),
+            parametros: [
+              limparParametro(pessoa.nome),
+              limparParametro(banca.nome),
+              limparParametro(dados.titulo),
+              limparParametro(dataHoraBR.format(dados.inicio)),
+              limparParametro(
+                dados.local ??
+                  (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null),
+              ),
+              limparParametro(banca.telefone),
+            ],
+          }
+        : {
+            tipo: "LEMBRETE_AO_PARTICIPANTE",
+            assunto: `${assuntoDoLembreteAoParticipante(banca.nome, dados)} (${marco.rotulo})`,
+            corpo: corpoDoLembreteAoParticipante(banca.nome, pessoa.nome, dados),
+            modelo: modeloDoTipo("LEMBRETE_AO_PARTICIPANTE"),
+            parametros: [
+              limparParametro(pessoa.nome),
+              limparParametro(banca.nome),
+              limparParametro(dados.titulo),
+              limparParametro(quandoComMarco(dataHoraBR.format(dados.inicio), marco)),
+              limparParametro(
+                dados.local ??
+                  (dados.numeroProcesso ? `Processo ${dados.numeroProcesso}` : null),
+              ),
+              limparParametro(banca.telefone),
+            ],
+          };
+
+    if (pessoa.email) {
+      if (
+        await criarAviso(escritorioId, {
+          usuarioId: null,
+          canal: "EMAIL",
+          tipo: texto.tipo,
+          compromissoId,
+          chave: base,
+          destino: pessoa.email,
+          assunto: texto.assunto,
+          corpo: texto.corpo,
+        })
+      ) {
+        criados += 1;
+      }
+    }
+
+    if (!pessoa.telefone || !comWhatsapp || !texto.modelo) continue;
+    if (
+      await criarAviso(escritorioId, {
+        usuarioId: null,
+        canal: "WHATSAPP",
+        tipo: texto.tipo,
+        compromissoId,
+        chave: `zap:${base}`,
+        destino: pessoa.telefone,
+        assunto: texto.assunto,
+        corpo: texto.corpo,
+        modelo: texto.modelo.nome,
+        parametros: texto.parametros,
+      })
+    ) {
+      criados += 1;
+    }
+  }
+
+  return { criados, semContato, soPorWhatsappDesligado };
 }

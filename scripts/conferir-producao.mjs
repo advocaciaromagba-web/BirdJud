@@ -120,6 +120,7 @@ const TABELAS_COM_RLS = [
   "TriagemDePublicacao",
   "Entrevista",
   "Tarefa",
+  "CompromissoExcluido",
   "PermissaoDeArea",
 ];
 

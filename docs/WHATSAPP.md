@@ -182,6 +182,14 @@ Cada pessoa, em **Minha conta**, informa o telefone e marca "Receber tambem
 no WhatsApp". Telefone que o sistema nao consegue ler e recusado ali, com a
 pessoa olhando para o campo — melhor que virar aviso perdido.
 
+## Entrada provada (08/10/2026, 21:26 UTC)
+
+Mensagem de texto mandada de um celular para +55 16 99799-8152 chegou ao
+webhook em producao: `webhook whatsapp: SEM_LEMBRETE {"intencao":"NAO_ENTENDI","respondeu":false}`.
+E o comportamento certo para uma mensagem solta — sem lembrete pendente, o
+sistema nao responde. A primeira tentativa nao chegou: o celular guardava
+sessao antiga do numero; apagar a conversa e mandar de novo resolveu.
+
 ## Como o envio se comporta
 
 - Um aviso por canal: quem tem e-mail e WhatsApp recebe os dois, e ligar o

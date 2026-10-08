@@ -13,6 +13,7 @@ const novoCompromisso = z.object({
   tipo: z.enum(TIPOS_DE_COMPROMISSO).default("COMPROMISSO"),
   inicio: z.string().datetime({ offset: true }).or(z.string().min(10)),
   local: z.string().max(200).optional(),
+  link: z.string().max(500).optional(),
   processoId: z.string().optional(),
   clienteId: z.string().optional(),
   // Cliente novo cadastrado na propria tela: a reuniao costuma ser o primeiro
