@@ -474,6 +474,75 @@ que o container subiu. O que entrou se confere no `deploymentLogs`.
    `deploymentRedeploy`) no ultimo `SUCCESS`. Diagnostico depois; site de pe
    primeiro.
 
+## 6c. O ambiente de ensaio
+
+Existe desde 08/10/2026. Serve para uma coisa: provar que um deploy sobe e
+serve antes de a producao receber.
+
+| | |
+| --- | --- |
+| Ambiente | `ensaio` |
+| Servicos | `postgres-ensaio`, `aplicacao-ensaio` — **so dois** |
+| Endereco | `aplicacao-ensaio-ensaio.up.railway.app` |
+| Branch | `main` |
+
+### Por que so dois servicos
+
+Clonar os cinco crons e o trabalhador dobraria a conta e, pior, um ensaio com
+credencial de producao **cobraria cartao no Asaas e mandaria WhatsApp e
+e-mail para cliente de verdade**. O ensaio nao tem nenhuma credencial de
+saida: sem `ASAAS_*`, sem `WHATSAPP_*`, sem `EMAIL_RELE_*`, sem `DJEN_*`, sem
+`ANTHROPIC_API_KEY`. O risco esta fechado por ausencia, nao por configuracao
+— configuracao se muda sem querer.
+
+Pelo mesmo motivo o ambiente foi criado **vazio** (`environmentCreate` sem
+`sourceEnvironmentId`) e os dois servicos montados a mao. Forkar a producao
+copiaria os segredos dela para dentro do ensaio, e dali eles nao saem mais do
+historico.
+
+Os segredos do ensaio (`NEXTAUTH_SECRET`, `SEGREDO_CHAVE`, senhas de banco)
+sao proprios, e nenhum deles vale em producao.
+
+### Os papeis nascem sozinhos
+
+Em producao os tres papeis foram criados a mao, uma vez. O ensaio usa
+`scripts/preparar-papeis.mjs`, que faz o mesmo de DENTRO do ambiente — a
+alternativa seria abrir uma porta publica no banco para rodar o SQL de fora,
+e isso nao se faz nem em ensaio.
+
+Por isso o comando de partida do ensaio tem uma etapa a mais, e ela vem
+PRIMEIRO — `esperar-banco` confere as credenciais da aplicacao e do dono, que
+ainda nao existem antes dela:
+
+```
+preparar-papeis && esperar-banco && migrar && rls:aplicar && conferir-producao && exec next start
+```
+
+O script exige `PREPARAR_PAPEIS=1` e uma conexao de superusuario
+(`DATABASE_URL_SUPER`) que a producao nao tem.
+
+### O que a primeira subida provou
+
+Banco vazio, e no fim: tres papeis criados, 43 migracoes aplicadas, RLS
+ligado e forcado nas 36 tabelas, conferencia de isolamento passando,
+`13 conferido(s), 7 aviso(s), 0 erro(s)`. Os sete avisos sao as integracoes
+ausentes de proposito.
+
+Isso vale como **ensaio de nascimento do sistema**: o caminho do zero ate
+servir esta provado, e nao so o caminho do deploy sobre um banco que ja
+existe.
+
+### O que falta para ser um portao
+
+Hoje producao e ensaio seguem o MESMO `main`, e sobem ao mesmo tempo — o
+ensaio e um espelho, nao um portao. Para virar portao, a producao passa a
+seguir um branch `producao`:
+
+1. empurra para `main` → o ensaio sobe;
+2. ensaio verde → promove (`git push origin main:producao`) → a producao sobe.
+
+E uma chamada de API no gatilho da producao, e reversivel.
+
 ## 7. Backup
 
 O backup do Railway e do banco inteiro, com todos os escritorios juntos. Ele
