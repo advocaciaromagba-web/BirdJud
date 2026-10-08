@@ -77,9 +77,49 @@ antes de procuracao, junto do telefone e da leitura que a IA fez do caso
 escritorio ao lado nao e indiscricao — e dar a peca do adversario antes de
 o processo existir. O teste confere que nem a CONTAGEM vaza.
 
+## Transcricao ao vivo: LOCAL OU NADA
+
+O gravador escreve no MESMO campo que se digita, entao o que ele transcreve
+e corrigivel na hora, sem copiar nada.
+
+A regra de sigilo esta no codigo, nao so no comentario. **Por padrao o
+reconhecimento de voz do Chrome manda o audio para um servidor.** O modo no
+dispositivo existe desde o Chrome 139 (ago/2025), mas exige instalar o
+idioma e nao esta em todo navegador. Numa triagem o que se fala e materia de
+sigilo profissional, entao:
+
+- o componente so liga o reconhecimento quando `available({processLocally:
+  true})` responde que o modelo local esta pronto;
+- quando falta o idioma, oferece baixar — uma vez, e depois funciona offline;
+- quando o navegador nao suporta, **para por ai**. Nao existe botao de
+  "transcrever pela nuvem": o aviso explica que isso significaria a conversa
+  do cliente sair do escritorio, e a alternativa oferecida e digitar.
+
+O sistema da Advocacia Roma passou por esse caminho antes e registrou a
+licao: a transcricao por navegador "dependia de versao do Chrome, pacote de
+idioma instalado, permissao e dispositivo de entrada — pontos de falha
+demais". Eles resolveram contratando a OpenAI para o audio enviado. Aqui a
+escolha foi outra: nao acrescentar fornecedor sem decisao expressa, e nao
+degradar o sigilo em silencio quando o local falta.
+
+### O que o modulo puro resolve
+
+`src/lib/transcricao.ts` cuida do que o reconhecimento faz de errado:
+
+| Problema | O que o modulo faz |
+| --- | --- |
+| trecho vem sem maiuscula nem ponto | poe os dois, senao vira um paragrafo de dez minutos |
+| repete o ultimo trecho na pausa | nao entra duas vezes |
+| nao sabe quem falou | troca de lado comeca linha nova, com a marca |
+
+E o aviso de silencio depois de 12 segundos: o erro mais caro nao e
+transcrever mal, e o microfone errado selecionado e vinte minutos de
+conversa que nao viraram nada.
+
 ## O que ainda nao existe
 
-- **Transcricao de audio**: hoje a anotacao e digitada. O proximo item do
-  bloco de captacao.
+- **Audio gravado, enviado como arquivo** (audiencia gravada de longe). Exige
+  um servico de transcricao — fornecedor novo, credencial e custo por
+  minuto. Decisao em aberto; a costura esta pronta.
 - **PDF da entrevista**: a Roma gera um; aqui a geracao de documento ja
   existe em `modelos-do-escritorio.ts` e so falta a especie.

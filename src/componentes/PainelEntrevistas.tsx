@@ -7,6 +7,7 @@ import {
   type Situacao,
   type Urgencia,
 } from "@/lib/entrevista";
+import { GravadorDeFala } from "./GravadorDeFala";
 
 export type EntrevistaNaTela = {
   id: string;
@@ -291,13 +292,21 @@ export function PainelEntrevistas({
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     O que foi dito
                   </p>
+                  {/* O gravador escreve no MESMO campo que se digita: o que
+                      ele transcreve e corrigivel na hora, sem copiar nada. */}
+                  <GravadorDeFala
+                    texto={texto}
+                    onTexto={(novo) =>
+                      setRascunho((r) => ({ ...r, [e.id]: novo }))
+                    }
+                  />
                   <textarea
                     value={texto}
                     onChange={(ev) =>
                       setRascunho((r) => ({ ...r, [e.id]: ev.target.value }))
                     }
                     rows={10}
-                    placeholder="Anote durante a conversa, com as palavras da pessoa."
+                    placeholder="Anote durante a conversa, com as palavras da pessoa — ou use a transcricao acima."
                     className="w-full rounded-lg border border-slate-300 p-3 text-sm leading-6"
                   />
                   <div className="flex flex-wrap items-center gap-2">
