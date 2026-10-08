@@ -166,3 +166,150 @@ export const ESQUEMA_TRIAGEM = {
   ],
   additionalProperties: false,
 };
+
+/* ===========================================================================
+ * Entrevista de triagem
+ * =========================================================================*/
+
+/**
+ * O roteiro de perguntas, antes da conversa.
+ *
+ * E APOIO. O advogado pergunta o que quiser, na ordem que a conversa pedir —
+ * roteiro existe para ninguem sair da sala sem ter perguntado a data, o
+ * documento e a testemunha, que e o que mais falta depois.
+ *
+ * Perguntas para pessoa LEIGA, e essa e a regra que mais se descumpre: o
+ * modelo tende a escrever "houve adimplemento substancial da avenca?", que
+ * ninguem do outro lado da mesa entende.
+ */
+export const SISTEMA_ROTEIRO = `
+Voce prepara um advogado brasileiro para a primeira conversa com alguem que
+procurou o escritorio.
+
+A partir do assunto informado, sugira perguntas objetivas que levantem os
+fatos e os documentos do caso. No maximo 15, e menos quando o assunto for
+simples: roteiro longo faz o advogado ler em vez de ouvir.
+
+Cubra, nesta ordem de importancia:
+1. o que aconteceu, e quando — data e que ja vira prazo;
+2. documentos que a pessoa tem e os que precisa trazer;
+3. quem mais estava envolvido: outra parte, testemunha;
+4. providencia ja tomada, notificacao recebida, audiencia marcada;
+5. o que a pessoa espera conseguir.
+
+COMO ESCREVER:
+- pergunta de gente para gente. Quem responde nao e advogado;
+- nada de "adimplemento", "avenca", "exordial", "data venia";
+- uma ideia por pergunta. Pergunta dupla recebe meia resposta;
+- nada de numero de artigo, sumula ou tese. Isso e trabalho do advogado;
+- nao pergunte o que o cadastro ja tem (nome, CPF, endereco).
+`.trim();
+
+export const ESQUEMA_ROTEIRO = {
+  type: "object" as const,
+  properties: {
+    perguntas: {
+      type: "array",
+      maxItems: 15,
+      items: { type: "string", maxLength: 200 },
+    },
+  },
+  required: ["perguntas"],
+  additionalProperties: false,
+};
+
+/**
+ * A organizacao do que foi dito, depois da conversa.
+ *
+ * As cinco regras abaixo sao o motivo de este recurso existir sem ser
+ * perigoso, e nenhuma delas e enfeite:
+ *
+ * - NAO COMPLETAR. O modelo sabe como casos parecidos costumam terminar, e
+ *   preencheria o que faltou com o que e comum. Numa triagem isso vira fato
+ *   que ninguem disse, dentro de um documento que vai para a pasta.
+ * - A TRANSCRICAO ERRA. Quando vier de audio, nome, valor e data chegam
+ *   errados. Dado importante e duvidoso vira pedido de confirmacao, nao
+ *   chute.
+ * - PRESCRICAO NUNCA SE AFIRMA. Dizer "ja prescreveu" em triagem faz o
+ *   escritorio recusar caso bom; dizer "nao prescreveu" faz perder prazo.
+ *   Vira ponto a verificar, sempre.
+ * - SEM ARTIGO DE LEI. Enquadramento e do advogado; citacao errada em
+ *   documento de pasta vale menos que nenhuma.
+ * - URGENTE E RARO. Se tudo e urgente, nada e.
+ */
+export const SISTEMA_ANALISE_ENTREVISTA = `
+Voce organiza o que foi dito numa entrevista de triagem entre um advogado
+brasileiro e alguem que procurou o escritorio. Seu trabalho e ESTRUTURAR o
+relato para o advogado conferir. Nao e dar parecer, nem escolher a tese, nem
+decidir se o caso e bom.
+
+REGRAS QUE NAO SE QUEBRAM:
+
+1. Trabalhe SO com o que esta no texto. Nao complete a historia com o que
+   costuma acontecer em casos parecidos. O que ficou vago vai para
+   "perguntasEmAberto", nunca para "fatos".
+
+2. O texto pode vir de transcricao de audio e TERA erro: nome trocado, valor
+   mal ouvido, frase cortada. Quando um dado importante estiver duvidoso,
+   escreva em "pontosDeAtencao" pedindo confirmacao. Nao adivinhe.
+
+3. NUNCA afirme que um prazo prescreveu ou que nao prescreveu. Se houver
+   datas que sugiram risco de prescricao ou decadencia, escreva em
+   "pontosDeAtencao" como algo A VERIFICAR.
+
+4. Nao cite artigo de lei, sumula ou tese. Em "area", escreva o ramo em
+   linguagem comum ("trabalhista", "familia", "credito rural").
+
+5. Em "fatos", mantenha a ordem cronologica e use as palavras de quem
+   contou. Sem floreio e sem traduzir para juridiques.
+
+6. "urgencia" URGENTE so quando o texto indicar prazo correndo, audiencia
+   marcada, risco de perder bem, prisao ou violencia. ALTA quando houver
+   data proxima sem risco imediato. Na duvida, MEDIA.
+
+7. Lista vazia e resposta valida. Inventar testemunha ou documento para
+   nao deixar campo vazio e o pior erro possivel aqui.
+`.trim();
+
+export const ESQUEMA_ANALISE_ENTREVISTA = {
+  type: "object" as const,
+  properties: {
+    area: { type: "string", maxLength: 60 },
+    resumo: { type: "string", maxLength: 800 },
+    fatos: { type: "array", items: { type: "string", maxLength: 400 } },
+    pretensoes: { type: "array", items: { type: "string", maxLength: 300 } },
+    documentosCitados: {
+      type: "array",
+      items: { type: "string", maxLength: 200 },
+    },
+    documentosQueFaltam: {
+      type: "array",
+      items: { type: "string", maxLength: 200 },
+    },
+    testemunhas: { type: "array", items: { type: "string", maxLength: 200 } },
+    pontosDeAtencao: {
+      type: "array",
+      items: { type: "string", maxLength: 400 },
+    },
+    perguntasEmAberto: {
+      type: "array",
+      items: { type: "string", maxLength: 300 },
+    },
+    urgencia: { type: "string", enum: ["BAIXA", "MEDIA", "ALTA", "URGENTE"] },
+    valorEnvolvido: { type: ["string", "null"], maxLength: 120 },
+  },
+  required: [
+    "area",
+    "resumo",
+    "fatos",
+    "pretensoes",
+    "documentosCitados",
+    "documentosQueFaltam",
+    "testemunhas",
+    "pontosDeAtencao",
+    "perguntasEmAberto",
+    "urgencia",
+    "valorEnvolvido",
+  ],
+  additionalProperties: false,
+};

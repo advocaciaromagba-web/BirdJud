@@ -430,6 +430,38 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
+  it("a entrevista de triagem nao vaza para o outro escritorio", async () => {
+    // O pior vazamento possivel do sistema. A entrevista carrega o relato
+    // cru de quem procurou o escritorio — antes de contrato, antes de
+    // procuracao, as vezes antes de a pessoa decidir se vai processar. Junto
+    // vem o telefone dela e a leitura que a IA fez do caso: documentos que
+    // faltam, testemunhas, pontos fracos. Entregar isso ao escritorio ao
+    // lado nao e indiscricao, e dar a peca do adversario antes do processo
+    // existir.
+    await comEscritorio(alfaP, (db) =>
+      db.entrevista.create({
+        data: semEscritorio({
+          nome: "Pessoa que procurou Alfa",
+          telefone: "77999990000",
+          assunto: "Quer processar o ex-patrao por verbas nao pagas",
+          situacao: "ANALISADA",
+          urgencia: "ALTA",
+          roteiro: ["Quando foi dispensado?"],
+          transcricao: "Trabalhou cinco anos sem registro e saiu em marco.",
+          analise: { area: "trabalhista", testemunhas: ["o colega de setor"] },
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) => db.entrevista.findMany());
+    expect(deBeta).toHaveLength(0);
+
+    // E nao e so a linha: nem a contagem vaza.
+    const contadasPorBeta = await comEscritorio(betaP, (db) =>
+      db.entrevista.count(),
+    );
+    expect(contadasPorBeta).toBe(0);
+  });
+
   it("a meta de um escritorio nao aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.meta.create({

@@ -49,7 +49,8 @@ DECLARE
     'PermissaoDeArea',
     'EnvioParaAssinatura',
     'BloqueioDeWhatsapp',
-    'TriagemDePublicacao'
+    'TriagemDePublicacao',
+    'Entrevista'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

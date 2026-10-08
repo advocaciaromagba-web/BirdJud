@@ -128,7 +128,7 @@ abaixo e a que sobrou.
 
 | O que | O que resolve |
 | --- | --- |
-| **Entrevista guiada** (`perguntas-entrevista`, `entrevista-analise`, `entrevista-pdf`) | Primeira conversa com o cliente, virando documento. |
+| ✔ **Entrevista guiada** (`perguntas-entrevista`, `entrevista-analise`) | Primeira conversa com quem procura o escritorio, virando documento. Roteiro de ate 15 perguntas em linguagem de gente; anotacao; organizacao em fatos, documentos, testemunhas e pontos a verificar. A IA e proibida de completar o que nao foi dito, de afirmar que um prazo prescreveu e de citar artigo. Sem IA, o roteiro basico entra no lugar. Falta o PDF. Ver `docs/ENTREVISTAS.md`. |
 | **Transcricao de audio** (`transcricao-audio`) | Audiencia e reuniao viram texto. |
 | **Revisao e minuta** (`revisao-ia`, `minuta-prompt`, `claude-documentos`) | O BirdJud tem minuta; la esta mais trabalhado. |
 | **Leitura de audiencia** (`leitura-audiencia`) | Intimacao vira compromisso. |

@@ -39,6 +39,10 @@ export const AREAS: Area[] = [
   { chave: "PUBLICACOES", nome: "Publicacoes", padrao: true, modulo: "PUBLICACOES_DJEN" },
   { chave: "ARQUIVOS", nome: "Arquivos", padrao: true, modulo: "NUVEM" },
   { chave: "MODELOS", nome: "Modelos de documento", padrao: true },
+  // Sem modulo de proposito: anotar a conversa e seguir um roteiro funciona
+  // sem IA nenhuma. O que depende do modulo e a SUGESTAO do roteiro e a
+  // organizacao do que foi dito, e cada uma se vira sozinha quando falta.
+  { chave: "ENTREVISTAS", nome: "Entrevistas de triagem", padrao: true },
 
   // O DINHEIRO E SUBDIVIDIDO DE PROPOSITO. Da para liberar a emissao e a
   // conferencia de cobranca — o trabalho de quem atende o cliente — sem abrir
@@ -80,6 +84,7 @@ export const AREA_DO_ENDERECO: Record<string, string> = {
   "/publicacoes": "PUBLICACOES",
   "/arquivos": "ARQUIVOS",
   "/modelos": "MODELOS",
+  "/entrevistas": "ENTREVISTAS",
   "/cobrancas": "COBRANCAS",
   "/honorarios": "COBRANCAS",
   "/conciliacao": "CONCILIACAO",

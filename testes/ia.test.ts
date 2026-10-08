@@ -340,3 +340,50 @@ d("analise gravada e medida", () => {
     }
   });
 });
+
+describe("instrucoes da entrevista", () => {
+  it("o roteiro e escrito para quem nao e advogado", async () => {
+    const { SISTEMA_ROTEIRO } = await import("../src/lib/prompts-ia");
+    expect(SISTEMA_ROTEIRO).toContain("Quem responde nao e advogado");
+    expect(SISTEMA_ROTEIRO).toContain("adimplemento");
+    expect(SISTEMA_ROTEIRO).toContain("uma ideia por pergunta");
+  });
+
+  /**
+   * As cinco regras que fazem este recurso existir sem ser perigoso. Cada
+   * uma delas saiu de uma forma conhecida de a triagem dar errado.
+   */
+  it("a analise da entrevista e proibida de completar o que nao foi dito", async () => {
+    const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Trabalhe SO com o que esta no texto");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain(
+      "Nao complete a historia com o que",
+    );
+  });
+
+  it("nunca afirma que um prazo prescreveu — nos dois sentidos", async () => {
+    const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain(
+      "NUNCA afirme que um prazo prescreveu ou que nao prescreveu",
+    );
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("A VERIFICAR");
+  });
+
+  it("nao indica artigo de lei: enquadramento e do advogado", async () => {
+    const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain(
+      "Nao cite artigo de lei, sumula ou tese",
+    );
+  });
+
+  it("avisa que a transcricao de audio erra, em vez de confiar nela", async () => {
+    const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("TERA erro");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Nao adivinhe");
+  });
+
+  it("lista vazia e resposta valida: inventar testemunha e o pior erro", async () => {
+    const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Lista vazia e resposta valida");
+  });
+});

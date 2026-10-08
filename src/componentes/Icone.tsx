@@ -23,7 +23,8 @@ export type NomeDeIcone =
   | "honorarios"
   | "extrato"
   | "modelos"
-  | "configuracoes";
+  | "configuracoes"
+  | "entrevistas";
 
 const TRACOS: Record<NomeDeIcone, string> = {
   painel: "M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z",
@@ -51,6 +52,9 @@ const TRACOS: Record<NomeDeIcone, string> = {
   // de Financeiro, Modelos o de Arquivos e Configuracoes o de Integracoes.
   // Em lista agrupada o titulo do grupo separava; em lista plana, dois itens
   // seguidos com o mesmo desenho obrigam a ler cada linha.
+  // Balao de conversa com linhas: a entrevista e uma conversa que vira texto.
+  entrevistas:
+    "M21 14a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2Zm-13-5h8M8 12.5h5",
   honorarios:
     "M3 10h18M6 10V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3m-6 4v4m-2-4h4a2 2 0 0 1 0 4h-4M5 10h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1Z",
   extrato:

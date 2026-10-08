@@ -90,6 +90,7 @@ model Escritorio {
   enviosParaAssinatura EnvioParaAssinatura[]
   respostasDeWhatsapp  RespostaDeWhatsapp[]
   triagens             TriagemDePublicacao[]
+  entrevistas          Entrevista[]
   bloqueiosDeWhatsapp  BloqueioDeWhatsapp[]
 }
 
@@ -226,6 +227,7 @@ model Cliente {
 
   contratos ContratoDeHonorarios[]
   comparecimentos ParticipanteDeCompromisso[]
+  entrevistas     Entrevista[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -406,6 +408,54 @@ model TriagemDePublicacao {
   publicacao Publicacao @relation(fields: [publicacaoId], references: [id], onDelete: Cascade)
 
   @@index([escritorioId, criadoEm])
+}
+
+/// Entrevista de triagem: a primeira conversa com quem procura o escritorio.
+///
+/// Nasce ANTES do cliente existir. Quem chega para uma consulta pode nao
+/// virar cliente, e obrigar o cadastro primeiro enche a base de gente que
+/// nunca contratou. Por isso `clienteId` e opcional e `nome` basta para
+/// comecar; quando o caso e aceito, a entrevista e ligada ao cliente.
+///
+/// `transcricao` e o que foi dito, e `analise` e o que a IA organizou a
+/// partir dela. As duas ficam: a analise e apoio e pode estar errada, e sem
+/// o texto original ninguem consegue conferir.
+model Entrevista {
+  id           String  @id @default(cuid())
+  escritorioId String
+  /// Ligada depois, se o caso virar cliente.
+  clienteId    String?
+  /// Quem foi entrevistado. Fica mesmo depois de virar cliente: e o nome
+  /// que a pessoa deu no dia, e conferir cadastro contra ele tem valor.
+  nome         String
+  telefone     String?
+  /// Do jeito que a pessoa contou, antes de qualquer enquadramento.
+  assunto      String
+  /// RASCUNHO | ROTEIRO | ANOTADA | ANALISADA | ARQUIVADA
+  situacao     String  @default("RASCUNHO")
+
+  /// Roteiro sugerido pela IA, uma pergunta por item. Apoio, nao obrigacao.
+  roteiro      Json?
+  /// O que foi dito. Digitado ou vindo de audio transcrito.
+  transcricao  String?
+  /// O que a IA organizou da transcricao. Ver src/lib/entrevista.ts.
+  analise      Json?
+  /// BAIXA | MEDIA | ALTA | URGENTE, da analise. Em coluna para ordenar.
+  urgencia     String?
+  /// Modelo que respondeu. Vazio enquanto nao houve analise.
+  modelo       String?
+
+  /// Quem conduziu. Nao e dono: a entrevista e do escritorio.
+  usuarioId    String?
+
+  criadaEm     DateTime @default(now())
+  atualizadaEm DateTime @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  @@index([escritorioId, criadaEm])
+  @@index([escritorioId, situacao])
 }
 
 /// Mensagem que CHEGOU pelo WhatsApp. Ver src/lib/resposta-whatsapp.ts.
