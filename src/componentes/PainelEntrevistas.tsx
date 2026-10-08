@@ -8,6 +8,7 @@ import {
   type Urgencia,
 } from "@/lib/entrevista";
 import { GravadorDeFala } from "./GravadorDeFala";
+import { EnvioDeAudio } from "./EnvioDeAudio";
 
 export type EntrevistaNaTela = {
   id: string;
@@ -300,6 +301,13 @@ export function PainelEntrevistas({
                       setRascunho((r) => ({ ...r, [e.id]: novo }))
                     }
                   />
+                  {temIA ? (
+                    <EnvioDeAudio
+                      entrevistaId={e.id}
+                      onTranscrito={() => router.refresh()}
+                      onErro={setErro}
+                    />
+                  ) : null}
                   <textarea
                     value={texto}
                     onChange={(ev) =>

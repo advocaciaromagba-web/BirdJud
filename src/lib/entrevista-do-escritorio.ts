@@ -24,6 +24,11 @@ import {
   SISTEMA_ROTEIRO,
 } from "./prompts-ia";
 import {
+  minutosDe,
+  transcrever,
+  type ResultadoDaTranscricao,
+} from "./transcricao-audio";
+import {
   MINIMO_DA_TRANSCRICAO,
   ROTEIRO_BASICO,
   TranscricaoCurta,
@@ -234,4 +239,56 @@ export async function arquivar(escritorioId: string, id: string) {
   return comEscritorio(escritorioId, (db) =>
     db.entrevista.update({ where: { id }, data: { situacao: "ARQUIVADA" } }),
   );
+}
+
+/**
+ * Transcreve um audio enviado e ACRESCENTA ao que ja esta anotado.
+ *
+ * Acrescenta, nunca substitui: quem envia o audio da segunda metade da
+ * reuniao nao quer perder a primeira. Se o certo for substituir, a pessoa
+ * apaga o campo antes — apagar e reversivel enquanto nao se salva; perder o
+ * que ja estava escrito, nao.
+ *
+ * A chave e da plataforma e o custo e absorvido por ela. A medicao em
+ * TRANSCRICAO_MIN existe para a plataforma saber quanto gasta, e nao gera
+ * excedente para o escritorio (ver catalogo.ts).
+ */
+export async function transcreverAudio(
+  escritorioId: string,
+  id: string,
+  audio: { nome: string; tipo: string; dados: Buffer },
+): Promise<{ texto: string; acrescentado: string }> {
+  const entrevista = await entrevistaPorId(escritorioId, id);
+
+  // Lanca quando o audio e recusado ou a transcricao falha, e e isso que se
+  // quer: nada e gravado e nada e medido se o texto nao veio.
+  const resultado: ResultadoDaTranscricao = await transcrever(audio);
+
+  const antes = (entrevista.transcricao ?? "").trimEnd();
+  const juntos = antes ? `${antes}\n\n${resultado.texto}` : resultado.texto;
+
+  await comEscritorio(escritorioId, (db) =>
+    db.entrevista.update({
+      where: { id },
+      data: {
+        transcricao: juntos,
+        // A analise anterior descrevia um texto menor: vale a mesma regra de
+        // anotar().
+        analise: Prisma.DbNull,
+        urgencia: null,
+        situacao: "ANOTADA",
+      },
+    }),
+  );
+
+  // Sem duracao informada, estima por tamanho: um minuto de audio falado
+  // costuma ficar perto de 1 MB nos formatos comprimidos. Medir aproximado e
+  // melhor do que nao medir, porque e a plataforma que paga a conta.
+  const minutos =
+    resultado.segundos !== null
+      ? minutosDe(resultado.segundos)
+      : Math.max(1, Math.round(audio.dados.length / (1024 * 1024)));
+  await registrarConsumo(escritorioId, "TRANSCRICAO_MIN", minutos);
+
+  return { texto: juntos, acrescentado: resultado.texto };
 }

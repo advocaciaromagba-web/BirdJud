@@ -189,6 +189,11 @@ export const FRANQUIA: Record<Metrica, Record<Faixa, number> | null> = {
     ATE_50: 100_000,
   },
   // Metricas de acompanhamento, sem cobranca por excedente.
+  //
+  // TRANSCRICAO_MIN esta aqui por decisao comercial, nao por esquecimento: a
+  // transcricao de audio e paga pela plataforma e NAO se repassa ao
+  // escritorio. A medicao existe para a plataforma saber quanto custa.
+  TRANSCRICAO_MIN: null,
   REGISTROS: null,
   USUARIOS_ATIVOS: null,
 };

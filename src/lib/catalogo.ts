@@ -86,6 +86,10 @@ export const METRICAS = [
   // Em MILHARES de tokens, nao em tokens. Preco sai em centavos inteiros, e
   // um centavo por token seria centenas de vezes o custo do modelo.
   "IA_MIL_TOKENS",
+  // Em MINUTOS de audio transcrito, arredondados para cima. A plataforma
+  // paga a conta da transcricao e nao repassa: a medicao existe para a
+  // Blackbird saber quanto custa, nao para cobrar do escritorio.
+  "TRANSCRICAO_MIN",
   "NFSE_EMITIDA",
   "COBRANCA_EMITIDA",
   "OAB_MONITORADA",
@@ -101,6 +105,12 @@ export const MODULO_DA_METRICA: Partial<Record<Metrica, Modulo>> = {
   WHATSAPP_MSG: "WHATSAPP",
   EMAIL_ENVIADO: "EMAIL",
   IA_MIL_TOKENS: "IA",
+  // TRANSCRICAO_MIN fica DE FORA de proposito. Mapear a metrica a um modulo
+  // e o que faz `consumoDoMes` aplicar a franquia dele e gerar excedente —
+  // e a franquia do modulo IA e em MILHARES DE TOKENS, nao em minutos de
+  // audio. O escritorio receberia cobranca de um excedente inventado por
+  // comparar grandezas diferentes. A transcricao e paga pela plataforma e
+  // nao se repassa: metrica sem modulo e franquia nula, excedente zero.
   NFSE_EMITIDA: "NFSE",
   COBRANCA_EMITIDA: "COBRANCAS",
   ARMAZENAMENTO_MB: "NUVEM",

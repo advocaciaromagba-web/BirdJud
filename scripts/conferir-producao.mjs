@@ -279,6 +279,10 @@ function conferirOpcionais() {
   const opcionais = [
     ["ANTHROPIC_API_KEY", "modulo de IA responde 503 sem ela"],
     [
+      "OPENAI_API_KEY",
+      "sem ela nao da para transcrever audio gravado — a transcricao ao vivo, que roda no computador do escritorio, continua funcionando",
+    ],
+    [
       "DJEN_RELE_URL",
       "sem o rele, a captura do DJEN so funciona de dentro do Brasil",
     ],

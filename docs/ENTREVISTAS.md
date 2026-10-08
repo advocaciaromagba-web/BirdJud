@@ -116,10 +116,43 @@ E o aviso de silencio depois de 12 segundos: o erro mais caro nao e
 transcrever mal, e o microfone errado selecionado e vinte minutos de
 conversa que nao viraram nada.
 
-## O que ainda nao existe
+## Audio gravado: OpenAI, centralizada na plataforma
 
-- **Audio gravado, enviado como arquivo** (audiencia gravada de longe). Exige
-  um servico de transcricao — fornecedor novo, credencial e custo por
-  minuto. Decisao em aberto; a costura esta pronta.
+Para audiencia e reuniao JA GRAVADAS, o arquivo vai para a transcricao da
+OpenAI. Decisao tomada em 08/10/2026.
+
+**A chave e da plataforma**, uma so para todos os escritorios — igual a da
+IA e ao numero de WhatsApp. **O custo e absorvido pelo BirdJud e nao se
+repassa.** A medicao em `TRANSCRICAO_MIN` existe para a plataforma saber
+quanto gasta.
+
+> A metrica **nao tem modulo** em `MODULO_DA_METRICA`, e isso e deliberado.
+> Mapea-la ao modulo `IA` faria `consumoDoMes` aplicar a franquia dele — que
+> e em MILHARES DE TOKENS — a MINUTOS de audio, e o escritorio receberia
+> cobranca de um excedente nascido de comparar grandezas diferentes. Sem
+> modulo: franquia nula, excedente zero.
+
+### O aviso de sigilo e parte do recurso
+
+O audio sai do escritorio com a voz de quem falou. A tela diz isso ANTES do
+envio, e exige marcar que entendeu — ninguem descobre depois, numa pagina de
+documentacao. E a mesma natureza de exposicao de mandar o texto para a IA
+organizar, mas e um passo a mais, e e audio.
+
+Quando os dois caminhos servem, **prefira o local**: a transcricao ao vivo
+nao manda nada para fora.
+
+### O que a tela garante
+
+| Situacao | O que acontece |
+| --- | --- |
+| arquivo acima de 25 MB, vazio ou de formato errado | recusado antes de sair da maquina — a plataforma paga a chamada |
+| chave da plataforma recusada | mensagem que nao culpa o escritorio, que nao tem chave nenhuma, e oferece a transcricao ao vivo |
+| transcricao volta vazia | falha explicita ("o audio pode estar mudo"), nunca sucesso silencioso |
+| ja havia anotacao | o texto do audio e **acrescentado**, nunca substitui |
+
+Acrescentar e nao substituir: quem envia o audio da segunda metade da
+reuniao nao quer perder a primeira. Apagar o campo antes e reversivel;
+perder o que ja estava escrito, nao.
 - **PDF da entrevista**: a Roma gera um; aqui a geracao de documento ja
   existe em `modelos-do-escritorio.ts` e so falta a especie.

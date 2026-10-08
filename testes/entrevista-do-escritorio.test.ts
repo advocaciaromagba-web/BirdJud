@@ -16,6 +16,7 @@ import { ROTEIRO_BASICO, TranscricaoCurta } from "../src/lib/entrevista";
 import {
   anotar,
   criarEntrevista,
+  transcreverAudio,
   entrevistasDoEscritorio,
   gerarRoteiro,
   ligarAoCliente,
@@ -99,13 +100,15 @@ d("entrevista de triagem", () => {
     saida = { perguntas: ["Quando foi dispensado?", "Tem recibo?"] };
   });
 
-  /** Quanto de IA ja foi medido para este escritorio no mes. */
-  async function medido(): Promise<number> {
+  /** Quanto ja foi medido desta metrica para este escritorio no mes. */
+  async function medidoDe(metrica: string): Promise<number> {
     const linhas = await comEscritorio(escritorio, (db) =>
-      db.consumoMensal.findMany({ where: { metrica: "IA_MIL_TOKENS" } }),
+      db.consumoMensal.findMany({ where: { metrica } }),
     );
     return linhas.reduce((soma, l) => soma + l.quantidade, 0);
   }
+
+  const medido = () => medidoDe("IA_MIL_TOKENS");
 
   async function nova(assunto = "Foi mandado embora sem receber") {
     return criarEntrevista(escritorio, {
@@ -235,6 +238,43 @@ d("entrevista de triagem", () => {
     expect(guardada?.analise).toBeNull();
     expect(guardada?.urgencia).toBeNull();
     expect(guardada?.situacao).toBe("ANOTADA");
+  });
+
+  it("o audio transcrito ACRESCENTA a anotacao, nao substitui", async () => {
+    // Quem envia o audio da segunda metade da reuniao nao quer perder a
+    // primeira. Apagar o campo antes e reversivel; perder o que ja estava
+    // escrito, nao.
+    const e = await nova();
+    await anotar(escritorio, e.id, RELATO);
+
+    const audio = createServer((req, res) => {
+      req.on("data", () => {});
+      req.on("end", () => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ text: "Parte vinda do audio.", duration: 130 }));
+      });
+    });
+    await new Promise<void>((ok) => audio.listen(0, "127.0.0.1", ok));
+    process.env.OPENAI_BASE_URL = `http://127.0.0.1:${(audio.address() as { port: number }).port}`;
+    process.env.OPENAI_API_KEY = "chave-de-teste";
+
+    const antes = await medidoDe("TRANSCRICAO_MIN");
+    try {
+      const r = await transcreverAudio(escritorio, e.id, {
+        nome: "reuniao.mp3",
+        tipo: "audio/mpeg",
+        dados: Buffer.alloc(200 * 1024, 3),
+      });
+      expect(r.texto).toContain(RELATO);
+      expect(r.texto).toContain("Parte vinda do audio.");
+      expect(r.acrescentado).toBe("Parte vinda do audio.");
+
+      // 130 segundos arredondam para 3 minutos.
+      expect(await medidoDe("TRANSCRICAO_MIN")).toBe(antes + 3);
+    } finally {
+      delete process.env.OPENAI_BASE_URL;
+      await new Promise<void>((ok) => audio.close(() => ok()));
+    }
   });
 
   it("liga ao cliente quando o caso e aceito", async () => {
