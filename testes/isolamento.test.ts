@@ -462,6 +462,36 @@ d("isolamento dos prazos", () => {
     expect(contadasPorBeta).toBe(0);
   });
 
+  it("a tarefa de um escritorio nao aparece para o outro", async () => {
+    // A lista de tarefas e a agenda de trabalho da banca: o que esta
+    // atrasado, de quem e, e para qual processo. Vazar isso entrega a
+    // carteira de clientes e o ritmo do escritorio ao concorrente.
+    const dono = await comEscritorio(alfaP, (db) =>
+      db.usuario.create({
+        data: semEscritorio({
+          nome: "Advogado de Alfa",
+          email: `dono-${Date.now()}@alfa.test`,
+          senhaHash: "x",
+          papel: "ADVOGADO",
+        }),
+      }),
+    );
+    await comEscritorio(alfaP, (db) =>
+      db.tarefa.create({
+        data: semEscritorio({
+          titulo: "Emendar a inicial de Alfa",
+          vencimento: new Date("2026-11-10T17:00:00Z"),
+          prioridade: "URGENTE",
+          responsavelId: dono.id,
+          numeroProcesso: "1002327-74.2024.8.26.0222",
+        }),
+      }),
+    );
+    const deBeta = await comEscritorio(betaP, (db) => db.tarefa.findMany());
+    expect(deBeta).toHaveLength(0);
+    expect(await comEscritorio(betaP, (db) => db.tarefa.count())).toBe(0);
+  });
+
   it("a meta de um escritorio nao aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.meta.create({

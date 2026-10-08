@@ -50,7 +50,8 @@ DECLARE
     'EnvioParaAssinatura',
     'BloqueioDeWhatsapp',
     'TriagemDePublicacao',
-    'Entrevista'
+    'Entrevista',
+    'Tarefa'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

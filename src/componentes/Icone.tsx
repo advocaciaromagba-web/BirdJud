@@ -24,7 +24,8 @@ export type NomeDeIcone =
   | "extrato"
   | "modelos"
   | "configuracoes"
-  | "entrevistas";
+  | "entrevistas"
+  | "tarefas";
 
 const TRACOS: Record<NomeDeIcone, string> = {
   painel: "M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z",
@@ -53,6 +54,9 @@ const TRACOS: Record<NomeDeIcone, string> = {
   // Em lista agrupada o titulo do grupo separava; em lista plana, dois itens
   // seguidos com o mesmo desenho obrigam a ler cada linha.
   // Balao de conversa com linhas: a entrevista e uma conversa que vira texto.
+  // Lista com visto: tarefa e o que se risca.
+  tarefas:
+    "M9 11l2.5 2.5L16 9M5 4h14a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z",
   entrevistas:
     "M21 14a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2Zm-13-5h8M8 12.5h5",
   honorarios:

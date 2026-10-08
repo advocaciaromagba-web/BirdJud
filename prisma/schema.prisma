@@ -91,6 +91,7 @@ model Escritorio {
   respostasDeWhatsapp  RespostaDeWhatsapp[]
   triagens             TriagemDePublicacao[]
   entrevistas          Entrevista[]
+  tarefas              Tarefa[]
   bloqueiosDeWhatsapp  BloqueioDeWhatsapp[]
 }
 
@@ -180,6 +181,7 @@ model Usuario {
   recebeWhatsapp  Boolean @default(false)
 
   avisos   Aviso[]
+  tarefasDesignadas Tarefa[] @relation("TarefasDoResponsavel")
   arquivos Arquivo[]
   criadoEm DateTime  @default(now())
 
@@ -228,6 +230,7 @@ model Cliente {
   contratos ContratoDeHonorarios[]
   comparecimentos ParticipanteDeCompromisso[]
   entrevistas     Entrevista[]
+  tarefas         Tarefa[]
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
@@ -254,6 +257,7 @@ model Processo {
   arquivos     Arquivo[]
 
   prazos Prazo[]
+  tarefas Tarefa[]
 
   itensDeChecklist ItemDeChecklist[]
 
@@ -408,6 +412,58 @@ model TriagemDePublicacao {
   publicacao Publicacao @relation(fields: [publicacaoId], references: [id], onDelete: Cascade)
 
   @@index([escritorioId, criadoEm])
+}
+
+/// Tarefa do dia a dia, e meta da equipe.
+///
+/// NAO e Prazo. Prazo e prazo JUDICIAL: exige termo inicial, numero de dias
+/// e contagem, e a data sai de conta com o calendario forense. "Ligar para o
+/// cliente" e "juntar os documentos da Maria" nao cabem ali sem inventar uma
+/// intimacao que nunca houve.
+///
+/// `meta` separa as duas coisas que a tela mostra junto: a tarefa do dia a
+/// dia, que se faz e se risca, e a meta da equipe, que atravessa o mes. Mesma
+/// tabela porque sao a mesma coisa com horizonte diferente, e separar em
+/// duas faria toda consulta virar duas.
+model Tarefa {
+  id           String  @id @default(cuid())
+  escritorioId String
+
+  titulo    String
+  descricao String?
+
+  /// Com HORA, nao so data: "hoje as 17h" e um compromisso diferente de
+  /// "hoje". Prazo de tarefa e combinado entre pessoas, nao calculado.
+  vencimento DateTime
+  /// BAIXA | MEDIA | ALTA | URGENTE
+  prioridade String  @default("MEDIA")
+  /// PENDENTE | EM_ANDAMENTO | CONCLUIDA
+  situacao   String  @default("PENDENTE")
+  /// true = meta da equipe; false = tarefa do dia a dia.
+  meta       Boolean @default(false)
+
+  /// Processo cadastrado, quando houver.
+  processoId String?
+  /// Numero digitado quando o processo ainda nao esta cadastrado. Guardar o
+  /// numero solto e melhor que perder o vinculo: alguem cadastra depois.
+  numeroProcesso String?
+  clienteId      String?
+
+  /// Tarefa sem dono nao e feita. Obrigatorio de proposito.
+  responsavelId String
+  criadoPorId   String?
+
+  concluidaEm  DateTime?
+  criadaEm     DateTime  @default(now())
+  atualizadaEm DateTime  @updatedAt
+
+  escritorio  Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  processo    Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  cliente     Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  responsavel Usuario    @relation("TarefasDoResponsavel", fields: [responsavelId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, situacao, vencimento])
+  @@index([escritorioId, responsavelId])
 }
 
 /// Entrevista de triagem: a primeira conversa com quem procura o escritorio.
