@@ -125,3 +125,68 @@ describe("aviso de contraste", () => {
     expect(avisoSobreContraste("#808080")).toContain("clara demais");
   });
 });
+
+describe("o menu lateral escuro", () => {
+  /**
+   * A barra e escura para TODO escritorio, inclusive o de marca clara: ela e
+   * o fundo de um texto branco, e um escritorio amarelo nao pode produzir
+   * uma barra onde nada se le.
+   */
+  const MARCAS: Array<[string, string, string]> = [
+    ["marinho e ouro", "#0F2B46", "#D4AF7C"],
+    ["amarelo claro", "#F2D23B", "#FFE88A"],
+    ["branco quase puro", "#FDFDFD", "#FFFFFF"],
+    ["preto e preto", "#000000", "#000000"],
+    ["vermelho forte", "#B3261E", "#8C1D18"],
+    ["verde escuro", "#10371F", "#143D25"],
+  ];
+
+  for (const [nome, primaria, secundaria] of MARCAS) {
+    describe(nome, () => {
+      const paleta = paletaDe(primaria, secundaria);
+
+      it("a barra e escura o bastante para texto claro", () => {
+        expect(contraste(paleta.menuFundo, "#FFFFFF")).toBeGreaterThanOrEqual(7);
+      });
+
+      it("o texto em repouso se le sobre a barra", () => {
+        expect(contraste(paleta.menuTexto, paleta.menuFundo)).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it("o item atual se destaca do fundo da barra", () => {
+        expect(contraste(paleta.menuAtivo, paleta.menuFundo)).toBeGreaterThanOrEqual(3);
+      });
+
+      it("o texto do item atual se le sobre ele", () => {
+        expect(contraste(paleta.menuSobreAtivo, paleta.menuAtivo)).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it("o realce do cursor e visivel, sem virar outro bloco", () => {
+        const diferenca = contraste(paleta.menuRealce, paleta.menuFundo);
+        expect(diferenca).toBeGreaterThan(1);
+        expect(diferenca).toBeLessThan(3);
+      });
+    });
+  }
+
+  it("a barra guarda o tom da marca, em vez de ser um cinza qualquer", () => {
+    const vermelha = paletaDe("#B3261E", "#8C1D18").menuFundo;
+    const verde = paletaDe("#10371F", "#143D25").menuFundo;
+    expect(vermelha).not.toBe(verde);
+  });
+
+  it("as variaveis do menu chegam ao body", () => {
+    const vars = variaveisDaPaleta(paletaDe("#0F2B46", "#D4AF7C"));
+    for (const chave of [
+      "--menu-fundo",
+      "--menu-realce",
+      "--menu-borda",
+      "--menu-texto",
+      "--menu-texto-fraco",
+      "--menu-ativo",
+      "--menu-sobre-ativo",
+    ]) {
+      expect(vars[chave]).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
+  });
+});

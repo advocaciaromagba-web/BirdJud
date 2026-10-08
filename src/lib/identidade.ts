@@ -123,7 +123,49 @@ export type Paleta = {
   primariaClara: string;
   /** Borda e separador na familia da marca, em vez de cinza generico. */
   primariaSuave: string;
+
+  /* --- O menu lateral escuro ------------------------------------------ */
+
+  /** Fundo da barra lateral. */
+  menuFundo: string;
+  /** Fundo do item sob o cursor, um degrau acima do fundo. */
+  menuRealce: string;
+  /** Separador entre os blocos da barra. */
+  menuBorda: string;
+  /** Texto dos itens em repouso: legivel, sem competir com o item atual. */
+  menuTexto: string;
+  /** Texto de apoio (o cargo, embaixo do nome). */
+  menuTextoFraco: string;
+  /** Fundo do item atual. */
+  menuAtivo: string;
+  /** Texto sobre o item atual. */
+  menuSobreAtivo: string;
 };
+
+/** Quase preto com um fio de azul, para onde toda cor de marca e puxada. */
+const FUNDO_DO_MENU = "#0B1220";
+
+/**
+ * O item atual precisa saltar do fundo escuro.
+ *
+ * A cor de destaque do escritorio e a primeira escolha — e dele, e e o que a
+ * foto de referencia faz com o dourado. Mas um escritorio de marca escura
+ * (marinho sobre marinho, grafite sobre grafite) produziria uma pilula
+ * invisivel: o "estou aqui" sumiria exatamente na barra onde ele mais
+ * importa. Quando isso acontece, a mesma cor e clareada ate destacar, o que
+ * preserva a identidade sem custar a orientacao.
+ *
+ * O 3.0 nao e o limiar de texto (4.5): aqui o que precisa ser percebido e um
+ * BLOCO de cor, nao uma letra. O texto sobre o bloco e escolhido depois, por
+ * corDoTextoSobre, e esse sim fecha contraste de leitura.
+ */
+function destaqueVisivelSobre(cor: string, fundo: string): string {
+  let candidata = cor;
+  for (let passo = 0; passo < 8 && contraste(candidata, fundo) < 3; passo += 1) {
+    candidata = misturar(candidata, "#FFFFFF", 0.18);
+  }
+  return candidata;
+}
 
 /**
  * A paleta inteira a partir das duas cores escolhidas.
@@ -143,6 +185,34 @@ export function paletaDe(primaria: string, secundaria: string): Paleta {
     primariaEscura: misturar(p, "#000000", 0.18),
     primariaClara: misturar(p, "#FFFFFF", 0.94),
     primariaSuave: misturar(p, "#FFFFFF", 0.78),
+    ...menuDe(p, s),
+  };
+}
+
+/**
+ * O menu escuro, derivado das duas cores do escritorio.
+ *
+ * Nao e azul-marinho fixo: a barra puxa a cor PRINCIPAL do escritorio para
+ * perto do preto, e o resultado tem o tom da marca sem deixar de ser escuro.
+ * Um escritorio verde ganha uma barra quase preta esverdeada; um vermelho,
+ * quase preta avermelhada. 88% de preto e bastante: sobra o suficiente para
+ * reconhecer a familia da cor e nao o bastante para a barra brigar com o
+ * conteudo.
+ *
+ * O item atual usa a cor de DESTAQUE, como na referencia — e o papel dela no
+ * sistema, e e o que separa o menu de um bloco cinza qualquer.
+ */
+function menuDe(primaria: string, secundaria: string) {
+  const fundo = misturar(primaria, FUNDO_DO_MENU, 0.88);
+  const ativo = destaqueVisivelSobre(secundaria, fundo);
+  return {
+    menuFundo: fundo,
+    menuRealce: misturar(fundo, "#FFFFFF", 0.1),
+    menuBorda: misturar(fundo, "#FFFFFF", 0.16),
+    menuTexto: misturar(fundo, "#FFFFFF", 0.78),
+    menuTextoFraco: misturar(fundo, "#FFFFFF", 0.52),
+    menuAtivo: ativo,
+    menuSobreAtivo: corDoTextoSobre(ativo),
   };
 }
 
@@ -162,6 +232,13 @@ export function variaveisDaPaleta(paleta: Paleta): Record<string, string> {
     "--marca-primaria-escura": paleta.primariaEscura,
     "--marca-primaria-clara": paleta.primariaClara,
     "--marca-primaria-suave": paleta.primariaSuave,
+    "--menu-fundo": paleta.menuFundo,
+    "--menu-realce": paleta.menuRealce,
+    "--menu-borda": paleta.menuBorda,
+    "--menu-texto": paleta.menuTexto,
+    "--menu-texto-fraco": paleta.menuTextoFraco,
+    "--menu-ativo": paleta.menuAtivo,
+    "--menu-sobre-ativo": paleta.menuSobreAtivo,
   };
 }
 

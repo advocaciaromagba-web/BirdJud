@@ -70,6 +70,7 @@ export default async function Painel() {
       nomeEscritorio={marca.nome}
       logoUrl={marca.logoUrl}
       papel={contexto.papel}
+      nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={painel.modulos}
       titulo="Hoje"

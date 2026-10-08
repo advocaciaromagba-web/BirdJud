@@ -4,7 +4,6 @@ import { AREA_DO_ENDERECO } from "@/lib/areas";
 import { Icone, type NomeDeIcone } from "./Icone";
 import { MenuLateral } from "./MenuLateral";
 import { CampoDeBusca } from "./CampoDeBusca";
-import { Sair } from "./Sair";
 
 export type Area = {
   href: string;
@@ -12,114 +11,85 @@ export type Area = {
   icone: NomeDeIcone;
   modulo?: Modulo;
   soAdmin?: boolean;
-  grupo: "trabalho" | "dinheiro" | "escritorio";
+  /** Fica abaixo da linha, junto de Configuracoes. */
+  rodape?: boolean;
 };
 
+/**
+ * O menu, numa lista so.
+ *
+ * A ORDEM e o que organiza, no lugar dos titulos de grupo que havia antes.
+ * De cima para baixo: o que se abre todo dia, depois o dinheiro, depois o
+ * que se mexe uma vez por mes. Agrupar em "Trabalho / Dinheiro / Escritorio"
+ * obrigava a pessoa a classificar antes de achar — "conferir extrato e
+ * dinheiro ou escritorio?" — e custava tres cabecalhos de espaco.
+ *
+ * Os nomes seguem o que o escritorio ja chama assim: Inicio (nao "Painel"),
+ * Equipe (nao "Usuarios").
+ */
 const AREAS: Area[] = [
-  { href: "/", rotulo: "Painel", icone: "painel", grupo: "trabalho" },
-  {
-    href: "/clientes",
-    rotulo: "Clientes",
-    icone: "clientes",
-    grupo: "trabalho",
-  },
-  {
-    href: "/processos",
-    rotulo: "Processos",
-    icone: "processos",
-    grupo: "trabalho",
-  },
-  { href: "/agenda", rotulo: "Agenda", icone: "agenda", grupo: "trabalho" },
-  { href: "/prazos", rotulo: "Prazos", icone: "prazos", grupo: "trabalho" },
+  { href: "/", rotulo: "Inicio", icone: "painel" },
+  { href: "/agenda", rotulo: "Agenda", icone: "agenda" },
+  { href: "/prazos", rotulo: "Prazos", icone: "prazos" },
+  { href: "/processos", rotulo: "Processos", icone: "processos" },
+  { href: "/clientes", rotulo: "Clientes", icone: "clientes" },
   {
     href: "/publicacoes",
     rotulo: "Publicacoes",
     icone: "publicacoes",
     modulo: "PUBLICACOES_DJEN",
-    grupo: "trabalho",
-  },
-  {
-    href: "/arquivos",
-    rotulo: "Arquivos",
-    icone: "arquivos",
-    modulo: "NUVEM",
-    grupo: "trabalho",
-  },
-  {
-    href: "/conciliacao",
-    rotulo: "Conferir extrato",
-    icone: "financeiro",
-    modulo: "COBRANCAS",
-    grupo: "dinheiro",
-  },
-  {
-    href: "/honorarios",
-    rotulo: "Honorarios",
-    icone: "cobrancas",
-    modulo: "COBRANCAS",
-    grupo: "dinheiro",
   },
   {
     href: "/cobrancas",
     rotulo: "Cobrancas",
     icone: "cobrancas",
     modulo: "COBRANCAS",
-    grupo: "dinheiro",
+  },
+  {
+    href: "/honorarios",
+    rotulo: "Honorarios",
+    icone: "honorarios",
+    modulo: "COBRANCAS",
   },
   {
     href: "/notas",
     rotulo: "Notas fiscais",
     icone: "notas",
     modulo: "NFSE",
-    grupo: "dinheiro",
   },
   {
     href: "/financeiro",
     rotulo: "Financeiro",
     icone: "financeiro",
     modulo: "FINANCEIRO",
-    grupo: "dinheiro",
   },
   {
-    href: "/modelos",
-    rotulo: "Modelos",
-    icone: "arquivos",
-    grupo: "escritorio",
+    href: "/conciliacao",
+    rotulo: "Conferir extrato",
+    icone: "extrato",
+    modulo: "COBRANCAS",
   },
-  {
-    href: "/usuarios",
-    rotulo: "Usuarios",
-    icone: "usuarios",
-    soAdmin: true,
-    grupo: "escritorio",
-  },
+  { href: "/modelos", rotulo: "Modelos", icone: "modelos" },
+  { href: "/arquivos", rotulo: "Arquivos", icone: "arquivos", modulo: "NUVEM" },
+  { href: "/usuarios", rotulo: "Equipe", icone: "usuarios", soAdmin: true },
+
+  // Abaixo da linha: o que nao e trabalho do dia.
+  { href: "/conta", rotulo: "Minha conta", icone: "conta", rodape: true },
   {
     href: "/integracoes",
     rotulo: "Integracoes",
     icone: "integracoes",
     soAdmin: true,
-    grupo: "escritorio",
+    rodape: true,
   },
   {
     href: "/administracao",
-    rotulo: "Administracao",
-    icone: "integracoes",
+    rotulo: "Configuracoes",
+    icone: "configuracoes",
     soAdmin: true,
-    grupo: "escritorio",
-  },
-  {
-    href: "/conta",
-    rotulo: "Minha conta",
-    icone: "conta",
-    grupo: "escritorio",
+    rodape: true,
   },
 ];
-
-const TITULO_DO_GRUPO: Record<Area["grupo"], string> = {
-  trabalho: "Trabalho",
-  dinheiro: "Dinheiro",
-  escritorio: "Escritorio",
-};
 
 /**
  * A estrutura de toda tela de dentro do sistema: menu lateral com a marca do
@@ -137,6 +107,7 @@ export function Estrutura({
   nomeEscritorio,
   logoUrl,
   papel,
+  nomeUsuario,
   modulos,
   acesso,
   titulo,
@@ -149,6 +120,8 @@ export function Estrutura({
   nomeEscritorio: string;
   logoUrl?: string | null;
   papel: string;
+  /** Nome de quem esta logado, para o cartao no pe do menu. */
+  nomeUsuario?: string;
   modulos: Modulo[];
   /**
    * Area -> pode entrar. Sem isto, o menu mostra o que o modulo e o papel
@@ -172,16 +145,11 @@ export function Estrutura({
       (!acesso || !AREA_DO_ENDERECO[area.href] || acesso[AREA_DO_ENDERECO[area.href]] === true),
   );
 
-  const grupos = (["trabalho", "dinheiro", "escritorio"] as const)
-    .map((grupo) => ({
-      grupo,
-      titulo: TITULO_DO_GRUPO[grupo],
-      areas: areas.filter((area) => area.grupo === grupo),
-    }))
-    .filter((bloco) => bloco.areas.length > 0);
+  const itens = areas.filter((area) => !area.rodape);
+  const rodape = areas.filter((area) => area.rodape);
 
   const marca = (
-    <Link href="/" className="flex items-center gap-3 px-2 py-1">
+    <Link href="/" className="flex items-center gap-3">
       {logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -208,16 +176,21 @@ export function Estrutura({
 
   return (
     <div className="min-h-dvh bg-[color:var(--off-white)] lg:flex">
-      <MenuLateral marca={marca} grupos={grupos} />
+      <MenuLateral
+        marca={marca}
+        itens={itens}
+        rodape={rodape}
+        nomeUsuario={nomeUsuario ?? nomeEscritorio}
+        papel={papel}
+      />
 
       <div className="min-w-0 flex-1">
         <div className="sticky top-0 z-10 hidden border-b border-slate-200/70 bg-white/75 backdrop-blur-md lg:block">
+          {/* So a busca. O cargo e o Sair saiam daqui tambem, e repetidos
+              do cartao no pe do menu: duas saidas na mesma tela e uma a
+              mais para a pessoa conferir qual e a certa. */}
           <div className="flex items-center gap-4 px-6 py-2.5">
             <CampoDeBusca termoInicial={termoDeBusca} />
-            <div className="ml-auto flex items-center gap-2">
-              <span className="etiqueta-neutra">{papel.toLowerCase()}</span>
-              <Sair />
-            </div>
           </div>
         </div>
 

@@ -33,6 +33,8 @@ export class SemSessao extends Error {
 export type ContextoRota = {
   escritorioId: string;
   usuarioId: string;
+  /** Nome de quem esta logado. O menu o mostra no pe, com as iniciais. */
+  nomeUsuario: string;
   papel: string;
   marca: Marca;
   /**
@@ -83,7 +85,7 @@ export async function exigirSessao(
   const usuario = await comEscritorio(marca.id, (db) =>
     db.usuario.findFirst({
       where: { id: sessao.usuarioId },
-      select: { ativo: true, sessoesValidasApos: true },
+      select: { nome: true, ativo: true, sessoesValidasApos: true },
     }),
   );
   if (!usuario?.ativo) throw new SemSessao("Usuario inativo ou removido.");
@@ -114,6 +116,9 @@ export async function exigirSessao(
   return {
     escritorioId: marca.id,
     usuarioId: sessao.usuarioId,
+    // O nome vem da linha que ja foi lida acima para conferir se o usuario
+    // continua ativo: o menu precisa dele, e nao custa consulta nova.
+    nomeUsuario: usuario.nome,
     papel: sessao.papel,
     marca,
     acesso,

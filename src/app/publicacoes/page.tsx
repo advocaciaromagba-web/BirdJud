@@ -127,6 +127,7 @@ export default async function PaginaPublicacoes() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Publicacoes"

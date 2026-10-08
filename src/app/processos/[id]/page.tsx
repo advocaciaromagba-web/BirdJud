@@ -37,6 +37,7 @@ export default async function PaginaDoProcesso({
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={ficha.modulos}
       titulo={formatarNumeroProcesso(processo.numero)}

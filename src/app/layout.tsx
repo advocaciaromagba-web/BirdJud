@@ -1,24 +1,27 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Source_Serif_4 } from "next/font/google";
+import { Poppins, Source_Serif_4 } from "next/font/google";
 import { MARCA_NEUTRA } from "@/lib/escritorio";
 import { normalizarCor, paletaDe, variaveisDaPaleta } from "@/lib/identidade";
 import { escritorioDoEndereco } from "@/lib/sessao";
 import "./globals.css";
 
-// Tres familias, com papeis separados: a de tela, que se le o dia inteiro; a
-// de titulo, que e identidade da marca e aparece pouco; e a serifada de
-// leitura, reservada a texto de peca e de publicacao. Baixadas no build e
-// servidas do nosso dominio — nenhuma requisicao do navegador do escritorio
-// sai para um terceiro.
-const interface_ = Inter({
+// DUAS familias, e nao tres. A Poppins responde por tudo que e interface e
+// titulo — menu, botao, tabela, cabecalho de tela. A serifada fica reservada
+// ao CORPO de peca e de publicacao, que e texto juridico longo: ali a serifa
+// ajuda a ler, e trocar por geometrica so cansaria a vista.
+//
+// Antes eram Inter (tela) e Playfair (titulo). A Playfair saiu porque
+// misturar serifa de display com a interface deixava o sistema com duas
+// personalidades; a Poppins nos dois papeis da a unidade pedida.
+//
+// Baixadas no build e servidas do nosso dominio — nenhuma requisicao do
+// navegador do escritorio sai para um terceiro.
+const interface_ = Poppins({
   subsets: ["latin"],
+  // A Poppins nao tem eixo variavel no Google Fonts: os pesos vao listados,
+  // e pedir um que nao esteja aqui faz o navegador engordar a letra sozinho.
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--fonte-interface",
-  display: "swap",
-});
-
-const titulo = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--fonte-display",
   display: "swap",
 });
 
@@ -60,7 +63,7 @@ export default async function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${interface_.variable} ${titulo.variable} ${serifada.variable}`}
+      className={`${interface_.variable} ${serifada.variable}`}
     >
       <body
         style={variaveisDaPaleta(paleta) as React.CSSProperties}

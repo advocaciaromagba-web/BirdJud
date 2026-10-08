@@ -26,6 +26,7 @@ export default async function PaginaDoPlano() {
         nomeEscritorio={contexto.marca.nome}
         logoUrl={contexto.marca.logoUrl}
         papel={contexto.papel}
+      nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
         modulos={modulos}
         titulo="Plano"
@@ -63,6 +64,7 @@ export default async function PaginaDoPlano() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      nomeUsuario={contexto.nomeUsuario}
       modulos={modulos}
       titulo="Plano do escritorio"
       chamada={

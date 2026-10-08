@@ -38,7 +38,9 @@
   --fonte-texto:
     var(--fonte-interface), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", sans-serif;
-  --fonte-titulo: var(--fonte-display), Georgia, "Times New Roman", serif;
+  /* O titulo usa a MESMA familia da interface, de proposito: a diferenca
+     entre titulo e texto passa a ser peso e tamanho, nao outra tipografia. */
+  --fonte-titulo: var(--fonte-texto);
   --fonte-leitura: var(--fonte-serifada), Georgia, "Times New Roman", serif;
 
   /*

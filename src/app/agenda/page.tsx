@@ -86,6 +86,7 @@ export default async function PaginaAgenda() {
       nomeEscritorio={contexto.marca.nome}
       logoUrl={contexto.marca.logoUrl}
       papel={contexto.papel}
+      nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Agenda"
