@@ -163,6 +163,7 @@ async function webhook(statuses: unknown[]): Promise<number> {
 const marca = Date.now();
 let esc = "";
 let responsavel = "";
+let quemEnviou = "";
 let compromisso = "";
 let participante = "";
 let cliente = "";
@@ -187,8 +188,8 @@ async function avisoPendente(chave: string, extra: Record<string, unknown> = {})
   );
 }
 
-async function enviarERetornarId(chave: string): Promise<{ id: string; idNaMeta: string }> {
-  const a = await avisoPendente(chave);
+async function enviarERetornarId(chave: string, extra: Record<string, unknown> = {}): Promise<{ id: string; idNaMeta: string }> {
+  const a = await avisoPendente(chave, extra);
   await enviarAvisosNoWhatsapp(esc);
   const depois = await comEscritorio(esc, (db) => db.aviso.findFirstOrThrow({ where: { id: a.id } }));
   expect(depois.estado).toBe("ENVIADO");
@@ -223,6 +224,17 @@ d("entrega no banco", () => {
       await db.usuario.create({
         data: semEscritorio({ nome: "Admin", email: `adm-entrega-${marca}@teste.br`, senhaHash: "x", papel: "ADMIN" }),
       });
+      const q = await db.usuario.create({
+        data: semEscritorio({
+          nome: "Secretaria Ana",
+          email: `ana-entrega-${marca}@teste.br`,
+          senhaHash: "x",
+          papel: "USUARIO",
+          telefone: "(71) 96666-5555",
+          recebeWhatsapp: true,
+        }),
+      });
+      quemEnviou = q.id;
       const r = await db.usuario.create({
         data: semEscritorio({ nome: "Dra. Responsavel", email: `resp-entrega-${marca}@teste.br`, senhaHash: "x", papel: "ADVOGADO" }),
       });
@@ -333,7 +345,9 @@ d("entrega no banco", () => {
     await webhook([{ id: idNaMeta, status: "failed", errors: [{ code: 131026 }] }]);
     await comEscritorio(esc, (db) => db.cliente.update({ where: { id: cliente }, data: { telefone: "(71) 97777-6666" } }));
 
-    const r = await reenviar(esc, id, { automatico: false, quem: "Dra. Responsavel" });
+    const r = await reenviar(esc, id, { automatico: false, quem: "Secretaria Ana", quemId: quemEnviou });
+    const copia = await comEscritorio(esc, (db) => db.aviso.findFirstOrThrow({ where: { reenvioDeId: id } }));
+    expect(copia.enviadoPorId).toBe(quemEnviou);
     expect(r.destino).toBe("5571977776666");
     expect(r.mudouDestino).toBe(true);
     const original = await lerAviso(id);
@@ -389,6 +403,37 @@ d("entrega no banco", () => {
     expect(m.resolvidas.some((x) => x.tratamento === "Avisado por outro meio")).toBe(true);
     // Alerta interno nao aparece como mensagem ao cliente.
     expect(m.naoEntregues.some((x) => x.tipo === TIPO_DO_ALERTA)).toBe(false);
+  });
+
+  it("o alerta vai SO para quem enviou: e-mail e o modelo de WhatsApp", async () => {
+    const { id, idNaMeta } = await enviarERetornarId(`t10:${marca}`, { enviadoPorId: quemEnviou });
+    await webhook([{ id: idNaMeta, status: "failed", errors: [{ code: 131026 }] }]);
+
+    const alertas = await comEscritorio(esc, (db) =>
+      db.aviso.findMany({ where: { tipo: TIPO_DO_ALERTA, chave: { contains: `falha:${id}:` } }, orderBy: { canal: "asc" } }),
+    );
+    // Nem o responsavel do compromisso nem o administrador: so a Ana.
+    expect(alertas.map((a) => [a.canal, a.usuarioId])).toEqual([
+      ["EMAIL", quemEnviou],
+      ["WHATSAPP", quemEnviou],
+    ]);
+    const zap = alertas.find((a) => a.canal === "WHATSAPP")!;
+    expect(zap.destino).toBe("5571966665555");
+    expect(zap.modelo).toBe("birdjud_mensagem_nao_entregue");
+    expect(zap.parametros).toEqual([
+      "Banca Entrega",
+      "Lembrete ao participante, por WhatsApp",
+      "Maria Cliente",
+      expect.stringMatching(/nao recebe WhatsApp/),
+      "o escritorio",
+    ]);
+    expect(alertas[0].corpo).toMatch(/A mensagem que voce enviou para Maria Cliente nao chegou/);
+
+    // O alerta que falha nao gera alerta de alerta.
+    await enviarAvisosNoWhatsapp(esc);
+    const zapEnviado = await lerAviso(zap.id);
+    await webhook([{ id: zapEnviado.idNaMeta, status: "failed", errors: [{ code: 131026 }] }]);
+    expect(await comEscritorio(esc, (db) => db.aviso.count({ where: { chave: { contains: `falha:${zap.id}:` } } }))).toBe(0);
   });
 
   it("retorno de mensagem desconhecida nao quebra o webhook", async () => {

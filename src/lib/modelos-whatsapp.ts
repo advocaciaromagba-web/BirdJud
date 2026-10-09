@@ -160,6 +160,24 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
       TELEFONE_DO_ESCRITORIO,
     ],
   },
+  // Alerta INTERNO: vai so para a pessoa do escritorio que enviou a mensagem
+  // que nao chegou (ver docs/ENTREGA-DE-MENSAGENS.md). Nunca para o cliente.
+  FALHA_DE_ENTREGA: {
+    nome: "birdjud_mensagem_nao_entregue",
+    idioma: "pt_BR",
+    texto: comRodape(
+      "No escritorio {{1}}, a mensagem que voce enviou ({{2}}) para {{3}} nao chegou. " +
+        "Motivo: {{4}}. Abra o sistema em Mensagens para reenviar ou marcar como resolvida.",
+      5,
+    ),
+    parametros: [
+      "nome do escritorio",
+      "o que era a mensagem",
+      "quem deveria receber",
+      "o motivo",
+      TELEFONE_DO_ESCRITORIO,
+    ],
+  },
 };
 
 export function modeloDoTipo(tipo: string): ModeloDeAviso | null {

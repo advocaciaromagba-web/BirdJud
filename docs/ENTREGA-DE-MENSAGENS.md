@@ -38,19 +38,41 @@ O reenvio automático **nunca** acontece:
 - para documento (o PDF é gerado de novo na ficha do cliente);
 - duas vezes. Se o reenvio automático também falhar, vai para a equipe.
 
-### O alerta
+### O alerta: só para quem enviou
 
-Cada falha que precisa de alguém gera um **e-mail** para o **responsável do
-compromisso**. Se o compromisso não tem responsável, ou a mensagem não é de
-compromisso, o e-mail vai para os **administradores**. O e-mail traz para
-quem era a mensagem, o motivo, o que fazer e o link da tela Mensagens. Sai
-pela conta de e-mail do escritório, um por falha e por pessoa, nunca repetido.
+O alerta vai **somente para a pessoa que enviou** a mensagem:
 
-Além do e-mail, o **Início** mostra a pendência "N mensagem(ns) podem não ter
-chegado" para toda a equipe, com link para a tela.
+| A mensagem saiu por | O alerta vai para |
+| --- | --- |
+| **Avisar** na agenda | quem clicou |
+| marcar o compromisso / incluir participante | quem marcou ou incluiu |
+| **Mandar documento** pelo WhatsApp | quem mandou |
+| **Reenviar** na tela Mensagens | quem reenviou |
+| régua automática (lembretes, resumos) | o **responsável do compromisso**, em nome de quem ela saiu |
+
+Só quando não há ninguém (a pessoa foi desligada, ou o aviso automático não
+tem compromisso com responsável), o alerta vai para os administradores. Uma
+falha de que ninguém fica sabendo é o que este alerta existe para evitar.
+
+Por onde:
+- **e-mail**, sempre, pela conta de e-mail do escritório;
+- **WhatsApp**, pelo modelo `birdjud_mensagem_nao_entregue`, quando a pessoa
+  marcou que recebe WhatsApp e tem celular no cadastro (e o escritório tem o
+  módulo).
+
+O e-mail traz o motivo, o que fazer e o link da tela Mensagens. O WhatsApp
+diz o essencial: o que era, para quem, o motivo, e que a tela Mensagens
+resolve. Cada falha gera um alerta por canal, nunca repetido. O alerta que
+falha não gera outro alerta.
+
+O reenvio automático continua sendo de quem enviou a original. O reenvio
+manual passa a ser de quem clicou.
+
+Além do alerta, o **Início** mostra a pendência "N mensagem(ns) podem não
+ter chegado" para toda a equipe, com link para a tela.
 
 As falhas de antes desta mudança aparecem na tela e na pendência, mas não
-geram e-mail.
+geram alerta.
 
 ## A tela Mensagens
 
@@ -92,4 +114,4 @@ plataforma recebeu.
   `src/app/api/mensagens/[id]`.
 - Rotina: o `LEMBRAR` de hora em hora chama `conferirEntregas` antes de
   enviar. Não precisa de cron novo.
-- Migração `50_entrega_de_mensagens`; testes em `testes/entrega.test.ts`.
+- Migrações `50_entrega_de_mensagens` e `51_quem_enviou`; testes em `testes/entrega.test.ts`.

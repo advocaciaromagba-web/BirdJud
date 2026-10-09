@@ -21,14 +21,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao();
+    const { escritorioId, usuarioId } = await exigirSessao();
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
     }
 
-    const r = await avisarAgora(escritorioId, id, corpo.data.qual);
+    const r = await avisarAgora(escritorioId, id, corpo.data.qual, usuarioId);
     if (r.criados > 0) await enfileirar("LEMBRAR", escritorioId);
 
     const partes: string[] = [];

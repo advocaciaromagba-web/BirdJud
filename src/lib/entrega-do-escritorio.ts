@@ -1,4 +1,4 @@
-// Entrega das mensagens, no banco: o retorno da Meta, o alerta para a equipe,
+// Entrega das mensagens, no banco: o retorno da Meta, o alerta para quem enviou,
 // o reenvio (automatico ou a pedido) e a lista da tela "Mensagens nao
 // entregues". As regras moram em entrega.ts; ver docs/ENTREGA-DE-MENSAGENS.md.
 import { Prisma } from "@prisma/client";
@@ -8,6 +8,8 @@ import { dominioDaPlataforma } from "./dominio";
 import { dataHoraBR } from "./datas";
 import { paraE164BR } from "./whatsapp";
 import { rotuloDoAviso } from "./agenda-rotulos";
+import { moduloAtivo } from "./modulos";
+import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
 import {
   O_QUE_FAZER,
   PREFIXO_DO_REENVIO_AUTOMATICO,
@@ -127,7 +129,7 @@ export async function depoisDaFalha(escritorioId: string, avisoId: string, agora
     await enfileirar("LEMBRAR", escritorioId, {}, quando);
     return;
   }
-  if ((await alertarEquipe(escritorioId, aviso)) > 0) await enfileirar("LEMBRAR", escritorioId);
+  if ((await alertarQuemEnviou(escritorioId, aviso)) > 0) await enfileirar("LEMBRAR", escritorioId);
 }
 
 function paraDecidir(a: AvisoComCompromisso) {
@@ -142,37 +144,58 @@ function paraDecidir(a: AvisoComCompromisso) {
 }
 
 /**
- * O e-mail para quem precisa agir: o responsavel do compromisso ou, sem
- * ele, os administradores. Um por falha e por pessoa — a chave garante.
+ * Para quem vai o alerta: SO para quem enviou.
+ *
+ * Quem clicou em Avisar, mandou o documento, reenviou ou marcou o compromisso
+ * e quem sabe o que aquela mensagem dizia e quem precisa avisar o cliente por
+ * outro meio. Avisar o escritorio inteiro faria cada um achar que e do outro.
+ *
+ * O que a regua manda sozinha nao tem quem enviou: vale o responsavel do
+ * compromisso, em nome de quem ela saiu. So quando nao ha nem um nem outro
+ * (pessoa desligada, aviso sem compromisso) vai para os administradores —
+ * falha que ninguem fica sabendo e o que este alerta existe para evitar.
  */
-async function alertarEquipe(escritorioId: string, aviso: AvisoComCompromisso): Promise<number> {
+async function quemAlertar(
+  db: Parameters<Parameters<typeof comEscritorio>[1]>[0],
+  aviso: AvisoComCompromisso,
+): Promise<{ id: string; email: string; telefone: string | null; recebeWhatsapp: boolean }[]> {
+  const campos = { id: true, email: true, telefone: true, recebeWhatsapp: true } as const;
+  for (const id of [aviso.enviadoPorId, aviso.compromisso?.responsavelId]) {
+    if (!id) continue;
+    const pessoa = await db.usuario.findFirst({ where: { id, ativo: true }, select: campos });
+    if (pessoa) return [pessoa];
+  }
+  return db.usuario.findMany({ where: { papel: "ADMIN", ativo: true }, select: campos });
+}
+
+/**
+ * O alerta: e-mail e, se a pessoa recebe WhatsApp, o modelo
+ * birdjud_mensagem_nao_entregue. Um por falha, por pessoa e por canal — a
+ * chave garante, e e o que deixa a rotina rodar de novo sem repetir.
+ */
+async function alertarQuemEnviou(escritorioId: string, aviso: AvisoComCompromisso): Promise<number> {
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
-    select: { nome: true, slug: true },
+    select: { nome: true, slug: true, telefoneAtendimento: true },
   });
   const destinatario = await nomeDeQuemRecebe(escritorioId, aviso);
   const categoria = categoriaDaFalha(aviso.canal, aviso.erroCodigo);
+  const motivo = aviso.erro ?? motivoDaFalha(aviso.erroCodigo);
   const endereco = `https://${escritorio.slug}.${dominioDaPlataforma()}/mensagens`;
+  const modelo = modeloDoTipo(TIPO_DO_ALERTA);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
 
   return comEscritorio(escritorioId, async (db) => {
-    let equipe = aviso.compromisso?.responsavelId
-      ? await db.usuario.findMany({
-          where: { id: aviso.compromisso.responsavelId, ativo: true },
-          select: { id: true, email: true },
-        })
-      : [];
-    if (equipe.length === 0) {
-      equipe = await db.usuario.findMany({ where: { papel: "ADMIN", ativo: true }, select: { id: true, email: true } });
-    }
+    const pessoas = await quemAlertar(db, aviso);
 
     const canal = aviso.canal === "WHATSAPP" ? "WhatsApp" : "e-mail";
     const corpo = [
-      `Uma mensagem do sistema para ${destinatario} nao chegou.`,
+      `A mensagem que voce enviou para ${destinatario} nao chegou.`,
       "",
       `O que era: ${rotuloDoAviso(aviso.tipo)} — ${aviso.assunto}`,
       `Por onde: ${canal}, para ${aviso.destino}`,
       aviso.compromisso ? `Compromisso: ${aviso.compromisso.titulo}, ${dataHoraBR.format(aviso.compromisso.inicio)}` : null,
-      `Motivo: ${aviso.erro ?? motivoDaFalha(aviso.erroCodigo)}`,
+      `Motivo: ${motivo}`,
       "",
       `O que fazer: ${O_QUE_FAZER[categoria]}`,
       "",
@@ -183,25 +206,44 @@ async function alertarEquipe(escritorioId: string, aviso: AvisoComCompromisso): 
       .filter((l) => l !== null)
       .join("\n");
 
-    let criados = 0;
-    for (const pessoa of equipe) {
+    const criar = async (dados: Omit<Prisma.AvisoUncheckedCreateInput, "escritorioId">): Promise<number> => {
       try {
-        await db.aviso.create({
-          data: semEscritorio({
-            usuarioId: pessoa.id,
-            canal: "EMAIL",
-            tipo: TIPO_DO_ALERTA,
-            chave: `falha:${aviso.id}:${pessoa.id}`,
-            destino: pessoa.email,
-            assunto: `Mensagem nao entregue: ${destinatario}`,
-            corpo,
-          }),
-        });
-        criados += 1;
+        await db.aviso.create({ data: semEscritorio(dados) });
+        return 1;
       } catch (erro) {
-        // Ja alertado: a chave e unica. E o que deixa a rotina rodar de novo.
-        if (!(erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002")) throw erro;
+        // Ja alertado: a chave e unica.
+        if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") return 0;
+        throw erro;
       }
+    };
+
+    let criados = 0;
+    for (const pessoa of pessoas) {
+      const base = {
+        usuarioId: pessoa.id,
+        tipo: TIPO_DO_ALERTA,
+        assunto: `Mensagem nao entregue: ${destinatario}`,
+        corpo,
+        compromissoId: aviso.compromissoId,
+      };
+      criados += await criar({ ...base, canal: "EMAIL", chave: `falha:${aviso.id}:${pessoa.id}`, destino: pessoa.email });
+
+      const telefone = pessoa.recebeWhatsapp ? paraE164BR(pessoa.telefone) : null;
+      if (!comWhatsapp || !telefone || !modelo) continue;
+      criados += await criar({
+        ...base,
+        canal: "WHATSAPP",
+        chave: `zap:falha:${aviso.id}:${pessoa.id}`,
+        destino: telefone,
+        modelo: modelo.nome,
+        parametros: [
+          limparParametro(escritorio.nome),
+          limparParametro(`${rotuloDoAviso(aviso.tipo)}, por ${canal}`),
+          limparParametro(destinatario),
+          limparParametro(motivo),
+          limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritorio"),
+        ],
+      });
     }
     return criados;
   });
@@ -242,7 +284,7 @@ export async function conferirEntregas(escritorioId: string, agora = new Date())
         // Sem como reenviar (contato apagado, pessoa bloqueou): vai para a equipe.
       }
     }
-    alertas += await alertarEquipe(escritorioId, f);
+    alertas += await alertarQuemEnviou(escritorioId, f);
   }
   return { reenviados, alertas };
 }
@@ -299,7 +341,7 @@ async function nomeDeQuemRecebe(
 export async function reenviar(
   escritorioId: string,
   avisoId: string,
-  opcoes: { automatico: boolean; quem: string },
+  opcoes: { automatico: boolean; quem: string; quemId?: string | null },
 ): Promise<{ novoId: string; destino: string; mudouDestino: boolean }> {
   const original = await comEscritorio(escritorioId, (db) => db.aviso.findFirst({ where: { id: avisoId } }));
   if (!original) throw new NaoDaParaReenviar("Mensagem nao encontrada.");
@@ -343,6 +385,9 @@ export async function reenviar(
           participanteId: original.participanteId,
           clienteId: original.clienteId,
           reenvioDeId: original.id,
+          // O reenvio automatico continua sendo de quem enviou; o manual passa
+          // a ser de quem clicou — e e essa pessoa que o alerta procura.
+          enviadoPorId: opcoes.automatico ? original.enviadoPorId : (opcoes.quemId ?? null),
         }),
         select: { id: true },
       });

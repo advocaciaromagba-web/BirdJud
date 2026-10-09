@@ -40,7 +40,7 @@ export async function POST(
   { params }: { params: Promise<{ especie: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao("WHATSAPP");
+    const { escritorioId, usuarioId } = await exigirSessao("WHATSAPP");
     const { especie } = await params;
     if (!ehEspecie(especie)) {
       return NextResponse.json({ erro: "Especie invalida." }, { status: 400 });
@@ -180,7 +180,7 @@ export async function POST(
       contrato,
       processo,
       recibo,
-    });
+    }, usuarioId);
 
     return NextResponse.json({ mandado }, { status: 201 });
   } catch (erro) {

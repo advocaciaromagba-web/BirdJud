@@ -1157,6 +1157,10 @@ model Aviso {
   observacao     String?
   /// Este aviso e o reenvio de qual.
   reenvioDeId    String?
+  /// Quem do escritorio disparou o envio (Avisar, Mandar documento, Reenviar,
+  /// marcar o compromisso). Nulo no que a regua manda sozinha. E para esta
+  /// pessoa — e so para ela — que vai o alerta quando a mensagem nao chega.
+  enviadoPorId   String?
 
   escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   usuario     Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)

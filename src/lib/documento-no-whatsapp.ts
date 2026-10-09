@@ -61,6 +61,8 @@ export async function mandarPecaNoWhatsapp(
   escritorioId: string,
   especie: Especie,
   dados: DadosDaPeca & { clienteId: string },
+  /** Quem mandou: recebe o alerta se o documento nao chegar. */
+  enviadoPorId: string | null = null,
 ): Promise<PecaMandada> {
   if (!(await moduloAtivo(escritorioId, "WHATSAPP"))) {
     throw new NaoDaParaMandar("O modulo de WhatsApp nao esta contratado.");
@@ -147,6 +149,7 @@ export async function mandarPecaNoWhatsapp(
         // (nao deveria) fica de fora: o registro do envio vale mais.
         idNaMeta: idRepetido ? null : idNaMeta,
         clienteId: dados.clienteId,
+        enviadoPorId,
       }),
     }),
   );

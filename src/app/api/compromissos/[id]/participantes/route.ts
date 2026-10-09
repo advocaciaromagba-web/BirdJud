@@ -32,7 +32,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao();
+    const { escritorioId, usuarioId } = await exigirSessao();
     const { id } = await params;
     const corpo = await req.json().catch(() => null);
     const quantos = await salvarParticipantes(
@@ -46,7 +46,7 @@ export async function PUT(
     // e gravada nesta tela, depois. A chave leva o participante, entao quem ja
     // foi avisado nao e avisado de novo quando a lista muda.
     try {
-      if ((await avisarAgendamento(escritorioId, id)) > 0) {
+      if ((await avisarAgendamento(escritorioId, id, usuarioId)) > 0) {
         await enfileirar("LEMBRAR", escritorioId);
       }
     } catch (falha) {

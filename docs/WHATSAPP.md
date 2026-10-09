@@ -120,6 +120,29 @@ Corpo, exatamente:
 | `{{3}}` | data e hora | 20/10/2026 14:30 |
 | `{{4}}` | local, ou o processo | Forum de Salvador, sala 3 |
 
+### 3. `birdjud_mensagem_nao_entregue` (alerta interno)
+
+Vai **so para a pessoa do escritorio que enviou** a mensagem que nao chegou
+(ver `docs/ENTREGA-DE-MENSAGENS.md`). Nunca para o cliente. Categoria
+**Utilidade**, idioma **Portugues (BR)**, sem cabecalho nem botao.
+
+Corpo, exatamente:
+
+```
+No escritorio {{1}}, a mensagem que voce enviou ({{2}}) para {{3}} nao chegou. Motivo: {{4}}. Abra o sistema em Mensagens para reenviar ou marcar como resolvida. Este numero so envia avisos e nao recebe mensagens. Em caso de duvida, ligue para {{5}}, que e o telefone do escritorio.
+```
+
+| Parametro | O que e | Exemplo |
+|---|---|---|
+| `{{1}}` | nome do escritorio | Advocacia Roma |
+| `{{2}}` | o que era, e por onde | Lembrete ao participante, por WhatsApp |
+| `{{3}}` | quem deveria receber | Maria da Silva |
+| `{{4}}` | o motivo | O numero nao recebe WhatsApp |
+| `{{5}}` | telefone do escritorio | (16) 3251-0000 |
+
+Enquanto nao estiver aprovado, o alerta continua saindo por **e-mail**; o
+WhatsApp dele falha sem gerar outro alerta.
+
 **A ordem dos parametros e um contrato.** Trocar `{{2}}` por `{{3}}` de um lado
 sem trocar do outro faz o sistema mandar a hora no lugar do titulo, e ninguem
 percebe ate alguem receber. Os textos acima estao tambem em
@@ -213,6 +236,7 @@ sessao antiga do numero; apagar a conversa e mandar de novo resolveu.
 | publicacoes novas | equipe que quis receber | `birdjud_resumo_publicacoes` |
 | o dia que tem algo | equipe que quis receber | `birdjud_resumo_do_dia` |
 | **documento gerado** (contrato, procuracao, declaracao, recibo) | o cliente, em PDF | `birdjud_documento` |
+| **mensagem que nao chegou** ao cliente | so quem enviou (ver docs/ENTREGA-DE-MENSAGENS.md) | `birdjud_mensagem_nao_entregue` |
 
 Os dois primeiros saem **na hora**, nao na proxima rodada da fila: quem ficou
 com a tarefa precisa saber agora. Sao gravados como qualquer outro aviso e a

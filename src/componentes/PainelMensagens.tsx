@@ -204,7 +204,7 @@ export function PainelMensagens({ naoEntregues, semConfirmacao, resolvidas }: Me
 
       <Secao
         titulo="Nao entregues"
-        explicacao="O envio falhou ou a Meta devolveu que nao entregou. Quem e responsavel pelo compromisso (ou o administrador) recebe um e-mail a cada uma."
+        explicacao="O envio falhou ou a Meta devolveu que nao entregou. Quem enviou cada uma recebe o alerta por e-mail e, se recebe WhatsApp, tambem por la."
         vazio="Nenhuma mensagem falhou."
         itens={naoEntregues}
       />

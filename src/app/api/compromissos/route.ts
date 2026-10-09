@@ -128,7 +128,7 @@ export async function POST(req: Request) {
     try {
       const avisos =
         (await avisarDesignacao(escritorioId, resultado.compromisso.id, usuarioId)) +
-        (await avisarAgendamento(escritorioId, resultado.compromisso.id));
+        (await avisarAgendamento(escritorioId, resultado.compromisso.id, usuarioId));
       if (avisos > 0) await enfileirar("LEMBRAR", escritorioId);
     } catch (falha) {
       console.log(

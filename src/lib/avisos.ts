@@ -491,6 +491,8 @@ type NovoAviso = {
   compromissoId?: string;
   /** De quem e o contato: o reenvio usa o contato ATUAL do cadastro. */
   participanteId?: string;
+  /** Quem do escritorio disparou: recebe o alerta se nao chegar. */
+  enviadoPorId?: string | null;
 };
 
 /** Devolve false quando o aviso ja existia — e o que torna a rotina repetivel. */
@@ -880,6 +882,7 @@ export async function avisarDesignacao(
 export async function avisarAgendamento(
   escritorioId: string,
   compromissoId: string,
+  enviadoPorId: string | null = null,
 ): Promise<number> {
   const achado = await paraOTexto(escritorioId, compromissoId);
   if (!achado) return 0;
@@ -905,6 +908,7 @@ export async function avisarAgendamento(
         await criarAviso(escritorioId, {
           usuarioId: null,
           participanteId: pessoa.participanteId,
+          enviadoPorId,
           canal: "EMAIL",
           tipo: "COMPROMISSO_MARCADO",
           compromissoId,
@@ -922,6 +926,7 @@ export async function avisarAgendamento(
     const criadoZap = await criarAviso(escritorioId, {
       usuarioId: null,
       participanteId: pessoa.participanteId,
+      enviadoPorId,
       canal: "WHATSAPP",
       tipo: "COMPROMISSO_MARCADO",
       compromissoId,
@@ -974,6 +979,7 @@ export async function avisarAgora(
   escritorioId: string,
   compromissoId: string,
   qual: Manual,
+  enviadoPorId: string | null = null,
 ): Promise<ResultadoDoAvisoManual> {
   const achado = await paraOTexto(escritorioId, compromissoId);
   if (!achado) throw new CompromissoNaoEncontrado();
@@ -1032,6 +1038,7 @@ export async function avisarAgora(
         await criarAviso(escritorioId, {
           usuarioId: null,
           participanteId: pessoa.participanteId,
+          enviadoPorId,
           canal: "EMAIL",
           tipo: texto.tipo,
           compromissoId,
@@ -1050,6 +1057,7 @@ export async function avisarAgora(
       await criarAviso(escritorioId, {
         usuarioId: null,
         participanteId: pessoa.participanteId,
+        enviadoPorId,
         canal: "WHATSAPP",
         tipo: texto.tipo,
         compromissoId,
