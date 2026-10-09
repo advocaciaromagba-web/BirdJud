@@ -79,6 +79,7 @@ export default async function ImplantacaoDoEscritorio({ params }: { params: Prom
       cidade: escritorio.cidade ?? "",
       corPrimaria: escritorio.corPrimaria ?? "#0B1F3B",
       corSecundaria: escritorio.corSecundaria ?? "#D4AF7C",
+      sede: Array.isArray(escritorio.enderecos) ? (escritorio.enderecos[0] ?? null) : null,
     },
     pessoas: d.pessoas.map((p) => {
       const c = ultimoConvite.get(p.id);

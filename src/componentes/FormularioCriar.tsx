@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
 import type { Perfil } from "@/lib/leitura-documento";
+import { consultarCep, estadoDepois, focar, mascararCep, type EstadoDoCep } from "./consultaDeCep";
+import { RecadoDoCep } from "./RecadoDoCep";
 
 export type Campo = {
   nome: string;
@@ -20,8 +22,14 @@ export type Campo = {
     // porque a primeira reuniao costuma ser com quem ainda nao e cliente, e
     // mandar a pessoa sair para cadastrar antes e o jeito certo de ela nao
     // cadastrar.
-    | "cliente";
+    | "cliente"
+    // CEP: completo, busca o endereco e preenche os campos de `preenche`; o
+    // cursor vai para `focoDepois` (o numero). E o primeiro campo do endereco.
+    | "cep";
   obrigatorio?: boolean;
+  preenche?: { logradouro?: string; bairro?: string; cidade?: string; uf?: string };
+  focoDepois?: string;
+  placeholder?: string;
   opcoes?: { valor: string; rotulo: string }[];
   ajuda?: string;
   /** Ocupa a linha inteira na grade de dois campos. */
@@ -85,6 +93,31 @@ export function FormularioCriar({
 
   function mudar(nome: string, valor: string) {
     setValores((atuais) => ({ ...atuais, [nome]: valor }));
+  }
+
+  const [estadoDoCep, setEstadoDoCep] = useState<EstadoDoCep>({ tipo: "parado" });
+
+  async function mudarCep(campo: Campo, valor: string) {
+    const mascarado = mascararCep(valor);
+    mudar(campo.nome, mascarado);
+    if (mascarado.replace(/\D/g, "").length !== 8) {
+      setEstadoDoCep({ tipo: "parado" });
+      return;
+    }
+    setEstadoDoCep({ tipo: "buscando" });
+    const achado = await consultarCep(mascarado);
+    setEstadoDoCep(estadoDepois(achado));
+    if (!achado || !campo.preenche) return;
+    const p = campo.preenche;
+    setValores((atuais) => ({
+      ...atuais,
+      ...(p.logradouro ? { [p.logradouro]: achado.logradouro ?? (achado.geral ? "" : atuais[p.logradouro] ?? "") } : {}),
+      ...(p.bairro ? { [p.bairro]: achado.bairro ?? (achado.geral ? "" : atuais[p.bairro] ?? "") } : {}),
+      ...(p.cidade ? { [p.cidade]: achado.cidade } : {}),
+      ...(p.uf ? { [p.uf]: achado.uf } : {}),
+    }));
+    const alvo = achado.geral ? p.logradouro : campo.focoDepois;
+    if (alvo) focar(`campo-${alvo}`);
   }
 
   function preencher(novos: Record<string, string>) {
@@ -302,10 +335,25 @@ export function FormularioCriar({
                 onChange={(evento) => mudar(campo.nome, evento.target.value)}
                 className="campo"
               />
+            ) : campo.tipo === "cep" ? (
+              <>
+                <input
+                  id={`campo-${campo.nome}`}
+                  name={campo.nome}
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  placeholder={campo.placeholder ?? "00000-000"}
+                  value={valores[campo.nome] ?? ""}
+                  onChange={(evento) => void mudarCep(campo, evento.target.value)}
+                  className="campo"
+                />
+                <RecadoDoCep estado={estadoDoCep} />
+              </>
             ) : (
               <input
                 id={`campo-${campo.nome}`}
                 name={campo.nome}
+                placeholder={campo.placeholder}
                 type={campo.tipo ?? "text"}
                 required={campo.obrigatorio}
                 value={valores[campo.nome] ?? ""}

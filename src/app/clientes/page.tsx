@@ -56,6 +56,22 @@ export default async function PaginaClientes() {
           { nome: "telefone", rotulo: "Telefone" },
           { nome: "email", rotulo: "E-mail", tipo: "email" },
 
+          // Endereco: o CEP primeiro, e o resto vem sozinho — falta o numero.
+          {
+            nome: "cep",
+            rotulo: "CEP",
+            tipo: "cep",
+            preenche: { logradouro: "logradouro", bairro: "bairro", cidade: "cidade", uf: "uf" },
+            focoDepois: "numero",
+            ajuda: "Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos.",
+          },
+          { nome: "logradouro", rotulo: "Rua / avenida" },
+          { nome: "numero", rotulo: "Numero" },
+          { nome: "complemento", rotulo: "Complemento" },
+          { nome: "bairro", rotulo: "Bairro" },
+          { nome: "cidade", rotulo: "Cidade" },
+          { nome: "uf", rotulo: "UF" },
+
           // Honorarios no mesmo gesto. Tudo opcional: cliente entra antes de
           // haver contrato, e obrigar o valor aqui faria alguem inventar um
           // numero so para conseguir cadastrar.

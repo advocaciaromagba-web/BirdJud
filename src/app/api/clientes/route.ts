@@ -18,6 +18,15 @@ const novoCliente = z.object({
   email: z.string().email().optional(),
   telefone: z.string().max(20).optional(),
 
+  // Endereco, em partes. O CEP chega com ou sem hifen.
+  cep: z.string().max(12).optional(),
+  logradouro: z.string().max(200).optional(),
+  numero: z.string().max(20).optional(),
+  complemento: z.string().max(120).optional(),
+  bairro: z.string().max(120).optional(),
+  cidade: z.string().max(120).optional(),
+  uf: z.string().max(2).optional(),
+
   // Honorarios, no mesmo gesto do cadastro. Tudo opcional: cliente entra
   // antes de haver contrato, e obrigar o valor aqui faria alguem inventar um
   // numero so para conseguir cadastrar.
@@ -55,6 +64,31 @@ export async function GET() {
   } catch (erro) {
     return tratarErro(erro);
   }
+}
+
+/**
+ * O endereco do cadastro, no formato da ficha. A rua vai com os dois nomes
+ * que o codigo usa (logradouro e rua). Nada preenchido: sem endereco.
+ */
+function enderecoDoCadastro(d: {
+  cep?: string; logradouro?: string; numero?: string; complemento?: string;
+  bairro?: string; cidade?: string; uf?: string;
+}): Record<string, string> | null {
+  const e: Record<string, string> = {};
+  const cep = (d.cep ?? "").replace(/\D/g, "");
+  if (cep.length === 8) e.cep = cep;
+  const rua = d.logradouro?.trim();
+  if (rua) {
+    e.logradouro = rua;
+    e.rua = rua;
+  }
+  for (const k of ["numero", "complemento", "bairro", "cidade"] as const) {
+    const v = d[k]?.trim();
+    if (v) e[k] = v;
+  }
+  const uf = d.uf?.trim().toUpperCase();
+  if (uf && /^[A-Z]{2}$/.test(uf)) e.uf = uf;
+  return Object.keys(e).length ? e : null;
 }
 
 export async function POST(req: Request) {
@@ -111,6 +145,7 @@ export async function POST(req: Request) {
           documento: d.documento,
           email: d.email,
           telefone: d.telefone,
+          endereco: enderecoDoCadastro(d) ?? undefined,
         }),
       }),
     );

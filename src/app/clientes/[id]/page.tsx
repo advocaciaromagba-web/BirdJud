@@ -241,7 +241,8 @@ export default async function FichaCliente({
                 {
                   nome: "endereco.cep",
                   rotulo: "CEP",
-                  valor: enderecoNaFicha.cep ?? "",
+                  valor: enderecoNaFicha.cep ? enderecoNaFicha.cep.replace(/^(\d{5})(\d{3})$/, "$1-$2") : "",
+                  placeholder: "Comece pelo CEP: o resto vem sozinho",
                   grupo: pessoaJuridica ? "Endereco da empresa" : "Endereco",
                 },
                 { nome: "endereco.logradouro", rotulo: "Rua / avenida", valor: enderecoNaFicha.logradouro ?? "" },

@@ -28,6 +28,7 @@ const acao = z.discriminatedUnion("acao", [
     cidade: z.string().max(120).optional(),
     corPrimaria: z.string().max(20).optional(),
     corSecundaria: z.string().max(20).optional(),
+    sede: z.record(z.string().max(200)).nullable().optional(),
   }),
   z.object({
     acao: z.literal("pessoa"),

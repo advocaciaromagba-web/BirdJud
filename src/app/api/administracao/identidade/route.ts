@@ -24,6 +24,7 @@ const cores = z.object({
   // pagamento recusa emitir a cobranca da assinatura, e o escritorio ficaria
   // devendo uma fatura que nunca lhe foi apresentada.
   cnpj: z.string().max(20).optional(),
+  sede: z.record(z.string().max(200)).nullable().optional(),
 });
 
 export async function POST(req: Request) {
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
         telefoneAtendimento: corpo.data.telefoneAtendimento ?? null,
         cidade: corpo.data.cidade ?? null,
         ...(corpo.data.cnpj !== undefined ? { cnpj: corpo.data.cnpj } : {}),
+        ...(corpo.data.sede !== undefined ? { sede: corpo.data.sede } : {}),
       });
     } catch (erro) {
       if (erro instanceof DadoInvalido) {

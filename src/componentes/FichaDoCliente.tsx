@@ -1,6 +1,8 @@
 "use client";
 
 import { Fragment, useState, type FormEvent } from "react";
+import { consultarCep, estadoDepois, focar, mascararCep, type EstadoDoCep } from "./consultaDeCep";
+import { RecadoDoCep } from "./RecadoDoCep";
 import { useRouter } from "next/navigation";
 
 export type CampoDaFicha = {
@@ -46,6 +48,34 @@ export function FichaDoCliente({
   const [salvo, setSalvo] = useState(false);
 
   const mudou = campos.some((c) => valores[c.nome] !== c.valor);
+  const [cep, setCep] = useState<EstadoDoCep>({ tipo: "parado" });
+
+  /**
+   * CEP completo: busca o endereco e preenche rua, bairro, cidade e UF; o
+   * cursor vai para o numero. CEP geral de cidade preenche so cidade e UF e
+   * leva o cursor para a rua.
+   */
+  async function aoMudarCep(valor: string) {
+    const mascarado = mascararCep(valor);
+    setValores((antes) => ({ ...antes, "endereco.cep": mascarado }));
+    setSalvo(false);
+    if (mascarado.replace(/\D/g, "").length !== 8) {
+      setCep({ tipo: "parado" });
+      return;
+    }
+    setCep({ tipo: "buscando" });
+    const achado = await consultarCep(mascarado);
+    setCep(estadoDepois(achado));
+    if (!achado) return;
+    setValores((antes) => ({
+      ...antes,
+      "endereco.logradouro": achado.logradouro ?? (achado.geral ? "" : antes["endereco.logradouro"] ?? ""),
+      "endereco.bairro": achado.bairro ?? (achado.geral ? "" : antes["endereco.bairro"] ?? ""),
+      "endereco.cidade": achado.cidade,
+      "endereco.uf": achado.uf,
+    }));
+    focar(achado.geral ? "cli-endereco.logradouro" : "cli-endereco.numero");
+  }
 
   async function salvar(evento: FormEvent) {
     evento.preventDefault();
@@ -119,13 +149,19 @@ export function FichaDoCliente({
               required={campo.obrigatorio}
               placeholder={campo.placeholder}
               value={valores[campo.nome] ?? ""}
+              inputMode={campo.nome === "endereco.cep" ? "numeric" : undefined}
               onChange={(e) => {
+                if (campo.nome === "endereco.cep") {
+                  void aoMudarCep(e.target.value);
+                  return;
+                }
                 setValores((antes) => ({ ...antes, [campo.nome]: e.target.value }));
                 setSalvo(false);
               }}
               className="campo"
             />
           )}
+          {campo.nome === "endereco.cep" ? <RecadoDoCep estado={cep} /> : null}
           {campo.ajuda ? <p className="ajuda">{campo.ajuda}</p> : null}
         </div>
         </Fragment>

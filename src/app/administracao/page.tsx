@@ -63,6 +63,7 @@ export default async function PaginaAdministracao() {
         cidade: true,
         cnpj: true,
         logoUrl: true,
+        enderecos: true,
       },
       }),
     ),
@@ -94,6 +95,7 @@ export default async function PaginaAdministracao() {
           cidadeAtual={escritorio?.cidade ?? null}
           cnpjAtual={escritorio?.cnpj ?? null}
           logoUrlAtual={escritorio?.logoUrl ?? null}
+          sedeAtual={Array.isArray(escritorio?.enderecos) ? escritorio!.enderecos[0] : null}
         />
 
         <TrocaDaSenhaDeAdministracao

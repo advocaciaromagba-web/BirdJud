@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Passo } from "@/lib/primeiros-passos";
 import { BarraDeProgresso } from "./RoteiroDePrimeirosPassos";
+import { EnderecoComCep, enderecoParaFormulario } from "./EnderecoComCep";
 
 type Campo = { nome: string; rotulo: string; tipo: "text" | "password" | "textarea"; obrigatorio: boolean; ajuda?: string };
 
@@ -24,6 +25,8 @@ export type DadosDaImplantacao = {
     cidade: string;
     corPrimaria: string;
     corSecundaria: string;
+    /** Endereco da sede, como esta gravado. */
+    sede: unknown;
   };
   pessoas: {
     id: string;
@@ -94,6 +97,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [recado, setRecado] = useState<{ onde: string; texto: string; ok: boolean } | null>(null);
   const [convites, setConvites] = useState<Convite[] | null>(null);
+  const [sede, setSede] = useState(() => enderecoParaFormulario(dados.escritorio.sede));
 
   async function agir(onde: string, corpo: Record<string, unknown>, form?: HTMLFormElement) {
     setOcupado(onde);
@@ -146,12 +150,13 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
         </div>
       </div>
 
-      <Secao numero={1} titulo="Dados do escritorio" resumo="CNPJ para a fatura da assinatura; telefone que vai em toda mensagem ao cliente; as cores do sistema.">
+      <Secao numero={1} titulo="Dados do escritorio" resumo="CNPJ para a fatura da assinatura; endereco da sede para as pecas; telefone que vai em toda mensagem ao cliente; as cores do sistema.">
         <form
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
-            agir("dados", { acao: "dados", ...valores(e.currentTarget) });
+            const temSede = Object.values(sede).some((v) => v.trim());
+            agir("dados", { acao: "dados", ...valores(e.currentTarget), ...(temSede ? { sede } : {}) });
           }}
         >
           {(
@@ -159,7 +164,6 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
               ["razaoSocial", "Razao social"],
               ["cnpj", "CNPJ"],
               ["telefoneAtendimento", "Telefone de atendimento"],
-              ["cidade", "Cidade"],
             ] as const
           ).map(([nome, rotulo]) => (
             <label key={nome} className="grid gap-1 text-sm">
@@ -167,6 +171,11 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
               <input name={nome} defaultValue={dados.escritorio[nome]} className="campo" />
             </label>
           ))}
+          <div className="sm:col-span-2">
+            <p className="rotulo">Endereco da sede</p>
+            <p className="mb-2 text-xs text-slate-500">Comece pelo CEP: rua, bairro e cidade vem sozinhos, falta so o numero.</p>
+            <EnderecoComCep prefixo="sede" valor={sede} aoMudar={setSede} />
+          </div>
           <label className="grid gap-1 text-sm">
             <span className="rotulo mb-0">Cor principal</span>
             <input name="corPrimaria" type="color" defaultValue={dados.escritorio.corPrimaria} className="h-10 w-20 rounded border border-slate-300" />

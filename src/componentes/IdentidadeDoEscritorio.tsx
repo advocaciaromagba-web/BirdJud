@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { EnderecoComCep, enderecoParaFormulario } from "./EnderecoComCep";
 import { useRouter } from "next/navigation";
 import {
   avisoSobreContraste,
@@ -23,6 +24,7 @@ export function IdentidadeDoEscritorio({
   cidadeAtual,
   cnpjAtual,
   logoUrlAtual,
+  sedeAtual,
 }: {
   nome: string;
   corPrimariaAtual: string;
@@ -30,6 +32,8 @@ export function IdentidadeDoEscritorio({
   telefoneAtual: string | null;
   cidadeAtual: string | null;
   cnpjAtual: string | null;
+  /** Endereco da sede, como esta gravado. */
+  sedeAtual?: unknown;
   logoUrlAtual: string | null;
 }) {
   const router = useRouter();
@@ -39,6 +43,7 @@ export function IdentidadeDoEscritorio({
   const [telefone, setTelefone] = useState(telefoneAtual ?? "");
   const [cidade, setCidade] = useState(cidadeAtual ?? "");
   const [cnpj, setCnpj] = useState(cnpjAtual ?? "");
+  const [sede, setSede] = useState(() => enderecoParaFormulario(sedeAtual));
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -72,6 +77,7 @@ export function IdentidadeDoEscritorio({
           telefoneAtendimento: telefone,
           cidade,
           cnpj,
+          sede,
         }),
       });
       const corpo = await resposta.json().catch(() => ({}));
@@ -227,6 +233,15 @@ export function IdentidadeDoEscritorio({
                 onChange={(e) => setCidade(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="mt-2">
+            <p className="rotulo">Endereco da sede</p>
+            <p className="ajuda mb-2 mt-0">
+              Entra na qualificacao do escritorio nas pecas. Comece pelo CEP: o
+              resto se preenche, falta so o numero.
+            </p>
+            <EnderecoComCep prefixo="sede" valor={sede} aoMudar={setSede} />
           </div>
         </div>
 
