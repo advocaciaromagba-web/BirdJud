@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cutucarNuvem } from "@/lib/avisar-nuvem";
 import { ehArquivoEnviado } from "@/lib/formulario";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
@@ -78,6 +79,8 @@ export async function POST(req: Request) {
       clienteId: texto("clienteId"),
       processoId: texto("processoId"),
     });
+    // Documento de cliente ganha copia na pasta dele, na nuvem do escritorio.
+    if (texto("clienteId")) await cutucarNuvem(escritorioId);
     return NextResponse.json({ arquivo }, { status: 201 });
   } catch (erro) {
     if (erro instanceof CorpoGrandeDemais) return NextResponse.json({ erro: "Arquivo grande demais." }, { status: 413 });

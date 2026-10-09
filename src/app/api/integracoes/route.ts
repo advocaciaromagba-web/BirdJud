@@ -83,6 +83,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (conector.oauth) {
+      return NextResponse.json(
+        { erro: `O ${conector.rotulo} se conecta pelo botao, entrando na conta do escritorio.` },
+        { status: 400 },
+      );
+    }
+
     const faltando = conector.campos
       .filter(
         (campo) => campo.obrigatorio && !corpo.data.dados[campo.nome]?.trim(),

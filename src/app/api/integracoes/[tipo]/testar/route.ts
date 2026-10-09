@@ -51,7 +51,7 @@ export async function POST(
       throw erro;
     }
 
-    const resultado = await conector.testar(dados);
+    const resultado = await conector.testar(dados, { escritorioId });
     await anotarTeste(
       escritorioId,
       conector.tipo,

@@ -6,7 +6,7 @@ import { conectorAsaas } from "./asaas";
 import { conectorInfinitePay } from "./infinitepay";
 import { conectorAutentique } from "./autentique";
 import { conectorCertificado } from "./certificado";
-import { conectorGoogle, conectorMicrosoft } from "./pendentes";
+import { conectorGoogle, conectorMicrosoft } from "./nuvem";
 
 /**
  * Os conectores que o ESCRITORIO configura.

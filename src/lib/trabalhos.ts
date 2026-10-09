@@ -14,6 +14,11 @@ import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
 import { arquivarVencidos } from "./agenda-do-escritorio";
+import {
+  arquivosParaEspelhar,
+  espelharArquivo,
+  organizarPastas,
+} from "./nuvem-do-escritorio";
 import { emitirParcelasDevidas } from "./honorarios-do-escritorio";
 import { gerarContasDoMes } from "./contas-do-escritorio";
 import { marcarPublicacoesRepetidas } from "./duplicados-do-escritorio";
@@ -317,6 +322,45 @@ async function arquivarAgenda({ escritorioId }: Contexto): Promise<void> {
   }
 }
 
+/**
+ * Poe a nuvem do escritorio em dia: cria a pasta de quem ainda nao tem e
+ * copia os documentos de cliente que ainda nao foram.
+ *
+ * Entra na fila na conexao, a cada cliente novo e a cada documento anexado.
+ * Faz um lote e, sobrando, se reagenda — escritorio com mil clientes nao
+ * prende a fila dele por meia hora seguida.
+ *
+ * Documento que falha na copia nao derruba o lote: fica para a proxima, e o
+ * erro vai para o log. A copia e conveniencia; o documento esta no sistema.
+ */
+async function organizarNuvem({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("ORGANIZAR_NUVEM exige escritorio.");
+  const pastas = await organizarPastas(escritorioId);
+  if (!pastas.conectada) return;
+
+  const pendentes = await arquivosParaEspelhar(escritorioId, 30);
+  let copiados = 0;
+  const falhas: string[] = [];
+  for (const id of pendentes) {
+    try {
+      if ((await espelharArquivo(escritorioId, id)) === "copiado") copiados += 1;
+    } catch (erro) {
+      falhas.push(`${id}: ${(erro as Error).message}`.slice(0, 160));
+    }
+  }
+
+  if (pastas.criadas || copiados || falhas.length) {
+    console.log(
+      `ORGANIZAR_NUVEM ${escritorioId}: ${pastas.criadas} pasta(s), ${copiados} copia(s)` +
+        (falhas.length ? `, ${falhas.length} falha(s) — ${falhas.join(" | ")}` : ""),
+    );
+  }
+  // Sobrou trabalho de verdade (e nao so falha repetida): mais um lote.
+  if (pastas.restantes > 0 || (pendentes.length === 30 && copiados > 0)) {
+    await enfileirar("ORGANIZAR_NUVEM", escritorioId, {}, new Date(Date.now() + 30_000));
+  }
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   LEMBRAR: lembrar,
@@ -330,6 +374,7 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   PURGAR_ENCERRADOS: purgar,
   LIMPAR_VENCIDOS: limparVencidos,
   ARQUIVAR_AGENDA: arquivarAgenda,
+  ORGANIZAR_NUVEM: organizarNuvem,
 };
 
 /** Trabalhos que rodam uma vez para a plataforma toda, nao por escritorio. */
@@ -352,6 +397,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   REGUA_DE_COBRANCA: undefined,
   LIMPAR_VENCIDOS: undefined,
   ARQUIVAR_AGENDA: undefined,
+  ORGANIZAR_NUVEM: "NUVEM",
 };
 
 /**

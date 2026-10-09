@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
+import { nuvemConectada } from "@/lib/nuvem-do-escritorio";
+import { NUVENS } from "@/lib/nuvem";
 import { dataBR } from "@/lib/datas";
 import { tamanhoLegivel } from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
@@ -45,6 +47,11 @@ export default async function FichaCliente({
   const { id } = await params;
 
   const modulos = await modulosAtivos(contexto.escritorioId);
+  // So o nome da nuvem ligada: a pasta em si e criada quando alguem clica.
+  const ligada = modulos.includes("NUVEM")
+    ? await nuvemConectada(contexto.escritorioId)
+    : null;
+  const nuvem = ligada && ligada.status !== "ERRO" ? NUVENS[ligada.provedor] : null;
 
   // Quem assina peca no escritorio. So importa quando ha mais de um: em banca
   // de um advogado a escolha nao existe, e a tela nem mostra.
@@ -301,7 +308,19 @@ export default async function FichaCliente({
       />
 
       <section className="cartao mt-6">
-        <h2 className="font-semibold">Documentos deste cliente</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">Documentos deste cliente</h2>
+          {nuvem ? (
+            <a
+              href={`/api/clientes/${cliente.id}/nuvem`}
+              target="_blank"
+              rel="noreferrer"
+              className="botao-secundario"
+            >
+              Abrir pasta no {nuvem.rotulo}
+            </a>
+          ) : null}
+        </div>
         {cliente.arquivos.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">
             Nenhum documento anexado. Para anexar, use a aba Arquivos e escolha

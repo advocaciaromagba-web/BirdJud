@@ -20,6 +20,18 @@ export type IntegracaoNaTela = {
   status: string | null;
   erro: string | null;
   verificadoEm: string | null;
+  /** Conexao pelo login do provedor: "microsoft" ou "google" no endereco. */
+  oauth?: "microsoft" | "google";
+  /** O aplicativo da plataforma esta registrado no provedor? */
+  disponivel?: boolean;
+  /** Outra nuvem ja esta ligada: esta fica bloqueada ate desconectar aquela. */
+  bloqueadaPor?: string | null;
+  nuvem?: {
+    conta: string | null;
+    endereco: string | null;
+    pastas: number;
+    copiados: number;
+  } | null;
 };
 
 function Selo({ status }: { status: string | null }) {
@@ -130,6 +142,13 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
   }
 
   async function desconectar() {
+    if (
+      integracao.oauth &&
+      !window.confirm(
+        `Desconectar o ${integracao.rotulo}?\n\nAs pastas e os documentos que ja estao la continuam na conta do escritorio. O sistema so para de criar e copiar.`,
+      )
+    )
+      return;
     await chamar(`/api/integracoes/${integracao.tipo}`, { method: "DELETE" });
     setRecado({ texto: "Integracao desconectada.", ok: true });
   }
@@ -154,7 +173,80 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
         </p>
       ) : null}
 
+      {integracao.nuvem ? (
+        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+          <p>
+            {integracao.nuvem.conta ? (
+              <>
+                Conta <strong>{integracao.nuvem.conta}</strong>
+              </>
+            ) : (
+              "Conta conectada"
+            )}
+            {" · "}
+            {integracao.nuvem.pastas} pasta(s) de cliente ·{" "}
+            {integracao.nuvem.copiados} documento(s) copiado(s)
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Tudo fica em BirdJud / Clientes / nome do cliente. Cliente novo ganha
+            pasta sozinho, e documento anexado a um cliente e copiado para a
+            pasta dele.
+          </p>
+          {integracao.nuvem.endereco ? (
+            <a
+              href={integracao.nuvem.endereco}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block font-medium text-[color:var(--cor-secundaria)] hover:underline"
+            >
+              Abrir a pasta BirdJud
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="mt-3 flex flex-wrap gap-2">
+        {integracao.oauth && !integracao.conectada ? (
+          integracao.disponivel === false ? (
+            <p className="text-sm text-slate-500">
+              Aguardando a plataforma liberar a conexao com o {integracao.rotulo}.
+            </p>
+          ) : integracao.bloqueadaPor ? (
+            <p className="text-sm text-slate-500">
+              O escritorio ja usa o {integracao.bloqueadaPor}. Para trocar,
+              desconecte-o primeiro.
+            </p>
+          ) : (
+            <a href={`/api/nuvem/conectar/${integracao.oauth}`} className="botao-principal">
+              {integracao.oauth === "microsoft"
+                ? "Entrar com a conta Microsoft"
+                : "Entrar com a conta Google"}
+            </a>
+          )
+        ) : null}
+        {integracao.oauth && integracao.conectada && integracao.status === "ERRO" ? (
+          <a href={`/api/nuvem/conectar/${integracao.oauth}`} className="botao-principal">
+            Conectar de novo
+          </a>
+        ) : null}
+        {integracao.oauth && integracao.conectada ? (
+          <button
+            type="button"
+            onClick={async () => {
+              const { resposta } = await chamar("/api/nuvem/organizar", { method: "POST" });
+              setRecado({
+                texto: resposta.ok
+                  ? "Organizacao na fila: as pastas que faltam e os documentos que nao foram saem em instantes."
+                  : "Nao foi possivel agendar agora.",
+                ok: resposta.ok,
+              });
+            }}
+            disabled={ocupado}
+            className="botao-secundario"
+          >
+            Organizar agora
+          </button>
+        ) : null}
         {integracao.campos.length > 0 ? (
           <button
             type="button"

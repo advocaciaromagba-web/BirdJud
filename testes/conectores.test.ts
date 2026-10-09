@@ -19,7 +19,7 @@ import {
   conectorCertificado,
   lerCertificado,
 } from "../src/lib/conectores/certificado";
-import { conectorMicrosoft } from "../src/lib/conectores/pendentes";
+import { conectorGoogle, conectorMicrosoft } from "../src/lib/conectores/nuvem";
 import {
   CONECTORES,
   ehTipoDeIntegracao,
@@ -373,15 +373,22 @@ describe("conector de certificado", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Conectores ainda sem verificacao automatica
+// Nuvem: conecta pelo login do provedor, nao por formulario
 // ---------------------------------------------------------------------------
 
-describe("conectores pendentes", () => {
-  it("nuvem por OAuth nao pede credencial em formulario", async () => {
-    expect(conectorMicrosoft.campos).toHaveLength(0);
-    const resultado = await conectorMicrosoft.testar({});
-    expect(resultado.ok).toBe(false);
-    expect(resultado.detalhe).toContain("OAuth");
+describe("conectores da nuvem", () => {
+  it("nao pedem credencial em formulario e se marcam como OAuth", async () => {
+    for (const [c, provedor] of [
+      [conectorMicrosoft, "MICROSOFT"],
+      [conectorGoogle, "GOOGLE"],
+    ] as const) {
+      expect(c.campos).toHaveLength(0);
+      expect(c.oauth).toBe(provedor);
+      expect(c.modulo).toBe("NUVEM");
+      expect(c.resumo({ conta: "a@b.com" })).toBe("Conta a@b.com");
+    }
+    // Sem o escritorio em maos, o teste nao tem token para usar.
+    expect((await conectorMicrosoft.testar({})).ok).toBe(false);
   });
 });
 

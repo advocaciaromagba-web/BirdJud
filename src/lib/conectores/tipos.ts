@@ -29,7 +29,15 @@ export type Conector = {
   /** Resumo seguro para a tela: nunca o segredo inteiro. */
   resumo: (dados: Record<string, string>) => string;
   /** Conversa com o servico de verdade. Nunca lanca: devolve o resultado. */
-  testar: (dados: Record<string, string>) => Promise<ResultadoTeste>;
+  testar: (
+    dados: Record<string, string>,
+    contexto?: { escritorioId: string },
+  ) => Promise<ResultadoTeste>;
+  /**
+   * Conexao pelo login do provedor (OAuth), e nao por formulario. A tela
+   * mostra o botao que leva a Microsoft ou ao Google.
+   */
+  oauth?: "MICROSOFT" | "GOOGLE";
 };
 
 /** Mostra so o fim do segredo: "...a1b2". */

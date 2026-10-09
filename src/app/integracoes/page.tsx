@@ -4,13 +4,20 @@ import { exigirAdmin, SemSessao } from "@/lib/sessao";
 import { SemPermissao } from "@/lib/papeis";
 import { moduloAtivo, modulosAtivos } from "@/lib/modulos";
 import { CONECTORES } from "@/lib/conectores";
+import { NUVENS } from "@/lib/nuvem";
+import { resumoDaNuvem } from "@/lib/nuvem-do-escritorio";
 import { Estrutura } from "@/componentes/Estrutura";
 import {
   PainelIntegracoes,
   type IntegracaoNaTela,
 } from "@/componentes/PainelIntegracoes";
 
-export default async function PaginaIntegracoes() {
+export default async function PaginaIntegracoes({
+  searchParams,
+}: {
+  searchParams: Promise<{ nuvem?: string; motivo?: string }>;
+}) {
+  const retorno = await searchParams;
   let contexto;
   try {
     contexto = await exigirAdmin();
@@ -38,6 +45,7 @@ export default async function PaginaIntegracoes() {
     }),
   );
   const porTipo = new Map(guardadas.map((i) => [i.tipo, i]));
+  const nuvem = await resumoDaNuvem(contexto.escritorioId).catch(() => null);
 
   const integracoes: IntegracaoNaTela[] = [];
   for (const conector of Object.values(CONECTORES)) {
@@ -56,6 +64,23 @@ export default async function PaginaIntegracoes() {
       status: guardada?.status ?? null,
       erro: guardada?.erro ?? null,
       verificadoEm: guardada?.verificadoEm?.toISOString() ?? null,
+      ...(conector.oauth
+        ? {
+            oauth: conector.oauth === "MICROSOFT" ? ("microsoft" as const) : ("google" as const),
+            disponivel: NUVENS[conector.oauth].configurada(),
+            bloqueadaPor:
+              nuvem && nuvem.provedor !== conector.oauth ? nuvem.rotulo : null,
+            nuvem:
+              nuvem && nuvem.provedor === conector.oauth
+                ? {
+                    conta: nuvem.conta,
+                    endereco: nuvem.endereco,
+                    pastas: nuvem.pastas,
+                    copiados: nuvem.copiados,
+                  }
+                : null,
+          }
+        : {}),
     });
   }
 
@@ -73,6 +98,16 @@ export default async function PaginaIntegracoes() {
         Cada escritorio conecta as proprias contas. As credenciais ficam
         cifradas e nunca aparecem de volta na tela.
       </p>
+      {retorno.nuvem === "conectada" ? (
+        <p className="aviso-ok mt-4">
+          Nuvem conectada. A pasta BirdJud / Clientes ja foi criada, e as pastas
+          dos clientes estao sendo criadas agora.
+        </p>
+      ) : retorno.nuvem === "erro" ? (
+        <p className="aviso-erro mt-4">
+          {retorno.motivo?.slice(0, 200) || "Nao foi possivel conectar a nuvem."}
+        </p>
+      ) : null}
       <PainelIntegracoes integracoes={integracoes} />
     </Estrutura>
   );

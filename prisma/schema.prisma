@@ -61,6 +61,7 @@ model Escritorio {
   processos         Processo[]
   compromissos      Compromisso[]
   compromissosExcluidos CompromissoExcluido[]
+  pastasNaNuvem     PastaNaNuvem[]
   oabs              OabMonitorada[]
   publicacoes       Publicacao[]
   analises          AnaliseIA[]
@@ -235,6 +236,7 @@ model Cliente {
 
   @@index([escritorioId])
   @@index([escritorioId, documento])
+  pastasNaNuvem PastaNaNuvem[]
 }
 
 model Processo {
@@ -844,6 +846,10 @@ model Arquivo {
   tipo         String // tipo MIME declarado, ja conferido contra a extensao
   tamanhoBytes Int
   hash         String? // sha256 do conteudo, para conferir integridade
+  /// Copia na nuvem do escritorio (OneDrive ou Google Drive), quando houve.
+  /// Nulo = ainda nao copiado, ou o escritorio nao tem nuvem conectada.
+  nuvemProvedor String?
+  nuvemItemId   String?
   criadoEm     DateTime @default(now())
 
   escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -1315,4 +1321,26 @@ model EntradaDeExtrato {
   @@unique([escritorioId, provedor, idNoProvedor])
   @@index([escritorioId, situacao])
   @@index([escritorioId, data])
+}
+
+/// A pasta de cada cliente na nuvem do escritorio.
+///
+/// Guardada pelo id do provedor, nao pelo nome: o cliente que muda de nome
+/// continua com a mesma pasta, e duas Marias Silva nao dividem pasta.
+/// Um por provedor — se o escritorio trocar OneDrive por Google Drive, as
+/// linhas do antigo saem na desconexao.
+model PastaNaNuvem {
+  id           String   @id @default(cuid())
+  escritorioId String
+  clienteId    String
+  provedor     String // MICROSOFT | GOOGLE
+  pastaId      String
+  endereco     String?
+  criadoEm     DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, provedor, clienteId])
+  @@index([escritorioId])
 }

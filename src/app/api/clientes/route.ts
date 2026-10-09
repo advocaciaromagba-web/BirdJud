@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cutucarNuvem } from "@/lib/avisar-nuvem";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
@@ -135,6 +136,9 @@ export async function POST(req: Request) {
         descricao: d.honDescricao ?? null,
       });
     }
+
+    // A pasta do cliente na nuvem do escritorio sai pela fila, sem esperar.
+    await cutucarNuvem(escritorioId);
 
     return NextResponse.json({ cliente }, { status: 201 });
   } catch (erro) {

@@ -52,7 +52,8 @@ DECLARE
     'TriagemDePublicacao',
     'Entrevista',
     'Tarefa',
-    'CompromissoExcluido'
+    'CompromissoExcluido',
+    'PastaNaNuvem'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

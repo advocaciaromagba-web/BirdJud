@@ -121,6 +121,7 @@ const TABELAS_COM_RLS = [
   "Entrevista",
   "Tarefa",
   "CompromissoExcluido",
+  "PastaNaNuvem",
   "PermissaoDeArea",
 ];
 
@@ -366,6 +367,22 @@ function conferirOpcionais() {
   // Aviso pelo mesmo motivo das duas conferencias acima: integracao pela
   // metade degrada um recurso, nao fura o isolamento, e nao justifica
   // impedir a aplicacao de subir.
+  // Nuvem: o aplicativo da plataforma em cada provedor. Sem ele, o botao
+  // "Entrar com a conta" some da tela de integracoes e mais nada muda.
+  for (const [rotulo, id, segredo] of [
+    ["OneDrive", "MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET"],
+    ["Google Drive", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+  ]) {
+    const temId = Boolean(process.env[id]);
+    const temSegredo = Boolean(process.env[segredo]);
+    if (temId && temSegredo) ok(rotulo, "aplicativo da plataforma registrado");
+    else if (temId || temSegredo) {
+      alerta(rotulo, `so uma de ${id} e ${segredo} esta definida: a conexao nao abre`);
+    } else {
+      alerta(rotulo, "aplicativo nao registrado: o escritorio ainda nao consegue conectar");
+    }
+  }
+
   if (process.env.DJEN_RELE_URL && !process.env.DJEN_RELE_TOKEN) {
     alerta(
       "DJEN_RELE_TOKEN",
