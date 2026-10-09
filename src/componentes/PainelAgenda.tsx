@@ -402,7 +402,7 @@ export function PainelAgenda({
                           href={c.link}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-medium text-[color:var(--cor-secundaria)] hover:underline"
+                          className="font-medium text-[color:var(--marca-primaria)] hover:underline"
                         >
                           Entrar
                         </a>
@@ -421,14 +421,14 @@ export function PainelAgenda({
                     <td className="whitespace-nowrap text-right text-xs">
                       <button
                         type="button"
-                        className="mr-3 font-medium text-[color:var(--cor-secundaria)] hover:underline"
+                        className="mr-3 font-medium text-[color:var(--marca-primaria)] hover:underline"
                         onClick={() => setVerId(verId === c.id ? null : c.id)}
                       >
                         {verId === c.id ? "Fechar" : "Ver"}
                       </button>
                       <button
                         type="button"
-                        className="mr-3 font-medium text-[color:var(--cor-secundaria)] hover:underline"
+                        className="mr-3 font-medium text-[color:var(--marca-primaria)] hover:underline"
                         onClick={() => {
                           setEditando(c);
                           setModo("editando");
@@ -439,7 +439,7 @@ export function PainelAgenda({
                       </button>
                       <button
                         type="button"
-                        className="mr-3 font-medium text-[color:var(--cor-secundaria)] hover:underline disabled:opacity-50"
+                        className="mr-3 font-medium text-[color:var(--marca-primaria)] hover:underline disabled:opacity-50"
                         disabled={ocupado === c.id}
                         onClick={() => setAvisarDe(avisarDe === c.id ? null : c.id)}
                       >
@@ -554,7 +554,7 @@ function VerCompromisso({
                 href={c.link}
                 target="_blank"
                 rel="noreferrer"
-                className="break-all text-[color:var(--cor-secundaria)] hover:underline"
+                className="break-all text-[color:var(--marca-primaria)] hover:underline"
               >
                 {c.link}
               </a>

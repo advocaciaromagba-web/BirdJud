@@ -197,7 +197,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
               href={integracao.nuvem.endereco}
               target="_blank"
               rel="noreferrer"
-              className="mt-2 inline-block font-medium text-[color:var(--cor-secundaria)] hover:underline"
+              className="mt-2 inline-block font-medium text-[color:var(--marca-primaria)] hover:underline"
             >
               Abrir a pasta BirdJud
             </a>

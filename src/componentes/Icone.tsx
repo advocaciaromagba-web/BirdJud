@@ -6,6 +6,7 @@
  */
 export type NomeDeIcone =
   | "painel"
+  | "passos"
   | "clientes"
   | "processos"
   | "agenda"
@@ -55,6 +56,8 @@ const TRACOS: Record<NomeDeIcone, string> = {
   // seguidos com o mesmo desenho obrigam a ler cada linha.
   // Balao de conversa com linhas: a entrevista e uma conversa que vira texto.
   // Lista com visto: tarefa e o que se risca.
+  // Bandeira num mastro: o caminho ate a chegada.
+  passos: "M5 21V4m0 0h11l-2 4 2 4H5",
   tarefas:
     "M9 11l2.5 2.5L16 9M5 4h14a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z",
   entrevistas:

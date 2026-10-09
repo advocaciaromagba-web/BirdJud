@@ -76,6 +76,13 @@ const AREAS: Area[] = [
   { href: "/usuarios", rotulo: "Equipe", icone: "usuarios", soAdmin: true },
 
   // Abaixo da linha: o que nao e trabalho do dia.
+  {
+    href: "/primeiros-passos",
+    rotulo: "Primeiros passos",
+    icone: "passos",
+    soAdmin: true,
+    rodape: true,
+  },
   { href: "/conta", rotulo: "Minha conta", icone: "conta", rodape: true },
   {
     href: "/integracoes",

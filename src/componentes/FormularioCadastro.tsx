@@ -66,6 +66,12 @@ export function FormularioCadastro({
           </strong>
           . Entre por ele com o e-mail e a senha que voce acabou de definir.
         </p>
+        <p className="mt-3 text-slate-700">
+          Na primeira entrada, o sistema mostra os <strong>primeiros passos</strong>:
+          tres coisas essenciais, em menos de dez minutos, e depois as conexoes
+          que fazem os avisos, as publicacoes e as cobrancas acontecerem
+          sozinhos. O roteiro guarda onde voce parou.
+        </p>
         <p className="ajuda">
           Periodo de teste de {dias} dias. A primeira fatura so e gerada depois
           disso.

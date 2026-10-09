@@ -45,6 +45,9 @@ model Escritorio {
   corSecundaria       String?
   telefoneAtendimento String?
   cidade              String?
+  /// Primeiros passos: { pulados: { CHAVE: { em, por } }, dispensadoEm }.
+  /// So o que a pessoa DECIDIU. O que esta feito e medido, nunca guardado.
+  primeirosPassos     Json?
   enderecos           Json?
   expediente          Json?
 

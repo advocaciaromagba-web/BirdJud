@@ -72,10 +72,10 @@ administracao do balde: tem de ser clicado no painel.
 O mecanismo de aceite esta certo — data, hora, IP e versao. O **texto** e
 rascunho meu.
 
-### 7. Onboarding nao existe `[nos]`
+### 7. Onboarding — resolvido em 09/10/2026
 
-Quem se cadastra cai no painel vazio. As pendencias aparecem, o que ajuda, mas
-nao ha caminho guiado de primeira configuracao.
+Roteiro de primeiros passos em tres fases, com o porque de cada passo, que se
+marca sozinho pelo estado real do escritorio. Ver `docs/PRIMEIROS-PASSOS.md`.
 
 ### 8. Conta Asaas compartilhada entre sete sistemas `[voce]`
 

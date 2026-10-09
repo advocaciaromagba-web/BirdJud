@@ -11,6 +11,8 @@ import { DIAS_DE_TESTE } from "@/lib/precos";
 import { CapaDaPlataforma } from "@/componentes/CapaDaPlataforma";
 import { Estrutura } from "@/componentes/Estrutura";
 import { Icone } from "@/componentes/Icone";
+import { CartaoPrimeirosPassos } from "@/componentes/CartaoPrimeirosPassos";
+import { roteiroDoEscritorio } from "@/lib/primeiros-passos-do-escritorio";
 
 function recortar(texto: string, limite = 180): string {
   const limpo = texto.replace(/\s+/g, " ").trim();
@@ -43,7 +45,19 @@ export default async function Painel() {
     })),
   ]);
 
-  const pendencias = pendenciasVisiveis(painel.pendencias, contexto.papel);
+  // O roteiro e do administrador: e ele quem configura o escritorio.
+  const roteiro =
+    contexto.papel === "ADMIN" ? await roteiroDoEscritorio(contexto.escritorioId) : null;
+  const comRoteiro = roteiro && !roteiro.completo && !roteiro.dispensado ? roteiro : null;
+  const chegando = Boolean(comRoteiro && comRoteiro.feitos === 0);
+
+  // Com o roteiro na tela, as pendencias de configuracao sairiam repetidas
+  // (OAB, e-mail, CNPJ, cadastro fiscal): o roteiro ja diz, e diz o porque.
+  // Prazo, integracao com erro e aviso que falhou continuam — sao do dia a dia.
+  const DO_ROTEIRO = new Set(["SEM_OAB", "SEM_INTEGRACAO_EMAIL", "SEM_CNPJ", "SEM_CADASTRO_FISCAL"]);
+  const pendencias = pendenciasVisiveis(painel.pendencias, contexto.papel).filter(
+    (p) => !comRoteiro || !DO_ROTEIRO.has(p.tipo),
+  );
   const nada =
     painel.compromissos.length === 0 &&
     painel.publicacoes.length === 0 &&
@@ -76,6 +90,11 @@ export default async function Painel() {
       titulo="Hoje"
       chamada="O que pede atencao agora, em uma tela."
     >
+      {comRoteiro ? (
+        <CartaoPrimeirosPassos roteiro={comRoteiro} nomeEscritorio={marca.nome} />
+      ) : null}
+
+      {chegando ? null : (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {indicadores.map((indicador) => (
           <Link
@@ -88,8 +107,9 @@ export default async function Painel() {
           </Link>
         ))}
       </div>
+      )}
 
-      {nada ? (
+      {nada && !chegando ? (
         <p className="vazio mt-6">
           Nada pedindo atencao agora: sem compromisso nas proximas 48 horas, sem
           publicacao nova e sem cobranca vencida.
