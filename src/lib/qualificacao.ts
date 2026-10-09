@@ -116,9 +116,14 @@ export function qualificacaoDoEscritorio(e: EscritorioParaQualificar): string {
  * de dado. Sem nacionalidade nem estado civil preenchidos, fica no masculino,
  * que e a forma do cargo em lei.
  */
-function ehFeminino(a: AdvogadoParaQualificar): boolean {
+function ehFeminino(a: { nacionalidade?: string | null; estadoCivil?: string | null }): boolean {
   const pistas = [limpo(a.nacionalidade), limpo(a.estadoCivil)].filter(Boolean) as string[];
   return pistas.some((p) => /a$/i.test(p.normalize("NFD").replace(/[\u0300-\u036f]/g, "")));
+}
+
+/** A mesma regra para o cliente: so pelo que a pessoa escreveu, nunca pelo nome. */
+export function ehFemininoPeloCadastro(p: { nacionalidade?: string | null; estadoCivil?: string | null }): boolean {
+  return ehFeminino(p);
 }
 
 /**

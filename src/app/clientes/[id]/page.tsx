@@ -106,6 +106,14 @@ export default async function FichaCliente({
   });
 
   const enderecoDaEmpresa = (cliente.endereco ?? null) as Endereco | null;
+  // Empresa e qualificada pelo representante: RG, estado civil e profissao
+  // sao da pessoa que assina por ela, e ficam na secao de representantes.
+  const pessoaJuridica = ehPessoaJuridica(cliente.documento);
+  const bruto = (cliente.endereco ?? {}) as Record<string, string | null | undefined>;
+  const enderecoNaFicha: Record<string, string | null | undefined> = {
+    ...bruto,
+    logradouro: bruto.logradouro ?? bruto.rua ?? null,
+  };
   const representantes: RepresentanteNaTela[] = cliente.representantes.map(
     (r) => ({
       nome: r.nome,
@@ -188,35 +196,66 @@ export default async function FichaCliente({
         <section className="cartao">
           <h2 className="font-semibold">Cadastro</h2>
           <p className="mt-1 text-sm text-slate-600">
-            So o nome e obrigatorio. Documento de identificacao hoje e o CPF; RG
-            nao e exigido em lugar nenhum do sistema.
+            So o nome e obrigatorio. O que for preenchido entra na qualificacao
+            da procuracao e do contrato; o que ficar vazio simplesmente nao
+            aparece no papel.
           </p>
           <div className="mt-4">
             <FichaDoCliente
               id={cliente.id}
               campos={[
-                {
-                  nome: "nome",
-                  rotulo: "Nome / razao social",
-                  valor: cliente.nome,
-                  obrigatorio: true,
-                },
+                { nome: "nome", rotulo: "Nome / razao social", valor: cliente.nome, obrigatorio: true, largo: true },
                 {
                   nome: "documento",
                   rotulo: "CPF / CNPJ",
                   valor: cliente.documento ?? "",
                   ajuda: "Conferido pelo digito verificador ao salvar a ficha.",
                 },
+                ...(pessoaJuridica
+                  ? []
+                  : [
+                      { nome: "rg", rotulo: "RG", valor: cliente.rg ?? "" },
+                      {
+                        nome: "nascimento",
+                        rotulo: "Data de nascimento",
+                        valor: cliente.nascimento ? cliente.nascimento.toISOString().slice(0, 10) : "",
+                        tipo: "date",
+                      },
+                    ]),
+                { nome: "telefone", rotulo: "Telefone", valor: cliente.telefone ?? "", grupo: "Contato" },
+                { nome: "email", rotulo: "E-mail", valor: cliente.email ?? "", tipo: "email" },
+                ...(pessoaJuridica
+                  ? []
+                  : [
+                      {
+                        nome: "nacionalidade",
+                        rotulo: "Nacionalidade",
+                        valor: cliente.nacionalidade ?? "",
+                        placeholder: "brasileira",
+                        grupo: "Qualificacao (vai na procuracao e no contrato)",
+                        ajuda: "Escreva como a pessoa e: brasileira, brasileiro. E isso que poe a peca no feminino.",
+                      },
+                      { nome: "estadoCivil", rotulo: "Estado civil", valor: cliente.estadoCivil ?? "", placeholder: "casada" },
+                      { nome: "profissao", rotulo: "Profissao", valor: cliente.profissao ?? "", placeholder: "professora", largo: true },
+                    ]),
                 {
-                  nome: "telefone",
-                  rotulo: "Telefone",
-                  valor: cliente.telefone ?? "",
+                  nome: "endereco.cep",
+                  rotulo: "CEP",
+                  valor: enderecoNaFicha.cep ?? "",
+                  grupo: pessoaJuridica ? "Endereco da empresa" : "Endereco",
                 },
+                { nome: "endereco.logradouro", rotulo: "Rua / avenida", valor: enderecoNaFicha.logradouro ?? "" },
+                { nome: "endereco.numero", rotulo: "Numero", valor: enderecoNaFicha.numero ?? "" },
+                { nome: "endereco.complemento", rotulo: "Complemento", valor: enderecoNaFicha.complemento ?? "" },
+                { nome: "endereco.bairro", rotulo: "Bairro", valor: enderecoNaFicha.bairro ?? "" },
+                { nome: "endereco.cidade", rotulo: "Cidade", valor: enderecoNaFicha.cidade ?? "" },
+                { nome: "endereco.uf", rotulo: "UF", valor: enderecoNaFicha.uf ?? "", placeholder: "SP" },
                 {
-                  nome: "email",
-                  rotulo: "E-mail",
-                  valor: cliente.email ?? "",
-                  tipo: "email",
+                  nome: "observacoes",
+                  rotulo: "Observacoes",
+                  valor: cliente.observacoes ?? "",
+                  tipo: "textarea",
+                  grupo: "Observacoes",
                 },
               ]}
             />

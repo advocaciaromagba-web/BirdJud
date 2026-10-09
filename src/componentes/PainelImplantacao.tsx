@@ -318,7 +318,13 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
         </div>
       </Secao>
 
-      <Secao numero={dados.temDjen ? 5 : 4} titulo="O roteiro do escritorio" resumo="O mesmo que o escritorio ve em Primeiros passos, medido do mesmo jeito. Os marcados como 'do escritorio' so ele pode fazer.">
+      <Secao numero={dados.temDjen ? 5 : 4} titulo="Clientes do sistema anterior" resumo="A planilha exportada do sistema que o escritorio usava (Excel ou CSV). Confere linha a linha antes de gravar, e o lote pode ser desfeito.">
+        <a href={`/plataforma/${dados.id}/importar`} className="botao-secundario">
+          Importar clientes por planilha
+        </a>
+      </Secao>
+
+      <Secao numero={dados.temDjen ? 6 : 5} titulo="O roteiro do escritorio" resumo="O mesmo que o escritorio ve em Primeiros passos, medido do mesmo jeito. Os marcados como 'do escritorio' so ele pode fazer.">
         <ol className="grid gap-1">
           {dados.roteiro.passos.map((p) => {
             const selo = SELO_DO_PASSO[p.situacao];
@@ -353,7 +359,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
         </ol>
       </Secao>
 
-      <Secao numero={dados.temDjen ? 6 : 5} titulo="Entrega" resumo="Manda o convite a quem ainda nao entrou. Pode repetir: reenviar invalida o link anterior da pessoa.">
+      <Secao numero={dados.temDjen ? 7 : 6} titulo="Entrega" resumo="Manda o convite a quem ainda nao entrou. Pode repetir: reenviar invalida o link anterior da pessoa.">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Falta da plataforma</p>

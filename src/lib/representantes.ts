@@ -173,7 +173,10 @@ export function prepararRepresentantes(
 /** O endereco escrito em uma linha, como entra na qualificacao. */
 export function enderecoEmLinha(endereco: Endereco | null): string {
   if (!endereco) return "";
-  const rua = [endereco.rua, endereco.numero].filter(Boolean).join(", ");
+  // "rua" e "logradouro" sao o mesmo campo com dois nomes no codigo: aceita
+  // os dois, para nenhum caminho de cadastro perder a rua na peca.
+  const logradouro = endereco.rua ?? (endereco as { logradouro?: string | null }).logradouro;
+  const rua = [logradouro, endereco.numero].filter(Boolean).join(", ");
   return [rua, endereco.complemento, endereco.bairro, endereco.cidade, endereco.uf, endereco.cep]
     .map((p) => (p ?? "").trim())
     .filter(Boolean)

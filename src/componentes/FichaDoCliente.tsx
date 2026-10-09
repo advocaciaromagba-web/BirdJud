@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 export type CampoDaFicha = {
-  nome: "nome" | "documento" | "email" | "telefone";
+  /** Campo do cliente, ou "endereco.<parte>" para uma parte do endereco. */
+  nome: string;
   rotulo: string;
   valor: string;
   tipo?: string;
   obrigatorio?: boolean;
   ajuda?: string;
+  /** Titulo da secao em que o campo comeca. */
+  grupo?: string;
+  /** Ocupa a linha inteira. */
+  largo?: boolean;
+  placeholder?: string;
 };
 
 /**
@@ -46,11 +52,17 @@ export function FichaDoCliente({
     setErro(null);
     setSalvo(false);
 
-    const mudancas = Object.fromEntries(
-      campos
-        .filter((c) => valores[c.nome] !== c.valor)
-        .map((c) => [c.nome, valores[c.nome] ?? ""]),
-    );
+    // As partes do endereco vao juntas, num objeto so; a rota soma ao que
+    // ja havia, entao mandar so o numero nao apaga a rua.
+    const mudancas: Record<string, unknown> = {};
+    const endereco: Record<string, string> = {};
+    for (const c of campos) {
+      if (valores[c.nome] === c.valor) continue;
+      const valor = valores[c.nome] ?? "";
+      if (c.nome.startsWith("endereco.")) endereco[c.nome.slice(9)] = valor;
+      else mudancas[c.nome] = valor;
+    }
+    if (Object.keys(endereco).length) mudancas.endereco = endereco;
     if (Object.keys(mudancas).length === 0) return;
 
     setSalvando(true);
@@ -74,36 +86,57 @@ export function FichaDoCliente({
   }
 
   return (
-    <form onSubmit={salvar} className="grid gap-4">
+    <form onSubmit={salvar} className="grid gap-4 sm:grid-cols-2">
       {campos.map((campo) => (
-        <div key={campo.nome}>
+        <Fragment key={campo.nome}>
+        {campo.grupo ? (
+          <p className="mt-2 border-t border-slate-100 pt-4 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:col-span-2">
+            {campo.grupo}
+          </p>
+        ) : null}
+        <div className={campo.largo || campo.tipo === "textarea" ? "sm:col-span-2" : ""}>
           <label htmlFor={`cli-${campo.nome}`} className="rotulo">
             {campo.rotulo}
             {campo.obrigatorio ? null : (
               <span className="ml-1 font-normal text-slate-400">opcional</span>
             )}
           </label>
-          <input
-            id={`cli-${campo.nome}`}
-            type={campo.tipo ?? "text"}
-            required={campo.obrigatorio}
-            value={valores[campo.nome] ?? ""}
-            onChange={(e) => {
-              setValores((antes) => ({ ...antes, [campo.nome]: e.target.value }));
-              setSalvo(false);
-            }}
-            className="campo"
-          />
+          {campo.tipo === "textarea" ? (
+            <textarea
+              id={`cli-${campo.nome}`}
+              rows={3}
+              value={valores[campo.nome] ?? ""}
+              onChange={(e) => {
+                setValores((antes) => ({ ...antes, [campo.nome]: e.target.value }));
+                setSalvo(false);
+              }}
+              className="campo"
+            />
+          ) : (
+            <input
+              id={`cli-${campo.nome}`}
+              type={campo.tipo ?? "text"}
+              required={campo.obrigatorio}
+              placeholder={campo.placeholder}
+              value={valores[campo.nome] ?? ""}
+              onChange={(e) => {
+                setValores((antes) => ({ ...antes, [campo.nome]: e.target.value }));
+                setSalvo(false);
+              }}
+              className="campo"
+            />
+          )}
           {campo.ajuda ? <p className="ajuda">{campo.ajuda}</p> : null}
         </div>
+        </Fragment>
       ))}
 
-      {erro ? <p className="aviso-erro">{erro}</p> : null}
+      {erro ? <p className="aviso-erro sm:col-span-2">{erro}</p> : null}
       {salvo && !mudou ? (
-        <p className="text-sm text-emerald-700">Salvo.</p>
+        <p className="text-sm text-emerald-700 sm:col-span-2">Salvo.</p>
       ) : null}
 
-      <div>
+      <div className="sm:col-span-2">
         <button
           type="submit"
           disabled={!mudou || salvando}

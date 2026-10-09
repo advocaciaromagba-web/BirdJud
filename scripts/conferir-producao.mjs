@@ -122,6 +122,7 @@ const TABELAS_COM_RLS = [
   "Tarefa",
   "CompromissoExcluido",
   "PastaNaNuvem",
+  "ImportacaoDeClientes",
   "PermissaoDeArea",
 ];
 

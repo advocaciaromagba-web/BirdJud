@@ -298,7 +298,7 @@ const DEFINICOES: Definicao[] = [
     porque:
       "Cliente e o centro de tudo: processo, compromisso, documento, cobranca e pasta na nuvem se penduram nele. Comece pelos que tem algo acontecendo agora.",
     como:
-      "Em Clientes, cadastre nome, CPF ou CNPJ e celular. Da para preencher lendo a foto do documento, com a IA.",
+      "Em Clientes, cadastre nome, CPF ou CNPJ e celular — da para preencher lendo a foto do documento, com a IA. Vindo de outro sistema? Em Clientes > Importar planilha, traga todos de uma vez pelo Excel.",
     destino: "/clientes",
     textoDoBotao: "Cadastrar cliente",
     minutos: 3,

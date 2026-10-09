@@ -37,6 +37,13 @@ export default async function PaginaClientes() {
       titulo="Clientes"
       chamada={`${clientes.length} cadastrado(s).`}
     >
+      {contexto.papel === "ADMIN" ? (
+        <div className="mb-3 flex justify-end">
+          <Link href="/clientes/importar" className="botao-secundario">
+            Importar planilha
+          </Link>
+        </div>
+      ) : null}
       <FormularioCriar
         rota="/api/clientes"
         recolhivel

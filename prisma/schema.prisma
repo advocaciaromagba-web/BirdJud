@@ -71,6 +71,7 @@ model Escritorio {
   compromissos      Compromisso[]
   compromissosExcluidos CompromissoExcluido[]
   pastasNaNuvem     PastaNaNuvem[]
+  importacoes       ImportacaoDeClientes[]
   oabs              OabMonitorada[]
   publicacoes       Publicacao[]
   analises          AnaliseIA[]
@@ -215,6 +216,18 @@ model Cliente {
   email        String?
   telefone     String?
   endereco     Json?
+  /// Qualificacao da pessoa fisica, como entra na procuracao e no contrato.
+  /// Texto como a pessoa escreve: "brasileira", "casada" — e o que define o
+  /// genero da qualificacao, nunca o nome.
+  rg            String?
+  nascimento    DateTime? @db.Date
+  nacionalidade String?
+  estadoCivil   String?
+  profissao     String?
+  observacoes   String?
+  /// A importacao de planilha que trouxe este cliente. E o que permite
+  /// desfazer um lote inteiro.
+  importacaoId  String?
   // Id do mesmo cliente na conta Asaas DO ESCRITORIO. Guardado para nao criar
   // um cadastro novo a cada cobranca. Nao e dado nosso: some junto com o
   // cliente e nao vale entre escritorios.
@@ -1352,4 +1365,26 @@ model PastaNaNuvem {
 
   @@unique([escritorioId, provedor, clienteId])
   @@index([escritorioId])
+}
+
+/// Uma importacao de clientes por planilha. Guarda os numeros e quem fez — o
+/// arquivo em si NAO fica: tem dados pessoais e ja cumpriu o papel.
+model ImportacaoDeClientes {
+  id            String    @id @default(cuid())
+  escritorioId  String
+  nomeDoArquivo String
+  /// Quem importou: usuario do escritorio, ou "Nome (Blackbird)" na implantacao.
+  feitaPor      String?
+  linhas        Int
+  importados    Int
+  jaExistiam    Int
+  recusados     Int
+  criadaEm      DateTime  @default(now())
+  desfeitaEm    DateTime?
+  /// Quantos ficaram por ja terem dado ligado (processo, cobranca...).
+  mantidosAoDesfazer Int?
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, criadaEm])
 }

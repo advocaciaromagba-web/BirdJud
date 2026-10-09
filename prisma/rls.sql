@@ -53,7 +53,8 @@ DECLARE
     'Entrevista',
     'Tarefa',
     'CompromissoExcluido',
-    'PastaNaNuvem'
+    'PastaNaNuvem',
+    'ImportacaoDeClientes'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

@@ -3,10 +3,8 @@
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "./prisma";
 
-export const UFS = [
-  "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA",
-  "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
-] as const;
+import { UFS } from "./ufs";
+export { UFS };
 
 export const novaOab = z.object({
   numero: z.string().min(3).max(10),

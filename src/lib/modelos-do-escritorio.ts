@@ -19,6 +19,7 @@ import {
   sedeDe,
   type AdvogadoParaQualificar,
 } from "./qualificacao";
+import { ehFemininoPeloCadastro } from "./qualificacao";
 import {
   lerTextos,
   montarDocx,
@@ -262,7 +263,21 @@ type Cliente = {
   email: string | null;
   telefone: string | null;
   endereco: unknown;
+  rg?: string | null;
+  nascimento?: Date | null;
+  nacionalidade?: string | null;
+  estadoCivil?: string | null;
+  profissao?: string | null;
 };
+
+const texto = (v: string | null | undefined) => (v && v.trim() ? v.trim() : null);
+
+/** "15/03/1980": data de nascimento como se escreve em documento. */
+export function nascimentoEmTexto(d: Date | null | undefined): string | null {
+  if (!d) return null;
+  // Coluna DATE: meia-noite UTC. Formatar em UTC evita virar o dia anterior.
+  return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+}
 
 /**
  * A qualificacao do cliente, como entra na peca.
@@ -279,8 +294,18 @@ export function qualificacaoDoCliente(
   const doc = cliente.documento ? formatarDocumento(cliente.documento) : null;
   const endereco = enderecoEmLinha((cliente.endereco ?? null) as never);
 
+  // Pessoa fisica: nacionalidade, estado civil, profissao e RG, quando
+  // houver, antes do CPF — e no feminino quando a propria pessoa escreveu
+  // assim ("brasileira", "casada"). Sem esses campos, o texto e o de sempre.
+  const pj = ehPessoaJuridica(cliente.documento);
+  const f = !pj && ehFemininoPeloCadastro(cliente);
+  const rg = pj ? null : texto(cliente.rg);
   const partes = [
-    doc ? `inscrito no ${ehPessoaJuridica(cliente.documento) ? "CNPJ" : "CPF"} sob o nº ${doc}` : null,
+    pj ? null : texto(cliente.nacionalidade),
+    pj ? null : texto(cliente.estadoCivil),
+    pj ? null : texto(cliente.profissao),
+    rg ? `${f ? "portadora" : "portador"} do RG nº ${rg}` : null,
+    doc ? `${f ? "inscrita" : pj ? "inscrita" : "inscrito"} no ${pj ? "CNPJ" : "CPF"} sob o nº ${doc}` : null,
     endereco ? `com endereco em ${endereco}` : null,
   ].filter(Boolean);
 
@@ -361,6 +386,11 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     "cliente.endereco": enderecoEmLinha((d.cliente.endereco ?? null) as never) || null,
     "cliente.email": d.cliente.email,
     "cliente.telefone": d.cliente.telefone,
+    "cliente.rg": texto(d.cliente.rg),
+    "cliente.nascimento": nascimentoEmTexto(d.cliente.nascimento),
+    "cliente.nacionalidade": texto(d.cliente.nacionalidade),
+    "cliente.estado_civil": texto(d.cliente.estadoCivil),
+    "cliente.profissao": texto(d.cliente.profissao),
     "representante.qualificacao":
       (d.representantes ?? [])
         .map((r) => qualificacao(comoRepresentante(r), (d.cliente.endereco ?? null) as never))
