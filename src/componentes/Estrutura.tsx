@@ -30,6 +30,7 @@ export type Area = {
 const AREAS: Area[] = [
   { href: "/", rotulo: "Inicio", icone: "painel" },
   { href: "/agenda", rotulo: "Agenda", icone: "agenda" },
+  { href: "/mensagens", rotulo: "Mensagens", icone: "mensagens" },
   { href: "/tarefas", rotulo: "Tarefas", icone: "tarefas" },
   { href: "/prazos", rotulo: "Prazos", icone: "prazos" },
   { href: "/processos", rotulo: "Processos", icone: "processos" },

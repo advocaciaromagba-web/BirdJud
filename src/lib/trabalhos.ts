@@ -3,6 +3,7 @@
 // Todo trabalho de escritorio roda dentro de comEscritorio(): mesmo no
 // trabalhador, que conecta com o papel do plano de controle, o codigo de
 // negocio continua vendo so o escritorio da vez.
+import { conferirEntregas } from "./entrega-do-escritorio";
 import { comEscritorio, prismaPlataforma } from "./prisma";
 import { competenciaDe, definirConsumo } from "./consumo";
 import { moduloAtivo, type Modulo } from "./modulos";
@@ -287,6 +288,12 @@ async function gerarContasAPagar({ escritorioId }: Contexto): Promise<void> {
 async function lembrar({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("LEMBRAR exige escritorio.");
 
+  // Primeiro a entrega do que ja saiu: reenvio automatico vencido entra na
+  // fila e sai nesta mesma passada; o que precisa de alguem vira alerta.
+  const entregas = await conferirEntregas(escritorioId);
+  if (entregas.reenviados || entregas.alertas) {
+    console.log(`LEMBRAR ${escritorioId}: ${entregas.reenviados} reenvio(s) automatico(s), ${entregas.alertas} alerta(s) de entrega.`);
+  }
   await gerarAvisos(escritorioId);
   await enviarAvisosPendentes(escritorioId);
   await enviarAvisosNoWhatsapp(escritorioId);

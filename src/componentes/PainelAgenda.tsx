@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { rotuloDaEntrega } from "@/lib/entrega";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FormularioCriar, type Campo } from "./FormularioCriar";
@@ -94,6 +96,9 @@ type Notificacao = {
   erro: string | null;
   criadoEm: string;
   enviadoEm: string | null;
+  idNaMeta?: string | null;
+  entregueEm?: string | null;
+  lidoEm?: string | null;
   compromisso: {
     id: string;
     titulo: string;
@@ -112,8 +117,34 @@ type AvisoDoCompromisso = {
   estado: string;
   erro: string | null;
   enviadoEm: string | null;
+  idNaMeta?: string | null;
+  entregueEm?: string | null;
+  lidoEm?: string | null;
   criadoEm: string;
 };
+
+/**
+ * Se o WhatsApp chegou ao celular: "Enviado" so diz que a Meta aceitou.
+ * Sem confirmacao leva para a tela onde se reenvia.
+ */
+function EntregaDoAviso({ a }: { a: { canal: string; estado: string; idNaMeta?: string | null; entregueEm?: string | null; lidoEm?: string | null } }) {
+  const r = rotuloDaEntrega(a);
+  if (a.estado === "FALHOU") {
+    return (
+      <Link href="/mensagens" className="mt-1 block whitespace-nowrap text-xs underline">
+        o que fazer
+      </Link>
+    );
+  }
+  if (!r) return null;
+  return r === "Sem confirmacao de entrega" ? (
+    <Link href="/mensagens" className="mt-1 block whitespace-nowrap text-xs text-amber-700 underline">
+      sem confirmacao
+    </Link>
+  ) : (
+    <span className="mt-1 block whitespace-nowrap text-xs text-emerald-700">{r.toLowerCase()}</span>
+  );
+}
 
 const COR_DO_ESTADO: Record<string, string> = {
   ENVIADO: "etiqueta-ok",
@@ -602,6 +633,7 @@ function VerCompromisso({
                 <span className={COR_DO_ESTADO[a.estado] ?? "etiqueta-neutra"} title={a.erro ?? undefined}>
                   {ROTULO_DO_ESTADO[a.estado] ?? a.estado}
                 </span>
+                <EntregaDoAviso a={a} />
               </li>
             ))}
           </ul>
@@ -813,6 +845,7 @@ function NotificacoesDaAgenda({ aoFechar }: { aoFechar: () => void }) {
                     <span className={COR_DO_ESTADO[it.estado] ?? "etiqueta-neutra"} title={it.erro ?? undefined}>
                       {ROTULO_DO_ESTADO[it.estado] ?? it.estado}
                     </span>
+                    <EntregaDoAviso a={it} />
                   </td>
                 </tr>
               ))}

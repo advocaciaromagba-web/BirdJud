@@ -291,6 +291,9 @@ export async function notificacoesDaAgenda(escritorioId: string) {
     tentativas: a.tentativas,
     criadoEm: a.criadoEm,
     enviadoEm: a.enviadoEm,
+    idNaMeta: a.idNaMeta,
+    entregueEm: a.entregueEm,
+    lidoEm: a.lidoEm,
     compromisso: a.compromisso
       ? {
           id: a.compromisso.id,
@@ -322,7 +325,7 @@ function mesmoTelefone(a: string | null | undefined, b: string | null | undefine
  * O destino e gravado ja no formato de envio; o cadastro guarda como a pessoa
  * digitou. Por isso a comparacao e pelos digitos, nao pelo texto.
  */
-function nomeDoDestinatario(a: {
+export function nomeDoDestinatario(a: {
   destino: string;
   usuario: { nome: string } | null;
   compromisso: {

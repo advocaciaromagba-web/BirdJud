@@ -26,9 +26,11 @@ export type NomeDeIcone =
   | "modelos"
   | "configuracoes"
   | "entrevistas"
-  | "tarefas";
+  | "tarefas"
+  | "mensagens";
 
 const TRACOS: Record<NomeDeIcone, string> = {
+  mensagens: "M5 5h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H10l-5 4V6a1 1 0 0 1 1-1Zm3 5h8m-8 3h5",
   painel: "M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z",
   clientes:
     "M16 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm11 9v-1a4 4 0 0 0-3-3.9M16 4.1a4 4 0 0 1 0 7.8",

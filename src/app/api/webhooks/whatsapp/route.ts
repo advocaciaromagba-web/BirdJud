@@ -3,6 +3,7 @@ import { z } from "zod";
 import { timingSafeEqual } from "node:crypto";
 import { assinaturaConfere } from "@/lib/whatsapp";
 import { tratarMensagem } from "@/lib/entrada-whatsapp";
+import { registrarStatus } from "@/lib/entrega-do-escritorio";
 
 // Recebe mensagem e nunca e estatica.
 export const dynamic = "force-dynamic";
@@ -46,6 +47,20 @@ const entrada = z.object({
                           button_reply: z.object({ title: z.string() }).nullish(),
                           list_reply: z.object({ title: z.string() }).nullish(),
                         })
+                        .nullish(),
+                    }),
+                  )
+                  .nullish(),
+                // O retorno de entrega do que NOS mandamos: sent, delivered,
+                // read, failed. Ver docs/ENTREGA-DE-MENSAGENS.md.
+                statuses: z
+                  .array(
+                    z.object({
+                      id: z.string(),
+                      status: z.string(),
+                      timestamp: z.string().nullish(),
+                      errors: z
+                        .array(z.object({ code: z.number().nullish(), title: z.string().nullish(), message: z.string().nullish() }))
                         .nullish(),
                     }),
                   )
@@ -153,6 +168,25 @@ export async function POST(req: Request) {
       anotar(r.desfecho, { intencao: r.intencao, respondeu: r.respondeu });
     } catch (erro) {
       anotar("falhou", { motivo: erro instanceof Error ? erro.message : "erro" });
+    }
+  }
+
+  const statuses = (corpo.data.entry ?? []).flatMap((e) =>
+    (e.changes ?? []).flatMap((c) => c.value.statuses ?? []),
+  );
+  for (const st of statuses) {
+    const erro = st.errors?.[0];
+    try {
+      const d = await registrarStatus({
+        idNaMeta: st.id,
+        status: st.status,
+        timestamp: st.timestamp,
+        codigo: erro?.code ?? null,
+        titulo: erro?.message ?? erro?.title ?? null,
+      });
+      if (d !== "DESCONHECIDA" && d !== "SEM_MUDANCA") anotar(`entrega ${d.toLowerCase()}`, { codigo: erro?.code ?? null });
+    } catch (falha) {
+      anotar("entrega falhou", { motivo: falha instanceof Error ? falha.message : "erro" });
     }
   }
 

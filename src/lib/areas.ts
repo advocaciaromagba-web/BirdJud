@@ -81,6 +81,8 @@ export const AREA_DO_ENDERECO: Record<string, string> = {
   "/clientes": "CLIENTES",
   "/processos": "PROCESSOS",
   "/agenda": "AGENDA",
+  // Mensagens nao entregues: quase todas sao avisos de compromisso.
+  "/mensagens": "AGENDA",
   "/prazos": "PRAZOS",
   "/tarefas": "TAREFAS",
   "/publicacoes": "PUBLICACOES",

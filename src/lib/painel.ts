@@ -7,6 +7,7 @@
 //
 // Cada bloco respeita o modulo contratado: quem nao tem publicacoes nao ve
 // bloco de publicacao, nem vazio.
+import { contarParaOPainel } from "./entrega-do-escritorio";
 import { comEscritorio } from "./prisma";
 import { modulosAtivos, type Modulo } from "./modulos";
 import { diaEmBrasilia, ehMesmoDiaEmBrasilia } from "./datas";
@@ -105,10 +106,6 @@ export async function montarPainel(
     integracoes: await db.integracao.findMany({
       select: { tipo: true, status: true },
     }),
-    avisosFalhados:
-      tem("EMAIL") || tem("WHATSAPP")
-        ? await db.aviso.count({ where: { estado: "FALHOU" } })
-        : 0,
     fiscal: tem("NFSE")
       ? await db.fiscal.findFirst({ select: { id: true } })
       : { id: "x" },
@@ -180,12 +177,15 @@ export async function montarPainel(
     });
   }
 
-  if (dados.avisosFalhados > 0) {
+  // Mensagem que nao chegou ao cliente e assunto de quem atende, nao so do
+  // administrador: a pendencia leva a tela onde se reenvia ou se resolve.
+  const naoChegaram = tem("EMAIL") || tem("WHATSAPP") ? await contarParaOPainel(escritorioId, agora) : 0;
+  if (naoChegaram > 0) {
     pendencias.push({
       tipo: "AVISOS_FALHADOS",
-      texto: `${dados.avisosFalhados} aviso(s) nao chegaram ao destino.`,
-      destino: "/integracoes",
-      soAdmin: true,
+      texto: `${naoChegaram} mensagem(ns) podem nao ter chegado ao destino. Reenvie ou avise por outro meio.`,
+      destino: "/mensagens",
+      soAdmin: false,
     });
   }
 

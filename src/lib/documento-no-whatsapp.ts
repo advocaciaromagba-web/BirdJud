@@ -129,6 +129,7 @@ export async function mandarPecaNoWhatsapp(
   // para aquele numero naquele dia. A chave leva a hora porque mandar o
   // contrato corrigido de novo e legitimo — ao contrario do lembrete, que nao
   // se repete.
+  const idRepetido = await prismaPlataforma().aviso.findUnique({ where: { idNaMeta }, select: { id: true } });
   await comEscritorio(escritorioId, (db) =>
     db.aviso.create({
       data: semEscritorio({
@@ -142,6 +143,10 @@ export async function mandarPecaNoWhatsapp(
         parametros: [peca.nomeDoArquivo] as unknown as Prisma.InputJsonValue,
         estado: "ENVIADO",
         enviadoEm: new Date(),
+        // O retorno de entrega da Meta acha o aviso por este id. Repetido
+        // (nao deveria) fica de fora: o registro do envio vale mais.
+        idNaMeta: idRepetido ? null : idNaMeta,
+        clienteId: dados.clienteId,
       }),
     }),
   );

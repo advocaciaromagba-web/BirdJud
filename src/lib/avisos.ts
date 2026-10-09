@@ -43,6 +43,7 @@ import { paraAvisarNoCompromisso } from "./participantes-do-escritorio";
 import { CompromissoNaoEncontrado } from "./agenda-do-escritorio";
 import { type AvisoManual as Manual } from "./avisos-manuais";
 import { dominioDaPlataforma } from "./dominio";
+import { depoisDaFalha } from "./entrega-do-escritorio";
 import { contasParaAvisar } from "./contas-do-escritorio";
 import { fatosDoDia } from "./resumo-do-escritorio";
 import {
@@ -314,6 +315,7 @@ async function gerarLembretes(
       if (pessoa.email) {
         const criadoEmail = await criarAviso(escritorioId, {
           usuarioId: null,
+          participanteId: pessoa.participanteId,
           canal: "EMAIL",
           tipo: "LEMBRETE_AO_PARTICIPANTE",
           compromissoId: compromisso.id,
@@ -330,6 +332,7 @@ async function gerarLembretes(
 
       const criadoZapDele = await criarAviso(escritorioId, {
         usuarioId: null,
+        participanteId: pessoa.participanteId,
         canal: "WHATSAPP",
         tipo: "LEMBRETE_AO_PARTICIPANTE",
         compromissoId: compromisso.id,
@@ -486,6 +489,8 @@ type NovoAviso = {
   parametros?: string[];
   /** O compromisso que gerou o aviso — e a prova de que a pessoa foi avisada. */
   compromissoId?: string;
+  /** De quem e o contato: o reenvio usa o contato ATUAL do cadastro. */
+  participanteId?: string;
 };
 
 /** Devolve false quando o aviso ja existia — e o que torna a rotina repetivel. */
@@ -564,6 +569,7 @@ export async function enviarAvisosPendentes(
   }
 
   const falhou = new Map(resultado.falhas.map((f) => [f.para, f.motivo]));
+  const falharam: string[] = [];
 
   await comEscritorio(escritorioId, async (db) => {
     for (const aviso of pendentes) {
@@ -576,6 +582,7 @@ export async function enviarAvisosPendentes(
         continue;
       }
       const tentativas = aviso.tentativas + 1;
+      const esgotou = tentativas >= MAX_TENTATIVAS;
       await db.aviso.update({
         where: { id: aviso.id },
         data: {
@@ -583,11 +590,15 @@ export async function enviarAvisosPendentes(
           erro: motivo.slice(0, 500),
           // Esgotadas as tentativas, para de tentar — mas a linha fica, para
           // o escritorio ver que aquele aviso nunca chegou.
-          estado: tentativas >= MAX_TENTATIVAS ? "FALHOU" : "PENDENTE",
+          estado: esgotou ? "FALHOU" : "PENDENTE",
+          falhouEm: esgotou ? new Date() : null,
         },
       });
+      if (esgotou) falharam.push(aviso.id);
     }
   });
+  // Fora da transacao: o alerta abre a sua.
+  for (const id of falharam) await depoisDaFalha(escritorioId, id);
 
   if (resultado.enviadas > 0) {
     await registrarConsumo(escritorioId, "EMAIL_ENVIADO", resultado.enviadas);
@@ -653,17 +664,14 @@ export async function enviarAvisosNoWhatsapp(
     }
 
     try {
-      await enviarModelo({
+      const { idNaMeta } = await enviarModelo({
         para: aviso.destino,
         modelo: aviso.modelo,
         parametros,
       });
-      await comEscritorio(escritorioId, (db) =>
-        db.aviso.update({
-          where: { id: aviso.id },
-          data: { estado: "ENVIADO", enviadoEm: new Date(), erro: null },
-        }),
-      );
+      // O id da Meta e o que liga o retorno de entrega (entregue, lida,
+      // falhou) a este aviso — ver entrega-do-escritorio.ts.
+      await marcarEnviado(escritorioId, aviso.id, idNaMeta);
       enviados += 1;
     } catch (erro) {
       if (erro instanceof SemNumeroDeWhatsapp) {
@@ -677,7 +685,7 @@ export async function enviarAvisosNoWhatsapp(
       const tentativas = erro.definitivo
         ? MAX_TENTATIVAS
         : aviso.tentativas + 1;
-      await marcarFalha(escritorioId, aviso.id, tentativas, erro.message);
+      await marcarFalha(escritorioId, aviso.id, tentativas, erro.message, erro.codigo);
       falhas += 1;
     }
   }
@@ -687,22 +695,45 @@ export async function enviarAvisosNoWhatsapp(
   return { enviados, falhas, semNumero: false };
 }
 
+/**
+ * ENVIADO, com o id da Meta. O id nunca pode impedir a marcacao: a mensagem
+ * JA saiu, e um aviso que ficasse PENDENTE sairia de novo na proxima rodada.
+ * Id repetido (nao deveria acontecer) fica de fora, e so o retorno de
+ * entrega daquele aviso se perde.
+ */
+async function marcarEnviado(escritorioId: string, id: string, idNaMeta: string): Promise<void> {
+  const base = { estado: "ENVIADO", enviadoEm: new Date(), erro: null, erroCodigo: null };
+  try {
+    await comEscritorio(escritorioId, (db) => db.aviso.update({ where: { id }, data: { ...base, idNaMeta } }));
+  } catch (erro) {
+    if ((erro as { code?: string }).code !== "P2002") throw erro;
+    console.error(`aviso ${id}: id da Meta repetido (${idNaMeta}); gravado sem ele.`);
+    await comEscritorio(escritorioId, (db) => db.aviso.update({ where: { id }, data: base }));
+  }
+}
+
 async function marcarFalha(
   escritorioId: string,
   id: string,
   tentativas: number,
   motivo: string,
+  codigo: number | null = null,
 ): Promise<void> {
+  const falhou = tentativas >= MAX_TENTATIVAS;
   await comEscritorio(escritorioId, (db) =>
     db.aviso.update({
       where: { id },
       data: {
         tentativas,
         erro: motivo.slice(0, 500),
-        estado: tentativas >= MAX_TENTATIVAS ? "FALHOU" : "PENDENTE",
+        erroCodigo: codigo,
+        estado: falhou ? "FALHOU" : "PENDENTE",
+        falhouEm: falhou ? new Date() : null,
       },
     }),
   );
+  // Falhou de vez: reenvio automatico ou alerta para a equipe.
+  if (falhou) await depoisDaFalha(escritorioId, id);
 }
 
 // ---------------------------------------------------------------------------
@@ -873,6 +904,7 @@ export async function avisarAgendamento(
       if (
         await criarAviso(escritorioId, {
           usuarioId: null,
+          participanteId: pessoa.participanteId,
           canal: "EMAIL",
           tipo: "COMPROMISSO_MARCADO",
           compromissoId,
@@ -889,6 +921,7 @@ export async function avisarAgendamento(
     if (!pessoa.telefone || !comWhatsapp || !modelo) continue;
     const criadoZap = await criarAviso(escritorioId, {
       usuarioId: null,
+      participanteId: pessoa.participanteId,
       canal: "WHATSAPP",
       tipo: "COMPROMISSO_MARCADO",
       compromissoId,
@@ -998,6 +1031,7 @@ export async function avisarAgora(
       if (
         await criarAviso(escritorioId, {
           usuarioId: null,
+          participanteId: pessoa.participanteId,
           canal: "EMAIL",
           tipo: texto.tipo,
           compromissoId,
@@ -1015,6 +1049,7 @@ export async function avisarAgora(
     if (
       await criarAviso(escritorioId, {
         usuarioId: null,
+        participanteId: pessoa.participanteId,
         canal: "WHATSAPP",
         tipo: texto.tipo,
         compromissoId,

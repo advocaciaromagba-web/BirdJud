@@ -54,11 +54,14 @@ export class FalhaNoWhatsapp extends Error {
   readonly status: number;
   /** true quando repetir a tentativa nao vai adiantar. */
   readonly definitivo: boolean;
-  constructor(motivo: string, definitivo: boolean, status = 502) {
+  /** Codigo da Meta; 0 quando nem chegou nela (rede). */
+  readonly codigo: number | null;
+  constructor(motivo: string, definitivo: boolean, status = 502, codigo: number | null = null) {
     super(motivo);
     this.name = "FalhaNoWhatsapp";
     this.definitivo = definitivo;
     this.status = status;
+    this.codigo = codigo;
   }
 }
 
@@ -165,7 +168,7 @@ export async function enviarModelo(
       },
     );
   } catch (erro) {
-    throw new FalhaNoWhatsapp(descreverFalha(erro), false);
+    throw new FalhaNoWhatsapp(descreverFalha(erro), false, 502, 0);
   }
 
   const json = (await resposta.json().catch(() => null)) as {
@@ -180,6 +183,8 @@ export async function enviarModelo(
     throw new FalhaNoWhatsapp(
       explicar(codigo, mensagem),
       ehDefinitivo(codigo, resposta.status),
+      502,
+      codigo,
     );
   }
 
@@ -257,7 +262,7 @@ export async function responderTexto(
       },
     );
   } catch (erro) {
-    throw new FalhaNoWhatsapp(descreverFalha(erro), false);
+    throw new FalhaNoWhatsapp(descreverFalha(erro), false, 502, 0);
   }
 
   const json = (await resposta.json().catch(() => null)) as {
@@ -270,6 +275,8 @@ export async function responderTexto(
     throw new FalhaNoWhatsapp(
       explicar(codigo, json?.error?.message ?? `A Meta respondeu ${resposta.status}.`),
       ehDefinitivo(codigo, resposta.status),
+      502,
+      codigo,
     );
   }
 
@@ -335,7 +342,7 @@ export async function subirDocumento(
       },
     );
   } catch (erro) {
-    throw new FalhaNoWhatsapp(descreverFalha(erro), false);
+    throw new FalhaNoWhatsapp(descreverFalha(erro), false, 502, 0);
   }
 
   const json = (await resposta.json().catch(() => null)) as {
@@ -348,6 +355,8 @@ export async function subirDocumento(
     throw new FalhaNoWhatsapp(
       explicar(codigo, json?.error?.message ?? `A Meta respondeu ${resposta.status}.`),
       ehDefinitivo(codigo, resposta.status),
+      502,
+      codigo,
     );
   }
   return json.id;
@@ -411,7 +420,7 @@ export async function enviarModeloComDocumento(
       },
     );
   } catch (erro) {
-    throw new FalhaNoWhatsapp(descreverFalha(erro), false);
+    throw new FalhaNoWhatsapp(descreverFalha(erro), false, 502, 0);
   }
 
   const json = (await resposta.json().catch(() => null)) as {
@@ -424,6 +433,8 @@ export async function enviarModeloComDocumento(
     throw new FalhaNoWhatsapp(
       explicar(codigo, json?.error?.message ?? `A Meta respondeu ${resposta.status}.`),
       ehDefinitivo(codigo, resposta.status),
+      502,
+      codigo,
     );
   }
   const id = json?.messages?.[0]?.id;

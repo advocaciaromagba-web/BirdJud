@@ -1134,6 +1134,30 @@ model Aviso {
   enviadoEm  DateTime?
   criadoEm   DateTime  @default(now())
 
+  // ----- Entrega (docs/ENTREGA-DE-MENSAGENS.md) -----
+  // ENVIADO quer dizer que a Meta ACEITOU. Se chegou ao celular, quem diz e o
+  // retorno dela pelo webhook, que cai nestes campos.
+  /// Id da mensagem na Meta (wamid): e por ele que o retorno acha o aviso.
+  idNaMeta    String?   @unique
+  entregueEm  DateTime?
+  lidoEm      DateTime?
+  /// Quando virou FALHOU — no envio ou no retorno da Meta.
+  falhouEm    DateTime?
+  /// Codigo de erro da Meta, quando veio dela: decide se o reenvio automatico adianta.
+  erroCodigo  Int?
+  /// Quem recebe, para o reenvio usar o contato ATUAL do cadastro.
+  participanteId String?
+  clienteId      String?
+
+  // ----- Tratamento da falha pelo escritorio -----
+  /// REENVIADO | REENVIO_AUTOMATICO | CONTATO_DIRETO | DESCARTADO
+  tratamento     String?
+  tratadoEm      DateTime?
+  tratadoPor     String?
+  observacao     String?
+  /// Este aviso e o reenvio de qual.
+  reenvioDeId    String?
+
   escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   usuario     Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   compromisso Compromisso? @relation(fields: [compromissoId], references: [id], onDelete: SetNull)
@@ -1141,6 +1165,7 @@ model Aviso {
   @@unique([escritorioId, chave])
   @@index([escritorioId, estado])
   @@index([escritorioId, compromissoId])
+  @@index([escritorioId, estado, tratadoEm])
 }
 
 // ---------------------------------------------------------------------------
