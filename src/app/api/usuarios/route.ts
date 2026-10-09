@@ -1,22 +1,12 @@
-import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { comEscritorio, semEscritorio } from "@/lib/prisma";
+import { comEscritorio } from "@/lib/prisma";
 import { exigirAdmin, exigirSessao } from "@/lib/sessao";
-import { gerarHash } from "@/lib/senhas";
-import {
-  criarPedido,
-  mensagemDeConvite,
-  VALIDADE_DO_CONVITE_MINUTOS,
-} from "@/lib/redefinicao";
-import {
-  enviarPelaPlataforma,
-  temRemetenteDaPlataforma,
-} from "@/lib/email-plataforma";
+import { temRemetenteDaPlataforma } from "@/lib/email-plataforma";
+import { convidarPessoa, incluirPessoa } from "@/lib/equipe";
 import { PAPEIS } from "@/lib/papeis";
-import { exigirVagaNaFaixa, FaixaEsgotada } from "@/lib/faixas";
+import { FaixaEsgotada } from "@/lib/faixas";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
-import { dominioDaPlataforma } from "@/lib/dominio";
 
 /*
  * A senha e OPCIONAL de proposito.
@@ -76,11 +66,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { senha, email, papel, ...resto } = corpo.data;
-    // Quem conta para a faixa de advogados do escritorio.
-    const advogado = papel === "ADVOGADO" || papel === "ADMIN";
-    await exigirVagaNaFaixa(escritorioId, advogado);
-
+    const { senha } = corpo.data;
     const convidar = !senha;
     if (convidar && !temRemetenteDaPlataforma()) {
       return NextResponse.json(
@@ -91,30 +77,8 @@ export async function POST(req: Request) {
       );
     }
 
-    /*
-     * Sem senha, o usuario nasce com um hash que ninguem reproduz.
-     *
-     * Nao e "senha vazia" nem campo nulo: e uma senha aleatoria de 32 bytes
-     * que nunca sai daqui. O unico caminho para dentro e o convite — e, se o
-     * convite vencer, o "esqueci minha senha".
-     */
-    const senhaHash = await gerarHash(
-      senha ?? randomBytes(32).toString("base64url"),
-    );
-
-    const usuario = await comEscritorio(escritorioId, (db) =>
-      db.usuario.create({
-        data: semEscritorio({
-          ...resto,
-          email: email.toLowerCase(),
-          papel,
-          advogado,
-          senhaHash,
-        }),
-        select: { id: true, nome: true, email: true, papel: true },
-      }),
-    );
-
+    // Vaga na faixa, senha impossivel de adivinhar e convite: ver equipe.ts.
+    const usuario = await incluirPessoa(escritorioId, corpo.data);
     if (!convidar) return NextResponse.json({ usuario }, { status: 201 });
 
     const quemConvidou = await comEscritorio(escritorioId, (db) =>
@@ -123,29 +87,14 @@ export async function POST(req: Request) {
         select: { nome: true },
       }),
     );
-
-    const { token } = await criarPedido(
-      escritorioId,
-      usuario.id,
-      null,
-      "CONVITE",
-    );
-    const dominio = dominioDaPlataforma();
-    const link = `https://${contexto.marca.slug}.${dominio}/redefinir-senha?t=${token}&c=1`;
-
-    const mensagem = mensagemDeConvite({
+    const convite = await convidarPessoa(escritorioId, usuario.id, {
       nomeDoEscritorio: contexto.marca.nome,
+      slug: contexto.marca.slug ?? "",
       nomeDeQuemConvidou: quemConvidou?.nome ?? "Quem administra o sistema",
-      link,
-      validadeMinutos: VALIDADE_DO_CONVITE_MINUTOS,
     });
-
-    try {
-      await enviarPelaPlataforma({ para: usuario.email, ...mensagem });
-    } catch (falha) {
+    if (!convite.enviado) {
       // O usuario ja existe; o que falhou foi o convite. Dizer isso, para o
       // administrador reenviar em vez de achar que nada aconteceu.
-      console.error("convite nao enviado:", falha);
       return NextResponse.json(
         {
           usuario,

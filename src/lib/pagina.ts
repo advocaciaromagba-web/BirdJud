@@ -13,13 +13,15 @@ import {
 import { SemDestravar, SemSenhaDeAdministracao } from "./administracao";
 import { SemPermissao } from "./papeis";
 import type { Modulo } from "./modulos";
+import { documentosPendentes } from "./aceite";
 
 export async function contextoDaPagina(
   modulo?: Modulo,
   area?: string,
 ): Promise<ContextoRota> {
+  let contexto: ContextoRota;
   try {
-    return await exigirSessao(modulo, area);
+    contexto = await exigirSessao(modulo, area);
   } catch (erro) {
     if (erro instanceof SemSessao) redirect("/login");
     // Area fechada nao e erro de sistema: e uma decisao do escritorio. A tela
@@ -28,6 +30,11 @@ export async function contextoDaPagina(
     if (erro instanceof SemPermissao) redirect(`/sem-acesso?motivo=${encodeURIComponent(erro.message)}`);
     throw erro;
   }
+  // Sem o aceite dos documentos vigentes, o sistema nao abre. Vale para
+  // todos: o administrador aceita, os outros esperam ele aceitar. Escritorio
+  // que se cadastrou sozinho ja aceitou no cadastro e nunca ve esta tela.
+  if ((await documentosPendentes(contexto.escritorioId)).length > 0) redirect("/aceite");
+  return contexto;
 }
 
 /** Por que a area protegida nao abriu — ou nada, quando abriu. */

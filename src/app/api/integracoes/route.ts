@@ -3,7 +3,8 @@ import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/sessao";
 import { moduloAtivo } from "@/lib/modulos";
-import { salvarIntegracao, type TipoIntegracao } from "@/lib/integracao";
+import { type TipoIntegracao } from "@/lib/integracao";
+import { ConexaoRecusada, conectarPorFormulario } from "@/lib/conectores/conectar";
 import { CONECTORES, ehTipoDeIntegracao } from "@/lib/conectores";
 import { tratarErro } from "@/lib/respostas";
 
@@ -66,51 +67,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const conector = CONECTORES[corpo.data.tipo as TipoIntegracao];
-    if (!conector) {
-      return NextResponse.json(
-        { erro: "Esta integracao nao e mais configurada pelo escritorio." },
-        { status: 404 },
+    let resultado;
+    try {
+      resultado = await conectarPorFormulario(
+        escritorioId,
+        corpo.data.tipo as TipoIntegracao,
+        corpo.data.dados,
       );
+    } catch (erro) {
+      if (erro instanceof ConexaoRecusada) {
+        return NextResponse.json({ erro: erro.message }, { status: erro.status });
+      }
+      throw erro;
     }
-    if (
-      conector.modulo &&
-      !(await moduloAtivo(escritorioId, conector.modulo))
-    ) {
-      return NextResponse.json(
-        { erro: `O modulo ${conector.modulo} nao esta contratado.` },
-        { status: 403 },
-      );
-    }
-
-    if (conector.oauth) {
-      return NextResponse.json(
-        { erro: `O ${conector.rotulo} se conecta pelo botao, entrando na conta do escritorio.` },
-        { status: 400 },
-      );
-    }
-
-    const faltando = conector.campos
-      .filter(
-        (campo) => campo.obrigatorio && !corpo.data.dados[campo.nome]?.trim(),
-      )
-      .map((campo) => campo.rotulo);
-    if (faltando.length > 0) {
-      return NextResponse.json(
-        { erro: `Faltou preencher: ${faltando.join(", ")}.` },
-        { status: 400 },
-      );
-    }
-
-    // Testa antes de guardar, e ja grava o veredito junto.
-    const resultado = await conector.testar(corpo.data.dados);
-    await salvarIntegracao(
-      escritorioId,
-      conector.tipo,
-      corpo.data.dados,
-      resultado.ok ? "OK" : "ERRO",
-      resultado.ok ? null : resultado.detalhe,
-    );
 
     return NextResponse.json({ ok: resultado.ok, detalhe: resultado.detalhe });
   } catch (erro) {

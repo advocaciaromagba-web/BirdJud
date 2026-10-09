@@ -1,46 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { comEscritorio, semEscritorio } from "@/lib/prisma";
+import { comEscritorio } from "@/lib/prisma";
 import { exigirAdmin, exigirSessao } from "@/lib/sessao";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
+import { adicionarOab, novaOab } from "@/lib/oabs";
 
 export const dynamic = "force-dynamic";
 
-const UFS = [
-  "AC",
-  "AL",
-  "AM",
-  "AP",
-  "BA",
-  "CE",
-  "DF",
-  "ES",
-  "GO",
-  "MA",
-  "MG",
-  "MS",
-  "MT",
-  "PA",
-  "PB",
-  "PE",
-  "PI",
-  "PR",
-  "RJ",
-  "RN",
-  "RO",
-  "RR",
-  "RS",
-  "SC",
-  "SE",
-  "SP",
-  "TO",
-] as const;
 
-const novaOab = z.object({
-  numero: z.string().min(3).max(10),
-  uf: z.enum(UFS),
-  nomeAdvogado: z.string().max(120).optional(),
-});
 
 export async function GET() {
   try {
@@ -66,16 +33,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const oab = await comEscritorio(escritorioId, (db) =>
-      db.oabMonitorada.create({
-        data: semEscritorio({
-          // So digitos: "123.456" e "123456" sao a mesma OAB.
-          numero: corpo.data.numero.replace(/\D/g, ""),
-          uf: corpo.data.uf,
-          nomeAdvogado: corpo.data.nomeAdvogado,
-        }),
-      }),
-    );
+    const oab = await adicionarOab(escritorioId, corpo.data);
     return NextResponse.json({ oab }, { status: 201 });
   } catch (erro) {
     if (ehDuplicado(erro)) {

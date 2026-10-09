@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { comEscritorio, prismaPlataforma, semEscritorio } from "@/lib/prisma";
-import { criarAssinatura } from "@/lib/cobranca";
+import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { DIAS_DE_TESTE } from "@/lib/precos";
-import { MODULOS, type Modulo } from "@/lib/catalogo";
-import { contaMontada, modulosDoPlano } from "@/lib/planos";
-import { definirModulos } from "@/lib/contratacao";
+import { MODULOS } from "@/lib/catalogo";
+import { modulosDoPlano } from "@/lib/planos";
+import { EnderecoIndisponivel, nascerEscritorio, slugValido } from "@/lib/nascimento";
 
 // Todo escritorio novo entra como solo. Quem tem mais advogados sobe de faixa
 // na primeira conversa — e ate la nao paga por vaga que nao usa.
@@ -18,26 +17,11 @@ import { VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
 import { dominioDaPlataforma } from "@/lib/dominio";
 
-const RESERVADOS = new Set([
-  "www",
-  "app",
-  "api",
-  "admin",
-  "painel",
-  "plataforma",
-  "suporte",
-]);
+
 
 const cadastro = z.object({
   escritorio: z.string().min(2).max(120),
-  slug: z
-    .string()
-    .min(3)
-    .max(40)
-    .regex(
-      /^[a-z0-9][a-z0-9-]*[a-z0-9]$/,
-      "O endereco aceita letras minusculas, numeros e hifen.",
-    ),
+  slug: slugValido,
   nome: z.string().min(2).max(120),
   email: z.string().email(),
   senha: z.string().min(10, "A senha precisa ter ao menos 10 caracteres."),
@@ -102,34 +86,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const slug = corpo.data.slug.toLowerCase();
-    if (RESERVADOS.has(slug)) {
-      return NextResponse.json(
-        { erro: "Este endereco e reservado." },
-        { status: 409 },
-      );
-    }
-
     // Sem escolha, o teste comeca com tudo ligado: quem esta avaliando
-    // precisa ver o sistema inteiro, inclusive a leitura por IA. Reduzir o
-    // plano depois e conversa comercial; comecar cego nao ajuda ninguem.
-    const escolhidos = (
-      corpo.data.modulos ?? modulosDoPlano("COMPLETO")
-    ).filter((modulo): modulo is Modulo => modulo !== "NUCLEO");
-    const conta = contaMontada(escolhidos, FAIXA_INICIAL);
-    // A conta pode ter subido para um plano pronto mais barato que a soma; os
-    // modulos contratados sao os desse plano, nao so os que foram marcados.
-    const contratados = conta.modulos.map((linha) => linha.modulo);
-
-    const escritorio = await prismaPlataforma().escritorio.create({
-      data: {
-        slug,
-        nome: corpo.data.escritorio,
-        status: "TESTE",
-        faixa: FAIXA_INICIAL,
-      },
+    // precisa ver o sistema inteiro, inclusive a leitura por IA.
+    const { escritorio, plano, mensalidadeCentavos } = await nascerEscritorio({
+      slug: corpo.data.slug,
+      nome: corpo.data.escritorio,
+      modulos: corpo.data.modulos ?? modulosDoPlano("COMPLETO"),
+      faixa: FAIXA_INICIAL,
+      diasDeTeste: DIAS_DE_TESTE,
     });
-
     await comEscritorio(escritorio.id, async (db) =>
       db.usuario.create({
         data: semEscritorio({
@@ -141,11 +106,6 @@ export async function POST(req: Request) {
         }),
       }),
     );
-
-    // definirModulos grava tambem a franquia de cada modulo. Sem ela o
-    // consumo seria ilimitado e nada viraria excedente.
-    await definirModulos(escritorio.id, contratados, FAIXA_INICIAL);
-
     await registrarAceite(escritorio.id, {
       nome: corpo.data.nome,
       email: corpo.data.email,
@@ -153,20 +113,22 @@ export async function POST(req: Request) {
       navegador: req.headers.get("user-agent"),
     });
 
-    await criarAssinatura(escritorio.id, conta.totalCentavos, DIAS_DE_TESTE);
 
     const dominio = dominioDaPlataforma();
     return NextResponse.json(
       {
         ok: true,
-        endereco: `${slug}.${dominio}`,
+        endereco: `${escritorio.slug}.${dominio}`,
         diasDeTeste: DIAS_DE_TESTE,
-        plano: conta.plano,
-        mensalidadeCentavos: conta.totalCentavos,
+        plano,
+        mensalidadeCentavos,
       },
       { status: 201 },
     );
   } catch (erro) {
+    if (erro instanceof EnderecoIndisponivel) {
+      return NextResponse.json({ erro: erro.message }, { status: erro.status });
+    }
     if (ehDuplicado(erro)) {
       return NextResponse.json(
         { erro: "Este endereco ja esta em uso." },

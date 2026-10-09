@@ -9,9 +9,8 @@ import {
   ID_DO_LOGO,
   LOGO_MAXIMO_BYTES,
   TIPOS_DE_LOGO,
-  exigirCor,
 } from "@/lib/identidade";
-import { documentoValido, formatarDocumento } from "@/lib/documentos";
+import { DadoInvalido, salvarDadosDoEscritorio } from "@/lib/dados-do-escritorio";
 import { tratarErro } from "@/lib/respostas";
 
 export const dynamic = "force-dynamic";
@@ -35,39 +34,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
     }
 
-    // Cor que nao e cor nao entra: ela vira estilo inline no <body>, e o
-    // navegador nao distingue "cor" de "resto de CSS" numa propriedade
-    // personalizada.
-    const primaria = exigirCor(corpo.data.corPrimaria, "principal");
-    const secundaria = exigirCor(corpo.data.corSecundaria, "de destaque");
-
-    // Conferido aqui, nao so na tela: CNPJ com digito errado so apareceria
-    // como recusa do Asaas no dia da primeira fatura.
-    let cnpj: string | null = null;
-    const bruto = corpo.data.cnpj?.trim();
-    if (bruto) {
-      if (!documentoValido(bruto)) {
-        return NextResponse.json(
-          { erro: "O CNPJ informado nao fecha o digito verificador." },
-          { status: 400 },
-        );
+    // As regras de cor e de CNPJ moram em dados-do-escritorio.ts.
+    let gravado;
+    try {
+      gravado = await salvarDadosDoEscritorio(escritorioId, {
+        corPrimaria: corpo.data.corPrimaria,
+        corSecundaria: corpo.data.corSecundaria,
+        telefoneAtendimento: corpo.data.telefoneAtendimento ?? null,
+        cidade: corpo.data.cidade ?? null,
+        ...(corpo.data.cnpj !== undefined ? { cnpj: corpo.data.cnpj } : {}),
+      });
+    } catch (erro) {
+      if (erro instanceof DadoInvalido) {
+        return NextResponse.json({ erro: erro.message }, { status: erro.status });
       }
-      cnpj = formatarDocumento(bruto);
+      throw erro;
     }
-
-    await comEscritorio(escritorioId, (db) =>
-      db.escritorio.update({
-        where: { id: escritorioId },
-        data: {
-          corPrimaria: primaria,
-          corSecundaria: secundaria,
-          telefoneAtendimento: corpo.data.telefoneAtendimento || null,
-          cidade: corpo.data.cidade || null,
-          ...(bruto !== undefined ? { cnpj } : {}),
-        },
-      }),
-    );
-
+    const primaria = gravado.corPrimaria!;
+    const secundaria = gravado.corSecundaria!;
     return NextResponse.json({ ok: true, corPrimaria: primaria, corSecundaria: secundaria });
   } catch (erro) {
     if (erro instanceof CorInvalida) {

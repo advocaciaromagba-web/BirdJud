@@ -45,6 +45,12 @@ model Escritorio {
   corSecundaria       String?
   telefoneAtendimento String?
   cidade              String?
+  /// Implantacao feita pela plataforma: quem montou, quando, e quando a conta
+  /// foi entregue ao escritorio (convites enviados). Nulo = o escritorio se
+  /// cadastrou sozinho.
+  implantadoPor       String?
+  implantadoEm        DateTime?
+  entregueEm          DateTime?
   /// Primeiros passos: { pulados: { CHAVE: { em, por } }, dispensadoEm }.
   /// So o que a pessoa DECIDIU. O que esta feito e medido, nunca guardado.
   primeirosPassos     Json?

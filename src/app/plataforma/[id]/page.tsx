@@ -55,8 +55,14 @@ export default async function EscritorioNoPainel({
 
   return (
     <main className="mx-auto max-w-3xl p-8">
-      <Link href="/plataforma" className="text-sm text-slate-500">
+      <Link href="/plataforma/escritorios" className="text-sm text-slate-500">
         ← todos os escritorios
+      </Link>
+      <Link
+        href={`/plataforma/${escritorio.id}/implantacao`}
+        className="botao-principal float-right"
+      >
+        Implantacao e configuracao
       </Link>
       <h1 className="mt-2 text-2xl font-bold">{escritorio.nome}</h1>
       <p className="mt-1 text-sm text-slate-500">
