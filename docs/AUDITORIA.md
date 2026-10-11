@@ -85,10 +85,11 @@ mesma para os sete, e revogar por causa de um derruba os outros seis.
 
 ## Ficam para depois do piloto
 
-- **WhatsApp**: os 7 modelos aprovados na Meta (conferidos em 11/10/2026,
-  texto idêntico ao do código); o 8º, `birdjud_mensagem_nao_entregue`,
-  submetido em 11/10 e em análise. Faltam `[voce]`: a forma de pagamento da
-  conta (erro 141006) e o nome de exibição, que só se pede no WhatsApp
+- **WhatsApp**: envio provado em 11/10/2026 — mensagem de modelo entregue
+  num celular real. Os 7 modelos estao aprovados (texto identico ao do
+  codigo); o 8o, `birdjud_mensagem_nao_entregue`, esta em analise. Forma de
+  pagamento e informacoes fiscais cadastradas na Meta (os erros 141006 e
+  131042 acabaram). Falta `[voce]` o nome de exibicao, pedido no WhatsApp
   Manager.
 - **NFS-e**: layout marcado "a conferir"; rodar `npm run conferir-nfse` com
   certificado A1 em homologacao antes de emitir nota de verdade.

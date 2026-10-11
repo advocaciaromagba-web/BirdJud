@@ -213,6 +213,19 @@ E o comportamento certo para uma mensagem solta — sem lembrete pendente, o
 sistema nao responde. A primeira tentativa nao chegou: o celular guardava
 sessao antiga do numero; apagar a conversa e mandar de novo resolveu.
 
+## Pagamento na Meta (resolvido em 11/10/2026)
+
+Sem forma de pagamento, a Meta aceita a mensagem na API e recusa a entrega
+depois, pelo webhook, com **131042**. No Brasil sao DUAS coisas, nesta ordem:
+
+1. o cartao, em Cobranca e pagamentos da conta do WhatsApp Business;
+2. as **informacoes fiscais** (CNPJ ou CPF, razao social, endereco). Sem
+   elas o erro continua, com o detalhe "incomplete tax information".
+
+Depois das duas, a Meta leva alguns minutos para reconhecer o cartao (o erro
+muda para "errors related to your payment method" e some sozinho). O motivo
+de toda recusa aparece no log da aplicacao como `meta recusou a entrega`.
+
 ## Como o envio se comporta
 
 - Um aviso por canal: quem tem e-mail e WhatsApp recebe os dois, e ligar o
