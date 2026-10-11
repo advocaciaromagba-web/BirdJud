@@ -60,7 +60,14 @@ const entrada = z.object({
                       status: z.string(),
                       timestamp: z.string().nullish(),
                       errors: z
-                        .array(z.object({ code: z.number().nullish(), title: z.string().nullish(), message: z.string().nullish() }))
+                        .array(
+                          z.object({
+                            code: z.number().nullish(),
+                            title: z.string().nullish(),
+                            message: z.string().nullish(),
+                            error_data: z.object({ details: z.string().nullish() }).nullish(),
+                          }),
+                        )
                         .nullish(),
                     }),
                   )
@@ -185,6 +192,17 @@ export async function POST(req: Request) {
         titulo: erro?.message ?? erro?.title ?? null,
       });
       if (d !== "DESCONHECIDA" && d !== "SEM_MUDANCA") anotar(`entrega ${d.toLowerCase()}`, { codigo: erro?.code ?? null });
+      // Toda falha da Meta vai para o log, mesmo de mensagem que nao e aviso
+      // (teste, resposta automatica): e o unico lugar onde o motivo aparece.
+      // So codigo e motivo — nada do texto nem do numero.
+      if (st.status === "failed") {
+        anotar("meta recusou a entrega", {
+          aviso: d !== "DESCONHECIDA",
+          codigo: erro?.code ?? null,
+          titulo: erro?.title ?? null,
+          detalhe: erro?.error_data?.details ?? erro?.message ?? null,
+        });
+      }
     } catch (falha) {
       anotar("entrega falhou", { motivo: falha instanceof Error ? falha.message : "erro" });
     }
