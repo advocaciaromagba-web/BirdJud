@@ -341,14 +341,14 @@ export function PainelHonorarios({
                         key={p.numero}
                         className="flex items-center justify-between text-xs"
                       >
-                        <span className={p.emitida ? "text-slate-400" : "text-slate-700"}>
+                        <span className={p.emitida ? "text-slate-500" : "text-slate-700"}>
                           {p.numero}/{p.total} · {p.vencimentoBR}
                         </span>
                         <span className="flex items-center gap-2">
                           <span className="tabular-nums text-slate-600">{p.valor}</span>
                           <span
                             className={
-                              p.emitida ? "text-emerald-700" : "text-slate-400"
+                              p.emitida ? "text-emerald-700" : "text-slate-500"
                             }
                           >
                             {p.emitida ? "cobrada" : "a cobrar"}

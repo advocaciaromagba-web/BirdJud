@@ -170,7 +170,7 @@ export function ChecklistDoCliente({
             </div>
             <div>
               <label htmlFor="ck-area" className="rotulo">
-                Area <span className="font-normal text-slate-400">opcional</span>
+                Area <span className="font-normal text-slate-500">opcional</span>
               </label>
               <input
                 id="ck-area"
@@ -183,7 +183,7 @@ export function ChecklistDoCliente({
           <div>
             <label htmlFor="ck-desc" className="rotulo">
               Sobre o caso{" "}
-              <span className="font-normal text-slate-400">opcional</span>
+              <span className="font-normal text-slate-500">opcional</span>
             </label>
             <input
               id="ck-desc"
@@ -214,7 +214,7 @@ export function ChecklistDoCliente({
           <div className="mt-5 grid gap-5">
             {Object.entries(porGrupo).map(([rotulo, doGrupo]) => (
               <div key={rotulo}>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                   {rotulo}
                 </p>
                 <ul className="mt-2 grid gap-1">
@@ -230,7 +230,7 @@ export function ChecklistDoCliente({
                       <span className="text-sm">
                         <span
                           className={
-                            estaEntregue(item) ? "text-slate-400 line-through" : ""
+                            estaEntregue(item) ? "text-slate-500 line-through" : ""
                           }
                         >
                           {item.documento}

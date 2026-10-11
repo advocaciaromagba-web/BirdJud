@@ -12,6 +12,7 @@ import {
   luminancia,
   normalizarCor,
   paletaDe,
+  textoLegivelSobre,
   variaveisDaPaleta,
 } from "@/lib/identidade";
 
@@ -188,5 +189,23 @@ describe("o menu lateral escuro", () => {
     ]) {
       expect(vars[chave]).toMatch(/^#[0-9A-Fa-f]{6}$/);
     }
+  });
+});
+
+describe("letra na cor de destaque", () => {
+  it("qualquer destaque vira texto legivel (4,5:1) no cartao e na pagina, sem sair da familia", () => {
+    for (const cor of ["#D4AF7C", "#FFD700", "#E8E8E8", "#C9A227", "#7FDBFF", "#FFFFFF"]) {
+      const texto = textoLegivelSobre(cor);
+      expect(contraste(texto, "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
+      expect(contraste(texto, "#F6F7F8")).toBeGreaterThanOrEqual(4.5);
+    }
+    // Cor que ja e escura fica como esta.
+    expect(textoLegivelSobre("#1B4D3E")).toBe("#1B4D3E");
+  });
+
+  it("a paleta leva a variavel que o sobretitulo usa", () => {
+    const v = variaveisDaPaleta(paletaDe("#0B1F3B", "#D4AF7C"));
+    expect(v["--marca-secundaria-texto"]).toBe(textoLegivelSobre("#D4AF7C"));
+    expect(v["--marca-secundaria"]).toBe("#D4AF7C");
   });
 });

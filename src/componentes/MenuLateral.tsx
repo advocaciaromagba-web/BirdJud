@@ -167,7 +167,7 @@ export function MenuLateral({
   return (
     <>
       {/* Tela larga: a barra fica sempre visivel. */}
-      <aside className="hidden w-64 shrink-0 lg:block">
+      <aside aria-label="Menu principal" className="hidden w-64 shrink-0 lg:block">
         <div className="sticky top-0 h-dvh">{corpo}</div>
       </aside>
 
@@ -216,6 +216,7 @@ export function MenuLateral({
         ) : null}
 
         <aside
+          aria-label="Menu principal no celular"
           className={`fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-200 ${
             aberto ? "translate-x-0" : "-translate-x-full"
           }`}

@@ -157,7 +157,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
               }
             >
               {top ? <p className="sobretitulo">Mais completo</p> : null}
-              <h3 className="mt-1 text-lg">{PLANO[plano].rotulo}</h3>
+              <h2 className="mt-1 text-lg">{PLANO[plano].rotulo}</h2>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
                 {PLANO[plano].chamada}
               </p>

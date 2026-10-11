@@ -60,7 +60,7 @@ export function RoteiroDePrimeirosPassos({
           <section key={fase.chave}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-lg font-bold">
-                <span className="mr-2 text-slate-400">{i + 1}.</span>
+                <span className="mr-2 text-slate-500">{i + 1}.</span>
                 {fase.titulo}
               </h2>
               <span className="text-sm text-slate-500">

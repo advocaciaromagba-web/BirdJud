@@ -123,6 +123,12 @@ export type Paleta = {
   primariaClara: string;
   /** Borda e separador na familia da marca, em vez de cinza generico. */
   primariaSuave: string;
+  /**
+   * A cor de destaque escurecida ate ser LIDA sobre fundo claro (4,5:1).
+   * Ouro puro sobre branco fica em 2:1: serve para filete e selo, nao para
+   * letra. O sobretitulo usa esta.
+   */
+  secundariaTexto: string;
 
   /* --- O menu lateral escuro ------------------------------------------ */
 
@@ -159,6 +165,19 @@ const FUNDO_DO_MENU = "#0B1220";
  * BLOCO de cor, nao uma letra. O texto sobre o bloco e escolhido depois, por
  * corDoTextoSobre, e esse sim fecha contraste de leitura.
  */
+/**
+ * A mesma cor, puxada para o preto ate fechar 4,5:1 sobre TODOS os fundos
+ * claros do sistema (branco do cartao e off-white da pagina). Continua da
+ * familia — ouro vira bronze —, so que legivel.
+ */
+export function textoLegivelSobre(cor: string, fundos: string[] = ["#FFFFFF", "#F6F7F8"]): string {
+  let candidata = cor;
+  for (let passo = 0; passo < 20 && fundos.some((f) => contraste(candidata, f) < 4.5); passo += 1) {
+    candidata = misturar(candidata, "#000000", 0.08);
+  }
+  return candidata;
+}
+
 function destaqueVisivelSobre(cor: string, fundo: string): string {
   let candidata = cor;
   for (let passo = 0; passo < 8 && contraste(candidata, fundo) < 3; passo += 1) {
@@ -185,6 +204,7 @@ export function paletaDe(primaria: string, secundaria: string): Paleta {
     primariaEscura: misturar(p, "#000000", 0.18),
     primariaClara: misturar(p, "#FFFFFF", 0.94),
     primariaSuave: misturar(p, "#FFFFFF", 0.78),
+    secundariaTexto: textoLegivelSobre(s),
     ...menuDe(p, s),
   };
 }
@@ -232,6 +252,7 @@ export function variaveisDaPaleta(paleta: Paleta): Record<string, string> {
     "--marca-primaria-escura": paleta.primariaEscura,
     "--marca-primaria-clara": paleta.primariaClara,
     "--marca-primaria-suave": paleta.primariaSuave,
+    "--marca-secundaria-texto": paleta.secundariaTexto,
     "--menu-fundo": paleta.menuFundo,
     "--menu-realce": paleta.menuRealce,
     "--menu-borda": paleta.menuBorda,

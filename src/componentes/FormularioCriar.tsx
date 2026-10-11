@@ -223,7 +223,7 @@ export function FormularioCriar({
             <label htmlFor={`campo-${campo.nome}`} className="rotulo">
               {campo.rotulo}
               {campo.obrigatorio ? (
-                <span className="text-slate-400"> *</span>
+                <span className="text-slate-500"> *</span>
               ) : null}
             </label>
             {campo.tipo === "cliente" ? (
@@ -253,7 +253,7 @@ export function FormularioCriar({
                         htmlFor={`campo-${campo.nome}-nome`}
                       >
                         Nome do cliente novo
-                        <span className="text-slate-400"> *</span>
+                        <span className="text-slate-500"> *</span>
                       </label>
                       <input
                         id={`campo-${campo.nome}-nome`}

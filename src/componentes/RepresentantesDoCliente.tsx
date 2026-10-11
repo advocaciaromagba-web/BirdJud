@@ -173,7 +173,7 @@ export function RepresentantesDoCliente({
                 </div>
                 <div>
                   <label className="rotulo" htmlFor={`rp-rg-${i}`}>
-                    RG <span className="font-normal text-slate-400">opcional</span>
+                    RG <span className="font-normal text-slate-500">opcional</span>
                   </label>
                   <input
                     id={`rp-rg-${i}`}

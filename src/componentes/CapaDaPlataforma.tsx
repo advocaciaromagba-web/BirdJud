@@ -404,7 +404,7 @@ export function CapaDaPlataforma({
             </p>
           </div>
 
-          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
+          <nav aria-label="Rodape" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
             <Link href="/planos" className="hover:text-white">
               Planos
             </Link>

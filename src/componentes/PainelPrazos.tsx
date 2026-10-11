@@ -186,7 +186,7 @@ export function PainelPrazos({
 
             <div>
               <label htmlFor="pz-processo" className="rotulo">
-                Processo <span className="font-normal text-slate-400">opcional</span>
+                Processo <span className="font-normal text-slate-500">opcional</span>
               </label>
               <select id="pz-processo" name="processoId" className="campo">
                 <option value="">—</option>
@@ -200,7 +200,7 @@ export function PainelPrazos({
 
             <div>
               <label htmlFor="pz-cliente" className="rotulo">
-                Cliente <span className="font-normal text-slate-400">opcional</span>
+                Cliente <span className="font-normal text-slate-500">opcional</span>
               </label>
               <select id="pz-cliente" name="clienteId" className="campo">
                 <option value="">—</option>
@@ -214,7 +214,7 @@ export function PainelPrazos({
 
             <div className="sm:col-span-2">
               <label htmlFor="pz-obs" className="rotulo">
-                Observacao <span className="font-normal text-slate-400">opcional</span>
+                Observacao <span className="font-normal text-slate-500">opcional</span>
               </label>
               <input id="pz-obs" name="observacao" className="campo" />
             </div>

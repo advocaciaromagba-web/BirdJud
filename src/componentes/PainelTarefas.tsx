@@ -361,7 +361,7 @@ export function PainelTarefas({
                       </p>
                     ) : null}
                     {t.numeroProcesso || t.nomeDoCliente ? (
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-0.5 text-xs text-slate-500">
                         {[t.nomeDoCliente, t.numeroProcesso]
                           .filter(Boolean)
                           .join(" · ")}

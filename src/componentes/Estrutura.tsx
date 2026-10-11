@@ -195,14 +195,14 @@ export function Estrutura({
       />
 
       <div className="min-w-0 flex-1">
-        <div className="sticky top-0 z-10 hidden border-b border-slate-200/70 bg-white/75 backdrop-blur-md lg:block">
+        <header className="sticky top-0 z-10 hidden border-b border-slate-200/70 bg-white/75 backdrop-blur-md lg:block">
           {/* So a busca. O cargo e o Sair saiam daqui tambem, e repetidos
               do cartao no pe do menu: duas saidas na mesma tela e uma a
               mais para a pessoa conferir qual e a certa. */}
           <div className="flex items-center gap-4 px-6 py-2.5">
             <CampoDeBusca termoInicial={termoDeBusca} />
           </div>
-        </div>
+        </header>
 
         <main className={largura === "estreita" ? "pagina-estreita" : "pagina"}>
           <div className="cabecalho-da-pagina">

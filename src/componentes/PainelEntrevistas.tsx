@@ -46,7 +46,7 @@ function Lista({ titulo, itens }: { titulo: string; itens: unknown }) {
       <ul className="mt-1 grid gap-1 text-sm text-slate-700">
         {valores.map((valor, i) => (
           <li key={i} className="flex gap-2">
-            <span className="text-slate-400">·</span>
+            <span className="text-slate-500">·</span>
             <span>{valor}</span>
           </li>
         ))}
@@ -233,7 +233,7 @@ export function PainelEntrevistas({
                 <p className="mt-0.5 line-clamp-2 text-sm text-slate-600">
                   {e.assunto}
                 </p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-slate-500">
                   {e.criadaEmBR} · {e.rotuloDaSituacao}
                   {e.temCliente ? " · ja e cliente" : ""}
                 </p>
@@ -272,7 +272,7 @@ export function PainelEntrevistas({
                     <ol className="grid gap-1 text-sm text-slate-700">
                       {e.roteiro.map((pergunta, i) => (
                         <li key={i} className="flex gap-2">
-                          <span className="w-5 shrink-0 text-right text-slate-400">
+                          <span className="w-5 shrink-0 text-right text-slate-500">
                             {i + 1}.
                           </span>
                           <span>{pergunta}</span>

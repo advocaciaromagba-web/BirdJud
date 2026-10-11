@@ -128,7 +128,7 @@ export function FichaDoCliente({
           <label htmlFor={`cli-${campo.nome}`} className="rotulo">
             {campo.rotulo}
             {campo.obrigatorio ? null : (
-              <span className="ml-1 font-normal text-slate-400">opcional</span>
+              <span className="ml-1 font-normal text-slate-500">opcional</span>
             )}
           </label>
           {campo.tipo === "textarea" ? (

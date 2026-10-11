@@ -179,6 +179,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <input
             type="file"
+            aria-label="Planilha de clientes (.xlsx ou .csv)"
             accept=".xlsx,.csv,.xls,.txt"
             onChange={(e) => {
               setArquivo(e.target.files?.[0] ?? null);
@@ -361,7 +362,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
                 <th className="text-right">Entraram</th>
                 <th className="text-right">Ja existiam</th>
                 <th className="text-right">Recusados</th>
-                <th></th>
+                <th><span className="sr-only">Acoes</span></th>
               </tr>
             </thead>
             <tbody>

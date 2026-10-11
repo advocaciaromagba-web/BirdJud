@@ -147,7 +147,7 @@ export function DespesasFixas({
               <span className="w-12 shrink-0 tabular-nums text-slate-500">
                 dia {d.diaDoVencimento}
               </span>
-              <span className={`min-w-0 flex-1 ${d.ativo ? "" : "text-slate-400 line-through"}`}>
+              <span className={`min-w-0 flex-1 ${d.ativo ? "" : "text-slate-500 line-through"}`}>
                 {d.descricao}
                 <span className="ml-2 text-xs text-slate-500">
                   {rotuloDaCategoria(d.categoria)}
@@ -263,7 +263,7 @@ export function DespesasFixas({
           </div>
           <div>
             <label className="rotulo" htmlFor="fixa-inicio">
-              Comeca em <span className="text-slate-400">opcional</span>
+              Comeca em <span className="text-slate-500">opcional</span>
             </label>
             <input
               id="fixa-inicio"
@@ -276,7 +276,7 @@ export function DespesasFixas({
           </div>
           <div>
             <label className="rotulo" htmlFor="fixa-fim">
-              Acaba em <span className="text-slate-400">opcional</span>
+              Acaba em <span className="text-slate-500">opcional</span>
             </label>
             <input
               id="fixa-fim"

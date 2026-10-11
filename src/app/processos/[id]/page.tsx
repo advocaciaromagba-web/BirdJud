@@ -134,7 +134,7 @@ export default async function PaginaDoProcesso({
                 <span
                   className={
                     compromisso.concluido
-                      ? "text-slate-400 line-through"
+                      ? "text-slate-500 line-through"
                       : "font-semibold"
                   }
                 >

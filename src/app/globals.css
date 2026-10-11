@@ -30,6 +30,8 @@
   --marca-primaria-clara: #f5f7f9;
   --marca-primaria-suave: #ced5dd;
   --marca-secundaria: #d4af7c; /* ouro elegante */
+  /* O ouro escurecido ate ser lido sobre fundo claro (textoLegivelSobre). */
+  --marca-secundaria-texto: #816a4b;
 
   /* Texto sobre a cor primaria. Branco serve para as cores densas que o
      cadastro aceita; a conferencia de contraste fica na tela de marca. */
@@ -159,6 +161,13 @@ h3 {
 /* Rotulo pequeno em versalete, acima de um titulo de secao. Em ouro. */
 .sobretitulo {
   @apply text-xs font-semibold uppercase tracking-[0.18em];
+  /* Letra pequena sobre fundo claro: o ouro puro fica em 2:1 e some. A
+     versao escurecida e da mesma familia e fecha 4,5:1 (WCAG AA). */
+  color: var(--marca-secundaria-texto);
+}
+
+/* Sobre faixa escura o ouro original e o que tem contraste. */
+.faixa-escura .sobretitulo {
   color: var(--marca-secundaria);
 }
 

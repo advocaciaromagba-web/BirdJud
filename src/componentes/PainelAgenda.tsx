@@ -399,7 +399,7 @@ export function PainelAgenda({
               <th>Cliente</th>
               <th>Sala</th>
               <th>Status</th>
-              <th></th>
+              <th><span className="sr-only">Acoes</span></th>
             </tr>
           </thead>
           <tbody>

@@ -53,11 +53,11 @@ Ver `docs/CLOUDFLARE.md`. Bloqueado: a zona `birdjud.com.br` esta na
 Cloudflare (nameservers `ingrid` e `salvador`), mas nao na conta a que temos
 acesso. Enquanto a conta nao for encontrada, nao ha o que ligar.
 
-### 4. Monitor externo `[nos + voce]`
+### 4. Monitor externo — resolvido em 11/10/2026
 
-O vigia roda dentro do mesmo provedor que vigia. Se o ambiente inteiro cair,
-ele cai junto e ninguem e avisado. Plano gratuito de UptimeRobot ou Better
-Stack basta.
+O GitHub Actions confere o sistema de fora do Railway a cada 10 minutos
+(saúde com banco, entrada, site, certificado). Quando cai, abre uma issue e o
+GitHub manda e-mail ao dono do repositório. Ver `docs/VIGIA-EXTERNO.md`.
 
 ### 5. Regra de 90 dias no balde do R2 `[voce]`
 
@@ -85,12 +85,22 @@ mesma para os sete, e revogar por causa de um derruba os outros seis.
 
 ## Ficam para depois do piloto
 
-- **WhatsApp**: dois modelos aprovados na Meta e as credenciais do escritorio.
+- **WhatsApp**: os 7 modelos aprovados na Meta (conferidos em 11/10/2026,
+  texto idêntico ao do código); o 8º, `birdjud_mensagem_nao_entregue`,
+  submetido em 11/10 e em análise. Faltam `[voce]`: a forma de pagamento da
+  conta (erro 141006) e o nome de exibição, que só se pede no WhatsApp
+  Manager.
 - **NFS-e**: layout marcado "a conferir"; rodar `npm run conferir-nfse` com
   certificado A1 em homologacao antes de emitir nota de verdade.
-- **Acessibilidade**: nunca auditada com leitor de tela.
+- **Acessibilidade**: auditoria automática (axe) feita e corrigida em
+  11/10/2026, ver `docs/ACESSIBILIDADE.md`. Falta teste com leitor de tela
+  de verdade.
 - **Desempenho sob carga**: nunca medido com mais de um escritorio ativo.
-- **Expurgo dos registros de acesso de suporte**: declarado, sem rotina.
+- **Expurgo dos registros de acesso de suporte** `[voce]`: nenhum documento
+  (termos, política, SLA, contrato) diz por quanto tempo esse registro fica.
+  Antes de criar a rotina é preciso decidir o prazo. O Marco Civil (art. 15)
+  pede no mínimo 6 meses para registro de acesso, e o registro também é prova
+  a favor do escritório.
 - **Varredura por mais confianca em cabecalho de visitante**: em 04/10 foi
   achado um ponto (a origem das tentativas). Nao ha base para dizer que era o
   unico.

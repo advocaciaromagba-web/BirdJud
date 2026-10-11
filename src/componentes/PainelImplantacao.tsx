@@ -83,7 +83,7 @@ function Secao({ numero, titulo, resumo, children }: { numero: number; titulo: s
   return (
     <section className="cartao">
       <h2 className="text-lg font-bold">
-        <span className="mr-2 text-slate-400">{numero}.</span>
+        <span className="mr-2 text-slate-500">{numero}.</span>
         {titulo}
       </h2>
       <p className="mt-1 text-sm text-slate-600">{resumo}</p>
@@ -204,7 +204,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                 <th>OAB</th>
                 <th>WhatsApp</th>
                 <th>Acesso</th>
-                <th></th>
+                <th><span className="sr-only">Acoes</span></th>
               </tr>
             </thead>
             <tbody>

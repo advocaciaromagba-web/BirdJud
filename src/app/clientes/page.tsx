@@ -179,7 +179,7 @@ export default async function PaginaClientes() {
                           {pendencias.length} a completar
                         </span>
                       ) : (
-                        <span className="text-slate-400">completo</span>
+                        <span className="text-slate-500">completo</span>
                       )}
                     </td>
                     <td className="text-right tabular-nums">

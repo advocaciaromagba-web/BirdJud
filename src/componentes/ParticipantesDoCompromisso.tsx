@@ -192,7 +192,7 @@ export function ParticipantesDoCompromisso({
                   <label className="rotulo">
                     Telefone{" "}
                     {p.clienteId ? (
-                      <span className="text-slate-400">so se for outro</span>
+                      <span className="text-slate-500">so se for outro</span>
                     ) : null}
                   </label>
                   <input
@@ -205,7 +205,7 @@ export function ParticipantesDoCompromisso({
                   <label className="rotulo">
                     E-mail{" "}
                     {p.clienteId ? (
-                      <span className="text-slate-400">so se for outro</span>
+                      <span className="text-slate-500">so se for outro</span>
                     ) : null}
                   </label>
                   <input

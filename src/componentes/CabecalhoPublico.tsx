@@ -29,7 +29,7 @@ export function CabecalhoPublico() {
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
         <MarcaBirdJud tamanho="pequena" />
 
-        <nav className="ml-6 hidden flex-1 items-center gap-6 text-sm lg:flex">
+        <nav aria-label="Navegacao do site" className="ml-6 hidden flex-1 items-center gap-6 text-sm lg:flex">
           {AREAS.map((area) => (
             <Link
               key={area.href}
@@ -83,7 +83,7 @@ export function CabecalhoPublico() {
 
       {aberto ? (
         <div className="border-t border-slate-200 bg-white lg:hidden">
-          <nav className="mx-auto grid max-w-6xl gap-1 px-4 py-3 sm:px-6">
+          <nav aria-label="Navegacao do site no celular" className="mx-auto grid max-w-6xl gap-1 px-4 py-3 sm:px-6">
             {AREAS.map((area) => (
               <Link
                 key={area.href}
