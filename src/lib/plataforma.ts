@@ -57,6 +57,22 @@ export async function exigirOperador(): Promise<ContextoOperador> {
  * suporte seria invisivel — e e exatamente o acesso que mais precisa de
  * rastro, porque atravessa o isolamento.
  */
+/**
+ * Por quanto tempo o registro de acesso do suporte fica guardado: 12 meses,
+ * decisao de 11/10/2026. Acima dos 6 meses minimos do Marco Civil (art. 15)
+ * para registro de acesso, e o bastante para o escritorio pedir o historico
+ * de um ano inteiro.
+ */
+export const MESES_DE_GUARDA_DO_ACESSO_DE_SUPORTE = 12;
+
+/** Apaga o registro de acesso de suporte mais velho que o prazo de guarda. */
+export async function expurgarAcessosDeSuporte(agora = new Date()): Promise<number> {
+  const limite = new Date(agora);
+  limite.setMonth(limite.getMonth() - MESES_DE_GUARDA_DO_ACESSO_DE_SUPORTE);
+  const r = await prismaPlataforma().acessoSuporte.deleteMany({ where: { iniciadoEm: { lt: limite } } });
+  return r.count;
+}
+
 export async function registrarAcessoSuporte(
   operadorId: string,
   escritorioId: string,

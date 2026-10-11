@@ -125,7 +125,7 @@ do Railway, nao a mao — o que esta aqui e o retrato do que foi criado.
 | `trabalhador` | consome a fila (inclusive `ORGANIZAR_NUVEM`: precisa das variaveis `MICROSOFT_*` e `GOOGLE_*` tambem) | start `npm run trabalhador`, reinicio sempre |
 | `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN, **triagem das publicacoes**, contas a pagar do mes e, em seguida, os avisos — nessa ordem |
 | `cron-diario` | `0 9 * * *` (06h de Brasilia) | consumo, regua de cobranca, sincronizacao de cobrancas, emissao de parcela de honorarios e **arquivamento da agenda** (`ARQUIVAR_AGENDA`, ver docs/AGENDA.md) |
-| `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados |
+| `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados e `LIMPAR_VENCIDOS` (janelas de limite, pedidos de senha vencidos e acesso de suporte com mais de 12 meses) |
 | `cron-horario` | `7 * * * *` (de hora em hora) | `LEMBRAR`: so os lembretes de compromisso |
 
 **Por que existe um cron de hora em hora.** A regua de lembretes tem um marco

@@ -9,6 +9,7 @@ import { competenciaDe, definirConsumo } from "./consumo";
 import { moduloAtivo, type Modulo } from "./modulos";
 import { enfileirar } from "./fila";
 import { limparLimitesVencidos } from "./limite";
+import { expurgarAcessosDeSuporte } from "./plataforma";
 import { limparPedidosVencidosDeTodos } from "./redefinicao";
 import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
@@ -222,8 +223,10 @@ async function sincronizarCobrancasDoEscritorio({
 async function limparVencidos(): Promise<void> {
   const janelas = await limparLimitesVencidos();
   const pedidos = await limparPedidosVencidosDeTodos();
+  // Registro de acesso do suporte: 12 meses de guarda (ver plataforma.ts).
+  const acessos = await expurgarAcessosDeSuporte();
   console.log(
-    `limpeza: ${janelas} janela(s) de limite e ${pedidos} pedido(s) de senha`,
+    `limpeza: ${janelas} janela(s) de limite, ${pedidos} pedido(s) de senha e ${acessos} acesso(s) de suporte com mais de 12 meses`,
   );
 }
 

@@ -96,11 +96,9 @@ mesma para os sete, e revogar por causa de um derruba os outros seis.
   11/10/2026, ver `docs/ACESSIBILIDADE.md`. Falta teste com leitor de tela
   de verdade.
 - **Desempenho sob carga**: nunca medido com mais de um escritorio ativo.
-- **Expurgo dos registros de acesso de suporte** `[voce]`: nenhum documento
-  (termos, política, SLA, contrato) diz por quanto tempo esse registro fica.
-  Antes de criar a rotina é preciso decidir o prazo. O Marco Civil (art. 15)
-  pede no mínimo 6 meses para registro de acesso, e o registro também é prova
-  a favor do escritório.
+- **Expurgo dos registros de acesso de suporte**: resolvido em 11/10/2026 —
+  guarda de 12 meses, rotina semanal `LIMPAR_VENCIDOS`. Falta declarar o
+  prazo nos Termos na proxima revisao juridica (ver `docs/juridico/LEIA-ME.md`).
 - **Varredura por mais confianca em cabecalho de visitante**: em 04/10 foi
   achado um ponto (a origem das tentativas). Nao ha base para dizer que era o
   unico.

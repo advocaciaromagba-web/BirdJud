@@ -26,3 +26,13 @@ leu.
 - valores e reajuste (a tabela de precos em `src/lib/precos.ts` e provisoria);
 - prazo de retencao apos encerramento (hoje: 90 dias, em `src/lib/juridico.ts`);
 - se o suporte tera telefone, e em que horario.
+
+
+## Para a proxima revisao
+
+- **Termos de Uso, item 5 (Acesso de suporte):** incluir que o registro de
+  cada acesso fica guardado por **12 meses** e depois e apagado (decisao de
+  11/10/2026; a rotina ja aplica o prazo). Nao foi incluido agora porque
+  mudar o texto exige subir `VERSAO_DOS_DOCUMENTOS` em `src/lib/juridico.ts`,
+  e isso pede novo aceite a todos os escritorios: melhor juntar com a revisao
+  do advogado.

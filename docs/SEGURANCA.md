@@ -56,6 +56,11 @@ com operador, escritorio, motivo e momento.
 Nao existe "entrar como o escritorio" (impersonacao). Se um dia existir, o
 registro ja tem onde ficar.
 
+**Guarda: 12 meses** (decisao de 11/10/2026). A rotina semanal
+`LIMPAR_VENCIDOS` apaga o registro mais velho que isso
+(`expurgarAcessosDeSuporte` em `src/lib/plataforma.ts`). Fica acima dos 6 meses
+minimos do Marco Civil (art. 15) para registro de acesso.
+
 ## Backup e restauracao
 
 - backup por escritorio em JSON completo (`npm run backup`), incluindo as
