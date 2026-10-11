@@ -103,6 +103,17 @@ export async function aplicarRegua(
   let faturaGerada: string | null = null;
   const assinatura = escritorio.assinatura;
 
+  // Cortesia: usa sem pagar, por tempo indeterminado. Nenhuma fatura e o
+  // escritorio fica ATIVO — nem "teste" que nunca acaba, nem inadimplente.
+  // Encerrado continua decisao humana.
+  if (assinatura?.cortesiaDesde) {
+    const statusNovo = escritorio.status === "ENCERRADO" ? "ENCERRADO" : "ATIVO";
+    if (statusNovo !== escritorio.status) {
+      await prismaPlataforma().escritorio.update({ where: { id: escritorioId }, data: { status: statusNovo } });
+    }
+    return { faturaGerada: null, statusAnterior: escritorio.status, statusNovo };
+  }
+
   // 1. Fatura do mes — so depois do periodo de teste, e so uma por competencia.
   if (assinatura && !assinatura.canceladaEm && assinatura.fimDoTeste <= agora) {
     const competencia = competenciaDe(agora);

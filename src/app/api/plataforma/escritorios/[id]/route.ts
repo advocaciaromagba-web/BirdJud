@@ -28,6 +28,8 @@ const acao = z.discriminatedUnion("acao", [
   }),
   z.object({ acao: z.literal("plano"), plano: z.enum(PLANOS) }),
   z.object({ acao: z.literal("regua") }),
+  // Cortesia: usa sem pagar, por tempo indeterminado (ver cobranca.ts).
+  z.object({ acao: z.literal("cortesia"), ligar: z.boolean(), motivo: z.string().trim().max(300).optional() }),
   // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
   // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
@@ -145,6 +147,34 @@ export async function POST(
           `Plano ${PLANO[corpo.data.plano].rotulo} aplicado. ` +
           `Mensalidade pela tabela de hoje: ${(conta.totalCentavos / 100).toFixed(2)}. ` +
           "O valor da assinatura nao foi alterado.",
+      });
+    }
+
+    if (corpo.data.acao === "cortesia") {
+      const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
+      if (!assinatura) {
+        return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      }
+      if (corpo.data.ligar && !corpo.data.motivo) {
+        return NextResponse.json({ erro: "Diga o motivo da cortesia: fica registrado." }, { status: 400 });
+      }
+      await prismaPlataforma().assinatura.update({
+        where: { escritorioId: escritorio.id },
+        data: corpo.data.ligar
+          ? { cortesiaDesde: new Date(), cortesiaMotivo: corpo.data.motivo, cortesiaPor: operador.nome ?? operador.operadorId }
+          : { cortesiaDesde: null, cortesiaMotivo: null, cortesiaPor: null },
+      });
+      await registrarAcessoSuporte(
+        operador.operadorId,
+        escritorio.id,
+        corpo.data.ligar ? `Cortesia concedida: ${corpo.data.motivo}` : "Cortesia retirada",
+      );
+      // Na hora, para o status ja refletir (cortesia deixa ATIVO).
+      const r = await aplicarRegua(escritorio.id);
+      return NextResponse.json({
+        detalhe: corpo.data.ligar
+          ? `Cortesia ligada: nenhuma fatura sera gerada. Status ${r.statusNovo}.`
+          : `Cortesia retirada: a regua volta a cobrar no proximo vencimento. Status ${r.statusNovo}.`,
       });
     }
 

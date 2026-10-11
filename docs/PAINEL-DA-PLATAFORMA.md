@@ -49,3 +49,19 @@ testes; o recebido do mes contra o anterior.
 - `src/componentes/GraficosDoPainel.tsx` — pizza, colunas e cartao de numero, em SVG
 - `src/app/plataforma/page.tsx`
 - testes: `testes/painel-plataforma.test.ts`, com uma carteira de datas e valores conhecidos
+
+
+## Cortesia
+
+Escritorio que usa sem pagar, por tempo indeterminado (ex.: o da casa, para
+testes). Na ficha do escritorio, em **Acoes da plataforma → Cortesia**, com
+motivo obrigatorio; fica registrado quem concedeu e quando, e vira linha de
+acesso de suporte. Efeito:
+
+- a regua nao gera fatura e deixa o escritorio **ATIVO**;
+- o painel tira o escritorio da receita, do ticket, da previsao e dos
+  "testes acabando", e mostra "N em cortesia" no quadro de escritorios;
+- a tela **Plano** do proprio escritorio mostra "Cortesia — sem mensalidade".
+
+Retirar a cortesia devolve a cobranca: a regua gera a fatura da competencia
+na proxima passada.

@@ -375,6 +375,13 @@ model Assinatura {
   canceladaEm   DateTime?
   criadaEm      DateTime  @default(now())
 
+  // Cortesia: o escritorio usa sem pagar, por tempo indeterminado. A regua
+  // nao gera fatura e o mantem ATIVO; o painel tira da receita e da
+  // previsao. Fica registrado quando, por que e quem concedeu.
+  cortesiaDesde  DateTime?
+  cortesiaMotivo String?
+  cortesiaPor    String?
+
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
 }
 

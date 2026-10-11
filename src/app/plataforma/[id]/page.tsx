@@ -81,6 +81,13 @@ export default async function EscritorioNoPainel({
         ) : (
           <p className="mt-2 text-slate-600">Sem assinatura.</p>
         )}
+        {escritorio.assinatura?.cortesiaDesde ? (
+          <p className="mt-2 font-semibold text-emerald-800">
+            Em cortesia desde {escritorio.assinatura.cortesiaDesde.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+            {escritorio.assinatura.cortesiaPor ? `, por ${escritorio.assinatura.cortesiaPor}` : ""}: nenhuma fatura e gerada.
+            {escritorio.assinatura.cortesiaMotivo ? ` Motivo: ${escritorio.assinatura.cortesiaMotivo}` : ""}
+          </p>
+        ) : null}
         <p className="mt-2 text-slate-600">
           Advogados {uso.advogados.usados}/{uso.advogados.limite} · apoio{" "}
           {uso.apoio.usados}/{uso.apoio.limite}
@@ -108,6 +115,7 @@ export default async function EscritorioNoPainel({
           modulo: m.modulo,
           ativo: m.ativo,
         }))}
+        emCortesia={Boolean(escritorio.assinatura?.cortesiaDesde)}
       />
 
       <section className="mt-6">

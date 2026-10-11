@@ -25,13 +25,12 @@ Medido no console da plataforma em 06/10: ADVOCACIA ROMA tem **1 usuario e 0
 registros**. Nenhum cliente, nenhum processo, nenhuma publicacao capturada,
 nenhuma fatura emitida, nenhum pagamento recebido.
 
-## Prazo que esta correndo
+## Advocacia Roma em cortesia (11/10/2026)
 
-**12/10/2026**: acaba o teste da ADVOCACIA ROMA (R$ 299,00/mes, vencimento dia
-10). Quando a regua passar, ela agora **emite cobranca de verdade** no Asaas —
-boleto e Pix — e manda o link por e-mail ao administrador. E a Blackbird
-cobrando a Advocacia Roma, as duas suas. Decidir antes se e isso mesmo:
-estender o teste, cancelar a assinatura ou deixar correr para provar o ciclo.
+Decisao: a ADVOCACIA ROMA fica em **cortesia ilimitada**, para os testes
+correrem sem cobranca. A regua nao gera fatura, o escritorio fica ATIVO e o
+painel da plataforma o tira da receita e da previsao. Concede-se e retira-se
+na ficha do escritorio no console (`Cortesia`), com motivo registrado.
 
 ## Impedem o uso real
 

@@ -29,7 +29,7 @@ export default async function PainelDaPlataforma() {
     select: {
       id: true, nome: true, status: true, faixa: true, criadoEm: true, encerradoEm: true,
       implantadoEm: true, entregueEm: true, slug: true,
-      assinatura: { select: { valorCentavos: true, diaVencimento: true, fimDoTeste: true, canceladaEm: true } },
+      assinatura: { select: { valorCentavos: true, diaVencimento: true, fimDoTeste: true, canceladaEm: true, cortesiaDesde: true } },
       faturas: {
         where: { OR: [{ status: "ABERTA" }, { pagoEm: { gte: desde } }] },
         select: { competencia: true, valorCentavos: true, vencimento: true, status: true, pagoEm: true },
@@ -60,7 +60,7 @@ export default async function PainelDaPlataforma() {
         <Numero
           rotulo="Escritorios"
           valor={String(a.escritorios.total)}
-          detalhe={`${a.escritorios.porStatus.find((s) => s.chave === "TESTE")!.valor} em teste`}
+          detalhe={`${a.escritorios.porStatus.find((s) => s.chave === "TESTE")!.valor} em teste${a.cortesias ? ` · ${a.cortesias} em cortesia` : ""}`}
         />
         <Numero
           rotulo="Vencido"

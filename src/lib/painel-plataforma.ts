@@ -59,7 +59,7 @@ export type EscritorioNoPainel = {
   faixa: string;
   criadoEm: Date;
   encerradoEm: Date | null;
-  assinatura: { valorCentavos: number; diaVencimento: number; fimDoTeste: Date; canceladaEm: Date | null } | null;
+  assinatura: { valorCentavos: number; diaVencimento: number; fimDoTeste: Date; canceladaEm: Date | null; cortesiaDesde?: Date | null } | null;
   faturas: FaturaNoPainel[];
 };
 
@@ -73,6 +73,8 @@ export type Analise = {
   pagantes: number;
   ticketMedio: number;
   receitaEmTeste: number;
+  /** Escritorios em cortesia: usam sem pagar. */
+  cortesias: number;
   porFaixa: Fatia[];
   vencido: { total: number; escritorios: number; porcentoDaReceita: number; porIdade: Fatia[]; maiorDevedor: { nome: string; valor: number; dias: number } | null };
   recebidoNoMes: number;
@@ -122,9 +124,12 @@ export function analisarCarteira(escritorios: EscritorioNoPainel[], agora = new 
     valor: escritorios.filter((e) => e.status === s).length,
   }));
 
-  const pagantes = escritorios.filter((e) => PAGAM.has(e.status) && e.assinatura && !e.assinatura.canceladaEm);
+  // Cortesia nao paga: fica fora da receita, do ticket e da previsao.
+  const cobravel = (e: EscritorioNoPainel) => e.assinatura && !e.assinatura.canceladaEm && !e.assinatura.cortesiaDesde;
+  const cortesias = escritorios.filter((e) => e.status !== "ENCERRADO" && e.assinatura?.cortesiaDesde).length;
+  const pagantes = escritorios.filter((e) => PAGAM.has(e.status) && cobravel(e));
   const receitaMensal = pagantes.reduce((s, e) => s + e.assinatura!.valorCentavos, 0);
-  const emTeste = escritorios.filter((e) => e.status === "TESTE" && e.assinatura && !e.assinatura.canceladaEm);
+  const emTeste = escritorios.filter((e) => e.status === "TESTE" && cobravel(e));
   const receitaEmTeste = emTeste.reduce((s, e) => s + e.assinatura!.valorCentavos, 0);
 
   const porFaixa = FAIXAS_EM_ORDEM.map((f) => ({
@@ -203,6 +208,7 @@ export function analisarCarteira(escritorios: EscritorioNoPainel[], agora = new 
     pagantes: pagantes.length,
     ticketMedio: pagantes.length ? Math.round(receitaMensal / pagantes.length) : 0,
     receitaEmTeste,
+    cortesias,
     porFaixa,
     vencido: {
       total: vencidoTotal,

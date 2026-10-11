@@ -23,16 +23,20 @@ export function AcoesDoEscritorio({
   escritorioId,
   faixaAtual,
   modulos,
+  emCortesia = false,
 }: {
   escritorioId: string;
   faixaAtual: string;
   modulos: { modulo: string; ativo: boolean }[];
+  /** Assinatura em cortesia: usa sem pagar. */
+  emCortesia?: boolean;
 }) {
   const router = useRouter();
   const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
     null,
   );
   const [ocupado, setOcupado] = useState(false);
+  const [motivo, setMotivo] = useState("");
   const contratados = new Map(modulos.map((m) => [m.modulo, m.ativo]));
   const ativos = modulos
     .filter((m) => m.ativo)
@@ -142,6 +146,43 @@ export function AcoesDoEscritorio({
         >
           Passar a regua agora
         </button>
+      </div>
+
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="font-semibold">Cortesia</p>
+        <p className="mt-1 text-slate-600">
+          Usa sem pagar, por tempo indeterminado: nenhuma fatura e gerada, o escritorio fica ativo e sai da receita e da
+          previsao do painel.
+        </p>
+        {emCortesia ? (
+          <button
+            type="button"
+            disabled={ocupado}
+            onClick={() => agir({ acao: "cortesia", ligar: false })}
+            className="mt-2 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+          >
+            Retirar a cortesia (volta a cobrar)
+          </button>
+        ) : (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              aria-label="Motivo da cortesia"
+              className="campo max-w-sm"
+              placeholder="Motivo (ex.: escritorio da casa, para testes)"
+              value={motivo}
+              maxLength={300}
+              onChange={(e) => setMotivo(e.target.value)}
+            />
+            <button
+              type="button"
+              disabled={ocupado || !motivo.trim()}
+              onClick={() => agir({ acao: "cortesia", ligar: true, motivo: motivo.trim() })}
+              className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+            >
+              Conceder cortesia
+            </button>
+          </div>
+        )}
       </div>
 
       {recado ? (

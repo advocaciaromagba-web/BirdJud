@@ -55,7 +55,8 @@ export default async function PaginaDoPlano() {
   // O que vale e o valor fechado na assinatura; a tabela pode ter mudado
   // depois, e contrato assinado nao muda por isso.
   const mensalidade = assinatura?.valorCentavos ?? conta.totalCentavos;
-  const emTeste = assinatura
+  const emCortesia = Boolean(assinatura?.cortesiaDesde);
+  const emTeste = assinatura && !emCortesia
     ? assinatura.fimDoTeste.getTime() > Date.now()
     : false;
 
@@ -75,8 +76,8 @@ export default async function PaginaDoPlano() {
     >
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="indicador">
-          <p className="indicador-numero">{emReais(mensalidade)}</p>
-          <p className="indicador-rotulo">Mensalidade contratada</p>
+          <p className="indicador-numero">{emCortesia ? "Cortesia" : emReais(mensalidade)}</p>
+          <p className="indicador-rotulo">{emCortesia ? "Sem mensalidade" : "Mensalidade contratada"}</p>
         </section>
         <section className="indicador">
           <p className="indicador-numero">
@@ -93,6 +94,12 @@ export default async function PaginaDoPlano() {
           <p className="indicador-rotulo">Equipe de apoio ativa</p>
         </section>
       </div>
+
+      {emCortesia ? (
+        <p className="aviso-ok mt-4">
+          Este escritorio esta em cortesia: usa o sistema sem custo e nenhuma fatura e gerada.
+        </p>
+      ) : null}
 
       {emTeste && assinatura ? (
         <p className="aviso-info mt-4">
