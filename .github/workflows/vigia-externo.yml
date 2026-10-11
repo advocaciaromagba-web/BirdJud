@@ -1,0 +1,62 @@
+name: Vigia externo
+
+# Confere o BirdJud de FORA do Railway a cada 10 minutos. Quando cai, abre uma
+# issue "Vigia externo: sistema com falha" — e o GitHub manda e-mail ao dono
+# do repositorio. Quando volta, comenta e fecha a mesma issue. Ver docs/VIGIA-EXTERNO.md.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: vigia-externo
+  cancel-in-progress: false
+
+jobs:
+  conferir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/vigia-externo.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Conferir producao
+        id: conferir
+        run: |
+          set +e
+          bash scripts/vigia-externo.sh > relatorio.txt
+          echo "saida=$?" >> "$GITHUB_OUTPUT"
+          cat relatorio.txt
+
+      - name: Abrir ou fechar o alarme
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SAIDA: ${{ steps.conferir.outputs.saida }}
+          DONO: ${{ github.repository_owner }}
+        run: |
+          TITULO="Vigia externo: sistema com falha"
+          ABERTA=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITULO\" in:title" --json number --jq '.[0].number // empty')
+          if [ "$SAIDA" != "0" ]; then
+            if [ -z "$ABERTA" ]; then
+              {
+                echo "@$DONO o vigia externo nao conseguiu confirmar que o BirdJud esta no ar."
+                echo
+                echo '```'
+                cat relatorio.txt
+                echo '```'
+                echo
+                echo "Esta issue fecha sozinha quando o sistema voltar a responder."
+              } > corpo.md
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITULO" --body-file corpo.md
+            fi
+            exit 1
+          elif [ -n "$ABERTA" ]; then
+            gh issue comment "$ABERTA" --repo "$GITHUB_REPOSITORY" --body "Voltou: $(cat relatorio.txt)"
+            gh issue close "$ABERTA" --repo "$GITHUB_REPOSITORY"
+          fi
