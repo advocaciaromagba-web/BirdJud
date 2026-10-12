@@ -163,9 +163,23 @@ export async function POST(
         where: { escritorioId: escritorio.id, canceladaEm: null },
         data: { canceladaEm: new Date() },
       });
+      // Fatura aberta que nunca saiu para o meio de pagamento morre aqui:
+      // ninguem vai cobra-la, e aberta ela viraria "atraso" no painel. A ja
+      // emitida fica como esta — cancelar so aqui deixaria o boleto vivo no
+      // provedor —, e a resposta diz quantas sao.
+      const canceladas = await prismaPlataforma().fatura.updateMany({
+        where: { escritorioId: escritorio.id, status: "ABERTA", idExterno: null },
+        data: { status: "CANCELADA" },
+      });
+      const emitidas = await prismaPlataforma().fatura.count({
+        where: { escritorioId: escritorio.id, status: "ABERTA" },
+      });
       await registrarAcessoSuporte(operador.operadorId, escritorio.id, `Encerrado: ${corpo.data.motivo}`);
       return NextResponse.json({
-        detalhe: `Escritorio encerrado. Os dados ficam ${PRAZO_DE_RETENCAO_DIAS} dias para exportacao e depois sao apagados.`,
+        detalhe:
+          `Escritorio encerrado. Os dados ficam ${PRAZO_DE_RETENCAO_DIAS} dias para exportacao e depois sao apagados.` +
+          (canceladas.count ? ` ${canceladas.count} fatura(s) nao emitida(s) cancelada(s).` : "") +
+          (emitidas ? ` Atencao: ${emitidas} fatura(s) ja emitida(s) no meio de pagamento continuam abertas — cancele no provedor.` : ""),
       });
     }
 
