@@ -12,6 +12,9 @@
 // Nunca o contrario. Prazo errado e a unica coisa neste sistema cujo erro nao
 // tem conserto depois, e modelo de linguagem contando dia util com feriado
 // municipal no meio e exatamente o tipo de conta que parece certa e nao e.
+import { criarTarefa } from "./tarefas-do-escritorio";
+import { fimDoDia } from "./tarefas";
+import { ehTipoDaAgenda } from "./natureza";
 import { comEscritorio, semEscritorio } from "./prisma";
 import { moduloAtivo } from "./modulos";
 import { IARecusou, SemChaveDeIA, milTokens, pedirEstruturado } from "./ia";
@@ -324,26 +327,25 @@ export class SemDataParaAgendar extends Error {
 }
 
 export type Aceite = {
-  compromissoId: string;
-  prazoId: string | null;
+  /** Agendamento (audiencia, pericia, atendimento): nasce na agenda. */
+  compromissoId: string | null;
+  /** Peca, manifestacao, recurso: nasce em Tarefas, com o prazo fatal. */
+  tarefaId: string | null;
   quando: Date;
 };
 
 /**
- * Aceita a sugestao: nasce o compromisso.
+ * Aceita a sugestao: nasce o compromisso OU a tarefa — nunca os dois, e
+ * nunca um no lugar do outro (natureza.ts).
  *
- * Nasce AQUI, e nao na triagem, porque sistema que cria prazo sozinho na
- * agenda do escritorio e sistema em que ninguem confia na agenda — e agenda
- * em que ninguem confia nao e olhada no dia em que importa.
+ * Nasce AQUI, e nao na triagem, porque sistema que lanca sozinho na agenda
+ * do escritorio e sistema em que ninguem confia na agenda.
  *
- * Quando ha prazo fatal, saem DUAS coisas e nao uma:
- *
- *   o COMPROMISSO, na data sugerida (tres dias uteis antes), que e quando o
- *   escritorio trabalha;
- *   o PRAZO, no fatal, que e o que a tela de prazos vigia.
- *
- * Marcar so o fatal e marcar para o dia em que nao da mais para errar; marcar
- * so o sugerido e perder o fatal de vista.
+ *   AGENDAMENTO -> compromisso na agenda, no dia do ato;
+ *   TAREFA      -> tarefa com ENTREGA na data sugerida (tres dias uteis antes)
+ *                  e PRAZO FATAL no fatal. Os dois na mesma linha: marcar so
+ *                  o fatal e marcar para o dia em que nao da mais para errar;
+ *                  marcar so a entrega e perder o fatal de vista.
  */
 export async function aceitarTriagem(
   escritorioId: string,
@@ -353,6 +355,8 @@ export async function aceitarTriagem(
     titulo?: string | null;
     responsavelId?: string | null;
   } = {},
+  /** Quem aceitou: fica com a tarefa quando ninguem foi escolhido. */
+  quemAceitou: string | null = null,
 ): Promise<Aceite> {
   const t = await comEscritorio(escritorioId, (db) =>
     db.triagemDePublicacao.findFirst({
@@ -370,8 +374,8 @@ export async function aceitarTriagem(
     }),
   );
   if (!t) throw new TriagemNaoEncontrada();
-  if (t.compromissoId) {
-    return { compromissoId: t.compromissoId, prazoId: null, quando: t.criadoEm };
+  if (t.compromissoId || t.tarefaId) {
+    return { compromissoId: t.compromissoId, tarefaId: t.tarefaId, quando: t.criadoEm };
   }
 
   // A data, em ordem de confianca: o que a pessoa escolheu, a data que o
@@ -407,41 +411,50 @@ export async function aceitarTriagem(
     .filter(Boolean)
     .join("\n");
 
-  const compromisso = await comEscritorio(escritorioId, (db) =>
-    db.compromisso.create({
-      data: semEscritorio({
-        titulo,
-        tipo: t.tipo,
-        inicio: quando,
-        processoId: processo?.id ?? null,
-        clienteId: processo?.clienteId ?? null,
-        responsavelId: ajustes.responsavelId || null,
-        observacoes: observacoes.slice(0, 2000),
-      }),
-      select: { id: true },
-    }),
-  );
+  const ehTarefa = t.especie === "TAREFA" || t.tipo === "TAREFA";
+  let compromissoId: string | null = null;
+  let tarefaId: string | null = null;
 
-  // O fatal vira prazo de verdade, vigiado pela tela de prazos.
-  let prazoId: string | null = null;
-  if (t.prazoDias && t.prazoDias > 0) {
-    const { id } = await registrarPrazo(escritorioId, {
-      titulo,
-      termoInicial: t.publicacao.dataDisponibilizacao.toISOString().slice(0, 10),
-      dias: t.prazoDias,
-      contagem: t.contagem === "CORRIDOS" ? "CORRIDOS" : "UTEIS",
-      processoId: processo?.id ?? null,
-      clienteId: processo?.clienteId ?? null,
-      responsavelId: ajustes.responsavelId || null,
-      observacao: "Da publicacao, por sugestao automatica. Confira nos autos.",
-    });
-    prazoId = id;
+  if (ehTarefa) {
+    const responsavelId = ajustes.responsavelId || quemAceitou;
+    if (!responsavelId) throw new SemResponsavel();
+    const tarefa = await criarTarefa(
+      escritorioId,
+      {
+        titulo,
+        descricao: observacoes.slice(0, 4000),
+        vencimento: quando,
+        prazoFatal: t.prazoFatal ? fimDoDia(t.prazoFatal.toISOString().slice(0, 10)) ?? null : null,
+        prioridade: "ALTA",
+        responsavelId,
+        clienteId: processo?.clienteId ?? null,
+        numeroProcesso: t.publicacao.numeroProcesso,
+      },
+      quemAceitou ?? responsavelId,
+    );
+    tarefaId = tarefa.id;
+  } else {
+    const compromisso = await comEscritorio(escritorioId, (db) =>
+      db.compromisso.create({
+        data: semEscritorio({
+          titulo,
+          tipo: ehTipoDaAgenda(t.tipo) ? t.tipo : "COMPROMISSO",
+          inicio: quando,
+          processoId: processo?.id ?? null,
+          clienteId: processo?.clienteId ?? null,
+          responsavelId: ajustes.responsavelId || null,
+          observacoes: observacoes.slice(0, 2000),
+        }),
+        select: { id: true },
+      }),
+    );
+    compromissoId = compromisso.id;
   }
 
   await comEscritorio(escritorioId, async (db) => {
     await db.triagemDePublicacao.update({
       where: { id: t.id },
-      data: { compromissoId: compromisso.id, aceitaEm: new Date() },
+      data: { compromissoId, tarefaId, aceitaEm: new Date() },
     });
     // Aceita a sugestao, a publicacao esta tratada: some da lista de abertas.
     await db.publicacao.updateMany({
@@ -450,7 +463,15 @@ export async function aceitarTriagem(
     });
   });
 
-  return { compromissoId: compromisso.id, prazoId, quando };
+  return { compromissoId, tarefaId, quando };
+}
+
+export class SemResponsavel extends Error {
+  readonly status = 400;
+  constructor() {
+    super("Escolha quem vai fazer a tarefa.");
+    this.name = "SemResponsavel";
+  }
 }
 
 /** Recusa a sugestao. A publicacao fica, a sugestao sai da frente. */

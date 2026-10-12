@@ -76,7 +76,7 @@ geram alerta.
 
 ## A tela Mensagens
 
-Menu **Mensagens**, logo abaixo de Agenda. Ela segue a mesma permissão da
+Em **Configurações**, cartão **Mensagens não entregues** (e no link do alerta e da pendência do Início). Ela segue a mesma permissão da
 Agenda e tem três partes:
 
 1. **Não entregues**: quem, por onde, o compromisso, o motivo, como foi o

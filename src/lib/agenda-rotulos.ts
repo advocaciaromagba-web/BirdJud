@@ -1,11 +1,12 @@
 // Rotulos da auditoria da agenda, em um modulo sem Prisma: a tela importa.
 
 /** Por que o compromisso saiu da agenda. */
-export type MotivoDaExclusao = "VENCIDO" | "EXCLUIDO";
+export type MotivoDaExclusao = "VENCIDO" | "EXCLUIDO" | "VIROU_TAREFA";
 
 export const TEXTO_DO_MOTIVO: Record<string, string> = {
   VENCIDO: "Venceu o horario — arquivado pela rotina.",
   EXCLUIDO: "Apagado por alguem do escritorio.",
+  VIROU_TAREFA: "Era peca ou prazo, nao compromisso: passou para Tarefas.",
 };
 
 /** Os tipos de aviso que nascem de um compromisso. */
@@ -14,6 +15,7 @@ export const TIPOS_DE_AVISO_DA_AGENDA = [
   "LEMBRETE_AO_PARTICIPANTE",
   "LEMBRETE_COMPROMISSO",
   "TAREFA_DESIGNADA",
+  "LEMBRETE_TAREFA",
 ] as const;
 
 export const ROTULO_DO_TIPO_DE_AVISO: Record<string, string> = {
@@ -21,6 +23,7 @@ export const ROTULO_DO_TIPO_DE_AVISO: Record<string, string> = {
   LEMBRETE_AO_PARTICIPANTE: "Lembrete ao participante",
   LEMBRETE_COMPROMISSO: "Lembrete a equipe",
   TAREFA_DESIGNADA: "Designacao",
+  LEMBRETE_TAREFA: "Lembrete de tarefa",
   DOCUMENTO: "Documento por WhatsApp",
   RESUMO_PUBLICACOES: "Resumo de publicacoes",
   RESUMO_DO_DIA: "Resumo do dia",

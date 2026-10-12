@@ -1,7 +1,7 @@
 # Agenda
 
-Audiencias, pericias, reunioes, prazos e tarefas do escritorio, numa tabela
-so: quando, tipo, titulo (com o processo embaixo), advogado(a), cliente ou
+Audiencias, pericias e atendimentos/reunioes do escritorio — onde alguem
+precisa **estar** —, numa tabela so: quando, tipo, titulo (com o processo embaixo), advogado(a), cliente ou
 quem vai, sala, status — e as acoes **Ver**, **Editar**, **Avisar**,
 **Excluir**.
 
@@ -10,6 +10,31 @@ saiu da agenda esta em "Excluidos (auditoria)"; todo aviso que o sistema
 mandou esta em "Notificacoes enviadas". E para isso que as duas existem:
 responder com registro quando alguem diz "ninguem me avisou" ou "essa
 audiencia nunca esteve na agenda".
+
+## Agenda nao e Tarefas
+
+A agenda aceita so tres tipos: **Audiencia**, **Pericia** e **Atendimento /
+reuniao** (`TIPOS_DA_AGENDA` em `src/lib/natureza.ts`). Peca, manifestacao,
+contestacao, recurso e prazo vao em **Tarefas**, onde ganham data de entrega
+e prazo fatal. A trava esta na API, nao so na tela:
+
+- `POST`/`PATCH /api/compromissos` recusam tipo fora dos tres (antes havia
+  TAREFA e PRAZO) e titulo que e claramente de tarefa ("Fazer contestacao");
+- `POST`/`PATCH /api/tarefas` recusam titulo que e claramente de agenda
+  ("Audiencia de conciliacao", "Pericia"). Meta da equipe nao passa pela
+  trava;
+- titulo que fala das duas coisas ("Quesitos para a pericia") nao e
+  recusado: quem decide e a tela em que a pessoa esta.
+
+O que estava misturado antes da separacao passa para Tarefas sozinho, na
+rotina diaria `ARQUIVAR_AGENDA` (`separarAgendaETarefas`): o compromisso
+TAREFA/PRAZO vira tarefa (entrega no dia dele, prazo fatal da linha de Prazo
+de mesmo titulo e processo) e vai para a auditoria com o motivo
+`VIROU_TAREFA`; Prazo que sobrou vira tarefa propria. Idempotente.
+
+A antiga tela de **Prazos** saiu do menu e redireciona para Tarefas. A tela
+**Mensagens** saiu do menu e esta em **Configuracoes** (e no link do alerta e
+da pendencia do Inicio).
 
 ## As quatro acoes
 

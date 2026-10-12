@@ -19,8 +19,10 @@ import { digitosDe, documentoValido, formatarDocumento } from "./documentos";
 import { normalizarNumeroProcesso } from "./leitura-publicacao";
 import { CATEGORIAS_DE_DESPESA, ehCategoria } from "./financeiro";
 import { paraCentavos } from "./dinheiro";
+import { calcularPrazo, PrazoInvalido, recuarDiasUteis, type Calendario } from "./prazos";
+import { ANTECEDENCIA_SUGERIDA_DIAS } from "./triagem-de-publicacao";
 
-export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA", "CONTA"] as const;
+export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA", "CONTA", "TAREFA"] as const;
 export type Perfil = (typeof PERFIS)[number];
 
 export type Confianca = "ALTA" | "MEDIA" | "BAIXA";
@@ -79,6 +81,19 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
     local: "Local",
     observacoes: "Observacoes",
   },
+  // Tarefa: a intimacao, o despacho ou a decisao dizem O QUE fazer e em
+  // quantos dias. A IA le isso; a DATA quem calcula e o sistema (prazos.ts),
+  // com dia util e o calendario do escritorio — a mesma regra da triagem.
+  TAREFA: {
+    titulo: "O que fazer",
+    descricao: "Resumo",
+    numeroProcesso: "Numero do processo",
+    dataDoAto: "Intimacao / disponibilizacao",
+    prazoDias: "Prazo em dias",
+    contagem: "Contagem",
+    prazoFatal: "Prazo fatal (calculado pelo sistema)",
+    entrega: "Entrega sugerida (calculada pelo sistema)",
+  },
   // Conta de consumo e boleto. O escritorio recebe estas contas todo mes e
   // digita as mesmas quatro coisas; a IA le e ja classifica.
   CONTA: {
@@ -97,6 +112,8 @@ const AJUDA_DO_PERFIL: Record<Perfil, string> = {
     "Peticao inicial, capa dos autos, despacho, sentenca ou print do andamento.",
   AGENDA:
     "Intimacao de audiencia, mandado, carta precatoria, e-mail de reuniao ou print do despacho que marcou a data.",
+  TAREFA:
+    "Intimacao, despacho, decisao, sentenca ou mandado que manda fazer algo (contestar, manifestar, recorrer, juntar). A IA le o que fazer e o prazo; o sistema calcula o prazo fatal e a entrega.",
   CONTA:
     "Conta de agua, energia, internet, telefone, boleto do aluguel, guia de imposto ou nota do fornecedor.",
 };
@@ -113,8 +130,12 @@ export function ajudaDoPerfil(perfil: Perfil): string {
   return AJUDA_DO_PERFIL[perfil];
 }
 
+/** Campos que o SISTEMA calcula. O modelo nao propoe; se propuser, cai fora. */
+const CALCULADOS = new Set(["prazoFatal", "entrega"]);
+
 export function montarInstrucao(perfil: Perfil): string {
   const campos = Object.entries(CAMPOS_DO_PERFIL[perfil])
+    .filter(([chave]) => !CALCULADOS.has(chave))
     .map(([chave, rotulo]) => `- "${chave}": ${rotulo}`)
     .join("\n");
 
@@ -153,6 +174,16 @@ export function montarInstrucao(perfil: Perfil): string {
           '- "logradouro" e o nome da rua com o tipo ("Rua das Flores"), sem o numero, sem o bairro;',
           '- "nacionalidade", "estadoCivil" e "profissao" so quando estiverem escritos (CIN nova, certidao, procuracao, ficha). Nao deduza estado civil do sobrenome nem nacionalidade do local de nascimento;',
           "- telefone e e-mail impressos na conta sao da empresa que emitiu a conta: nao use.",
+        ]
+      : []),
+    ...(perfil === "TAREFA"
+      ? [
+          '- "titulo" e curto e diz o trabalho a fazer ("Contestacao", "Manifestacao sobre o laudo", "Recurso de apelacao"), nao o texto do documento;',
+          '- "descricao" resume em ate tres frases o que foi determinado e o que precisa ser feito;',
+          '- "dataDoAto" e a data da intimacao, da ciencia ou da disponibilizacao no diario, no formato aaaa-mm-dd. Nao some dias: a conta e do sistema;',
+          '- "prazoDias" e so o numero de dias que o documento da ("15"). Prazo em dobro, em horas ou sem numero: nao devolva e explique em observacoes;',
+          '- "contagem" e UTEIS ou CORRIDOS. Processo civel e trabalhista conta em dias UTEIS; penal e direito material, CORRIDOS. Na duvida, UTEIS com confianca MEDIA;',
+          "- audiencia, pericia ou reuniao NAO sao tarefa: se o documento so marca uma delas, diga em observacoes que aquilo vai na Agenda.",
         ]
       : []),
     ...(perfil === "AGENDA"
@@ -283,7 +314,7 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
   const observacoes = [...lido.data.observacoes];
 
   for (const [chave, bruto] of Object.entries(lido.data.campos)) {
-    if (!(chave in aceitos)) continue;
+    if (!(chave in aceitos) || CALCULADOS.has(chave)) continue;
 
     let valor = String(bruto.valor).replace(/\s+/g, " ").trim().slice(0, 300);
     if (!valor) continue;
@@ -385,6 +416,39 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
       valor = uf;
     }
 
+    if (perfil === "TAREFA" && chave === "dataDoAto") {
+      const data = normalizarData(valor);
+      if (!data) {
+        observacoes.push(`A data da intimacao lida ("${valor}") nao pode ser entendida. Sem ela o prazo nao e calculado.`);
+        continue;
+      }
+      valor = data;
+    }
+
+    if (perfil === "TAREFA" && chave === "prazoDias") {
+      const dias = Number(valor.replace(/\D/g, ""));
+      if (!Number.isInteger(dias) || dias < 1 || dias > 1000) {
+        observacoes.push(`O prazo lido ("${valor}") nao e um numero de dias. Confira no documento.`);
+        continue;
+      }
+      valor = String(dias);
+    }
+
+    if (perfil === "TAREFA" && chave === "contagem") {
+      const c = valor.toUpperCase();
+      valor = c.startsWith("CORR") ? "CORRIDOS" : "UTEIS";
+    }
+
+    if (perfil === "TAREFA" && chave === "numeroProcesso") {
+      const normalizado = normalizarNumeroProcesso(valor);
+      if (normalizado) {
+        valor = normalizado;
+      } else {
+        confianca = "BAIXA";
+        observacoes.push(`O numero lido (${valor}) nao tem o formato do numero unico do CNJ. Confira nos autos.`);
+      }
+    }
+
     // So o numero de PROCESSO passa pelo formato do CNJ. No cliente,
     // "numero" e o numero da casa — formatar como processo o destruiria.
     if (perfil === "PROCESSO" && chave === "numero") {
@@ -406,5 +470,46 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
     };
   }
 
+  return { campos, observacoes: observacoes.slice(0, 20) };
+}
+
+/**
+ * Tarefa lida: o prazo fatal e a entrega, calculados pelo SISTEMA.
+ *
+ * A IA diz quantos dias e a partir de quando; que DIA isso e — com dia util,
+ * feriado e o calendario do escritorio — e prazos.ts, a mesma conta da
+ * triagem de publicacoes. A entrega vem tres dias uteis antes do fatal, sem
+ * cair antes de hoje. Os dois chegam com confianca no maximo MEDIA: e conta
+ * sobre leitura, e quem confere e o advogado.
+ */
+export function calcularPrazoDaLeitura(
+  leitura: Leitura,
+  hojeISO: string,
+  calendario?: Calendario,
+): Leitura {
+  const { dataDoAto, prazoDias, contagem } = leitura.campos;
+  if (!dataDoAto || !prazoDias) return leitura;
+
+  const campos = { ...leitura.campos };
+  const observacoes = [...leitura.observacoes];
+  try {
+    const conta = calcularPrazo(
+      dataDoAto.valor,
+      Number(prazoDias.valor),
+      contagem?.valor === "CORRIDOS" ? "CORRIDOS" : "UTEIS",
+      calendario,
+    );
+    const entrega = recuarDiasUteis(conta.vencimento, ANTECEDENCIA_SUGERIDA_DIAS, hojeISO, calendario);
+    const confianca = [dataDoAto.confianca, prazoDias.confianca, contagem?.confianca ?? "MEDIA"].reduce(
+      (a, b) => menorConfianca(a, b),
+      "MEDIA" as Confianca,
+    );
+    campos.prazoFatal = { valor: conta.vencimento, confianca, origem: "calculado pelo sistema" };
+    campos.entrega = { valor: entrega, confianca, origem: `${ANTECEDENCIA_SUGERIDA_DIAS} dias uteis antes do fatal` };
+    observacoes.unshift(`Prazo: ${conta.explicacao}`);
+  } catch (erro) {
+    if (!(erro instanceof PrazoInvalido)) throw erro;
+    observacoes.push(`Nao deu para calcular o prazo: ${erro.message}`);
+  }
   return { campos, observacoes: observacoes.slice(0, 20) };
 }

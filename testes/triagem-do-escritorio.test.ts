@@ -18,6 +18,7 @@ const d = temBanco ? describe : describe.skip;
 
 d("triagem da publicacao", () => {
   let escritorio = "";
+  let advogada = "";
   let servidor: Server;
   let saida: Record<string, unknown> = {};
   let chamadas = 0;
@@ -66,6 +67,15 @@ d("triagem da publicacao", () => {
           data: semEscritorio({ modulo, ativo: true }),
         });
       }
+      const u = await db.usuario.create({
+        data: semEscritorio({
+          nome: "Dra. Triagem",
+          email: `dra-${Date.now()}@triagem.test`,
+          senhaHash: "x",
+          papel: "ADMIN",
+        }),
+      });
+      advogada = u.id;
     });
   });
 
@@ -166,26 +176,27 @@ d("triagem da publicacao", () => {
     expect(t.confianca).toBe("BAIXA");
   });
 
-  it("aceitar cria o compromisso na data sugerida E o prazo no fatal", async () => {
+  it("aceitar peca cria TAREFA com entrega na sugerida e prazo fatal no fatal", async () => {
     const p = await publicacao("Citada para contestar no prazo de 15 dias.");
     const t = await triarPublicacao(escritorio, p.id);
-    const aceite = await aceitarTriagem(escritorio, t.id);
+    const aceite = await aceitarTriagem(escritorio, t.id, {}, advogada);
 
-    expect(aceite.prazoId).not.toBeNull();
-    const c = await comEscritorio(escritorio, (db) =>
-      db.compromisso.findFirstOrThrow({ where: { id: aceite.compromissoId } }),
+    // Contestacao e trabalho de escrever: vai para Tarefas, nunca para a agenda.
+    expect(aceite.compromissoId).toBeNull();
+    expect(aceite.tarefaId).not.toBeNull();
+    const tarefa = await comEscritorio(escritorio, (db) =>
+      db.tarefa.findFirstOrThrow({ where: { id: aceite.tarefaId! } }),
     );
-    // O compromisso na data de trabalhar...
-    expect(c.inicio.toISOString().slice(0, 10)).toBe("2026-11-19");
-    expect(c.tipo).toBe("TAREFA");
-    // ...e o fatal escrito nas observacoes, para quem abrir a agenda ver.
-    expect(c.observacoes).toContain("PRAZO FATAL: 25/11/2026");
-
-    // O prazo de verdade, na tela de Prazos, vence no fatal.
-    const prazo = await comEscritorio(escritorio, (db) =>
-      db.prazo.findFirstOrThrow({ where: { id: aceite.prazoId! } }),
-    );
-    expect(prazo.vencimento.toISOString().slice(0, 10)).toBe("2026-11-25");
+    // A entrega na data de trabalhar...
+    expect(tarefa.vencimento.toISOString().slice(0, 10)).toBe("2026-11-19");
+    // ...e o fatal na mesma linha, no fim do dia.
+    expect(tarefa.prazoFatal?.toISOString()).toBe("2026-11-26T02:59:00.000Z");
+    // Ninguem escolhido: fica com quem aceitou.
+    expect(tarefa.responsavelId).toBe(advogada);
+    expect(tarefa.descricao).toContain("PRAZO FATAL: 25/11/2026");
+    expect(
+      await comEscritorio(escritorio, (db) => db.compromisso.count()),
+    ).toBe(0);
 
     // E a publicacao sai da lista de abertas.
     const depois = await comEscritorio(escritorio, (db) =>
@@ -194,18 +205,39 @@ d("triagem da publicacao", () => {
     expect(depois.lida).toBe(true);
   });
 
-  it("aceitar duas vezes nao cria dois compromissos", async () => {
+  it("tarefa sem responsavel e sem quem aceitou e recusada", async () => {
+    const p = await publicacao("Manifeste-se em 5 dias, sem dono.");
+    const t = await triarPublicacao(escritorio, p.id);
+    await expect(aceitarTriagem(escritorio, t.id)).rejects.toThrow("Escolha quem vai fazer");
+  });
+
+  it("aceitar audiencia cria COMPROMISSO na agenda, nao tarefa", async () => {
+    const antes = saida;
+    saida = { ...saida, especie: "AGENDAMENTO", tipo: "AUDIENCIA", titulo: "Audiencia de conciliacao", dataDoAto: "2026-12-10T14:00", prazoDias: null };
+    const p = await publicacao("Fica designada audiencia de conciliacao para 10/12/2026 as 14h.");
+    const t = await triarPublicacao(escritorio, p.id);
+    const aceite = await aceitarTriagem(escritorio, t.id, {}, advogada);
+    saida = antes;
+    expect(aceite.tarefaId).toBeNull();
+    const c = await comEscritorio(escritorio, (db) =>
+      db.compromisso.findFirstOrThrow({ where: { id: aceite.compromissoId! } }),
+    );
+    expect(c.tipo).toBe("AUDIENCIA");
+  });
+
+  it("aceitar duas vezes nao cria duas tarefas", async () => {
     const p = await publicacao("Manifeste-se em 5 dias.");
     const t = await triarPublicacao(escritorio, p.id);
-    const um = await aceitarTriagem(escritorio, t.id);
-    const dois = await aceitarTriagem(escritorio, t.id);
-    expect(dois.compromissoId).toBe(um.compromissoId);
+    const um = await aceitarTriagem(escritorio, t.id, {}, advogada);
+    const dois = await aceitarTriagem(escritorio, t.id, {}, advogada);
+    expect(um.tarefaId).not.toBeNull();
+    expect(dois.tarefaId).toBe(um.tarefaId);
   });
 
   it("triar de novo refaz a sugestao, mas nao mexe na ja aceita", async () => {
     const p = await publicacao("Manifeste-se em 5 dias.");
     const t = await triarPublicacao(escritorio, p.id);
-    await aceitarTriagem(escritorio, t.id);
+    await aceitarTriagem(escritorio, t.id, {}, advogada);
 
     saida = { ...saida, titulo: "Outra coisa", especie: "AGENDAMENTO" };
     const refeita = await triarPublicacao(escritorio, p.id);

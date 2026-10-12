@@ -145,3 +145,17 @@ function normalizar(texto: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+
+/**
+ * Prazo fatal digitado (aaaa-mm-dd) para o fim daquele dia em Brasilia: o
+ * prazo vale ate o fim do expediente do dia, e nao a meia-noite que comeca.
+ * null quando vazio; undefined quando invalido.
+ */
+export function fimDoDia(texto: string | null | undefined): Date | null | undefined {
+  const t = (texto ?? "").trim();
+  if (!t) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return undefined;
+  const d = new Date(`${t}T23:59:00-03:00`);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}

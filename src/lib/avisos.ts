@@ -130,7 +130,9 @@ export async function gerarAvisos(
     comWhatsapp,
   );
 
-  return { resumos, lembretes };
+  const lembretesDeTarefas = await gerarLembretesDeTarefas(escritorioId, agora);
+
+  return { resumos, lembretes: lembretes + lembretesDeTarefas };
 }
 
 async function gerarResumos(
@@ -1074,4 +1076,207 @@ export async function avisarAgora(
   }
 
   return { criados, semContato, soPorWhatsappDesligado };
+}
+
+// ---------------------------------------------------------------------------
+// Tarefas: o aviso de que ficou com voce, e o lembrete antes da entrega
+// ---------------------------------------------------------------------------
+//
+// Tarefa e trabalho de UMA pessoa — o responsavel. Por isso os dois avisos
+// vao so para ele, por e-mail e, se ele recebe, por WhatsApp. Os modelos sao
+// os que ja estao aprovados: birdjud_tarefa_designada e
+// birdjud_lembrete_compromisso (que diz "lembrete de {{2}} em {{3}}").
+
+const dataBR = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short" });
+
+type TarefaNoAviso = {
+  id: string;
+  titulo: string;
+  vencimento: Date;
+  prazoFatal: Date | null;
+  numeroProcesso: string | null;
+  cliente: { nome: string } | null;
+};
+
+function sobreATarefa(t: TarefaNoAviso): string {
+  return [
+    t.cliente?.nome ?? null,
+    t.numeroProcesso ? `Processo ${t.numeroProcesso}` : null,
+    t.prazoFatal ? `prazo fatal ${dataBR.format(t.prazoFatal)}` : null,
+  ]
+    .filter(Boolean)
+    .join(" - ") || "sem processo";
+}
+
+/** Avisa o responsavel de que a tarefa ficou com ele. Quem designou para si nao recebe. */
+export async function avisarTarefaDesignada(
+  escritorioId: string,
+  tarefaId: string,
+  designadoPor: string | null,
+): Promise<number> {
+  const t = await comEscritorio(escritorioId, (db) =>
+    db.tarefa.findFirst({
+      where: { id: tarefaId },
+      include: {
+        cliente: { select: { nome: true } },
+        responsavel: { select: { id: true, nome: true, email: true, telefone: true, recebeWhatsapp: true, ativo: true } },
+      },
+    }),
+  );
+  if (!t || t.meta || !t.responsavel.ativo) return 0;
+  if (designadoPor && designadoPor === t.responsavelId) return 0;
+
+  const banca = await daBanca(escritorioId);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
+  const quando = dataHoraBR.format(t.vencimento);
+  const sobre = sobreATarefa(t);
+  const assunto = `Tarefa para voce: ${t.titulo}`;
+  const corpo = [
+    `No escritorio ${banca.nome}, a tarefa "${t.titulo}" ficou com voce.`,
+    `Entrega: ${quando}.`,
+    t.prazoFatal ? `Prazo fatal: ${dataBR.format(t.prazoFatal)}.` : null,
+    `Sobre: ${sobre}.`,
+    "",
+    `Abra em ${banca.endereco}/tarefas`,
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
+  // A chave leva o responsavel: passar para outra pessoa avisa a nova.
+  const chave = `tarefa-designada:${t.id}:${t.responsavelId}`;
+  let criados = 0;
+
+  if (
+    await criarAviso(escritorioId, {
+      usuarioId: t.responsavelId,
+      canal: "EMAIL",
+      tipo: "TAREFA_DESIGNADA",
+      chave,
+      destino: t.responsavel.email,
+      assunto,
+      corpo,
+      enviadoPorId: designadoPor,
+    })
+  ) {
+    criados += 1;
+  }
+
+  const modelo = modeloDoTipo("TAREFA_DESIGNADA");
+  const telefone = telefoneDoUsuario(t.responsavel, comWhatsapp);
+  if (telefone && modelo) {
+    if (
+      await criarAviso(escritorioId, {
+        usuarioId: t.responsavelId,
+        canal: "WHATSAPP",
+        tipo: "TAREFA_DESIGNADA",
+        chave: `zap:${chave}`,
+        destino: telefone,
+        assunto,
+        corpo,
+        enviadoPorId: designadoPor,
+        modelo: modelo.nome,
+        parametros: [
+          limparParametro(banca.nome),
+          limparParametro(t.titulo),
+          limparParametro(quando),
+          limparParametro(sobre),
+          limparParametro(banca.telefone),
+        ],
+      })
+    ) {
+      criados += 1;
+    }
+  }
+  return criados;
+}
+
+const ANTECEDENCIA_DA_TAREFA_HORAS = 24;
+
+/**
+ * Lembrete ao responsavel 24 horas antes da ENTREGA e, separado, 24 horas
+ * antes do PRAZO FATAL. A chave leva a data: mudar a entrega rearma o
+ * lembrete, e a mesma data nunca lembra duas vezes.
+ */
+export async function gerarLembretesDeTarefas(escritorioId: string, agora = new Date()): Promise<number> {
+  const limite = new Date(agora.getTime() + ANTECEDENCIA_DA_TAREFA_HORAS * HORA);
+  const tarefas = await comEscritorio(escritorioId, (db) =>
+    db.tarefa.findMany({
+      where: {
+        meta: false,
+        situacao: { not: "CONCLUIDA" },
+        OR: [
+          { vencimento: { gt: agora, lte: limite } },
+          { prazoFatal: { gt: agora, lte: limite } },
+        ],
+      },
+      include: {
+        cliente: { select: { nome: true } },
+        responsavel: { select: { id: true, email: true, telefone: true, recebeWhatsapp: true, ativo: true } },
+      },
+      take: 200,
+    }),
+  );
+  if (tarefas.length === 0) return 0;
+
+  const banca = await daBanca(escritorioId);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
+  const modelo = modeloDoTipo("LEMBRETE_COMPROMISSO");
+  let criados = 0;
+
+  for (const t of tarefas) {
+    if (!t.responsavel.ativo) continue;
+    const marcos: { qual: "ENTREGA" | "FATAL"; quando: Date }[] = [];
+    if (t.vencimento > agora && t.vencimento <= limite) marcos.push({ qual: "ENTREGA", quando: t.vencimento });
+    if (t.prazoFatal && t.prazoFatal > agora && t.prazoFatal <= limite) marcos.push({ qual: "FATAL", quando: t.prazoFatal });
+
+    for (const m of marcos) {
+      const rotulo = m.qual === "FATAL" ? "PRAZO FATAL" : "entrega";
+      const assunto = `Lembrete: ${t.titulo} (${rotulo} ${dataHoraBR.format(m.quando)})`;
+      const corpo = [
+        `No escritorio ${banca.nome}: "${t.titulo}" tem ${rotulo} em ${dataHoraBR.format(m.quando)}.`,
+        `Sobre: ${sobreATarefa(t)}.`,
+        "",
+        `Abra em ${banca.endereco}/tarefas`,
+      ].join("\n");
+      const chave = `tarefa-lembrete:${m.qual}:${t.id}:${m.quando.toISOString()}:${t.responsavelId}`;
+
+      if (
+        await criarAviso(escritorioId, {
+          usuarioId: t.responsavelId,
+          canal: "EMAIL",
+          tipo: "LEMBRETE_TAREFA",
+          chave,
+          destino: t.responsavel.email,
+          assunto,
+          corpo,
+        })
+      ) {
+        criados += 1;
+      }
+
+      const telefone = telefoneDoUsuario(t.responsavel, comWhatsapp);
+      if (!telefone || !modelo) continue;
+      if (
+        await criarAviso(escritorioId, {
+          usuarioId: t.responsavelId,
+          canal: "WHATSAPP",
+          tipo: "LEMBRETE_TAREFA",
+          chave: `zap:${chave}`,
+          destino: telefone,
+          assunto,
+          corpo,
+          modelo: modelo.nome,
+          parametros: [
+            limparParametro(banca.nome),
+            limparParametro(t.titulo),
+            limparParametro(`${dataHoraBR.format(m.quando)} (${rotulo})`),
+            limparParametro(sobreATarefa(t)),
+            limparParametro(banca.telefone),
+          ],
+        })
+      ) {
+        criados += 1;
+      }
+    }
+  }
+  return criados;
 }

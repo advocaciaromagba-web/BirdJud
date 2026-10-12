@@ -124,6 +124,19 @@ export default async function PaginaAdministracao() {
         )}
 
         <section className="cartao">
+          <p className="sobretitulo">Comunicacao</p>
+          <h2 className="mt-1 text-lg font-bold">Mensagens nao entregues</h2>
+          <p className="mt-2 leitura text-slate-600">
+            WhatsApp e e-mail que nao chegaram ao cliente: o motivo, o
+            reenvio e o que ja foi resolvido. Quem enviou recebe o alerta na
+            hora, com o link desta tela.
+          </p>
+          <Link className="botao-secundario mt-4 inline-block" href="/mensagens">
+            Abrir mensagens
+          </Link>
+        </section>
+
+        <section className="cartao">
           <p className="sobretitulo">Pessoas</p>
           <h2 className="mt-1 text-lg font-bold">Usuarios do escritorio</h2>
           <p className="mt-2 leitura text-slate-600">

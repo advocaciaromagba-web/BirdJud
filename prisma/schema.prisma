@@ -472,6 +472,8 @@ model TriagemDePublicacao {
   modelo        String?
   /// Preenchido quando alguem aceitou e o compromisso nasceu.
   compromissoId String?
+  /// Preenchido quando a sugestao era de TAREFA e virou tarefa.
+  tarefaId      String?
   aceitaEm      DateTime?
   recusadaEm    DateTime?
   criadoEm      DateTime @default(now())
@@ -503,6 +505,9 @@ model Tarefa {
   /// Com HORA, nao so data: "hoje as 17h" e um compromisso diferente de
   /// "hoje". Prazo de tarefa e combinado entre pessoas, nao calculado.
   vencimento DateTime
+  /// Prazo fatal (processual), quando a tarefa responde a um. `vencimento`
+  /// e a data INTERNA, de entrega no escritorio; o fatal e o do processo.
+  prazoFatal DateTime?
   /// BAIXA | MEDIA | ALTA | URGENTE
   prioridade String  @default("MEDIA")
   /// PENDENTE | EM_ANDAMENTO | CONCLUIDA
@@ -1259,6 +1264,8 @@ model Prazo {
   responsavelId  String?
   cumpridoEm     DateTime?
   observacao     String?
+  /// A tarefa que passou a carregar este prazo (a tela de Prazos saiu).
+  tarefaId       String?
   criadoEm       DateTime  @default(now())
   atualizadoEm   DateTime  @updatedAt
 

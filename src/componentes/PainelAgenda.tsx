@@ -1,5 +1,6 @@
 "use client";
 
+import { ROTULO_DO_TIPO_DA_AGENDA, TIPOS_DA_AGENDA } from "@/lib/natureza";
 import Link from "next/link";
 import { rotuloDaEntrega } from "@/lib/entrega";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -245,7 +246,9 @@ export function PainelAgenda({
       nome: "tipo",
       rotulo: "Tipo",
       tipo: "select",
-      opcoes: Object.entries(ROTULO_DO_TIPO).map(([valor, rotulo]) => ({ valor, rotulo })),
+      // So o que e de estar presente. Peca e prazo vao em Tarefas.
+      opcoes: TIPOS_DA_AGENDA.map((valor) => ({ valor, rotulo: ROTULO_DO_TIPO_DA_AGENDA[valor] })),
+      ajuda: "Peca, manifestacao, recurso e prazo nao entram aqui: cadastre em Tarefas.",
     },
     {
       nome: "responsavelId",
@@ -265,7 +268,7 @@ export function PainelAgenda({
       largo: true,
       opcoes: clientes.map((c) => ({ valor: c.id, rotulo: c.nome })),
       ajuda:
-        "Obrigatorio na tarefa. No agendamento e opcional — a primeira reuniao pode ser com quem ainda nao e cliente. Quem mais vai (testemunha, perito, acompanhante) entra em Participantes, depois de gravar.",
+        "Opcional — a primeira reuniao pode ser com quem ainda nao e cliente. Quem mais vai (testemunha, perito, acompanhante) entra em Participantes, depois de gravar.",
     },
     {
       nome: "processoId",

@@ -197,9 +197,8 @@ function retrato(c: {
  * Arquiva o que venceu: audiencia, pericia e reuniao cujo horario passou ha
  * mais de HORAS_DE_SEGURANCA. Sai da agenda e entra na auditoria.
  *
- * PRAZO e TAREFA ficam. Prazo vencido nao e historia, e problema: tem de
- * continuar na frente de alguem ate ser dado como cumprido. Esses saem pela
- * conclusao, nunca pelo relogio.
+ * Peca e prazo nao estao aqui: moram em Tarefas (natureza.ts), e tarefa
+ * vencida nao e historia, e problema — sai pela conclusao, nunca pelo relogio.
  */
 export async function arquivarVencidos(
   escritorioId: string,
@@ -226,6 +225,114 @@ export async function arquivarVencidos(
     }
 
     return { arquivados: vencidos.length, titulos: vencidos.map((c) => c.titulo) };
+  });
+}
+
+/**
+ * Tira da agenda o que e tarefa, e da tela de Prazos o que ficou para tras.
+ *
+ * Antes da separacao (natureza.ts), a agenda aceitava os tipos TAREFA e
+ * PRAZO, e o aceite da publicacao criava um compromisso TAREFA mais uma
+ * linha em Prazo com o fatal. Isto passa os dois para Tarefas:
+ *
+ *  - compromisso TAREFA/PRAZO vira tarefa com entrega no dia dele; a linha de
+ *    Prazo de mesmo titulo e processo vira o prazo fatal dela;
+ *  - Prazo que sobrou vira tarefa propria, com entrega e fatal no vencimento.
+ *
+ * Nada some sem registro: o compromisso vai para a auditoria com o motivo
+ * VIROU_TAREFA, e o Prazo fica, marcado com a tarefa que o carrega.
+ * Idempotente: roda nas rotinas e so acha trabalho uma vez.
+ */
+export async function separarAgendaETarefas(
+  escritorioId: string,
+): Promise<{ deCompromissos: number; dePrazos: number }> {
+  return comEscritorio(escritorioId, async (db) => {
+    const compromissos = await db.compromisso.findMany({
+      where: { tipo: { in: ["TAREFA", "PRAZO"] } },
+      include: COM_TUDO,
+      take: 200,
+    });
+    const prazos = await db.prazo.findMany({
+      where: { tarefaId: null },
+      include: { processo: { select: { numero: true } } },
+      take: 500,
+    });
+    if (compromissos.length === 0 && prazos.length === 0) {
+      return { deCompromissos: 0, dePrazos: 0 };
+    }
+
+    // Tarefa sem dono nao e feita: quem estava no compromisso, senao o
+    // primeiro administrador, senao qualquer pessoa ativa.
+    const dono =
+      (await db.usuario.findFirst({ where: { ativo: true, papel: "ADMIN" }, orderBy: { criadoEm: "asc" }, select: { id: true } })) ??
+      (await db.usuario.findFirst({ where: { ativo: true }, orderBy: { criadoEm: "asc" }, select: { id: true } }));
+    if (!dono) return { deCompromissos: 0, dePrazos: 0 };
+
+    const fatalDe = (dia: Date) => new Date(`${dia.toISOString().slice(0, 10)}T23:59:00-03:00`);
+    const usados = new Set<string>();
+    let deCompromissos = 0;
+    let dePrazos = 0;
+
+    for (const c of compromissos) {
+      const prazo = prazos.find(
+        (p) => !usados.has(p.id) && p.titulo === c.titulo && p.processoId === c.processoId,
+      );
+      const tarefa = await db.tarefa.create({
+        data: semEscritorio({
+          titulo: c.titulo,
+          descricao: c.observacoes,
+          vencimento: c.inicio,
+          prazoFatal: prazo ? fatalDe(prazo.vencimento) : null,
+          prioridade: c.tipo === "PRAZO" || prazo ? "ALTA" : "MEDIA",
+          situacao: c.concluido || prazo?.cumpridoEm ? "CONCLUIDA" : "PENDENTE",
+          concluidaEm: c.concluido ? new Date() : (prazo?.cumpridoEm ?? null),
+          processoId: c.processoId,
+          numeroProcesso: c.processo?.numero ?? null,
+          clienteId: c.clienteId,
+          responsavelId: c.responsavelId ?? prazo?.responsavelId ?? dono.id,
+        }),
+        select: { id: true },
+      });
+      if (prazo) {
+        usados.add(prazo.id);
+        await db.prazo.update({ where: { id: prazo.id }, data: { tarefaId: tarefa.id } });
+      }
+      await db.triagemDePublicacao.updateMany({
+        where: { compromissoId: c.id },
+        data: { compromissoId: null, tarefaId: tarefa.id },
+      });
+      await cancelarLembretesPendentes(db, c.id, "passou para Tarefas");
+      await db.compromissoExcluido.create({
+        data: semEscritorio({ ...retrato(c), motivo: "VIROU_TAREFA" }),
+      });
+      await db.compromisso.delete({ where: { id: c.id } });
+      deCompromissos += 1;
+    }
+
+    for (const p of prazos) {
+      if (usados.has(p.id)) continue;
+      const fatal = fatalDe(p.vencimento);
+      const tarefa = await db.tarefa.create({
+        data: semEscritorio({
+          titulo: p.titulo,
+          descricao: [p.explicacao, p.observacao].filter(Boolean).join("\n") || null,
+          vencimento: fatal,
+          prazoFatal: fatal,
+          prioridade: "ALTA",
+          situacao: p.cumpridoEm ? "CONCLUIDA" : "PENDENTE",
+          concluidaEm: p.cumpridoEm,
+          processoId: p.processoId,
+          numeroProcesso: p.processo?.numero ?? null,
+          clienteId: p.clienteId,
+          responsavelId: p.responsavelId ?? dono.id,
+        }),
+        select: { id: true },
+      });
+      await db.prazo.update({ where: { id: p.id }, data: { tarefaId: tarefa.id } });
+      dePrazos += 1;
+    }
+
+    return { deCompromissos, dePrazos };
   });
 }
 

@@ -1,3 +1,4 @@
+import { diaEmBrasilia } from "@/lib/datas";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
 import { comEscritorio } from "@/lib/prisma";
@@ -46,6 +47,7 @@ export default async function PaginaTarefas({
     titulo: t.titulo,
     descricao: t.descricao,
     vencimentoISO: t.vencimento.toISOString(),
+    prazoFatalDia: t.prazoFatal ? diaEmBrasilia(t.prazoFatal) : null,
     prioridade: t.prioridade as Prioridade,
     situacao: t.situacao,
     meta: t.meta,
@@ -66,7 +68,7 @@ export default async function PaginaTarefas({
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Tarefas e metas"
-      chamada="Tarefas do dia a dia e metas da equipe."
+      chamada="Pecas, manifestacoes, recursos e metas da equipe. Audiencia, pericia e atendimento ficam na Agenda."
     >
       <PainelTarefas
         tarefas={naTela}
@@ -75,6 +77,7 @@ export default async function PaginaTarefas({
         ativas={contagem.ativas}
         concluidas={contagem.concluidas}
         mostrandoConcluidas={concluidas}
+        temIA={modulos.includes("IA")}
       />
     </Estrutura>
   );

@@ -20,6 +20,8 @@ export type TriagemNaTela = {
   atencao: string | null;
   explicacao: string | null;
   aceita: boolean;
+  /** Aceita como tarefa (peca, recurso) e nao como compromisso da agenda. */
+  aceitaComoTarefa: boolean;
   recusada: boolean;
 };
 
@@ -77,7 +79,7 @@ export function ListaPublicacoes({
 }
 
 const ROTULO_DA_ESPECIE: Record<string, string> = {
-  AGENDAMENTO: "Agendar",
+  AGENDAMENTO: "Agenda",
   TAREFA: "Tarefa",
 };
 
@@ -115,6 +117,8 @@ function Cartao({
   const [aviso, setAviso] = useState<string | null>(null);
 
   const t = publicacao.triagem;
+  // Peca, manifestacao, recurso: vira TAREFA. Audiencia, pericia: AGENDA.
+  const ehTarefa = t ? t.especie === "TAREFA" || t.tipo === "TAREFA" : false;
   const [quando, setQuando] = useState(
     paraCampo(t?.dataDoAto ?? t?.prazoSugerido ?? null),
   );
@@ -197,8 +201,8 @@ function Cartao({
     }
     if (acao === "ACEITAR") {
       setAviso(
-        json.aceite?.prazoId
-          ? "Na agenda, e o prazo fatal na tela de Prazos."
+        json.aceite?.tarefaId
+          ? "Tarefa criada, com a entrega e o prazo fatal. Esta em Tarefas."
           : "Na agenda.",
       );
     }
@@ -289,13 +293,33 @@ function Cartao({
       </button>
 
       {t && !t.recusada ? (
+        /*
+          A SUGESTAO DA IA TEM COR PROPRIA (violeta), diferente do texto da
+          publicacao e dos botoes do escritorio. Quem olha precisa saber, sem
+          ler, que aquilo foi a maquina que sugeriu — e que prazo e assunto
+          se conferem nos autos antes de lancar.
+        */
         <div
-          className={`mt-3 rounded border p-3 ${
-            t.aceita ? "border-emerald-300 bg-emerald-50" : "border-marca/40 bg-white"
+          className={`mt-3 rounded-md border-2 p-3 ${
+            t.aceita ? "border-emerald-300 bg-emerald-50" : "border-violet-300 bg-violet-50"
           }`}
         >
+          {!t.aceita ? (
+            <p className="mb-2 flex flex-wrap items-center gap-2 border-b border-violet-200 pb-2 text-sm text-violet-900">
+              <span className="rounded bg-violet-700 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
+                Sugestao da IA
+              </span>
+              <span className="font-semibold">
+                Precisa de conferencia: confira o prazo e o assunto nos autos antes de lancar.
+              </span>
+            </p>
+          ) : null}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded bg-marca px-2 py-0.5 text-xs font-semibold text-white">
+            <span
+              className={`rounded px-2 py-0.5 text-xs font-semibold text-white ${
+                ehTarefa ? "bg-indigo-700" : "bg-marca"
+              }`}
+            >
               {ROTULO_DA_ESPECIE[t.especie] ?? t.especie}
             </span>
             <span className="text-sm font-semibold">{t.titulo}</span>
@@ -320,7 +344,8 @@ function Cartao({
               </span>
               <span className="text-slate-600">
                 {" "}
-                — a sugestao abaixo vem tres dias uteis antes.
+                — calculado pelo sistema a partir do que a IA leu. A entrega
+                sugerida abaixo vem tres dias uteis antes.
               </span>
             </p>
           ) : null}
@@ -333,14 +358,14 @@ function Cartao({
 
           {t.aceita ? (
             <p className="mt-2 text-sm font-semibold text-emerald-800">
-              Ja esta na agenda.
+              {t.aceitaComoTarefa ? "Ja esta em Tarefas." : "Ja esta na agenda."}
             </p>
           ) : (
             <>
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 <div>
                   <label className="rotulo" htmlFor={`quando-${t.id}`}>
-                    Quando
+                    {ehTarefa ? "Entrega (sugerida)" : "Data e hora"}
                   </label>
                   <input
                     id={`quando-${t.id}`}
@@ -372,7 +397,9 @@ function Cartao({
                     value={responsavelId}
                     onChange={(e) => setResponsavelId(e.target.value)}
                   >
-                    <option value="">Sem responsavel</option>
+                    <option value="">
+                      {ehTarefa ? "Fica comigo" : "Sem responsavel"}
+                    </option>
                     {equipe.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.nome}
@@ -389,7 +416,7 @@ function Cartao({
                   onClick={() => decidir("ACEITAR")}
                   className="botao-principal disabled:opacity-50"
                 >
-                  {ocupado ? "..." : `Lancar na agenda`}
+                  {ocupado ? "..." : ehTarefa ? "Conferi — criar tarefa" : "Conferi — lancar na agenda"}
                 </button>
                 <button
                   type="button"

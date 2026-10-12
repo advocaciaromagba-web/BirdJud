@@ -2,12 +2,9 @@
 //
 // A regra de ordem e de atraso mora em tarefas.ts, pura. Aqui se grava.
 //
-// AINDA NAO AVISA O RESPONSAVEL, e isso e divida consciente. O
-// `avisarDesignacao` de avisos.ts recebe um compromissoId e resolve canal e
-// destino a partir do Compromisso — nao serve para Tarefa sem ser
-// generalizado. Meio-ligar um caminho de notificacao e pior que nao ligar:
-// o escritorio passaria a confiar num aviso que as vezes sai. Fica como
-// proximo passo, junto com os lembretes de 48h/24h/vence hoje.
+// O responsavel e avisado quando a tarefa fica com ele (avisarTarefaDesignada)
+// e lembrado 24 horas antes da entrega e do prazo fatal (gerarAvisos). Quem
+// chama enfileira um LEMBRAR para o aviso sair na hora.
 import { comEscritorio, semEscritorio } from "./prisma";
 import { prioridadeDe, situacaoDe } from "./tarefas";
 
@@ -23,6 +20,8 @@ export type DadosDaTarefa = {
   titulo: string;
   descricao?: string | null;
   vencimento: Date;
+  /** Prazo fatal do processo, quando houver. `vencimento` e a entrega interna. */
+  prazoFatal?: Date | null;
   prioridade?: string | null;
   responsavelId: string;
   clienteId?: string | null;
@@ -66,6 +65,7 @@ export async function criarTarefa(
         titulo: dados.titulo.trim(),
         descricao: dados.descricao?.trim() || null,
         vencimento: dados.vencimento,
+        prazoFatal: dados.prazoFatal ?? null,
         prioridade: prioridadeDe(dados.prioridade),
         responsavelId: dados.responsavelId,
         clienteId: dados.clienteId || null,
@@ -156,6 +156,7 @@ export async function editarTarefa(
         ...(dados.vencimento !== undefined
           ? { vencimento: dados.vencimento }
           : {}),
+        ...(dados.prazoFatal !== undefined ? { prazoFatal: dados.prazoFatal } : {}),
         ...(dados.prioridade !== undefined
           ? { prioridade: prioridadeDe(dados.prioridade) }
           : {}),

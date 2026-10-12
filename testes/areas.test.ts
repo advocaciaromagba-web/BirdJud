@@ -49,7 +49,7 @@ describe("o catalogo", () => {
     expect(porChave.get("CLIENTES")).toBe(true);
     expect(porChave.get("PROCESSOS")).toBe(true);
     expect(porChave.get("AGENDA")).toBe(true);
-    expect(porChave.get("PRAZOS")).toBe(true);
+    expect(porChave.get("TAREFAS")).toBe(true);
   });
 
   // Da para liberar a emissao de cobranca sem abrir o livro-caixa e a meta do

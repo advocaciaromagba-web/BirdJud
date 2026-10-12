@@ -47,11 +47,11 @@ const DEMONSTRACOES: Demonstracao[] = [
     arquivo: "agenda",
     endereco: "seu-escritorio.birdjud.com.br/agenda",
     sobretitulo: "Agenda e tarefas",
-    titulo: "Prazo, audiencia e tarefa no mesmo dia da tela",
+    titulo: "Audiencia na agenda, peca em tarefas, nada misturado",
     texto:
-      "A agenda se le por dia, como o escritorio trabalha. Prazo, audiencia, reuniao e tarefa dividem a mesma lista, presos ao processo de origem, e o que acontece nas proximas 48 horas aparece no painel antes de qualquer outra coisa.",
+      "A agenda guarda onde alguem precisa estar: audiencia, pericia, atendimento. Tarefas guardam o que precisa ser escrito, com data de entrega e prazo fatal. Uma nao aceita o que e da outra, e o que vence nas proximas 48 horas aparece no painel antes de qualquer outra coisa.",
     pontos: [
-      "Aviso por e-mail e por WhatsApp de audiencia e de prazo",
+      "Aviso por e-mail e por WhatsApp de audiencia e de prazo fatal",
       "Tarefa atribuida a quem vai fazer, com o processo junto",
       "Horario sempre em Brasilia, venha de onde vier",
     ],

@@ -117,6 +117,7 @@ export default async function PaginaPublicacoes() {
           atencao: p.triagem.atencao,
           explicacao: p.triagem.explicacao,
           aceita: p.triagem.aceitaEm !== null,
+          aceitaComoTarefa: p.triagem.tarefaId !== null,
           recusada: p.triagem.recusadaEm !== null,
         }
       : null,

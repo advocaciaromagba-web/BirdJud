@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
-import { TIPOS_DE_COMPROMISSO, faltaParaGravar } from "@/lib/compromissos";
+import { faltaParaGravar } from "@/lib/compromissos";
+import { TIPOS_DA_AGENDA, recusaDaAgenda } from "@/lib/natureza";
 import { formatarDocumento } from "@/lib/documentos";
 import { tratarErro } from "@/lib/respostas";
 import { avisarAgendamento, avisarDesignacao } from "@/lib/avisos";
@@ -10,7 +11,10 @@ import { enfileirar } from "@/lib/fila";
 
 const novoCompromisso = z.object({
   titulo: z.string().min(2).max(200),
-  tipo: z.enum(TIPOS_DE_COMPROMISSO).default("COMPROMISSO"),
+  // So o que e de estar presente: tarefa e prazo moram em Tarefas.
+  tipo: z.enum(TIPOS_DA_AGENDA, {
+    errorMap: () => ({ message: "Na agenda vai audiencia, pericia ou atendimento. Tarefa e prazo vao em Tarefas." }),
+  }).default("COMPROMISSO"),
   inicio: z.string().datetime({ offset: true }).or(z.string().min(10)),
   local: z.string().max(200).optional(),
   link: z.string().max(500).optional(),
@@ -62,7 +66,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ erro: "Data invalida." }, { status: 400 });
     }
 
-    // Tarefa exige cliente; agendamento nao. A regra vive em um so lugar.
+    // Agenda e de estar presente; peca e prazo vao em Tarefas (natureza.ts).
+    const recusa = recusaDaAgenda(corpo.data.tipo, corpo.data.titulo);
+    if (recusa) return NextResponse.json({ erro: recusa }, { status: 400 });
     const falta = faltaParaGravar(corpo.data);
     if (falta) return NextResponse.json({ erro: falta }, { status: 400 });
 

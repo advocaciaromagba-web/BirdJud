@@ -4,7 +4,7 @@
 // se busca.
 import { comEscritorio } from "./prisma";
 import { hojeNoEscritorio } from "./contas-do-escritorio";
-import { horaBR } from "./datas";
+import { diaEmBrasilia, horaBR } from "./datas";
 import type { FatosDoDia } from "./resumo-do-dia";
 
 function emISO(d: Date): string {
@@ -35,16 +35,23 @@ export async function fatosDoDia(
   const inicioDeHoje = new Date(`${hoje}T00:00:00Z`);
   const inicioDeAmanha = new Date(`${amanha}T00:00:00Z`);
   const inicioDeDepois = new Date(`${amanhaDe(amanha)}T00:00:00Z`);
+  // Tarefa tem hora: o "amanha" dela termina a meia-noite de Brasilia.
+  const fimDeAmanha = new Date(`${amanhaDe(amanha)}T03:00:00Z`);
 
   const dados = await comEscritorio(escritorioId, async (db) => ({
-    prazos: await db.prazo.findMany({
+    // Prazo mora na tarefa (natureza.ts): o fatal quando ha, senao a entrega.
+    prazos: await db.tarefa.findMany({
       where: {
-        cumpridoEm: null,
-        vencimento: { lt: inicioDeDepois },
+        situacao: { not: "CONCLUIDA" },
+        meta: false,
+        OR: [
+          { prazoFatal: { lt: fimDeAmanha } },
+          { prazoFatal: null, vencimento: { lt: fimDeAmanha } },
+        ],
       },
       orderBy: { vencimento: "asc" },
       take: 100,
-      include: { processo: { select: { numero: true } } },
+      select: { titulo: true, vencimento: true, prazoFatal: true, numeroProcesso: true },
     }),
     compromissos: await db.compromisso.findMany({
       where: {
@@ -66,16 +73,16 @@ export async function fatosDoDia(
     }),
   }));
 
-  const comoPrazo = (p: (typeof dados.prazos)[number]) => ({
+  const prazos = dados.prazos.map((p) => ({
     titulo: p.titulo,
-    vencimento: emISO(p.vencimento),
-    numeroProcesso: p.processo?.numero ?? null,
-  });
+    vencimento: diaEmBrasilia(p.prazoFatal ?? p.vencimento),
+    numeroProcesso: p.numeroProcesso,
+  }));
 
   return {
-    prazosVencidos: dados.prazos.filter((p) => emISO(p.vencimento) < hoje).map(comoPrazo),
-    prazosHoje: dados.prazos.filter((p) => emISO(p.vencimento) === hoje).map(comoPrazo),
-    prazosAmanha: dados.prazos.filter((p) => emISO(p.vencimento) === amanha).map(comoPrazo),
+    prazosVencidos: prazos.filter((p) => p.vencimento < hoje),
+    prazosHoje: prazos.filter((p) => p.vencimento === hoje),
+    prazosAmanha: prazos.filter((p) => p.vencimento === amanha),
     compromissosHoje: dados.compromissos.map((c) => ({
       titulo: c.titulo,
       tipo: c.tipo,

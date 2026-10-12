@@ -16,7 +16,9 @@ import {
   SemChaveDeIA,
   type Anexo,
 } from "@/lib/ia";
+import { calendarioDoEscritorio, hoje } from "@/lib/prazos-do-escritorio";
 import {
+  calcularPrazoDaLeitura,
   interpretar,
   LeituraIlegivel,
   montarInstrucao,
@@ -116,7 +118,12 @@ export async function POST(req: Request) {
       "medium",
     );
 
-    const leitura = interpretar(perfil as Perfil, resultado.texto);
+    let leitura = interpretar(perfil as Perfil, resultado.texto);
+    // Tarefa: a IA leu os dias; a data quem da e o sistema, com o calendario
+    // do escritorio.
+    if (perfil === "TAREFA") {
+      leitura = calcularPrazoDaLeitura(leitura, hoje(), await calendarioDoEscritorio(escritorioId));
+    }
 
     // Fica gravado o que a IA propos, nao o que o escritorio aceitou: e o
     // registro de que a leitura existiu, para quando alguem perguntar de onde

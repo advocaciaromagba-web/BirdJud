@@ -9,6 +9,10 @@ import {
   editarTarefa,
   mudarSituacao,
 } from "@/lib/tarefas-do-escritorio";
+import { recusaDeTarefa } from "@/lib/natureza";
+import { avisarTarefaDesignada } from "@/lib/avisos";
+import { enfileirar } from "@/lib/fila";
+import { fimDoDia } from "@/lib/tarefas";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +20,7 @@ const mudanca = z.object({
   titulo: z.string().trim().min(3).optional(),
   descricao: z.string().trim().max(4000).optional().nullable(),
   vencimento: z.string().min(10).optional(),
+  prazoFatal: z.string().max(10).optional().nullable(),
   prioridade: z.enum(PRIORIDADES).optional(),
   responsavelId: z.string().trim().min(1).optional(),
   clienteId: z.string().trim().optional().nullable(),
@@ -29,7 +34,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao(undefined, "TAREFAS");
+    const { escritorioId, usuarioId } = await exigirSessao(undefined, "TAREFAS");
     const { id } = await params;
     const dados = mudanca.parse(await req.json());
 
@@ -41,11 +46,24 @@ export async function PATCH(
       });
     }
 
-    const { situacao, vencimento, ...resto } = dados;
+    if (dados.titulo !== undefined && !dados.meta) {
+      const recusa = recusaDeTarefa(dados.titulo);
+      if (recusa) return NextResponse.json({ erro: recusa }, { status: 400 });
+    }
+    const { situacao, vencimento, prazoFatal: fatalTexto, ...resto } = dados;
+    const prazoFatal = fatalTexto === undefined ? undefined : fimDoDia(fatalTexto);
+    if (fatalTexto !== undefined && prazoFatal === undefined) {
+      return NextResponse.json({ erro: "Prazo fatal invalido." }, { status: 400 });
+    }
     const tarefa = await editarTarefa(escritorioId, id, {
       ...resto,
       ...(vencimento ? { vencimento: new Date(vencimento) } : {}),
+      ...(prazoFatal !== undefined ? { prazoFatal } : {}),
     });
+    // Passou para outra pessoa: a nova e avisada (a chave leva o responsavel).
+    if (dados.responsavelId && (await avisarTarefaDesignada(escritorioId, id, usuarioId)) > 0) {
+      await enfileirar("LEMBRAR", escritorioId);
+    }
     if (situacao) await mudarSituacao(escritorioId, id, situacao);
     return NextResponse.json({ tarefa });
   } catch (erro) {

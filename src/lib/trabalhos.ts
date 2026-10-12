@@ -15,7 +15,7 @@ import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
-import { arquivarVencidos } from "./agenda-do-escritorio";
+import { arquivarVencidos, separarAgendaETarefas } from "./agenda-do-escritorio";
 import {
   arquivosParaEspelhar,
   espelharArquivo,
@@ -326,6 +326,13 @@ async function triar({ escritorioId }: Contexto): Promise<void> {
  */
 async function arquivarAgenda({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("ARQUIVAR_AGENDA exige escritorio.");
+  // Peca e prazo que ainda estavam na agenda ou na tela de Prazos vao para
+  // Tarefas (separarAgendaETarefas). Idempotente: depois da primeira vez, nao
+  // acha nada.
+  const separados = await separarAgendaETarefas(escritorioId);
+  if (separados.deCompromissos || separados.dePrazos) {
+    console.log(`ARQUIVAR_AGENDA ${escritorioId}: ${separados.deCompromissos} compromisso(s) e ${separados.dePrazos} prazo(s) passaram para Tarefas.`);
+  }
   const r = await arquivarVencidos(escritorioId);
   if (r.arquivados > 0) {
     console.log(`ARQUIVAR_AGENDA ${escritorioId}: ${r.arquivados} — ${r.titulos.join(" | ")}`);

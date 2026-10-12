@@ -4,6 +4,7 @@ import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import {
   SemDataParaAgendar,
+  SemResponsavel,
   TriagemNaoEncontrada,
   aceitarTriagem,
   recusarTriagem,
@@ -22,16 +23,17 @@ const pedido = z.object({
 /**
  * Aceita ou recusa a sugestao.
  *
- * O compromisso nasce AQUI, no clique — nunca na triagem. Sistema que cria
- * prazo sozinho na agenda do escritorio e sistema em que ninguem confia na
- * agenda.
+ * O compromisso (audiencia, pericia) ou a tarefa (peca, recurso) nasce AQUI,
+ * no clique — nunca na triagem. Sistema que lanca sozinho na agenda do
+ * escritorio e sistema em que ninguem confia na agenda. Tarefa sem
+ * responsavel escolhido fica com quem aceitou.
  */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao("PUBLICACOES_DJEN", "PUBLICACOES");
+    const { escritorioId, usuarioId } = await exigirSessao("PUBLICACOES_DJEN", "PUBLICACOES");
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
@@ -47,10 +49,14 @@ export async function POST(
       quando: corpo.data.quando,
       titulo: corpo.data.titulo,
       responsavelId: corpo.data.responsavelId,
-    });
+    }, usuarioId);
     return NextResponse.json({ aceite }, { status: 201 });
   } catch (erro) {
-    if (erro instanceof TriagemNaoEncontrada || erro instanceof SemDataParaAgendar) {
+    if (
+      erro instanceof TriagemNaoEncontrada ||
+      erro instanceof SemDataParaAgendar ||
+      erro instanceof SemResponsavel
+    ) {
       return NextResponse.json({ erro: erro.message }, { status: erro.status });
     }
     return tratarErro(erro);

@@ -113,14 +113,14 @@ export async function montarPainel(
       where: { id: escritorioId },
       select: { cnpj: true },
     }),
-    // Prazo e a unica coisa aqui cujo erro nao tem conserto depois. Buscamos
-    // em DIAS CORRIDOS de folga e so para separar o que pode estar apertado;
-    // quem conta os dias uteis de verdade e o modulo de prazos, abaixo.
-    prazos: await db.prazo.findMany({
-      where: { cumpridoEm: null },
-      select: { vencimento: true },
+    // Prazo e a unica coisa aqui cujo erro nao tem conserto depois. Desde a
+    // separacao agenda x tarefas, prazo mora na TAREFA: conta o prazo fatal
+    // quando ha, senao a entrega. Metas da equipe nao sao prazo.
+    prazos: await db.tarefa.findMany({
+      where: { situacao: { not: "CONCLUIDA" }, meta: false },
+      select: { vencimento: true, prazoFatal: true },
       orderBy: { vencimento: "asc" },
-      take: 200,
+      take: 500,
     }),
   }));
 
@@ -131,7 +131,7 @@ export async function montarPainel(
   // para o admin — quem cumpre o prazo raramente e quem administra o sistema.
   const hojeISO = diaEmBrasilia(agora);
   const apertados = dados.prazos.filter((p) => {
-    const vence = p.vencimento.toISOString().slice(0, 10);
+    const vence = diaEmBrasilia(p.prazoFatal ?? p.vencimento);
     const { urgencia } = urgenciaDoPrazo(vence, hojeISO);
     return urgencia !== "EM_CURSO";
   }).length;
@@ -140,9 +140,9 @@ export async function montarPainel(
       tipo: "PRAZO_APERTADO",
       texto:
         apertados === 1
-          ? "1 prazo vence hoje, esta a tres dias uteis ou ja venceu."
-          : `${apertados} prazos vencem hoje, estao a tres dias uteis ou ja venceram.`,
-      destino: "/prazos",
+          ? "1 tarefa com prazo hoje, a tres dias uteis ou ja vencida."
+          : `${apertados} tarefas com prazo hoje, a tres dias uteis ou ja vencidas.`,
+      destino: "/tarefas",
       soAdmin: false,
     });
   }

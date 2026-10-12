@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { TIPOS_DA_AGENDA, recusaDaAgenda } from "@/lib/natureza";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
-import { TIPOS_DE_COMPROMISSO } from "@/lib/compromissos";
 import {
   CompromissoNaoEncontrado,
   editarCompromisso,
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 const edicao = z.object({
   titulo: z.string().min(2).max(200).optional(),
-  tipo: z.enum(TIPOS_DE_COMPROMISSO).optional(),
+  tipo: z.enum(TIPOS_DA_AGENDA).optional(),
   inicio: z.string().min(10).optional(),
   local: z.string().max(200).optional().or(z.literal("")),
   link: z.string().max(500).optional().or(z.literal("")),
@@ -87,6 +87,15 @@ export async function PATCH(
     }
 
     const d = corpo.data;
+    if (d.titulo !== undefined || d.tipo !== undefined) {
+      const atual = await comEscritorio(escritorioId, (db) =>
+        db.compromisso.findFirst({ where: { id }, select: { titulo: true, tipo: true } }),
+      );
+      if (atual) {
+        const recusa = recusaDaAgenda(d.tipo ?? atual.tipo, d.titulo ?? atual.titulo);
+        if (recusa) return NextResponse.json({ erro: recusa }, { status: 400 });
+      }
+    }
     const campos: Parameters<typeof editarCompromisso>[2] = {};
     if (d.titulo !== undefined) campos.titulo = d.titulo;
     if (d.tipo !== undefined) campos.tipo = d.tipo;

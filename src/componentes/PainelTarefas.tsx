@@ -11,12 +11,15 @@ import {
   type Prioridade,
   type SituacaoDaTarefa,
 } from "@/lib/tarefas";
+import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
 
 export type TarefaNaTela = {
   id: string;
   titulo: string;
   descricao: string | null;
   vencimentoISO: string;
+  /** Prazo fatal do processo (aaaa-mm-dd, Brasilia), quando houver. */
+  prazoFatalDia: string | null;
   prioridade: Prioridade;
   situacao: string;
   meta: boolean;
@@ -45,6 +48,13 @@ const quando = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
 });
 
+const dia = (iso: string) => iso.split("-").reverse().join("/");
+
+/** O que a leitura do documento pos no formulario, antes de gravar. */
+type Preenchido = Partial<
+  Record<"titulo" | "descricao" | "numeroProcesso" | "vencimento" | "prazoFatal", string>
+>;
+
 /** O valor que o <input type="datetime-local"> entende. */
 function paraCampo(iso: string): string {
   const d = new Date(iso);
@@ -59,6 +69,7 @@ export function PainelTarefas({
   ativas,
   concluidas,
   mostrandoConcluidas,
+  temIA = false,
 }: {
   tarefas: TarefaNaTela[];
   equipe: Pessoa[];
@@ -66,6 +77,7 @@ export function PainelTarefas({
   ativas: number;
   concluidas: number;
   mostrandoConcluidas: boolean;
+  temIA?: boolean;
 }) {
   const router = useRouter();
   const [busca, setBusca] = useState("");
@@ -73,6 +85,36 @@ export function PainelTarefas({
   const [criando, setCriando] = useState(false);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  // A leitura troca os valores iniciais e remonta o formulario (a `chave`):
+  // o formulario e nao controlado, e assim continua editavel depois.
+  const [preenchido, setPreenchido] = useState<Preenchido>({});
+  const [chave, setChave] = useState(0);
+
+  function aplicarLeitura(campos: Record<string, string>) {
+    const descricao = [
+      campos.descricao,
+      campos.prazoDias && campos.dataDoAto
+        ? `Prazo de ${campos.prazoDias} dias ${campos.contagem === "CORRIDOS" ? "corridos" : "uteis"} a partir de ${dia(campos.dataDoAto)} (lido pela IA — confira nos autos).`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    setPreenchido({
+      titulo: campos.titulo,
+      descricao: descricao || undefined,
+      numeroProcesso: campos.numeroProcesso,
+      // Entrega no fim do expediente do dia sugerido.
+      vencimento: campos.entrega ? `${campos.entrega}T18:00` : undefined,
+      prazoFatal: campos.prazoFatal,
+    });
+    setChave((n) => n + 1);
+  }
+
+  function fecharFormulario() {
+    setCriando(false);
+    setEditando(null);
+    setPreenchido({});
+  }
 
   const visiveis = useMemo(
     () => tarefas.filter((t) => combina(t, busca)),
@@ -107,6 +149,7 @@ export function PainelTarefas({
 
   const formulario = (tarefa: TarefaNaTela | null) => (
     <form
+      key={`${tarefa?.id ?? "nova"}:${chave}`}
       onSubmit={async (evento) => {
         evento.preventDefault();
         const dados = new FormData(evento.currentTarget);
@@ -114,6 +157,7 @@ export function PainelTarefas({
           titulo: String(dados.get("titulo") ?? ""),
           descricao: String(dados.get("descricao") ?? "") || null,
           vencimento: String(dados.get("vencimento") ?? ""),
+          prazoFatal: String(dados.get("prazoFatal") ?? "") || null,
           prioridade: String(dados.get("prioridade") ?? "MEDIA"),
           responsavelId: String(dados.get("responsavelId") ?? ""),
           clienteId: String(dados.get("clienteId") ?? "") || null,
@@ -123,11 +167,10 @@ export function PainelTarefas({
         await agir("formulario", async () => {
           if (tarefa) {
             await chamar(`/api/tarefas/${tarefa.id}`, "PATCH", corpo);
-            setEditando(null);
           } else {
             await chamar("/api/tarefas", "POST", corpo);
-            setCriando(false);
           }
+          fecharFormulario();
         });
       }}
       className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4"
@@ -138,8 +181,8 @@ export function PainelTarefas({
           name="titulo"
           required
           minLength={3}
-          defaultValue={tarefa?.titulo ?? ""}
-          placeholder="O servico a executar. Ex: emendar a inicial, distribuir a peticao"
+          defaultValue={preenchido.titulo ?? tarefa?.titulo ?? ""}
+          placeholder="O servico a executar. Ex: contestacao, manifestacao sobre o laudo, recurso"
           className="rounded-lg border border-slate-300 px-3 py-2"
         />
       </label>
@@ -149,21 +192,31 @@ export function PainelTarefas({
         <textarea
           name="descricao"
           rows={3}
-          defaultValue={tarefa?.descricao ?? ""}
+          defaultValue={preenchido.descricao ?? tarefa?.descricao ?? ""}
           className="rounded-lg border border-slate-300 px-3 py-2"
         />
       </label>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-3">
         <label className="grid gap-1 text-sm">
-          <span className="text-slate-600">Prazo</span>
+          <span className="text-slate-600">Entrega (no escritorio)</span>
           <input
             type="datetime-local"
             name="vencimento"
             required
             defaultValue={
-              tarefa ? paraCampo(tarefa.vencimentoISO) : undefined
+              preenchido.vencimento ??
+              (tarefa ? paraCampo(tarefa.vencimentoISO) : undefined)
             }
+            className="rounded-lg border border-slate-300 px-3 py-2"
+          />
+        </label>
+        <label className="grid gap-1 text-sm">
+          <span className="text-slate-600">Prazo fatal (processo)</span>
+          <input
+            type="date"
+            name="prazoFatal"
+            defaultValue={preenchido.prazoFatal ?? tarefa?.prazoFatalDia ?? ""}
             className="rounded-lg border border-slate-300 px-3 py-2"
           />
         </label>
@@ -206,7 +259,7 @@ export function PainelTarefas({
           </span>
           <input
             name="numeroProcesso"
-            defaultValue={tarefa?.numeroProcesso ?? ""}
+            defaultValue={preenchido.numeroProcesso ?? tarefa?.numeroProcesso ?? ""}
             placeholder="0000000-00.0000.0.00.0000"
             className="rounded-lg border border-slate-300 px-3 py-2"
           />
@@ -244,10 +297,7 @@ export function PainelTarefas({
         </button>
         <button
           type="button"
-          onClick={() => {
-            setCriando(false);
-            setEditando(null);
-          }}
+          onClick={fecharFormulario}
           className="botao-secundario"
         >
           Cancelar
@@ -284,6 +334,15 @@ export function PainelTarefas({
         </div>
       </div>
 
+      {criando && temIA ? (
+        <LeitorDeDocumentos perfil="TAREFA" aoAplicar={aplicarLeitura} />
+      ) : null}
+      {criando && Object.keys(preenchido).length > 0 ? (
+        <p className="rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
+          Sugestao da IA no formulario abaixo: confira o prazo e o assunto nos
+          autos antes de salvar.
+        </p>
+      ) : null}
       {criando ? formulario(null) : null}
       {editando ? formulario(editando) : null}
 
@@ -325,7 +384,7 @@ export function PainelTarefas({
               <tr>
                 <th className="px-4 py-3 font-semibold">Tarefa</th>
                 <th className="px-4 py-3 font-semibold">Responsavel</th>
-                <th className="px-4 py-3 font-semibold">Prazo</th>
+                <th className="px-4 py-3 font-semibold">Entrega / prazo fatal</th>
                 <th className="px-4 py-3 font-semibold">Prioridade</th>
                 <th className="px-4 py-3 font-semibold">Situacao</th>
                 <th className="px-4 py-3" />
@@ -373,6 +432,11 @@ export function PainelTarefas({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-700">
                     {quando.format(new Date(t.vencimentoISO))}
+                    {t.prazoFatalDia ? (
+                      <span className="block text-xs font-semibold text-red-700">
+                        fatal {dia(t.prazoFatalDia)}
+                      </span>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -408,6 +472,7 @@ export function PainelTarefas({
                         type="button"
                         onClick={() => {
                           setCriando(false);
+                          setPreenchido({});
                           setEditando(t);
                         }}
                         className="text-slate-700 underline-offset-2 hover:underline"

@@ -35,7 +35,6 @@ export const AREAS: Area[] = [
   { chave: "CLIENTES", nome: "Clientes", padrao: true },
   { chave: "PROCESSOS", nome: "Processos", padrao: true },
   { chave: "AGENDA", nome: "Agenda", padrao: true },
-  { chave: "PRAZOS", nome: "Prazos", padrao: true },
   { chave: "TAREFAS", nome: "Tarefas e metas", padrao: true },
   { chave: "PUBLICACOES", nome: "Publicacoes", padrao: true, modulo: "PUBLICACOES_DJEN" },
   { chave: "ARQUIVOS", nome: "Arquivos", padrao: true, modulo: "NUVEM" },
@@ -83,7 +82,8 @@ export const AREA_DO_ENDERECO: Record<string, string> = {
   "/agenda": "AGENDA",
   // Mensagens nao entregues: quase todas sao avisos de compromisso.
   "/mensagens": "AGENDA",
-  "/prazos": "PRAZOS",
+  // A tela de Prazos virou Tarefas (prazo mora na tarefa).
+  "/prazos": "TAREFAS",
   "/tarefas": "TAREFAS",
   "/publicacoes": "PUBLICACOES",
   "/arquivos": "ARQUIVOS",

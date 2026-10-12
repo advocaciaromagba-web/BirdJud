@@ -31,10 +31,24 @@ forma diferente (ver `docs/WHATSAPP.md`).
 > **O prazo fatal vai preenchido. A data sugerida fica tres dias uteis antes.**
 
 Marcar a tarefa para o dia do vencimento e marcar para o dia em que nao da mais
-para errar. Por isso, quando ha prazo, o aceite cria **duas** coisas:
+para errar. Por isso o aceite de uma sugestao de **TAREFA** cria uma tarefa
+com as **duas** datas na mesma linha:
 
-- o **compromisso**, na data sugerida — que e quando o escritorio trabalha;
-- o **prazo**, no fatal — que e o que a tela de Prazos vigia.
+- a **entrega**, na data sugerida — que e quando o escritorio trabalha;
+- o **prazo fatal**, no fim do dia do fatal — que e o que o Inicio e o resumo
+  do dia vigiam.
+
+A tarefa fica com o responsavel escolhido, ou com quem aceitou. Sugestao de
+**AGENDAMENTO** (audiencia, pericia) vira compromisso na Agenda. Ver
+`docs/AGENDA.md`, "Agenda nao e Tarefas".
+
+## A sugestao aparece como sugestao
+
+O bloco da sugestao tem cor propria (violeta), diferente do texto da
+publicacao e dos botoes do escritorio, com a etiqueta **Sugestao da IA** e o
+aviso "precisa de conferencia: confira o prazo e o assunto nos autos antes de
+lancar". O botao diz o que vai acontecer: "Conferi — criar tarefa" ou
+"Conferi — lancar na agenda".
 
 Tres dias **uteis**, e nao corridos: tres dias corridos antes de uma quarta cai
 no domingo, e trabalho marcado para domingo e trabalho que ninguem ve. E a

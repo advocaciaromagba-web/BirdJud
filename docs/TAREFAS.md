@@ -2,19 +2,42 @@
 
 Tarefa do dia a dia da equipe, e meta que atravessa o mes.
 
-## Tarefa NAO e Prazo
+## Tarefa e trabalho; Agenda e presenca
 
-As duas telas existem lado a lado, e a separacao e deliberada.
+Tarefa e tudo que alguem precisa **escrever ou providenciar**: montar a
+inicial, manifestar, contestar, recorrer, juntar documento. Audiencia,
+pericia e atendimento vao na **Agenda** — a API recusa (`src/lib/natureza.ts`,
+ver `docs/AGENDA.md`).
 
-| | `Prazo` | `Tarefa` |
+Cada tarefa tem duas datas:
+
+| | `vencimento` (Entrega) | `prazoFatal` |
 | --- | --- | --- |
-| de onde vem a data | conta com termo inicial, dias e calendario forense (`prazos.ts`) | combinada entre pessoas |
-| o que acontece se errar | perde direito, sem conserto | alguem cobra de novo |
-| exemplo | "contestar em 15 dias uteis da intimacao" | "ligar para o cliente", "juntar os doctos da Maria" |
+| o que e | quando o escritorio entrega o trabalho, com hora | o fatal do processo, quando ha |
+| de onde vem | combinada, ou sugerida tres dias uteis antes do fatal | conta com termo inicial, dias e calendario forense (`prazos.ts`) |
+| se errar | alguem cobra de novo | perde direito, sem conserto |
 
-Lancar "cobrancas gaby" como Prazo exigiria inventar uma intimacao que nunca
-houve. E juntar as duas na mesma tabela faria um prazo fatal herdar a
-frouxidao de um lembrete de ligacao.
+O fatal e gravado as 23h59 de Brasilia do dia. A tela de Prazos saiu: os
+prazos antigos viraram tarefas, e o Inicio ("tarefas com prazo hoje, a tres
+dias uteis ou ja vencidas") e o resumo do dia contam pelo fatal, ou pela
+entrega quando nao ha fatal. Meta nao conta.
+
+## Avisos
+
+Quem recebe a tarefa e avisado por e-mail e WhatsApp (modelo
+`TAREFA_DESIGNADA`), menos quando se designou a si mesmo. Vinte e quatro
+horas antes da entrega e do prazo fatal sai um lembrete (`LEMBRETE_TAREFA`),
+so para o responsavel.
+
+## Criar tarefa lendo o documento
+
+Com o modulo IA, "Nova tarefa" abre o leitor (perfil `TAREFA`): intimacao,
+despacho ou decisao. A IA le **o que fazer**, o resumo, o processo, a data da
+intimacao e **quantos dias**; quem transforma isso em data e o sistema
+(`calcularPrazoDaLeitura`), com dia util e o calendario do escritorio — a
+mesma conta da triagem de publicacoes. Prazo fatal que a IA tente devolver e
+descartado. O formulario chega preenchido, marcado como **Sugestao da IA**, e
+so grava depois que alguem confere e clica em salvar.
 
 `meta` separa, dentro da mesma tabela, a tarefa do dia a dia da meta da
 equipe: sao a mesma coisa com horizonte diferente, e duas tabelas fariam
