@@ -38,6 +38,10 @@ export type DadosDaImplantacao = {
     recebeWhatsapp: boolean;
     ativo: boolean;
     situacao: "ENTROU" | "CONVIDADO" | "CONVITE_VENCIDO" | "AGUARDANDO";
+    /** Verificacao em duas etapas ligada. */
+    doisFatores: boolean;
+    /** Bloqueada por tentativas erradas, ate quando. */
+    bloqueadoAte: string | null;
     conviteEm: string | null;
   }[];
   oabs: { id: string; numero: string; uf: string; nomeAdvogado: string | null }[];
@@ -224,6 +228,12 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                       {p.conviteEm && p.situacao !== "ENTROU" ? (
                         <div className="text-xs text-slate-500">em {quando.format(new Date(p.conviteEm))}</div>
                       ) : null}
+                      {p.doisFatores ? <div className="text-xs text-slate-600">duas etapas ligada</div> : null}
+                      {p.bloqueadoAte ? (
+                        <div className="text-xs font-medium text-red-700">
+                          bloqueada ate {quando.format(new Date(p.bloqueadoAte))}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="text-right">
                       {p.situacao !== "ENTROU" && p.situacao !== "AGUARDANDO" ? (
@@ -234,6 +244,24 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                           onClick={() => agir(`convite-${p.id}`, { acao: "convite", usuarioId: p.id })}
                         >
                           Reenviar convite
+                        </button>
+                      ) : null}
+                      {p.situacao === "ENTROU" ? (
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-[color:var(--marca-primaria)] hover:underline"
+                          disabled={ocupado === `convite-${p.id}`}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Destravar o acesso de ${p.nome}? Tira o bloqueio, desliga a verificacao em duas etapas e manda um link para criar senha nova.`,
+                              )
+                            ) {
+                              void agir(`convite-${p.id}`, { acao: "destravar", usuarioId: p.id });
+                            }
+                          }}
+                        >
+                          Destravar acesso
                         </button>
                       ) : null}
                     </td>

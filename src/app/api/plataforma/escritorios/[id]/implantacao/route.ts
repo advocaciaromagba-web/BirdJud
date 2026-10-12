@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prismaPlataforma } from "@/lib/prisma";
+import { comEscritorio, prismaPlataforma } from "@/lib/prisma";
 import { exigirOperador, registrarAcessoSuporte, SemOperador } from "@/lib/plataforma";
 import { entregarEscritorio, incluirNaEquipe } from "@/lib/implantacao";
 import { convidarPessoa } from "@/lib/equipe";
@@ -44,6 +44,9 @@ const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("pular"), chave }),
   z.object({ acao: z.literal("retomar"), chave }),
   z.object({ acao: z.literal("convite"), usuarioId: z.string().min(1) }),
+  // Recuperar o acesso de quem ficou de fora: perdeu o celular da verificacao
+  // em duas etapas, esqueceu a senha ou bloqueou por tentativas.
+  z.object({ acao: z.literal("destravar"), usuarioId: z.string().min(1) }),
   z.object({ acao: z.literal("entregar") }),
 ]);
 
@@ -109,6 +112,27 @@ export async function POST(
       case "convite": {
         await anotar("convite reenviado");
         const r = await convidarPessoa(id, a.usuarioId, {
+          nomeDoEscritorio: escritorio.nome,
+          slug: escritorio.slug,
+          nomeDeQuemConvidou: `${operador.nome}, da Blackbird`,
+        });
+        return NextResponse.json({ convites: [r] });
+      }
+      case "destravar": {
+        const pessoa = await comEscritorio(id, (db) =>
+          db.usuario.findFirst({ where: { id: a.usuarioId }, select: { id: true, email: true } }),
+        );
+        if (!pessoa) return NextResponse.json({ erro: "Pessoa nao encontrada." }, { status: 404 });
+        await anotar(`acesso destravado (${pessoa.email}): bloqueio e duas etapas retirados, link de senha nova`);
+        await comEscritorio(id, (db) =>
+          db.usuario.update({
+            where: { id: pessoa.id },
+            data: { doisFatores: null, tentativasFalhas: 0, bloqueadoAte: null },
+          }),
+        );
+        // Senha nova pelo mesmo caminho do convite: link de uso unico, e quem
+        // escolhe a senha e a pessoa. A plataforma nunca sabe a senha.
+        const r = await convidarPessoa(id, pessoa.id, {
           nomeDoEscritorio: escritorio.nome,
           slug: escritorio.slug,
           nomeDeQuemConvidou: `${operador.nome}, da Blackbird`,

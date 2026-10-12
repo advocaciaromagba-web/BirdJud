@@ -46,6 +46,7 @@ export default async function ImplantacaoDoEscritorio({ params }: { params: Prom
         select: {
           id: true, nome: true, email: true, papel: true, oab: true, telefone: true,
           recebeWhatsapp: true, ultimoAcesso: true, ativo: true,
+          doisFatores: true, bloqueadoAte: true,
         },
       }),
       convites: await db.redefinicaoDeSenha.findMany({
@@ -86,6 +87,9 @@ export default async function ImplantacaoDoEscritorio({ params }: { params: Prom
       return {
         id: p.id, nome: p.nome, email: p.email, papel: p.papel, oab: p.oab, telefone: p.telefone,
         recebeWhatsapp: p.recebeWhatsapp, ativo: p.ativo,
+        // So se esta ligado — o segredo em si nunca sai do servidor.
+        doisFatores: Boolean(p.doisFatores),
+        bloqueadoAte: p.bloqueadoAte && p.bloqueadoAte > new Date() ? p.bloqueadoAte.toISOString() : null,
         situacao: p.ultimoAcesso
           ? ("ENTROU" as const)
           : c && !c.usadoEm && c.expiraEm > new Date()
