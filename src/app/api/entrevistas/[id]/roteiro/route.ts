@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  * roteiro basico volta e `comIA` diz a verdade para a tela.
  */
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -24,7 +24,9 @@ export async function POST(
       "ENTREVISTAS",
     );
     const { id } = await params;
-    return NextResponse.json(await gerarRoteiro(escritorioId, id, usuarioId));
+    const corpo = (await req.json().catch(() => ({}))) as { tipoAcao?: unknown };
+    const tipoAcao = typeof corpo.tipoAcao === "string" ? corpo.tipoAcao : null;
+    return NextResponse.json(await gerarRoteiro(escritorioId, id, usuarioId, tipoAcao));
   } catch (erro) {
     if (erro instanceof EntrevistaNaoEncontrada) {
       return NextResponse.json({ erro: erro.message }, { status: erro.status });

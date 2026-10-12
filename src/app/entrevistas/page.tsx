@@ -8,6 +8,7 @@ import {
   type Urgencia,
 } from "@/lib/entrevista";
 import { entrevistasDoEscritorio } from "@/lib/entrevista-do-escritorio";
+import { comEscritorio } from "@/lib/prisma";
 import { Estrutura } from "@/componentes/Estrutura";
 import { PainelEntrevistas } from "@/componentes/PainelEntrevistas";
 
@@ -15,6 +16,9 @@ export default async function PaginaEntrevistas() {
   const contexto = await contextoDaPagina(undefined, "ENTREVISTAS");
   const modulos = await modulosAtivos(contexto.escritorioId);
   const lista = await entrevistasDoEscritorio(contexto.escritorioId);
+  const clientes = await comEscritorio(contexto.escritorioId, (db) =>
+    db.cliente.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true }, take: 3000 }),
+  );
 
   const naTela = lista.map((e) => ({
     id: e.id,
@@ -28,6 +32,11 @@ export default async function PaginaEntrevistas() {
       ? (ROTULO_DA_URGENCIA[e.urgencia as Urgencia] ?? e.urgencia)
       : null,
     temCliente: Boolean(e.clienteId),
+    clienteId: e.clienteId,
+    tipoAcao: e.tipoAcao ?? "",
+    anotacoes: e.anotacoes ?? "",
+    encerrada: e.encerradaEm !== null,
+    minutaPrompt: e.minutaPrompt,
     roteiro: Array.isArray(e.roteiro) ? (e.roteiro as string[]) : [],
     transcricao: e.transcricao ?? "",
     analise: (e.analise as Record<string, unknown> | null) ?? null,
@@ -56,6 +65,8 @@ export default async function PaginaEntrevistas() {
       <PainelEntrevistas
         entrevistas={naTela}
         temIA={modulos.includes("IA")}
+        clientes={clientes}
+        podeMinuta={contexto.papel === "ADVOGADO" || contexto.papel === "ADMIN"}
       />
     </Estrutura>
   );

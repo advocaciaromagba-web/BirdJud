@@ -573,6 +573,18 @@ model Entrevista {
   roteiro      Json?
   /// O que foi dito. Digitado ou vindo de audio transcrito.
   transcricao  String?
+  /// Anotacoes do advogado, a parte da fala: impressao, estrategia, lembrete.
+  anotacoes    String?
+  /// Tipo de acao ("despejo por falta de pagamento"): orienta o roteiro.
+  tipoAcao     String?
+  /// Como a transcricao foi feita, para constar no PDF:
+  /// LOCAL | NUVEM | DIGITADA | AUDIO_ENVIADO
+  origemTranscricao String?
+  /// Encerrada: a conversa acabou; libera o texto para a peticao inicial.
+  encerradaEm  DateTime?
+  /// Texto pronto para a peticao inicial, montado da organizacao + cadastro.
+  minutaPrompt   String?
+  minutaGeradaEm DateTime?
   /// O que a IA organizou da transcricao. Ver src/lib/entrevista.ts.
   analise      Json?
   /// BAIXA | MEDIA | ALTA | URGENTE, da analise. Em coluna para ordenar.

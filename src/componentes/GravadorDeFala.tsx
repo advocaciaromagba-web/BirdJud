@@ -58,9 +58,12 @@ function fabrica(): FabricaDeReconhecimento | null {
 export function GravadorDeFala({
   texto,
   onTexto,
+  onOrigem,
 }: {
   texto: string;
   onTexto: (novo: string) => void;
+  /** LOCAL (no computador) ou NUVEM (com autorizacao): vai para o PDF. */
+  onOrigem?: (origem: "LOCAL" | "NUVEM") => void;
 }) {
   const [disponibilidade, setDisponibilidade] =
     useState<Disponibilidade>("verificando");
@@ -70,6 +73,18 @@ export function GravadorDeFala({
   const [parcial, setParcial] = useState("");
   const [semFalaHa, setSemFalaHa] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
+  // Nuvem so com autorizacao expressa, nesta entrevista (metodo da Roma):
+  // para muitos atendimentos e aceitavel; para conversa sensivel, talvez nao.
+  const [aceitouNuvem, setAceitouNuvem] = useState(false);
+  // Teste de microfone: separa "microfone nao capta" de "reconhecimento nao
+  // entende" — sem isso a pessoa so ve "ouvindo" e nada acontecendo.
+  const [testandoMic, setTestandoMic] = useState(false);
+  const [nivel, setNivel] = useState(0);
+  const [jaCaptou, setJaCaptou] = useState(false);
+  const [microfones, setMicrofones] = useState<string[]>([]);
+  const fluxoRef = useRef<MediaStream | null>(null);
+  const audioRef = useRef<AudioContext | null>(null);
+  const animacaoRef = useRef<number | null>(null);
 
   const reconhecedor = useRef<Reconhecedor | null>(null);
   const ladoAtual = useRef<Lado>(lado);
@@ -137,9 +152,65 @@ export function GravadorDeFala({
     }
   }
 
+  async function testarMicrofone() {
+    setErro(null);
+    try {
+      const fluxo = await navigator.mediaDevices.getUserMedia({ audio: true });
+      fluxoRef.current = fluxo;
+      const Contexto =
+        window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const contexto = new Contexto();
+      audioRef.current = contexto;
+      const analisador = contexto.createAnalyser();
+      analisador.fftSize = 512;
+      contexto.createMediaStreamSource(fluxo).connect(analisador);
+      const amostras = new Uint8Array(analisador.frequencyBinCount);
+      setTestandoMic(true);
+      const medir = () => {
+        analisador.getByteTimeDomainData(amostras);
+        // Distancia media do silencio (128 e o ponto neutro).
+        let soma = 0;
+        for (const v of amostras) soma += Math.abs(v - 128);
+        const n = Math.min(100, Math.round((soma / amostras.length) * 6));
+        setNivel(n);
+        if (n > 8) setJaCaptou(true);
+        animacaoRef.current = requestAnimationFrame(medir);
+      };
+      medir();
+      const lista = await navigator.mediaDevices.enumerateDevices();
+      setMicrofones(lista.filter((d) => d.kind === "audioinput").map((d) => d.label || "microfone sem nome"));
+    } catch (e) {
+      setTestandoMic(false);
+      const nome = (e as { name?: string })?.name;
+      setErro(
+        nome === "NotAllowedError"
+          ? "O navegador bloqueou o microfone. Clique no cadeado ao lado do endereco e autorize o microfone."
+          : nome === "NotFoundError"
+            ? "Nenhum microfone foi encontrado neste computador."
+            : `Nao foi possivel acessar o microfone (${nome ?? "erro desconhecido"}).`,
+      );
+    }
+  }
+
+  function pararTeste() {
+    if (animacaoRef.current) cancelAnimationFrame(animacaoRef.current);
+    fluxoRef.current?.getTracks().forEach((t) => t.stop());
+    audioRef.current?.close().catch(() => {});
+    fluxoRef.current = null;
+    audioRef.current = null;
+    setTestandoMic(false);
+    setNivel(0);
+  }
+
+  useEffect(() => () => pararTeste(), []);
+
+  const podeNuvem = disponibilidade === "sem-suporte" && fabrica() !== null;
+  const podeGravar = disponibilidade === "pronto" || (podeNuvem && aceitouNuvem);
+
   function comecar() {
     const F = fabrica();
-    if (!F || disponibilidade !== "pronto") return;
+    if (!F || !podeGravar) return;
+    const local = disponibilidade === "pronto";
     setErro(null);
     querParar.current = false;
 
@@ -148,7 +219,8 @@ export function GravadorDeFala({
     r.continuous = true;
     r.interimResults = true;
     // A trava que importa: se o navegador respeitar, o audio nao sai daqui.
-    r.processLocally = true;
+    // Sem modo local, so com a autorizacao marcada acima.
+    if (local) r.processLocally = true;
 
     r.onresult = (evento) => {
       const e = evento as {
@@ -214,6 +286,7 @@ export function GravadorDeFala({
     try {
       r.start();
       setOuvindo(true);
+      onOrigem?.(local ? "LOCAL" : "NUVEM");
     } catch {
       setErro("Nao deu para comecar a ouvir. Confira o microfone.");
     }
@@ -254,7 +327,44 @@ export function GravadorDeFala({
         </div>
       ) : null}
 
-      {disponibilidade === "pronto" ? (
+      {podeNuvem && !aceitouNuvem ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <p className="font-semibold">Atencao ao sigilo profissional</p>
+          <p className="mt-1">
+            Este navegador nao transcreve sem ajuda externa. Se voce ativar, o audio da conversa vai para o servico de
+            reconhecimento de voz do navegador para virar texto. Para muitos atendimentos isso e aceitavel; para
+            conversas sensiveis, talvez nao. A alternativa sem envio nenhum e digitar no campo abaixo.
+          </p>
+          <label className="mt-2 flex items-start gap-2">
+            <input type="checkbox" className="mt-0.5" checked={aceitouNuvem} onChange={(e) => setAceitouNuvem(e.target.checked)} />
+            <span>Estou ciente e autorizo a transcricao por servico externo nesta entrevista.</span>
+          </label>
+        </div>
+      ) : null}
+
+      {/* Medidor de microfone */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={testandoMic ? pararTeste : testarMicrofone} className="botao-secundario text-xs">
+          {testandoMic ? "Parar teste" : "Testar microfone"}
+        </button>
+        {testandoMic ? (
+          <>
+            <div className="h-2.5 min-w-[8rem] flex-1 overflow-hidden rounded-full bg-slate-200" aria-label="Nivel do microfone">
+              <div className={`h-full ${nivel > 8 ? "bg-emerald-500" : "bg-slate-400"}`} style={{ width: `${nivel}%` }} />
+            </div>
+            <span className="text-xs text-slate-500">{nivel > 8 ? "captando" : "silencio"}</span>
+          </>
+        ) : null}
+      </div>
+      {testandoMic ? (
+        <p className="text-xs text-slate-500">
+          Fale agora. Se a barra nao se mexer, o problema e o microfone ou a permissao do navegador — nao o
+          reconhecimento.{jaCaptou ? " O microfone esta funcionando." : ""}
+          {microfones.length ? ` Microfones: ${microfones.join(" · ")}.` : ""}
+        </p>
+      ) : null}
+
+      {podeGravar ? (
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"

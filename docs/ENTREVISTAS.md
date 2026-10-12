@@ -156,3 +156,27 @@ reuniao nao quer perder a primeira. Apagar o campo antes e reversivel;
 perder o que ja estava escrito, nao.
 - **PDF da entrevista**: a Roma gera um; aqui a geracao de documento ja
   existe em `modelos-do-escritorio.ts` e so falta a especie.
+
+## No metodo do sistema da Advocacia Roma
+
+- **Tipo de acao** ao lado de "Sugerir roteiro": orienta as perguntas (fica
+  gravado e vai no PDF).
+- **Gravador**: modo local (o audio nao sai do computador), download do
+  portugues, marcacao de quem fala, aviso de silencio e **Testar microfone**
+  com medidor de nivel. Sem modo local, a transcricao por servico externo so
+  com **autorizacao expressa** naquela entrevista. A origem (local, nuvem,
+  digitada, audio enviado) fica registrada.
+- **Anotacoes do advogado** separadas do que foi dito; entram na organizacao
+  pela IA e no PDF.
+- **Ligar ao cliente**, **Encerrar/Reabrir** (nada e apagado) e **PDF da
+  entrevista**: roteiro, organizacao, anotacoes e a transcricao inteira, com a
+  origem e o aviso de sigilo profissional.
+- **Texto para a peticao inicial** (advogado ou administrador): so depois de
+  encerrar e organizar, com o cliente ligado. Monta a qualificacao do
+  cadastro e os fatos da organizacao; lacuna vira [PREENCHER] e nada e
+  inventado. Cadastro incompleto e listado — completa-se a ficha, ou monta-se
+  assim mesmo.
+
+Codigo: `src/lib/entrevista-do-escritorio.ts`, `src/lib/minuta-prompt.ts`,
+`src/lib/entrevista-pdf.ts`; migracao 57; testes em
+`testes/entrevista-completa.test.ts`.

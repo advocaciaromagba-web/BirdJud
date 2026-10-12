@@ -28,6 +28,9 @@ import {
   transcrever,
   type ResultadoDaTranscricao,
 } from "./transcricao-audio";
+import { montarPromptMinuta, camposFaltando, type ClienteParaMinuta } from "./minuta-prompt";
+import { gerarPdfEntrevista } from "./entrevista-pdf";
+import { prismaPlataforma } from "./prisma";
 import {
   MINIMO_DA_TRANSCRICAO,
   ROTEIRO_BASICO,
@@ -97,8 +100,11 @@ export async function gerarRoteiro(
   escritorioId: string,
   id: string,
   usuarioId: string,
+  /** Tipo de acao ("despejo por falta de pagamento"): orienta as perguntas. */
+  tipoAcao?: string | null,
 ): Promise<{ perguntas: string[]; comIA: boolean }> {
   const entrevista = await entrevistaPorId(escritorioId, id);
+  const tipo = tipoAcao?.trim() ? tipoAcao.trim().slice(0, 300) : entrevista.tipoAcao;
 
   let perguntas = [...ROTEIRO_BASICO];
   let comIA = false;
@@ -109,7 +115,12 @@ export async function gerarRoteiro(
         perguntas: unknown;
       }>(
         SISTEMA_ROTEIRO,
-        `Assunto, nas palavras de quem procurou o escritorio:\n${entrevista.assunto}`,
+        [
+          tipo ? `Tipo de acao: ${tipo}` : null,
+          `Assunto, nas palavras de quem procurou o escritorio:\n${entrevista.assunto}`,
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
         ESQUEMA_ROTEIRO,
         "low",
       );
@@ -135,7 +146,7 @@ export async function gerarRoteiro(
   await comEscritorio(escritorioId, (db) =>
     db.entrevista.update({
       where: { id },
-      data: { roteiro: perguntas, situacao: "ROTEIRO" },
+      data: { roteiro: perguntas, situacao: "ROTEIRO", tipoAcao: tipo ?? null },
     }),
   );
   void usuarioId;
@@ -147,14 +158,20 @@ export async function anotar(
   escritorioId: string,
   id: string,
   transcricao: string,
+  extra: { anotacoes?: string | null; origem?: string | null } = {},
 ) {
-  await entrevistaPorId(escritorioId, id);
+  const atual = await entrevistaPorId(escritorioId, id);
   const texto = transcricao.trim();
+  // A origem fica a de quem gravou primeiro por voz; texto digitado sobre uma
+  // transcricao por voz continua sendo "por voz, corrigida".
+  const origem = extra.origem ?? atual.origemTranscricao ?? (texto ? "DIGITADA" : null);
   return comEscritorio(escritorioId, (db) =>
     db.entrevista.update({
       where: { id },
       data: {
         transcricao: texto,
+        ...(extra.anotacoes !== undefined ? { anotacoes: extra.anotacoes?.trim() || null } : {}),
+        origemTranscricao: origem,
         // Quem reescreve a anotacao invalida a analise anterior: ela passa a
         // descrever um texto que nao existe mais.
         //
@@ -189,9 +206,13 @@ export async function organizar(
       SISTEMA_ANALISE_ENTREVISTA,
       [
         `Assunto informado: ${entrevista.assunto}`,
+        entrevista.tipoAcao ? `Tipo de acao: ${entrevista.tipoAcao}` : "",
         "",
         "O que foi dito na entrevista:",
         texto,
+        "",
+        "Anotacoes do advogado:",
+        entrevista.anotacoes?.trim() || "(sem anotacoes)",
       ].join("\n"),
       ESQUEMA_ANALISE_ENTREVISTA,
       "high",
@@ -272,6 +293,7 @@ export async function transcreverAudio(
       where: { id },
       data: {
         transcricao: juntos,
+        origemTranscricao: entrevista.origemTranscricao ?? "AUDIO_ENVIADO",
         // A analise anterior descrevia um texto menor: vale a mesma regra de
         // anotar().
         analise: Prisma.DbNull,
@@ -291,4 +313,110 @@ export async function transcreverAudio(
   await registrarConsumo(escritorioId, "TRANSCRICAO_MIN", minutos);
 
   return { texto: juntos, acrescentado: resultado.texto };
+}
+
+// ---------------------------------------------------------------------------
+// Encerrar, PDF e texto da peticao inicial (metodo do sistema da Advocacia Roma)
+// ---------------------------------------------------------------------------
+
+export class EntrevistaIncompleta extends Error {
+  readonly status = 400;
+  constructor(motivo: string) {
+    super(motivo);
+    this.name = "EntrevistaIncompleta";
+  }
+}
+
+/** A conversa acabou. Reabrir e possivel: encerrar nao apaga nada. */
+export async function encerrar(escritorioId: string, id: string, aberta = false) {
+  await entrevistaPorId(escritorioId, id);
+  return comEscritorio(escritorioId, (db) =>
+    db.entrevista.update({ where: { id }, data: { encerradaEm: aberta ? null : new Date() } }),
+  );
+}
+
+/**
+ * O texto para a peticao inicial: organizacao + qualificacao do cliente.
+ *
+ * So depois de ENCERRAR e ORGANIZAR, e com a entrevista ligada ao cliente —
+ * a qualificacao vem do cadastro dele. Cadastro incompleto nao impede: sai
+ * com [PREENCHER] e a lista do que falta, se a pessoa confirmar.
+ */
+export async function gerarMinuta(
+  escritorioId: string,
+  id: string,
+  usuarioId: string,
+  opcoes: { observacoes?: string; ignorarPendencias?: boolean } = {},
+): Promise<{ prompt: string | null; faltando: string[] }> {
+  const e = await entrevistaPorId(escritorioId, id);
+  if (!e.encerradaEm) throw new EntrevistaIncompleta("Encerre a entrevista antes de gerar o texto da peticao inicial.");
+  if (!e.analise) throw new EntrevistaIncompleta("Organize a entrevista primeiro — o texto e montado a partir dessa organizacao.");
+  if (!e.clienteId) throw new EntrevistaIncompleta("Ligue a entrevista ao cliente: a qualificacao vem do cadastro dele.");
+
+  const [cliente, advogado, escritorio] = await Promise.all([
+    comEscritorio(escritorioId, (db) => db.cliente.findFirst({ where: { id: e.clienteId! } })),
+    comEscritorio(escritorioId, (db) =>
+      db.usuario.findFirst({ where: { id: usuarioId }, select: { nome: true, oab: true } }),
+    ),
+    prismaPlataforma().escritorio.findUnique({ where: { id: escritorioId }, select: { nome: true } }),
+  ]);
+  if (!cliente) throw new EntrevistaIncompleta("O cliente desta entrevista nao existe mais.");
+
+  const paraMinuta: ClienteParaMinuta = {
+    nome: cliente.nome,
+    documento: cliente.documento,
+    rg: cliente.rg,
+    nacionalidade: cliente.nacionalidade,
+    estadoCivil: cliente.estadoCivil,
+    profissao: cliente.profissao,
+    email: cliente.email,
+    telefone: cliente.telefone,
+    endereco: (cliente.endereco ?? null) as ClienteParaMinuta["endereco"],
+  };
+  const faltando = camposFaltando(paraMinuta);
+  if (faltando.length > 0 && !opcoes.ignorarPendencias) return { prompt: null, faltando };
+
+  const prompt = montarPromptMinuta(
+    paraMinuta,
+    { nome: advogado?.nome ?? "", oab: advogado?.oab ?? null, escritorio: escritorio?.nome ?? null },
+    e.analise as unknown as AnaliseDaEntrevista,
+    opcoes.observacoes ?? "",
+  );
+  await comEscritorio(escritorioId, (db) =>
+    db.entrevista.update({ where: { id }, data: { minutaPrompt: prompt, minutaGeradaEm: new Date() } }),
+  );
+  return { prompt, faltando };
+}
+
+/** O PDF da entrevista: roteiro, organizacao, anotacoes e a transcricao inteira. */
+export async function pdfDaEntrevista(escritorioId: string, id: string): Promise<{ pdf: Uint8Array; nome: string }> {
+  const e = await entrevistaPorId(escritorioId, id);
+  const [cliente, quem, escritorio] = await Promise.all([
+    e.clienteId
+      ? comEscritorio(escritorioId, (db) => db.cliente.findFirst({ where: { id: e.clienteId! }, select: { documento: true } }))
+      : null,
+    e.usuarioId
+      ? comEscritorio(escritorioId, (db) => db.usuario.findFirst({ where: { id: e.usuarioId! }, select: { nome: true } }))
+      : null,
+    prismaPlataforma().escritorio.findUnique({ where: { id: escritorioId }, select: { nome: true } }),
+  ]);
+  const roteiro = Array.isArray(e.roteiro) ? (e.roteiro as unknown[]).filter((p): p is string => typeof p === "string") : [];
+  const pdf = await gerarPdfEntrevista({
+    escritorio: escritorio?.nome ?? "Escritorio",
+    titulo: e.tipoAcao ? `Entrevista — ${e.tipoAcao}` : "Entrevista de triagem",
+    nomeCliente: e.nome,
+    documentoCliente: cliente?.documento ?? null,
+    nomeAdvogado: quem?.nome ?? "-",
+    iniciadaEm: e.criadaEm,
+    encerradaEm: e.encerradaEm,
+    origemTranscricao: e.origemTranscricao ?? "DIGITADA",
+    transcricao: e.transcricao ?? "",
+    anotacoes: e.anotacoes ?? "",
+    analise: (e.analise ?? null) as AnaliseDaEntrevista | null,
+    tipoAcao: e.tipoAcao,
+    perguntas: roteiro,
+  });
+  const dia = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(e.criadaEm);
+  const nome = `Entrevista ${dia} - ${e.nome.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").slice(0, 60)}.pdf`;
+  return { pdf, nome };
 }

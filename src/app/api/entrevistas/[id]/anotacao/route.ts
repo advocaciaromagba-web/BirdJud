@@ -11,6 +11,9 @@ const corpo = z.object({
   // O teto e o mesmo da chamada de IA: anotacao maior nao teria como ser
   // organizada depois, e descobrir isso so na hora de organizar seria pior.
   transcricao: z.string().max(LIMITE_DE_CARACTERES),
+  anotacoes: z.string().max(LIMITE_DE_CARACTERES).nullish(),
+  /** Como a transcricao foi feita: vai para o PDF. */
+  origem: z.enum(["LOCAL", "NUVEM", "DIGITADA", "AUDIO_ENVIADO"]).nullish(),
 });
 
 export async function PUT(
@@ -20,9 +23,9 @@ export async function PUT(
   try {
     const { escritorioId } = await exigirSessao(undefined, "ENTREVISTAS");
     const { id } = await params;
-    const { transcricao } = corpo.parse(await req.json());
+    const { transcricao, anotacoes, origem } = corpo.parse(await req.json());
     return NextResponse.json({
-      entrevista: await anotar(escritorioId, id, transcricao),
+      entrevista: await anotar(escritorioId, id, transcricao, { anotacoes, origem }),
     });
   } catch (erro) {
     if (erro instanceof EntrevistaNaoEncontrada) {

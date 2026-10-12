@@ -20,6 +20,11 @@ export type EntrevistaNaTela = {
   urgencia: Urgencia | null;
   rotuloDaUrgencia: string | null;
   temCliente: boolean;
+  clienteId: string | null;
+  tipoAcao: string;
+  anotacoes: string;
+  encerrada: boolean;
+  minutaPrompt: string | null;
   roteiro: string[];
   transcricao: string;
   analise: Record<string, unknown> | null;
@@ -69,9 +74,14 @@ function Lista({ titulo, itens }: { titulo: string; itens: unknown }) {
 export function PainelEntrevistas({
   entrevistas,
   temIA,
+  clientes = [],
+  podeMinuta = false,
 }: {
   entrevistas: EntrevistaNaTela[];
   temIA: boolean;
+  clientes?: { id: string; nome: string }[];
+  /** Advogado ou administrador: libera o texto da peticao inicial. */
+  podeMinuta?: boolean;
 }) {
   const router = useRouter();
   const [criando, setCriando] = useState(false);
@@ -82,6 +92,29 @@ export function PainelEntrevistas({
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [rascunho, setRascunho] = useState<Record<string, string>>({});
+  const [notas, setNotas] = useState<Record<string, string>>({});
+  const [tipos, setTipos] = useState<Record<string, string>>({});
+  const [origens, setOrigens] = useState<Record<string, "LOCAL" | "NUVEM">>({});
+  const [minuta, setMinuta] = useState<Record<string, { prompt: string | null; faltando: string[] }>>({});
+  const [observacoes, setObservacoes] = useState<Record<string, string>>({});
+  const [copiado, setCopiado] = useState<string | null>(null);
+
+  async function pedirMinuta(id: string, ignorarPendencias = false) {
+    setOcupado(`${id}:minuta`);
+    setErro(null);
+    try {
+      const r = await chamar(`/api/entrevistas/${id}/minuta`, "POST", {
+        observacoes: observacoes[id] ?? "",
+        ignorarPendencias,
+      });
+      setMinuta((m) => ({ ...m, [id]: r }));
+      if (r.prompt) router.refresh();
+    } catch (falha) {
+      setErro((falha as Error).message);
+    } finally {
+      setOcupado(null);
+    }
+  }
 
   async function chamar(url: string, metodo: string, corpo?: unknown) {
     setErro(null);
@@ -217,7 +250,10 @@ export function PainelEntrevistas({
       {entrevistas.map((e) => {
         const expandida = aberta === e.id;
         const texto = rascunho[e.id] ?? e.transcricao;
+        const anotacoes = notas[e.id] ?? e.anotacoes;
+        const mudou = texto !== e.transcricao || anotacoes !== e.anotacoes;
         const curta = texto.trim().length < MINIMO_DA_TRANSCRICAO;
+        const textoDaMinuta = minuta[e.id]?.prompt ?? e.minutaPrompt;
         return (
           <article
             key={e.id}
@@ -236,6 +272,7 @@ export function PainelEntrevistas({
                 <p className="mt-1 text-xs text-slate-500">
                   {e.criadaEmBR} · {e.rotuloDaSituacao}
                   {e.temCliente ? " · ja e cliente" : ""}
+                  {e.encerrada ? " · encerrada" : ""}
                 </p>
               </div>
               {e.urgencia ? (
@@ -255,9 +292,16 @@ export function PainelEntrevistas({
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Roteiro de perguntas
                     </p>
+                    <input
+                      value={tipos[e.id] ?? e.tipoAcao}
+                      onChange={(ev) => setTipos((t) => ({ ...t, [e.id]: ev.target.value }))}
+                      placeholder="Tipo de acao (ex.: despejo por falta de pagamento)"
+                      aria-label="Tipo de acao"
+                      className="min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                    />
                     <button
                       type="button"
-                      onClick={() => acao(e.id, "roteiro", "POST")}
+                      onClick={() => acao(e.id, "roteiro", "POST", { tipoAcao: tipos[e.id] ?? e.tipoAcao })}
                       disabled={ocupado === `${e.id}:roteiro`}
                       className="botao-secundario text-xs"
                     >
@@ -300,6 +344,7 @@ export function PainelEntrevistas({
                     onTexto={(novo) =>
                       setRascunho((r) => ({ ...r, [e.id]: novo }))
                     }
+                    onOrigem={(origem) => setOrigens((o) => ({ ...o, [e.id]: origem }))}
                   />
                   {temIA ? (
                     <EnvioDeAudio
@@ -317,15 +362,29 @@ export function PainelEntrevistas({
                     placeholder="Anote durante a conversa, com as palavras da pessoa — ou use a transcricao acima."
                     className="w-full rounded-lg border border-slate-300 p-3 text-sm leading-6"
                   />
+                  <label className="grid gap-1 text-sm">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Anotacoes do advogado (a parte da fala)
+                    </span>
+                    <textarea
+                      value={anotacoes}
+                      onChange={(ev) => setNotas((n) => ({ ...n, [e.id]: ev.target.value }))}
+                      rows={4}
+                      placeholder="Impressoes, estrategia, o que conferir — nao entra como fala do cliente."
+                      className="w-full rounded-lg border border-slate-300 p-3 text-sm leading-6"
+                    />
+                  </label>
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() =>
-                        acao(e.id, "anotacao", "PUT", { transcricao: texto })
+                        acao(e.id, "anotacao", "PUT", {
+                          transcricao: texto,
+                          anotacoes,
+                          origem: origens[e.id] ?? null,
+                        })
                       }
-                      disabled={
-                        ocupado === `${e.id}:anotacao` || texto === e.transcricao
-                      }
+                      disabled={ocupado === `${e.id}:anotacao` || !mudou}
                       className="botao-secundario text-xs"
                     >
                       {ocupado === `${e.id}:anotacao` ? "Salvando..." : "Salvar anotacao"}
@@ -334,11 +393,7 @@ export function PainelEntrevistas({
                       <button
                         type="button"
                         onClick={() => acao(e.id, "organizar", "POST")}
-                        disabled={
-                          ocupado === `${e.id}:organizar` ||
-                          curta ||
-                          texto !== e.transcricao
-                        }
+                        disabled={ocupado === `${e.id}:organizar` || curta || mudou}
                         className="botao-principal text-xs"
                       >
                         {ocupado === `${e.id}:organizar`
@@ -351,7 +406,7 @@ export function PainelEntrevistas({
                         Faltam {MINIMO_DA_TRANSCRICAO - texto.trim().length}{" "}
                         caracteres para dar pra organizar.
                       </span>
-                    ) : texto !== e.transcricao ? (
+                    ) : mudou ? (
                       <span className="text-xs text-slate-500">
                         Salve a anotacao antes de organizar.
                       </span>
@@ -408,6 +463,97 @@ export function PainelEntrevistas({
                     </p>
                   </section>
                 ) : null}
+
+                {/* 4. Fechamento: cliente, encerrar, PDF e texto da inicial */}
+                <section className="grid gap-3 border-t border-slate-100 pt-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!e.temCliente ? (
+                      <select
+                        defaultValue=""
+                        aria-label="Ligar ao cliente"
+                        onChange={(ev) => ev.target.value && acao(e.id, "cliente", "PUT", { clienteId: ev.target.value })}
+                        className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                      >
+                        <option value="">Ligar ao cliente...</option>
+                        {clientes.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nome}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => acao(e.id, "encerrar", "POST", e.encerrada ? { reabrir: true } : {})}
+                      disabled={ocupado === `${e.id}:encerrar`}
+                      className="botao-secundario text-xs"
+                    >
+                      {e.encerrada ? "Reabrir entrevista" : "Encerrar entrevista"}
+                    </button>
+                    <a href={`/api/entrevistas/${e.id}/pdf`} target="_blank" rel="noreferrer" className="botao-secundario text-xs">
+                      PDF da entrevista
+                    </a>
+                  </div>
+
+                  {podeMinuta && e.encerrada && e.analise && e.temCliente ? (
+                    <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Texto para a peticao inicial
+                      </p>
+                      <textarea
+                        value={observacoes[e.id] ?? ""}
+                        onChange={(ev) => setObservacoes((o) => ({ ...o, [e.id]: ev.target.value }))}
+                        rows={2}
+                        placeholder="Orientacoes suas para a peca (opcional): tese, pedido, tom."
+                        className="w-full rounded-lg border border-slate-300 p-2 text-sm"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => pedirMinuta(e.id)}
+                          disabled={ocupado === `${e.id}:minuta`}
+                          className="botao-principal text-xs"
+                        >
+                          {ocupado === `${e.id}:minuta` ? "Montando..." : textoDaMinuta ? "Montar de novo" : "Montar o texto"}
+                        </button>
+                      </div>
+                      {minuta[e.id] && !minuta[e.id].prompt && minuta[e.id].faltando.length > 0 ? (
+                        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">
+                          Cadastro do cliente incompleto: {minuta[e.id].faltando.join(", ")}. Complete na ficha do cliente,
+                          ou{" "}
+                          <button type="button" className="font-semibold underline" onClick={() => pedirMinuta(e.id, true)}>
+                            montar mesmo assim, com [PREENCHER]
+                          </button>
+                          .
+                        </div>
+                      ) : null}
+                      {textoDaMinuta ? (
+                        <>
+                          <textarea readOnly value={textoDaMinuta} rows={10} className="w-full rounded-lg border border-slate-300 p-2 font-mono text-xs" />
+                          <div>
+                            <button
+                              type="button"
+                              className="botao-secundario text-xs"
+                              onClick={() => {
+                                void navigator.clipboard?.writeText(textoDaMinuta);
+                                setCopiado(e.id);
+                              }}
+                            >
+                              {copiado === e.id ? "Copiado" : "Copiar"}
+                            </button>
+                            <span className="ml-2 text-xs text-slate-500">
+                              Cole no seu assistente de redacao. Lacuna vem marcada com [PREENCHER] — nada e inventado.
+                            </span>
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : podeMinuta && e.analise ? (
+                    <p className="text-xs text-slate-500">
+                      Para montar o texto da peticao inicial: {[!e.temCliente ? "ligue ao cliente" : null, !e.encerrada ? "encerre a entrevista" : null].filter(Boolean).join(" e ")}.
+                    </p>
+                  ) : null}
+                </section>
               </div>
             ) : null}
           </article>
