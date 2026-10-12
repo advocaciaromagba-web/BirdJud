@@ -140,8 +140,8 @@ No escritorio {{1}}, a mensagem que voce enviou ({{2}}) para {{3}} nao chegou. M
 | `{{4}}` | o motivo | O numero nao recebe WhatsApp |
 | `{{5}}` | telefone do escritorio | (16) 3251-0000 |
 
-Enquanto nao estiver aprovado, o alerta continua saindo por **e-mail**; o
-WhatsApp dele falha sem gerar outro alerta.
+**Aprovado em 12/10/2026.** O alerta sai por e-mail e, para quem recebe
+WhatsApp, tambem por la.
 
 **A ordem dos parametros e um contrato.** Trocar `{{2}}` por `{{3}}` de um lado
 sem trocar do outro faz o sistema mandar a hora no lugar do titulo, e ninguem

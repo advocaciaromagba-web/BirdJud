@@ -86,10 +86,10 @@ mesma para os sete, e revogar por causa de um derruba os outros seis.
 
 - **WhatsApp**: envio provado em 11/10/2026 — mensagem de modelo entregue
   num celular real. Os 7 modelos estao aprovados (texto identico ao do
-  codigo); o 8o, `birdjud_mensagem_nao_entregue`, esta em analise. Forma de
+  codigo); o 8o, `birdjud_mensagem_nao_entregue`, aprovado em 12/10/2026. Forma de
   pagamento e informacoes fiscais cadastradas na Meta (os erros 141006 e
-  131042 acabaram). Falta `[voce]` o nome de exibicao, pedido no WhatsApp
-  Manager.
+  131042 acabaram). Nome de exibicao "BirdJud" pedido em 11/10, em analise
+  na Meta.
 - **NFS-e**: layout marcado "a conferir"; rodar `npm run conferir-nfse` com
   certificado A1 em homologacao antes de emitir nota de verdade.
 - **Acessibilidade**: auditoria automática (axe) feita e corrigida em
