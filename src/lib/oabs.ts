@@ -2,6 +2,7 @@
 // implantacao feita pela plataforma.
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "./prisma";
+import { enfileirar } from "./fila";
 
 import { UFS } from "./ufs";
 export { UFS };
@@ -20,7 +21,7 @@ export function numeroDaOab(numero: string): string {
 }
 
 export async function adicionarOab(escritorioId: string, oab: NovaOab) {
-  return comEscritorio(escritorioId, (db) =>
+  const criada = await comEscritorio(escritorioId, (db) =>
     db.oabMonitorada.create({
       data: semEscritorio({
         numero: numeroDaOab(oab.numero),
@@ -29,6 +30,11 @@ export async function adicionarOab(escritorioId: string, oab: NovaOab) {
       }),
     }),
   );
+  // OAB nova: os processos dela no DJEN (12 meses) sao buscados e cadastrados
+  // em seguida, pela fila (processos-do-djen.ts). Fila fora do ar nao impede
+  // o cadastro: a captura diaria enfileira de novo.
+  await enfileirar("IMPORTAR_PROCESSOS", escritorioId).catch(() => {});
+  return criada;
 }
 
 /**

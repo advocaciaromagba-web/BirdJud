@@ -22,6 +22,7 @@ import {
   organizarPastas,
 } from "./nuvem-do-escritorio";
 import { emitirParcelasDevidas, preverTodosOsRecebimentos } from "./honorarios-do-escritorio";
+import { importarProcessosPendentes } from "./processos-do-djen";
 import { gerarContasDoMes } from "./contas-do-escritorio";
 import { marcarPublicacoesRepetidas } from "./duplicados-do-escritorio";
 import {
@@ -102,6 +103,23 @@ async function purgar(): Promise<void> {
 async function capturar({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("CAPTURAR_PUBLICACOES exige escritorio.");
   const resultado = await capturarPublicacoes(escritorioId);
+  if (resultado.processosNovos > 0) {
+    console.log(`CAPTURAR_PUBLICACOES ${escritorioId}: ${resultado.processosNovos} processo(s) novo(s) cadastrado(s).`);
+  }
+  // OAB que ainda nao teve os processos do ano buscados (cadastrada antes
+  // desta rotina existir, ou cuja busca falhou): busca agora, em trabalho
+  // proprio, para nao atrasar a captura do dia.
+  if (
+    (await comEscritorio(escritorioId, (db) =>
+      db.oabMonitorada.count({ where: { ativo: true, processosImportadosEm: null } }),
+    )) > 0 &&
+    !(await prismaPlataforma().trabalho.findFirst({
+      where: { escritorioId, tipo: "IMPORTAR_PROCESSOS", estado: { in: ["PENDENTE", "EXECUTANDO"] } },
+      select: { id: true },
+    }))
+  ) {
+    await enfileirar("IMPORTAR_PROCESSOS", escritorioId);
+  }
 
   // Antes de levantar a falha de alguma OAB: o que entrou, entrou, e marcar a
   // repeticao do que entrou nao depende de as outras OABs terem dado certo.
@@ -308,6 +326,21 @@ async function lembrar({ escritorioId }: Contexto): Promise<void> {
 }
 
 /**
+ * Busca no DJEN os processos dos ultimos 12 meses de cada OAB nova e os
+ * cadastra, ligados ao cliente quando as partes batem. Ver
+ * processos-do-djen.ts.
+ */
+async function importarProcessos({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("IMPORTAR_PROCESSOS exige escritorio.");
+  const r = await importarProcessosPendentes(escritorioId);
+  console.log(
+    `IMPORTAR_PROCESSOS ${escritorioId}: ${r.comunicacoes} comunicacao(oes), ${r.criados} processo(s) novo(s), ` +
+      `${r.comCliente} ja com cliente, ${r.segredos} em segredo (a mao)` +
+      (r.falhas.length ? `, ${r.falhas.length} janela(s) com falha — ${r.falhas.slice(0, 3).join(" | ")}` : ""),
+  );
+}
+
+/**
  * Toda publicacao passa pela triagem.
  *
  * Roda logo depois da captura, na mesma madrugada: a publicacao que chega as
@@ -390,6 +423,7 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   EMITIR_HONORARIOS: emitirHonorarios,
   GERAR_CONTAS_A_PAGAR: gerarContasAPagar,
   CAPTURAR_PUBLICACOES: capturar,
+  IMPORTAR_PROCESSOS: importarProcessos,
   TRIAR_PUBLICACOES: triar,
   APURAR_CONSUMO: apurarConsumo,
   REGUA_DE_COBRANCA: ruaDeCobranca,
@@ -409,6 +443,7 @@ export const TRABALHOS_DA_PLATAFORMA = new Set([
 const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   // Escritorio que nao contratou publicacoes nao gera trabalho de captura.
   CAPTURAR_PUBLICACOES: "PUBLICACOES_DJEN",
+  IMPORTAR_PROCESSOS: "PUBLICACOES_DJEN",
   TRIAR_PUBLICACOES: "PUBLICACOES_DJEN",
   AVISAR: "EMAIL",
   LEMBRAR: "EMAIL",

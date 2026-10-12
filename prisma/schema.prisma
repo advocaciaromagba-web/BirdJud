@@ -271,6 +271,12 @@ model Processo {
   area         String?
   situacao     String    @default("ATIVO")
   distribuicao DateTime?
+  /// DJEN = cadastrado sozinho a partir de uma comunicacao; nulo = a mao.
+  origem       String?
+  /// Classe processual, como o DJEN informa.
+  classe       String?
+  /// Partes intimadas [{nome, polo}] — o que permite achar o cliente depois.
+  partes       Json?
   criadoEm     DateTime  @default(now())
 
   escritorio   Escritorio    @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -1122,6 +1128,9 @@ model OabMonitorada {
   nomeAdvogado  String?
   ativo         Boolean   @default(true)
   ultimaCaptura DateTime?
+  /// Quando os processos desta OAB foram buscados no DJEN (12 meses para
+  /// tras) e cadastrados. Nulo: a busca ainda vai rodar.
+  processosImportadosEm DateTime?
   criadoEm      DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -1150,6 +1159,11 @@ model Publicacao {
   // Classificacao automatica a partir do texto, sempre conferivel pelo humano.
   urgente              Boolean  @default(false)
   prazoDias            Int?
+
+  /// Partes intimadas [{nome, polo}], como o DJEN informa.
+  partes    Json?
+  /// Parece segredo de justica: o processo NAO e cadastrado sozinho.
+  segredo   Boolean  @default(false)
 
   lida      Boolean  @default(false)
   arquivada Boolean  @default(false)

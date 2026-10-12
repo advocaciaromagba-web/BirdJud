@@ -91,6 +91,7 @@ describe("rele rodando", () => {
         data_disponibilizacao: "2026-09-10",
         numero_processo: "0001234-56.2026.8.26.0100",
         siglaTribunal: "TJSP",
+        destinatarioadvogados: [{ advogado: { numero_oab: "12345", uf_oab: "BA", nome: "Teste" } }],
       },
     ],
   });

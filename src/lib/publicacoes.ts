@@ -7,6 +7,8 @@ import { comEscritorio, semEscritorio } from "./prisma";
 import { buscarPeriodo, FalhaNoDjen, type Comunicacao } from "./djen";
 import { normalizarNumeroProcesso, triar } from "./leitura-publicacao";
 import { registrarConsumo } from "./consumo";
+import { processoDaComunicacao } from "./processos-do-djen";
+import type { Prisma } from "@prisma/client";
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -20,6 +22,8 @@ export type ResultadoDaCaptura = {
   recebidas: number;
   novas: number;
   vinculadas: number;
+  /** Processos cadastrados sozinhos a partir de publicacao nova. */
+  processosNovos: number;
   falhas: { oab: string; motivo: string }[];
 };
 
@@ -56,6 +60,7 @@ export async function capturarPublicacoes(
     recebidas: 0,
     novas: 0,
     vinculadas: 0,
+    processosNovos: 0,
     falhas: [],
   };
 
@@ -88,6 +93,7 @@ export async function capturarPublicacoes(
       const gravou = await gravarPublicacao(escritorioId, comunicacao, rotulo);
       if (gravou.nova) resultado.novas += 1;
       if (gravou.vinculada) resultado.vinculadas += 1;
+      if (gravou.processoNovo) resultado.processosNovos += 1;
     }
 
     // So marca a captura quando a OAB foi consultada sem erro.
@@ -115,27 +121,28 @@ async function gravarPublicacao(
   escritorioId: string,
   comunicacao: Comunicacao,
   oab: string,
-): Promise<{ nova: boolean; vinculada: boolean }> {
+): Promise<{ nova: boolean; vinculada: boolean; processoNovo: boolean }> {
   const numero = normalizarNumeroProcesso(comunicacao.numeroProcesso);
   const triagem = triar(comunicacao.texto);
 
+  const jaExiste = await comEscritorio(escritorioId, (db) =>
+    db.publicacao.findFirst({ where: { idExterno: comunicacao.idExterno }, select: { id: true } }),
+  );
+  if (jaExiste) return { nova: false, vinculada: false, processoNovo: false };
+
+  // O processo ja cadastrado — ou, sendo novo, cadastrado agora e ligado ao
+  // cliente pelas partes (processos-do-djen.ts). Segredo de justica fica para
+  // a pessoa cadastrar a mao.
+  const processo = await processoDaComunicacao(escritorioId, comunicacao);
+
   return comEscritorio(escritorioId, async (db) => {
-    const jaExiste = await db.publicacao.findFirst({
-      where: { idExterno: comunicacao.idExterno },
-      select: { id: true },
-    });
-    if (jaExiste) return { nova: false, vinculada: false };
-
-    // Vincula ao processo quando o escritorio ja o tem cadastrado.
-    const processo = numero
-      ? await db.processo.findFirst({ where: { numero }, select: { id: true } })
-      : null;
-
     await db.publicacao.create({
       data: semEscritorio({
         idExterno: comunicacao.idExterno,
-        processoId: processo?.id ?? null,
+        processoId: processo.processoId,
         numeroProcesso: numero,
+        partes: (comunicacao.partes ?? []) as unknown as Prisma.InputJsonValue,
+        segredo: processo.segredo,
         tribunal: comunicacao.tribunal,
         orgao: comunicacao.orgao,
         tipoComunicacao: comunicacao.tipoComunicacao,
@@ -148,6 +155,6 @@ async function gravarPublicacao(
       }),
     });
 
-    return { nova: true, vinculada: processo !== null };
+    return { nova: true, vinculada: processo.processoId !== null && !processo.criado, processoNovo: processo.criado };
   });
 }

@@ -130,3 +130,38 @@ mesmo segundo.
 E idempotente: uma triagem por publicacao (indice unico), refazer substitui a
 sugestao, e sugestao ja **aceita** nunca e mexida — o compromisso ja existe, e
 mudar a sugestao por baixo dele so confundiria quem olhasse depois.
+
+## Processos cadastrados pelo DJEN
+
+Quando o escritorio cadastra uma **OAB**, o sistema busca no DJEN os
+**ultimos 12 meses** daquela OAB (de 30 em 30 dias, um pedido por vez) e
+**cadastra cada processo encontrado** (`IMPORTAR_PROCESSOS`,
+`src/lib/processos-do-djen.ts`). Depois disso, em toda captura diaria,
+processo novo que aparece numa publicacao ja entra cadastrado e a publicacao
+nasce ligada a ele. A busca do ano nao enche a lista de publicacoes: so
+cadastra processos.
+
+- **Cliente**: vem das partes intimadas. Se o nome de uma parte bate com **um
+  unico** cliente, o processo nasce ligado a ele (igualdade, ou nome contido
+  quando o mais curto tem 3+ palavras significativas — "Jose da Silva" nao
+  vira "Jose da Silva Santos"). Sem cliente, o processo guarda as partes e
+  **liga sozinho quando o cliente for cadastrado**.
+- **Segredo de justica nao e cadastrado sozinho** (texto fala em segredo ou
+  sigilo, ou as partes vem em iniciais/mascaradas). A publicacao mostra
+  "segredo de justica — cadastre o processo a mao" e o botao **Cadastrar
+  processo**, com a escolha do cliente. O mesmo botao aparece em qualquer
+  publicacao cujo processo ainda nao esta cadastrado.
+- Em OABs monitoradas, cada OAB mostra quando os processos foram buscados.
+
+### O que o DJEN ensinou (sistema da Advocacia Roma)
+
+`src/lib/djen.ts` traz as licoes de quem usa o DJEN em producao:
+1. o filtro por OAB da API devolve comunicacao de **outro** advogado (numero
+   de OAB repetido em outra UF) — toda comunicacao e reconferida pelo numero
+   **e** UF dos advogados intimados, e a que nao bate fica de fora. E o que
+   impede cadastrar processo que nao e do escritorio;
+2. no maximo **50 itens por pagina** (acima disso a API devolve vazio sem
+   erro);
+3. pausa entre paginas (limite de taxa; `DJEN_PAUSA_MS`);
+4. `datadisponibilizacao` em DD/MM/AAAA;
+5. texto em HTML cru e limpo (`limpar-html.ts`).

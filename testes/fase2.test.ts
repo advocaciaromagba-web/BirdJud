@@ -300,7 +300,7 @@ d("fase 2", () => {
       expect(agendados).toBeGreaterThanOrEqual(2);
 
       const deAlfa = await prismaPlataforma().trabalho.count({
-        where: { escritorioId: alfa, estado: "PENDENTE" },
+        where: { escritorioId: alfa, estado: "PENDENTE", tipo: "APURAR_CONSUMO" },
       });
       expect(deAlfa).toBe(1);
     });

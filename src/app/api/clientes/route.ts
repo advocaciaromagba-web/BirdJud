@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cutucarNuvem } from "@/lib/avisar-nuvem";
+import { vincularProcessosAoCliente } from "@/lib/processos-do-djen";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
@@ -191,6 +192,9 @@ export async function POST(req: Request) {
 
     // A pasta do cliente na nuvem do escritorio sai pela fila, sem esperar.
     await cutucarNuvem(escritorioId);
+    // Processos que o DJEN trouxe antes de o cliente existir, com o nome dele
+    // entre as partes, passam a ser dele.
+    await vincularProcessosAoCliente(escritorioId, cliente.id).catch(() => 0);
 
     return NextResponse.json({ cliente }, { status: 201 });
   } catch (erro) {

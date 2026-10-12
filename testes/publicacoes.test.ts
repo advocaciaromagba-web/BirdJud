@@ -189,8 +189,19 @@ afterAll(async () => {
   await new Promise<void>((ok) => servidor.close(() => ok()));
 });
 
+// As OABs usadas nos testes. A comunicacao real traz os advogados intimados,
+// e o cliente do DJEN reconfere numero E UF (licao do sistema da Roma): sem
+// eles na lista, a comunicacao e de outro advogado e fica de fora.
+// Sem a pausa entre paginas (limite de taxa do CNJ) nos testes.
+process.env.DJEN_PAUSA_MS = "0";
+const ADVOGADOS = [
+  ["123456", "SP"], ["123456", "BA"], ["1", "SP"], ["111111", "SP"], ["222222", "MG"], ["333333", "SP"],
+].map(([numero_oab, uf_oab]) => ({ advogado: { numero_oab, uf_oab, nome: "Advogado de teste" } }));
+
 function comunicacao(id: number, texto: string, numero?: string) {
   return {
+    destinatarioadvogados: ADVOGADOS,
+    destinatarios: [{ nome: "MARIA APARECIDA SOUZA", polo: "A" }],
     id,
     data_disponibilizacao: "2026-09-17",
     numero_processo: numero ?? "0001234-56.2026.8.26.0100",
@@ -258,6 +269,54 @@ describe("cliente do DJEN", () => {
       expect(vistos[proibido]).toBeUndefined();
     }
     expect(achadas.map((c) => c.tribunal)).toEqual(["TJBA", "TJSP", "TRF1"]);
+  });
+
+  it("comunicacao de outro advogado (mesmo numero, outra UF) fica de fora", async () => {
+    responder = () => ({
+      status: 200,
+      json: {
+        count: 2,
+        items: [
+          comunicacao(1, "Desta OAB"),
+          {
+            ...comunicacao(2, "De outra UF"),
+            destinatarioadvogados: [{ advogado: { numero_oab: "123456", uf_oab: "MG", nome: "Outro" } }],
+          },
+        ],
+      },
+    });
+    const achadas = await buscarPeriodo({ numeroOab: "123456", ufOab: "SP", de: new Date(), ate: new Date() });
+    expect(achadas.map((c) => c.texto)).toEqual(["Desta OAB"]);
+  });
+
+  it("le data brasileira, limpa HTML e traz as partes", async () => {
+    responder = () => ({
+      status: 200,
+      json: {
+        count: 1,
+        items: [
+          {
+            ...comunicacao(1, "<p>Fica intimada a parte&nbsp;autora.</p>"),
+            data_disponibilizacao: undefined,
+            datadisponibilizacao: "14/09/2026",
+          },
+        ],
+      },
+    });
+    const [c] = await buscarPeriodo({ numeroOab: "123456", ufOab: "SP", de: new Date(), ate: new Date() });
+    expect(c.dataDisponibilizacao.toISOString().slice(0, 10)).toBe("2026-09-14");
+    expect(c.texto).toBe("Fica intimada a parte autora.");
+    expect(c.partes).toEqual([{ nome: "MARIA APARECIDA SOUZA", polo: "A" }]);
+  });
+
+  it("nunca pede mais que 50 por pagina (acima disso a API devolve vazio)", async () => {
+    let pedido = "";
+    responder = (url) => {
+      pedido = url.searchParams.get("itensPorPagina") ?? "";
+      return { status: 200, json: { items: [], count: 0 } };
+    };
+    await buscarPeriodo({ numeroOab: "1", ufOab: "SP", de: new Date(), ate: new Date(), itensPorPagina: 100 });
+    expect(pedido).toBe("50");
   });
 
   it("explica o 403 como bloqueio por pais", async () => {
@@ -368,6 +427,7 @@ d("captura por escritorio", () => {
       oabsConsultadas: 1,
       novas: 2,
       vinculadas: 1,
+      processosNovos: 1,
     });
 
     const publicacoes = await comEscritorio(alfa, (db) =>
@@ -376,8 +436,9 @@ d("captura por escritorio", () => {
     expect(publicacoes).toHaveLength(2);
     expect(publicacoes[0]).toMatchObject({ urgente: true, prazoDias: 5 });
     expect(publicacoes[0]?.processoId).not.toBeNull();
-    // Processo que o escritorio nao tem cadastrado entra sem vinculo.
-    expect(publicacoes[1]?.processoId).toBeNull();
+    // Processo que o escritorio nao tinha: cadastrado na hora, a partir do
+    // DJEN (processos-do-djen.ts), e a publicacao ja entra ligada a ele.
+    expect(publicacoes[1]?.processoId).not.toBeNull();
   });
 
   it("capturar de novo nao duplica", async () => {

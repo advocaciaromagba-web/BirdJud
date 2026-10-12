@@ -31,6 +31,10 @@ export type PublicacaoNaTela = {
   numeroProcesso: string | null;
   numeroFormatado: string | null;
   temProcesso: boolean;
+  /** Parece segredo de justica: o processo nao foi cadastrado sozinho. */
+  segredo: boolean;
+  /** Partes intimadas, como o DJEN informa. */
+  partes: string[];
   tribunal: string | null;
   orgao: string | null;
   tipoComunicacao: string | null;
@@ -51,9 +55,11 @@ export type PessoaDaEquipe = { id: string; nome: string };
 export function ListaPublicacoes({
   publicacoes,
   equipe = [],
+  clientes = [],
 }: {
   publicacoes: PublicacaoNaTela[];
   equipe?: PessoaDaEquipe[];
+  clientes?: { id: string; nome: string }[];
 }) {
   if (publicacoes.length === 0) {
     return (
@@ -71,6 +77,7 @@ export function ListaPublicacoes({
           key={publicacao.id}
           publicacao={publicacao}
           equipe={equipe}
+          clientes={clientes}
           posicao={i}
         />
       ))}
@@ -102,10 +109,12 @@ function paraCampo(iso: string | null): string {
 function Cartao({
   publicacao,
   equipe,
+  clientes,
   posicao,
 }: {
   publicacao: PublicacaoNaTela;
   equipe: PessoaDaEquipe[];
+  clientes: { id: string; nome: string }[];
   /** Posicao na lista, para escalonar a leitura automatica. */
   posicao: number;
 }) {
@@ -257,10 +266,13 @@ function Cartao({
         {publicacao.numeroFormatado ?? "Sem numero de processo"}
         {publicacao.numeroFormatado && !publicacao.temProcesso ? (
           <span className="ml-2 text-xs font-normal text-amber-700">
-            processo nao cadastrado
+            {publicacao.segredo ? "segredo de justica — cadastre o processo a mao" : "processo nao cadastrado"}
           </span>
         ) : null}
       </p>
+      {publicacao.numeroFormatado && !publicacao.temProcesso ? (
+        <CadastrarProcesso publicacaoId={publicacao.id} clientes={clientes} partes={publicacao.partes} />
+      ) : null}
       <p className="text-sm text-slate-500">
         {[publicacao.tribunal, publicacao.orgao, publicacao.tipoComunicacao]
           .filter(Boolean)
@@ -491,5 +503,67 @@ function Cartao({
         ) : null}
       </div>
     </li>
+  );
+}
+
+/**
+ * Cadastro do processo a partir da publicacao — o caminho do segredo de
+ * justica, que o sistema nao cadastra sozinho, e de qualquer processo que
+ * tenha ficado de fora.
+ */
+function CadastrarProcesso({
+  publicacaoId,
+  clientes,
+  partes,
+}: {
+  publicacaoId: string;
+  clientes: { id: string; nome: string }[];
+  partes: string[];
+}) {
+  const router = useRouter();
+  const [aberto, setAberto] = useState(false);
+  const [clienteId, setClienteId] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function cadastrar() {
+    setOcupado(true);
+    setErro(null);
+    const r = await fetch(`/api/publicacoes/${publicacaoId}/processo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clienteId: clienteId || null }),
+    });
+    const json = await r.json().catch(() => ({}));
+    setOcupado(false);
+    if (!r.ok) return setErro(json.erro ?? "Nao consegui cadastrar o processo.");
+    router.refresh();
+  }
+
+  if (!aberto) {
+    return (
+      <button type="button" className="mt-1 text-xs font-semibold text-marca underline" onClick={() => setAberto(true)}>
+        Cadastrar processo
+      </button>
+    );
+  }
+  return (
+    <div className="mt-2 grid gap-2 rounded border border-slate-200 bg-slate-50 p-3 text-sm sm:grid-cols-[1fr_auto]">
+      {partes.length > 0 ? (
+        <p className="text-xs text-slate-600 sm:col-span-2">Partes intimadas: {partes.join("; ")}</p>
+      ) : null}
+      <select className="campo" value={clienteId} onChange={(e) => setClienteId(e.target.value)} aria-label="Cliente do processo">
+        <option value="">Sem cliente por enquanto</option>
+        {clientes.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.nome}
+          </option>
+        ))}
+      </select>
+      <button type="button" className="botao-principal" disabled={ocupado} onClick={cadastrar}>
+        {ocupado ? "..." : "Cadastrar"}
+      </button>
+      {erro ? <p className="text-xs text-red-700 sm:col-span-2">{erro}</p> : null}
+    </div>
   );
 }

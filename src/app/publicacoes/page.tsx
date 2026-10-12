@@ -74,6 +74,7 @@ export default async function PaginaPublicacoes() {
         select: { id: true, nome: true, papel: true },
         take: 200,
       }),
+      clientes: await db.cliente.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true }, take: 3000 }),
       naoLidas: await db.publicacao.count({
         where: { arquivada: false, lida: false },
       }),
@@ -89,6 +90,8 @@ export default async function PaginaPublicacoes() {
       ? formatarNumeroProcesso(p.numeroProcesso)
       : null,
     temProcesso: p.processoId !== null,
+    segredo: p.segredo,
+    partes: (Array.isArray(p.partes) ? (p.partes as { nome: string }[]) : []).map((x) => x.nome).slice(0, 6),
     tribunal: p.tribunal,
     orgao: p.orgao,
     tipoComunicacao: p.tipoComunicacao,
@@ -164,10 +167,15 @@ export default async function PaginaPublicacoes() {
                     </span>
                   ) : null}
                 </span>
-                <span className="text-slate-500">
+                <span className="text-right text-slate-500">
                   {oab.ultimaCaptura
                     ? `capturada em ${data.format(oab.ultimaCaptura)}`
                     : "ainda nao capturada"}
+                  <span className="block text-xs">
+                    {oab.processosImportadosEm
+                      ? `processos buscados em ${data.format(oab.processosImportadosEm)}`
+                      : "buscando os processos dos ultimos 12 meses"}
+                  </span>
                 </span>
               </li>
             ))}
@@ -196,7 +204,8 @@ export default async function PaginaPublicacoes() {
           id: p.id,
           nome: `${p.nome} (${p.papel.toLowerCase()})`,
         }))}
-      />
+        clientes={dados.clientes}
+        />
     </Estrutura>
   );
 }
