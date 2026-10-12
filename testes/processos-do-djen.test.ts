@@ -171,6 +171,22 @@ d("cadastro de processos pelo DJEN", () => {
     expect(p.partes).toEqual([{ nome: "ANA BEATRIZ COSTA", polo: "A" }]);
   });
 
+  it("na busca do ano, o processo em segredo aparece em Publicacoes, uma vez", async () => {
+    await comEscritorio(escritorio, (db) => db.oabMonitorada.update({ where: { id: oabId }, data: { processosImportadosEm: null } }));
+    itens = [
+      comunicacao(30, "1000030-30.2025.8.26.0222", ["J. S. S."]),
+      comunicacao(31, "1000030-30.2025.8.26.0222", ["J. S. S."]),
+    ];
+    const r = await importarProcessosDaOab(escritorio, oabId, new Date("2026-10-12T12:00:00Z"));
+    expect(r.segredos).toBe(1);
+    const pubs = await comEscritorio(escritorio, (db) => db.publicacao.findMany({ where: { numeroProcesso: "10000303020258260222" } }));
+    expect(pubs).toHaveLength(1);
+    expect(pubs[0].segredo).toBe(true);
+    // Rodar de novo nao duplica.
+    await importarProcessosDaOab(escritorio, oabId, new Date("2026-10-12T12:00:00Z"));
+    expect(await comEscritorio(escritorio, (db) => db.publicacao.count({ where: { numeroProcesso: "10000303020258260222" } }))).toBe(1);
+  });
+
   it("cliente cadastrado depois puxa os processos com o nome dele", async () => {
     const pedro = await comEscritorio(escritorio, (db) =>
       db.cliente.create({ data: semEscritorio({ nome: "Pedro Henrique Alves" }) }),

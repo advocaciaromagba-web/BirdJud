@@ -39,7 +39,7 @@ const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("reativar") }),
   // Busca dos processos das OABs no DJEN (12 meses) agora, sem esperar a
   // captura da madrugada. So poe o trabalho na fila.
-  z.object({ acao: z.literal("processos") }),
+  z.object({ acao: z.literal("processos"), refazer: z.boolean().optional() }),
   // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
   // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
@@ -188,6 +188,13 @@ export async function POST(
     }
 
     if (corpo.data.acao === "processos") {
+      // Refazer: busca de novo o ano das OABs ja buscadas. E idempotente —
+      // processo existente so tem o andamento atualizado.
+      if (corpo.data.refazer) {
+        await comEscritorio(escritorio.id, (db) =>
+          db.oabMonitorada.updateMany({ where: { ativo: true }, data: { processosImportadosEm: null } }),
+        );
+      }
       const oabs = await comEscritorio(escritorio.id, (db) =>
         db.oabMonitorada.count({ where: { ativo: true, processosImportadosEm: null } }),
       );

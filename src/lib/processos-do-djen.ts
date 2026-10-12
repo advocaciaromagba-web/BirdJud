@@ -195,7 +195,34 @@ export async function importarProcessosDaOab(
       const p = await processoDaComunicacao(escritorioId, c);
       if (p.criado) r.criados += 1;
       if (p.criado && p.clienteId) r.comCliente += 1;
-      if (p.segredo && !p.processoId) r.segredos += 1;
+      if (p.segredo && !p.processoId) {
+        r.segredos += 1;
+        // Segredo de justica fica para a pessoa — mas tem de aparecer: a
+        // comunicacao mais recente dele entra em Publicacoes, marcada, com o
+        // botao "Cadastrar processo". So uma por processo, e nunca repetida.
+        await comEscritorio(escritorioId, async (db) => {
+          const ja = await db.publicacao.findFirst({
+            where: { OR: [{ idExterno: c.idExterno }, { numeroProcesso: numero, segredo: true }] },
+            select: { id: true },
+          });
+          if (ja) return;
+          await db.publicacao.create({
+            data: semEscritorio({
+              idExterno: c.idExterno,
+              numeroProcesso: numero,
+              tribunal: c.tribunal,
+              orgao: c.orgao,
+              tipoComunicacao: c.tipoComunicacao,
+              texto: c.texto,
+              link: c.link,
+              oab: `${oab.numero}/${oab.uf}`,
+              dataDisponibilizacao: c.dataDisponibilizacao,
+              partes: (c.partes ?? []) as unknown as Prisma.InputJsonValue,
+              segredo: true,
+            }),
+          });
+        });
+      }
     }
     ate = new Date(de.getTime() - DIA);
   }
