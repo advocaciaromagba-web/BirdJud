@@ -19,7 +19,7 @@ import { digitosDe, documentoValido, formatarDocumento } from "./documentos";
 import { normalizarNumeroProcesso } from "./leitura-publicacao";
 import { CATEGORIAS_DE_DESPESA, ehCategoria } from "./financeiro";
 import { paraCentavos } from "./dinheiro";
-import { calcularPrazo, PrazoInvalido, recuarDiasUteis, type Calendario } from "./prazos";
+import { calcularPrazo, calcularPrazoDaPublicacao, PrazoInvalido, recuarDiasUteis, type Calendario } from "./prazos";
 import { ANTECEDENCIA_SUGERIDA_DIAS } from "./triagem-de-publicacao";
 
 export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA", "CONTA", "TAREFA", "FISCAL"] as const;
@@ -88,7 +88,8 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
     titulo: "O que fazer",
     descricao: "Resumo",
     numeroProcesso: "Numero do processo",
-    dataDoAto: "Intimacao / disponibilizacao",
+    dataDoAto: "Data da intimacao / publicacao",
+    tipoDaData: "Essa data e de",
     prazoDias: "Prazo em dias",
     contagem: "Contagem",
     prazoFatal: "Prazo fatal (calculado pelo sistema)",
@@ -210,7 +211,8 @@ export function montarInstrucao(perfil: Perfil): string {
       ? [
           '- "titulo" e curto e diz o trabalho a fazer ("Contestacao", "Manifestacao sobre o laudo", "Recurso de apelacao"), nao o texto do documento;',
           '- "descricao" resume em ate tres frases o que foi determinado e o que precisa ser feito;',
-          '- "dataDoAto" e a data da intimacao, da ciencia ou da disponibilizacao no diario, no formato aaaa-mm-dd. Nao some dias: a conta e do sistema;',
+          '- "dataDoAto" e a data da intimacao, da ciencia ou da publicacao no diario, no formato aaaa-mm-dd. Nao some dias: a conta e do sistema;',
+          '- "tipoDaData" diz o que e essa data: INTIMACAO (intimacao ou ciencia pessoal/eletronica), PUBLICACAO (o texto diz "publicado em") ou DISPONIBILIZACAO (o texto diz "disponibilizado em" / "data de disponibilizacao" no DJe ou DJEN). Nao converta uma na outra: devolva a data como esta e diga o tipo;',
           '- "prazoDias" e so o numero de dias que o documento da ("15"). Prazo em dobro, em horas ou sem numero: nao devolva e explique em observacoes;',
           '- "contagem" e UTEIS ou CORRIDOS. Processo civel e trabalhista conta em dias UTEIS; penal e direito material, CORRIDOS. Na duvida, UTEIS com confianca MEDIA;',
           "- audiencia, pericia ou reuniao NAO sao tarefa: se o documento so marca uma delas, diga em observacoes que aquilo vai na Agenda.",
@@ -500,6 +502,11 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
       valor = c.startsWith("CORR") ? "CORRIDOS" : "UTEIS";
     }
 
+    if (perfil === "TAREFA" && chave === "tipoDaData") {
+      const t = semAcentoMaiusculo(valor);
+      valor = t.startsWith("DISPON") ? "DISPONIBILIZACAO" : t.startsWith("PUBLIC") ? "PUBLICACAO" : "INTIMACAO";
+    }
+
     if (perfil === "TAREFA" && chave === "numeroProcesso") {
       const normalizado = normalizarNumeroProcesso(valor);
       if (normalizado) {
@@ -548,13 +555,17 @@ export function calcularPrazoDaLeitura(
   hojeISO: string,
   calendario?: Calendario,
 ): Leitura {
-  const { dataDoAto, prazoDias, contagem } = leitura.campos;
+  const { dataDoAto, prazoDias, contagem, tipoDaData } = leitura.campos;
   if (!dataDoAto || !prazoDias) return leitura;
+  // So conta os dois saltos (disponibilizacao -> publicacao -> inicio) quando a
+  // leitura DIZ que a data e de disponibilizacao. Na duvida, um salto so: errar
+  // para mais cedo avisa antes; errar para mais tarde perde o prazo.
+  const daDisponibilizacao = tipoDaData?.valor === "DISPONIBILIZACAO";
 
   const campos = { ...leitura.campos };
   const observacoes = [...leitura.observacoes];
   try {
-    const conta = calcularPrazo(
+    const conta = (daDisponibilizacao ? calcularPrazoDaPublicacao : calcularPrazo)(
       dataDoAto.valor,
       Number(prazoDias.valor),
       contagem?.valor === "CORRIDOS" ? "CORRIDOS" : "UTEIS",

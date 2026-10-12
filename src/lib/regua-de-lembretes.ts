@@ -84,3 +84,37 @@ export function marcoAgora(
 export function quandoComMarco(dataHora: string, marco: Marco): string {
   return `${dataHora} — ${marco.rotulo}`;
 }
+
+// ---------------------------------------------------------------------------
+// Prazo fatal: a regua conta em DIAS UTEIS, nao em horas
+// ---------------------------------------------------------------------------
+//
+// O prazo fatal e o ultimo dia — perdeu, perdeu o direito. Um aviso 24 horas
+// antes chega tarde para preparar a peca. Por isso o fatal tem tres marcos:
+// QUATRO dias uteis antes (da para fazer), o dia util ANTERIOR e o PROPRIO
+// dia. Em dias uteis porque um fatal na segunda, visto na sexta, tem um dia
+// de trabalho pela frente, nao tres.
+
+export const AVISO_DO_FATAL_EM_DIAS_UTEIS = 4;
+
+/** Antes desta hora (Brasilia) o aviso do fatal espera: ninguem le a meia-noite. */
+export const HORA_DO_AVISO_DO_FATAL = 7;
+
+export type MarcoDoFatal = { chave: "4du" | "1du" | "hoje"; rotulo: string };
+
+/**
+ * Em qual marco do fatal a tarefa esta, dados os dias uteis que faltam.
+ *
+ * Faixas, como na regua dos compromissos: de 2 a 4 dias uteis e o primeiro
+ * aviso (com a conta de verdade no texto — tarefa criada a 3 dias recebe
+ * "faltam 3 dias uteis" na hora); 1 e a vespera; 0 e o dia.
+ */
+export function marcoDoFatal(diasUteis: number): MarcoDoFatal | null {
+  if (diasUteis < 0) return null;
+  if (diasUteis === 0) return { chave: "hoje", rotulo: "vence HOJE" };
+  if (diasUteis === 1) return { chave: "1du", rotulo: "vence no proximo dia util" };
+  if (diasUteis <= AVISO_DO_FATAL_EM_DIAS_UTEIS) {
+    return { chave: "4du", rotulo: `faltam ${diasUteis} dias uteis` };
+  }
+  return null;
+}

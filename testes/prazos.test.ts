@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import {
   PrazoInvalido,
   calcularPrazo,
+  calcularPrazoDaPublicacao,
   dataValida,
   dentroDoRecesso,
   diasUteisAte,
@@ -21,6 +22,7 @@ import {
   paraBR,
   proximoDiaUtil,
 } from "../src/lib/prazos";
+import { marcoDoFatal } from "../src/lib/regua-de-lembretes";
 
 const dia = (iso: string) => new Date(`${iso}T00:00:00Z`);
 
@@ -196,5 +198,60 @@ describe("apresentacao", () => {
     expect(dataValida("2026-11-31")).toBe(false);
     expect(dataValida("2024-02-29")).toBe(true); // bissexto
     expect(dataValida("2026-02-29")).toBe(false);
+  });
+});
+
+describe("prazo que corre de publicacao no diario (CPC 224 §§ 2º e 3º)", () => {
+  it("publicada no dia 5, comeca no dia 6 se for util; publicada na sexta, comeca na segunda", () => {
+    // Terca 06/10/2026 -> quarta 07/10.
+    expect(calcularPrazo("2026-10-06", 5).inicioContagem).toBe("2026-10-07");
+    // Sexta 16/10/2026 -> segunda 19/10.
+    expect(calcularPrazo("2026-10-16", 5).inicioContagem).toBe("2026-10-19");
+  });
+
+  it("do DJEN vem a DISPONIBILIZACAO: publica no util seguinte e corre no util depois", () => {
+    // Disponibilizada na quinta 15/10: publicada na sexta 16/10, corre na segunda 19/10.
+    const quinta = calcularPrazoDaPublicacao("2026-10-15", 15);
+    expect(quinta.dataPublicacao).toBe("2026-10-16");
+    expect(quinta.inicioContagem).toBe("2026-10-19");
+    // Disponibilizada na sexta 16/10: publicada na segunda 19/10, corre na terca 20/10.
+    const sexta = calcularPrazoDaPublicacao("2026-10-16", 15);
+    expect(sexta.dataPublicacao).toBe("2026-10-19");
+    expect(sexta.inicioContagem).toBe("2026-10-20");
+    // Mesmo vencimento de quem conta a partir da publicacao em 19/10.
+    expect(sexta.vencimento).toBe(calcularPrazo("2026-10-19", 15).vencimento);
+    expect(sexta.explicacao).toContain("publicada em 19/10/2026");
+  });
+
+  it("feriado entre a disponibilizacao e a publicacao empurra as duas datas", () => {
+    // Sexta 09/10; segunda 12/10 e Nossa Senhora Aparecida: publica na terca 13, corre na quarta 14.
+    const r = calcularPrazoDaPublicacao("2026-10-09", 5);
+    expect(r.dataPublicacao).toBe("2026-10-13");
+    expect(r.inicioContagem).toBe("2026-10-14");
+  });
+
+  it("feriado municipal do escritorio tambem conta", () => {
+    const r = calcularPrazoDaPublicacao("2026-10-15", 5, "UTEIS", new Set(["2026-10-16"]));
+    expect(r.dataPublicacao).toBe("2026-10-19");
+    expect(r.inicioContagem).toBe("2026-10-20");
+  });
+});
+
+describe("regua do prazo fatal, em dias uteis", () => {
+  it("avisa a 4 dias uteis, na vespera e no dia", () => {
+    expect(marcoDoFatal(6)).toBeNull();
+    expect(marcoDoFatal(5)).toBeNull();
+    expect(marcoDoFatal(4)).toEqual({ chave: "4du", rotulo: "faltam 4 dias uteis" });
+    expect(marcoDoFatal(3)?.chave).toBe("4du");
+    expect(marcoDoFatal(3)?.rotulo).toBe("faltam 3 dias uteis");
+    expect(marcoDoFatal(1)?.chave).toBe("1du");
+    expect(marcoDoFatal(0)?.chave).toBe("hoje");
+    expect(marcoDoFatal(-1)).toBeNull();
+  });
+
+  it("fatal na segunda, visto na terca anterior: 4 dias uteis", () => {
+    expect(marcoDoFatal(diasUteisAte("2026-10-20", "2026-10-26"))?.chave).toBe("4du");
+    // Visto na sexta: um dia util so, e a vespera.
+    expect(marcoDoFatal(diasUteisAte("2026-10-23", "2026-10-26"))?.chave).toBe("1du");
   });
 });

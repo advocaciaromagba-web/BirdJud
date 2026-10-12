@@ -335,3 +335,49 @@ export function recuarDiasUteis(
   const doPiso = chave(proximoDiaUtil(new Date(`${piso}T00:00:00Z`), calendario));
   return doPiso > vencimentoISO ? vencimentoISO : doPiso;
 }
+
+export type PrazoDaPublicacao = PrazoCalculado & {
+  /** Data da publicacao: o 1o dia util depois da disponibilizacao. */
+  dataPublicacao: string;
+};
+
+/**
+ * Prazo que corre de uma publicacao no Diario de Justica eletronico (DJEN).
+ *
+ * O DJEN informa a DISPONIBILIZACAO, nao a publicacao. Sao DOIS saltos ate o
+ * prazo comecar a correr:
+ *
+ *   1. CPC 224 § 2º e Lei 11.419/2006 art. 4º § 3º: considera-se data da
+ *      PUBLICACAO o primeiro dia util seguinte ao da disponibilizacao.
+ *   2. CPC 224 § 3º e Lei 11.419/2006 art. 4º § 4º: a CONTAGEM comeca no
+ *      primeiro dia util seguinte ao da publicacao.
+ *
+ * Exemplo: disponibilizada na quinta, publica-se na sexta e o prazo comeca a
+ * correr na segunda. Disponibilizada na sexta, publica-se na segunda e comeca
+ * na terca. Contar direto da disponibilizacao encurta o prazo em um dia util.
+ */
+export function calcularPrazoDaPublicacao(
+  dataDisponibilizacao: string,
+  dias: number,
+  contagem: Contagem = "UTEIS",
+  calendario?: Calendario,
+): PrazoDaPublicacao {
+  if (!dataValida(dataDisponibilizacao)) {
+    throw new PrazoInvalido("Data de disponibilizacao invalida.");
+  }
+  const disponibilizacao = new Date(`${dataDisponibilizacao}T00:00:00Z`);
+  // Salto 1: disponibilizacao -> publicacao.
+  const publicacao = proximoDiaUtil(somaDias(disponibilizacao, 1), calendario);
+  const dataPublicacao = chave(publicacao);
+  // Salto 2: calcularPrazo ja exclui o dia da publicacao e comeca no util seguinte.
+  const conta = calcularPrazo(dataPublicacao, dias, contagem, calendario);
+  return {
+    ...conta,
+    dataPublicacao,
+    explicacao:
+      `Disponibilizada em ${formatar(disponibilizacao)}; publicada em ${formatar(publicacao)}, ` +
+      `1º dia util seguinte (CPC 224 § 2º). O prazo comeca no 1º dia util depois da ` +
+      `publicacao (CPC 224 § 3º). ` +
+      conta.explicacao,
+  };
+}

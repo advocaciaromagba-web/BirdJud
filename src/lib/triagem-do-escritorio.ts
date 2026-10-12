@@ -24,7 +24,7 @@ import {
   SISTEMA_TRIAGEM,
   entradaDaAnalise,
 } from "./prompts-ia";
-import { calcularPrazo, recuarDiasUteis, PrazoInvalido } from "./prazos";
+import { calcularPrazoDaPublicacao, recuarDiasUteis, PrazoInvalido } from "./prazos";
 import {
   calendarioDoEscritorio,
   hoje,
@@ -71,8 +71,12 @@ type PublicacaoParaTriar = {
   prazoDias: number | null;
 };
 
-/** O dia em que o prazo comeca a correr, no formato de prazos.ts. */
-function termoInicial(p: PublicacaoParaTriar): string {
+/**
+ * A disponibilizacao no DJEN, em AAAA-MM-DD. NAO e o termo inicial: a
+ * publicacao e o dia util seguinte, e o prazo corre do util depois dela
+ * (calcularPrazoDaPublicacao).
+ */
+function disponibilizadaEm(p: PublicacaoParaTriar): string {
   return p.dataDisponibilizacao.toISOString().slice(0, 10);
 }
 
@@ -189,8 +193,8 @@ export async function triarPublicacao(
 
   if (sugestao.prazoDias && sugestao.prazoDias > 0) {
     try {
-      const conta = calcularPrazo(
-        termoInicial(publicacao),
+      const conta = calcularPrazoDaPublicacao(
+        disponibilizadaEm(publicacao),
         sugestao.prazoDias,
         sugestao.contagem === "CORRIDOS" ? "CORRIDOS" : "UTEIS",
         calendario,

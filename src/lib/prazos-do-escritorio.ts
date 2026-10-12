@@ -13,7 +13,7 @@ import {
 import { diaEmBrasilia } from "./datas";
 
 /** Quantos dias uteis antes do vencimento o prazo vira urgente. */
-export const AVISO_EM_DIAS = 3;
+export const AVISO_EM_DIAS = 4;
 
 /** Hoje, em AAAA-MM-DD, no fuso de Brasilia. */
 export function hoje(): string {

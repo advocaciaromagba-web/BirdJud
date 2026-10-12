@@ -19,6 +19,7 @@ import {
 import { fimDoDia } from "../src/lib/tarefas";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { separarAgendaETarefas } from "../src/lib/agenda-do-escritorio";
+import { gerarLembretesDeTarefas } from "../src/lib/avisos";
 
 describe("natureza: o que e agenda e o que e tarefa", () => {
   it("audiencia, pericia e atendimento sao agenda", () => {
@@ -94,6 +95,27 @@ describe("tarefa lendo o documento", () => {
     // Conta sobre leitura: nunca chega como "leitura clara".
     expect(comPrazo.campos.prazoFatal.confianca).toBe("MEDIA");
     expect(comPrazo.observacoes[0]).toMatch(/^Prazo:/);
+  });
+
+  it("data de DISPONIBILIZACAO no diario: publica no util seguinte e corre no util depois", () => {
+    const lida = interpretar(
+      "TAREFA",
+      JSON.stringify({
+        campos: {
+          titulo: { valor: "Contestacao", confianca: "ALTA" },
+          dataDoAto: { valor: "03/11/2026", confianca: "ALTA" },
+          tipoDaData: { valor: "disponibilização", confianca: "ALTA" },
+          prazoDias: { valor: "15", confianca: "ALTA" },
+          contagem: { valor: "uteis", confianca: "ALTA" },
+        },
+        observacoes: [],
+      }),
+    );
+    expect(lida.campos.tipoDaData.valor).toBe("DISPONIBILIZACAO");
+    const comPrazo = calcularPrazoDaLeitura(lida, "2026-11-03");
+    // Um dia util a mais que a intimacao do teste acima (25/11).
+    expect(comPrazo.campos.prazoFatal.valor).toBe("2026-11-26");
+    expect(comPrazo.observacoes[0]).toContain("publicada em 04/11/2026");
   });
 
   it("sem os dias, nao inventa data", () => {
@@ -230,5 +252,59 @@ d("o que estava misturado passa para Tarefas", () => {
 
   it("rodar de novo nao faz nada", async () => {
     expect(await separarAgendaETarefas(escritorio)).toEqual({ deCompromissos: 0, dePrazos: 0 });
+  });
+});
+
+d("regua do prazo fatal: 4 dias uteis antes, vespera e o dia", () => {
+  let escritorio = "";
+
+  beforeAll(async () => {
+    escritorio = (await prismaPlataforma().escritorio.create({
+      data: { slug: `fatal-${Date.now()}`, nome: "Banca do Fatal" },
+    })).id;
+    await comEscritorio(escritorio, async (db) => {
+      const dra = await db.usuario.create({
+        data: semEscritorio({ nome: "Dra. Fatal", email: `fatal-${Date.now()}@f.test`, senhaHash: "x", papel: "ADMIN" }),
+      });
+      await db.tarefa.create({
+        data: semEscritorio({
+          titulo: "Contestacao",
+          // Entrega ja passou: so o fatal avisa daqui para a frente.
+          vencimento: new Date("2026-10-19T12:00:00Z"),
+          // Fatal na segunda 26/10/2026, fim do dia em Brasilia.
+          prazoFatal: new Date("2026-10-27T02:59:00Z"),
+          responsavelId: dra.id,
+          criadoPorId: dra.id,
+        }),
+      });
+    });
+  });
+
+  afterAll(async () => {
+    if (escritorio) await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
+    await prismaPlataforma().$disconnect();
+  });
+
+  const avisos = () =>
+    comEscritorio(escritorio, (db) =>
+      db.aviso.findMany({ where: { tipo: "LEMBRETE_TAREFA" }, select: { chave: true, assunto: true } }),
+    );
+
+  it("na madrugada espera; as 10h de terca (4 dias uteis antes) avisa uma vez", async () => {
+    expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-20T06:00:00Z"))).toBe(0);
+    expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-20T13:00:00Z"))).toBe(1);
+    expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-20T14:00:00Z"))).toBe(0);
+    // Quarta: faltam 3, ainda o mesmo marco — nao repete.
+    expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-21T13:00:00Z"))).toBe(0);
+    const [primeiro] = await avisos();
+    expect(primeiro.chave).toContain("FATAL-4du");
+    expect(primeiro.assunto).toContain("PRAZO FATAL, faltam 4 dias uteis: 26/10/2026");
+  });
+
+  it("na sexta (vespera util) e na segunda (o dia) avisa de novo", async () => {
+    expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-23T13:00:00Z"))).toBe(1);
+    expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-26T13:00:00Z"))).toBe(1);
+    const chaves = (await avisos()).map((a) => a.chave).sort();
+    expect(chaves.map((c) => c.split(":")[1])).toEqual(["FATAL-1du", "FATAL-4du", "FATAL-hoje"]);
   });
 });

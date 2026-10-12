@@ -124,13 +124,16 @@ d("triagem da publicacao", () => {
     // A IA so disse "15 dias". O vencimento abaixo so esta certo porque o
     // calculo pulou fins de semana e feriados — inclusive 20/11, Consciencia
     // Negra, que um modelo de linguagem esquece com frequencia.
+    // Disponibilizada na terca 03/11, publicada na quarta 04/11 (CPC 224 § 2º),
+    // o prazo corre a partir da quinta 05/11 (CPC 224 § 3º).
     const p = await publicacao("Citada para contestar no prazo de 15 dias.");
     const t = await triarPublicacao(escritorio, p.id);
 
     expect(t.especie).toBe("TAREFA");
-    expect(t.prazoFatal?.toISOString().slice(0, 10)).toBe("2026-11-25");
-    // Tres dias uteis antes do fatal, pulando o feriado de 20/11.
-    expect(t.prazoSugerido?.toISOString().slice(0, 10)).toBe("2026-11-19");
+    expect(t.prazoFatal?.toISOString().slice(0, 10)).toBe("2026-11-26");
+    // Tres dias uteis antes do fatal.
+    expect(t.prazoSugerido?.toISOString().slice(0, 10)).toBe("2026-11-23");
+    expect(t.explicacao).toContain("publicada em 04/11/2026");
     expect(t.explicacao).toBeTruthy();
   });
 
@@ -188,12 +191,12 @@ d("triagem da publicacao", () => {
       db.tarefa.findFirstOrThrow({ where: { id: aceite.tarefaId! } }),
     );
     // A entrega na data de trabalhar...
-    expect(tarefa.vencimento.toISOString().slice(0, 10)).toBe("2026-11-19");
+    expect(tarefa.vencimento.toISOString().slice(0, 10)).toBe("2026-11-23");
     // ...e o fatal na mesma linha, no fim do dia.
-    expect(tarefa.prazoFatal?.toISOString()).toBe("2026-11-26T02:59:00.000Z");
+    expect(tarefa.prazoFatal?.toISOString()).toBe("2026-11-27T02:59:00.000Z");
     // Ninguem escolhido: fica com quem aceitou.
     expect(tarefa.responsavelId).toBe(advogada);
-    expect(tarefa.descricao).toContain("PRAZO FATAL: 25/11/2026");
+    expect(tarefa.descricao).toContain("PRAZO FATAL: 26/11/2026");
     expect(
       await comEscritorio(escritorio, (db) => db.compromisso.count()),
     ).toBe(0);

@@ -18,15 +18,19 @@ import {
   SemNumeroDeWhatsapp,
 } from "./whatsapp";
 import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
-import { dataHoraBR } from "./datas";
+import { dataHoraBR, diaEmBrasilia } from "./datas";
 import {
   MAIOR_ANTECEDENCIA_HORAS,
   MARCOS,
   TIPOS_COM_REGUA,
   marcoAgora,
   quandoComMarco,
+  HORA_DO_AVISO_DO_FATAL,
+  marcoDoFatal,
   type Marco,
 } from "./regua-de-lembretes";
+import { diasUteisAte } from "./prazos";
+import { calendarioDoEscritorio } from "./prazos-do-escritorio";
 import {
   assuntoDaDesignacao,
   assuntoDoAgendamento,
@@ -1192,12 +1196,29 @@ export async function avisarTarefaDesignada(
 const ANTECEDENCIA_DA_TAREFA_HORAS = 24;
 
 /**
- * Lembrete ao responsavel 24 horas antes da ENTREGA e, separado, 24 horas
- * antes do PRAZO FATAL. A chave leva a data: mudar a entrega rearma o
- * lembrete, e a mesma data nunca lembra duas vezes.
+ * Ate onde a busca olha para o fatal. Quatro dias uteis podem atravessar o
+ * recesso de 20/12 a 20/01 (CPC 220) — um mes sem dia util —, por isso a
+ * janela e larga e quem decide e a conta em dias uteis, nao a janela.
+ */
+const JANELA_DO_FATAL_DIAS = 45;
+
+function horaEmBrasilia(agora: Date): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", hour: "numeric", hourCycle: "h23" }).format(agora),
+  );
+}
+
+/**
+ * Lembrete ao responsavel 24 horas antes da ENTREGA e, separado, a regua do
+ * PRAZO FATAL: quatro dias uteis antes, no dia util anterior e no proprio dia
+ * (marcoDoFatal). A chave leva a data e o marco: mudar a data rearma os
+ * lembretes, e o mesmo marco nunca avisa duas vezes.
  */
 export async function gerarLembretesDeTarefas(escritorioId: string, agora = new Date()): Promise<number> {
   const limite = new Date(agora.getTime() + ANTECEDENCIA_DA_TAREFA_HORAS * HORA);
+  const limiteDoFatal = new Date(agora.getTime() + JANELA_DO_FATAL_DIAS * 24 * HORA);
+  // Aviso de fatal so de manha em diante: o da madrugada some na pilha.
+  const avisaFatal = horaEmBrasilia(agora) >= HORA_DO_AVISO_DO_FATAL;
   const tarefas = await comEscritorio(escritorioId, (db) =>
     db.tarefa.findMany({
       where: {
@@ -1205,14 +1226,15 @@ export async function gerarLembretesDeTarefas(escritorioId: string, agora = new 
         situacao: { not: "CONCLUIDA" },
         OR: [
           { vencimento: { gt: agora, lte: limite } },
-          { prazoFatal: { gt: agora, lte: limite } },
+          ...(avisaFatal ? [{ prazoFatal: { gt: agora, lte: limiteDoFatal } }] : []),
         ],
       },
       include: {
         cliente: { select: { nome: true } },
         responsavel: { select: { id: true, email: true, telefone: true, recebeWhatsapp: true, ativo: true } },
       },
-      take: 200,
+      orderBy: { prazoFatal: "asc" },
+      take: 500,
     }),
   );
   if (tarefas.length === 0) return 0;
@@ -1220,19 +1242,29 @@ export async function gerarLembretesDeTarefas(escritorioId: string, agora = new 
   const banca = await daBanca(escritorioId);
   const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
   const modelo = modeloDoTipo("LEMBRETE_COMPROMISSO");
+  const calendario = await calendarioDoEscritorio(escritorioId);
+  const hojeISO = diaEmBrasilia(agora);
   let criados = 0;
 
   for (const t of tarefas) {
     if (!t.responsavel.ativo) continue;
-    const marcos: { qual: "ENTREGA" | "FATAL"; quando: Date }[] = [];
-    if (t.vencimento > agora && t.vencimento <= limite) marcos.push({ qual: "ENTREGA", quando: t.vencimento });
-    if (t.prazoFatal && t.prazoFatal > agora && t.prazoFatal <= limite) marcos.push({ qual: "FATAL", quando: t.prazoFatal });
+    const marcos: { qual: string; quando: Date; rotulo: string; comHora: boolean }[] = [];
+    if (t.vencimento > agora && t.vencimento <= limite) {
+      marcos.push({ qual: "ENTREGA", quando: t.vencimento, rotulo: "entrega", comHora: true });
+    }
+    if (avisaFatal && t.prazoFatal && t.prazoFatal > agora) {
+      const marco = marcoDoFatal(diasUteisAte(hojeISO, diaEmBrasilia(t.prazoFatal), calendario));
+      if (marco) {
+        marcos.push({ qual: `FATAL-${marco.chave}`, quando: t.prazoFatal, rotulo: `PRAZO FATAL, ${marco.rotulo}`, comHora: false });
+      }
+    }
 
     for (const m of marcos) {
-      const rotulo = m.qual === "FATAL" ? "PRAZO FATAL" : "entrega";
-      const assunto = `Lembrete: ${t.titulo} (${rotulo} ${dataHoraBR.format(m.quando)})`;
+      const rotulo = m.rotulo;
+      const quando = m.comHora ? dataHoraBR.format(m.quando) : dataBR.format(m.quando);
+      const assunto = `Lembrete: ${t.titulo} (${rotulo}: ${quando})`;
       const corpo = [
-        `No escritorio ${banca.nome}: "${t.titulo}" tem ${rotulo} em ${dataHoraBR.format(m.quando)}.`,
+        `No escritorio ${banca.nome}: "${t.titulo}" tem ${rotulo}: ${quando}.`,
         `Sobre: ${sobreATarefa(t)}.`,
         "",
         `Abra em ${banca.endereco}/tarefas`,
@@ -1268,7 +1300,7 @@ export async function gerarLembretesDeTarefas(escritorioId: string, agora = new 
           parametros: [
             limparParametro(banca.nome),
             limparParametro(t.titulo),
-            limparParametro(`${dataHoraBR.format(m.quando)} (${rotulo})`),
+            limparParametro(`${quando} (${rotulo})`),
             limparParametro(sobreATarefa(t)),
             limparParametro(banca.telefone),
           ],

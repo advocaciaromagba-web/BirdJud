@@ -356,8 +356,9 @@ function Cartao({
               </span>
               <span className="text-slate-600">
                 {" "}
-                — calculado pelo sistema a partir do que a IA leu. A entrega
-                sugerida abaixo vem tres dias uteis antes.
+                — ultimo dia, calculado pelo sistema a partir da publicacao.
+                A entrega sugerida vem tres dias uteis antes, e o responsavel
+                e avisado 4 dias uteis antes, na vespera e no dia.
               </span>
             </p>
           ) : null}
