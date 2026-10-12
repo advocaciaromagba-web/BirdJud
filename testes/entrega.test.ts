@@ -4,7 +4,19 @@
 // adianta, e o reenvio vai para o contato corrigido do cadastro.
 import { createHmac } from "node:crypto";
 import { createServer, type Server } from "node:http";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+// A fila e global e o teste da propria fila (fase2) reclama qualquer trabalho
+// pendente: gravar LEMBRAR de verdade aqui, em paralelo, quebrava aquele teste
+// de vez em quando. Aqui so importa O QUE iria para a fila, e quando.
+const fila = vi.hoisted(() => [] as { tipo: string; escritorioId: string | null; agendadoPara: Date }[]);
+vi.mock("../src/lib/fila", async (original) => ({
+  ...(await original<typeof import("../src/lib/fila")>()),
+  enfileirar: async (tipo: string, escritorioId: string | null, _dados = {}, agendadoPara = new Date()) => {
+    fila.push({ tipo, escritorioId, agendadoPara });
+    return `falso-${fila.length}`;
+  },
+}));
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { enviarAvisosNoWhatsapp } from "../src/lib/avisos";
 import {
@@ -259,14 +271,14 @@ d("entrega no banco", () => {
   });
 
   afterAll(async () => {
-    await prismaPlataforma().trabalho.deleteMany({ where: { escritorioId: esc } });
+    fila.length = 0;
     await prismaPlataforma().escritorio.delete({ where: { id: esc } }).catch(() => {});
     await new Promise<void>((ok) => servidor.close(() => ok()));
     delete process.env.META_BASE_URL;
   });
 
   beforeEach(async () => {
-    await prismaPlataforma().trabalho.deleteMany({ where: { escritorioId: esc } });
+    fila.length = 0;
   });
 
   it("guarda o id da Meta e le entregue e lida pelo webhook", async () => {
@@ -299,8 +311,7 @@ d("entrega no banco", () => {
     expect(alertas[0].corpo).toMatch(/Maria Cliente/);
     expect(alertas[0].corpo).toMatch(/\/mensagens/);
     // E o trabalhador e chamado na hora para mandar o alerta.
-    const fila = await prismaPlataforma().trabalho.findMany({ where: { escritorioId: esc, tipo: "LEMBRAR" } });
-    expect(fila.length).toBeGreaterThan(0);
+    expect(fila.some((t) => t.tipo === "LEMBRAR" && t.escritorioId === esc)).toBe(true);
 
     // A rodada de hora em hora nao alerta de novo.
     expect((await conferirEntregas(esc)).alertas).toBe(0);
@@ -318,8 +329,7 @@ d("entrega no banco", () => {
     await webhook([{ id: idNaMeta, status: "failed", timestamp: String(falhouEm), errors: [{ code: 131000 }] }]);
     expect(await alertasDe(id)).toHaveLength(0);
     // Reenvio marcado na fila para daqui a 30 minutos.
-    const fila = await prismaPlataforma().trabalho.findMany({ where: { escritorioId: esc, tipo: "LEMBRAR" } });
-    expect(fila.some((t) => t.agendadoPara.getTime() === falhouEm * 1000 + 30 * MIN)).toBe(true);
+    expect(fila.some((t) => t.tipo === "LEMBRAR" && t.agendadoPara.getTime() === falhouEm * 1000 + 30 * MIN)).toBe(true);
 
     // Antes da hora, nada.
     expect((await conferirEntregas(esc, new Date(falhouEm * 1000 + 10 * MIN))).reenviados).toBe(0);

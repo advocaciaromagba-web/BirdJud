@@ -43,7 +43,17 @@ export async function enfileirar(
  * SKIP LOCKED deixa varios trabalhadores rodarem juntos sem pegar a mesma
  * linha. A subconsulta NOT EXISTS e o que garante um por escritorio.
  */
-export async function reclamar(): Promise<Trabalho | null> {
+export async function reclamar(
+  /**
+   * So para teste: reclama apenas trabalhos destes escritorios. Em producao a
+   * fila e global, de proposito; nos testes, que rodam em paralelo contra o
+   * mesmo banco, a fila global faria um teste pegar o trabalho de outro.
+   */
+  apenasDosEscritorios?: string[],
+): Promise<Trabalho | null> {
+  const filtro = apenasDosEscritorios
+    ? Prisma.sql`AND t."escritorioId" IN (${Prisma.join(apenasDosEscritorios)})`
+    : Prisma.empty;
   const linhas = await prismaPlataforma().$queryRaw<Trabalho[]>`
     UPDATE "Trabalho" SET
       "estado" = 'EXECUTANDO',
@@ -53,6 +63,7 @@ export async function reclamar(): Promise<Trabalho | null> {
       SELECT t."id" FROM "Trabalho" t
       WHERE t."estado" = 'PENDENTE'
         AND t."agendadoPara" <= now()
+        ${filtro}
         AND (
           t."escritorioId" IS NULL
           OR NOT EXISTS (

@@ -214,9 +214,10 @@ d("fase 2", () => {
   describe("fila de trabalho", () => {
     beforeAll(async () => {
       // A fila e global: reclamar() nao filtra por escritorio, de proposito.
-      // Limpar aqui e o que torna a ordem previsivel — em producao o que
-      // sobra de outro escritorio e justamente o que deve continuar la.
-      await prismaPlataforma().trabalho.deleteMany({});
+      // Aqui ele filtra (so alfa e beta), porque os outros testes rodam em
+      // paralelo no mesmo banco e enfileiram os seus — e limpar a fila de
+      // todos apagaria o trabalho que outro teste esta conferindo.
+      await prismaPlataforma().trabalho.deleteMany({ where: { escritorioId: { in: [alfa, beta] } } });
     });
 
     it("um trabalho em execucao por escritorio", async () => {
@@ -224,17 +225,17 @@ d("fase 2", () => {
       await enfileirar("APURAR_CONSUMO", alfa);
       await enfileirar("APURAR_CONSUMO", beta);
 
-      const primeiro = await reclamar();
-      const segundo = await reclamar();
+      const primeiro = await reclamar([alfa, beta]);
+      const segundo = await reclamar([alfa, beta]);
       expect(primeiro?.escritorioId).toBe(alfa);
       // O segundo de alfa esta travado; vem o de beta.
       expect(segundo?.escritorioId).toBe(beta);
 
       // Nada mais reclamavel enquanto os dois rodam.
-      await expect(reclamar()).resolves.toBeNull();
+      await expect(reclamar([alfa, beta])).resolves.toBeNull();
 
       await concluir(primeiro!.id);
-      const terceiro = await reclamar();
+      const terceiro = await reclamar([alfa, beta]);
       expect(terceiro?.escritorioId).toBe(alfa);
       await concluir(terceiro!.id);
       await concluir(segundo!.id);
@@ -250,7 +251,7 @@ d("fase 2", () => {
 
     it("falha volta para a fila e para em FALHOU no limite", async () => {
       const id = await enfileirar("TIPO_INEXISTENTE", alfa);
-      const trabalho = await reclamar();
+      const trabalho = await reclamar([alfa, beta]);
       expect(trabalho?.id).toBe(id);
 
       await falhar(
@@ -275,7 +276,7 @@ d("fase 2", () => {
 
     it("trabalho preso em execucao volta para a fila", async () => {
       const id = await enfileirar("APURAR_CONSUMO", beta);
-      await reclamar();
+      await reclamar([alfa, beta]);
       await prismaPlataforma().trabalho.update({
         where: { id },
         data: {

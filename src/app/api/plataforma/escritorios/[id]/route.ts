@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { encerrarEscritorio, reativarEscritorio } from "@/lib/encerramento";
+import { PRAZO_DE_RETENCAO_DIAS } from "@/lib/juridico";
 import { z } from "zod";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "@/lib/prisma";
 import {
@@ -30,6 +32,10 @@ const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("regua") }),
   // Cortesia: usa sem pagar, por tempo indeterminado (ver cobranca.ts).
   z.object({ acao: z.literal("cortesia"), ligar: z.boolean(), motivo: z.string().trim().max(300).optional() }),
+  // Encerrar interrompe o servico e comeca a contar o prazo de retencao
+  // (encerramento.ts); reativar desfaz enquanto o prazo corre.
+  z.object({ acao: z.literal("encerrar"), motivo: z.string().trim().min(3).max(300) }),
+  z.object({ acao: z.literal("reativar") }),
   // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
   // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
@@ -148,6 +154,33 @@ export async function POST(
           `Mensalidade pela tabela de hoje: ${(conta.totalCentavos / 100).toFixed(2)}. ` +
           "O valor da assinatura nao foi alterado.",
       });
+    }
+
+    if (corpo.data.acao === "encerrar") {
+      await encerrarEscritorio(escritorio.id);
+      // Assinatura cancelada junto: nenhuma fatura nova, e o painel tira da carteira.
+      await prismaPlataforma().assinatura.updateMany({
+        where: { escritorioId: escritorio.id, canceladaEm: null },
+        data: { canceladaEm: new Date() },
+      });
+      await registrarAcessoSuporte(operador.operadorId, escritorio.id, `Encerrado: ${corpo.data.motivo}`);
+      return NextResponse.json({
+        detalhe: `Escritorio encerrado. Os dados ficam ${PRAZO_DE_RETENCAO_DIAS} dias para exportacao e depois sao apagados.`,
+      });
+    }
+
+    if (corpo.data.acao === "reativar") {
+      const atual = await prismaPlataforma().escritorio.findUnique({
+        where: { id: escritorio.id },
+        select: { status: true, purgadoEm: true },
+      });
+      if (atual?.status !== "ENCERRADO" || atual.purgadoEm) {
+        return NextResponse.json({ erro: "So da para reativar encerrado que ainda nao foi apagado." }, { status: 400 });
+      }
+      await reativarEscritorio(escritorio.id);
+      await prismaPlataforma().assinatura.updateMany({ where: { escritorioId: escritorio.id }, data: { canceladaEm: null } });
+      await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Reativado");
+      return NextResponse.json({ detalhe: "Escritorio reativado." });
     }
 
     if (corpo.data.acao === "cortesia") {

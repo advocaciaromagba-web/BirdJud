@@ -24,12 +24,15 @@ export function AcoesDoEscritorio({
   faixaAtual,
   modulos,
   emCortesia = false,
+  encerrado = false,
 }: {
   escritorioId: string;
   faixaAtual: string;
   modulos: { modulo: string; ativo: boolean }[];
   /** Assinatura em cortesia: usa sem pagar. */
   emCortesia?: boolean;
+  /** Escritorio encerrado (ainda nao apagado). */
+  encerrado?: boolean;
 }) {
   const router = useRouter();
   const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
@@ -37,6 +40,7 @@ export function AcoesDoEscritorio({
   );
   const [ocupado, setOcupado] = useState(false);
   const [motivo, setMotivo] = useState("");
+  const [motivoDoEncerramento, setMotivoDoEncerramento] = useState("");
   const contratados = new Map(modulos.map((m) => [m.modulo, m.ativo]));
   const ativos = modulos
     .filter((m) => m.ativo)
@@ -182,6 +186,49 @@ export function AcoesDoEscritorio({
               Conceder cortesia
             </button>
           </div>
+        )}
+      </div>
+
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="font-semibold">Encerramento</p>
+        {encerrado ? (
+          <button
+            type="button"
+            disabled={ocupado}
+            onClick={() => agir({ acao: "reativar" })}
+            className="mt-2 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+          >
+            Reativar o escritorio
+          </button>
+        ) : (
+          <>
+            <p className="mt-1 text-slate-600">
+              Interrompe o acesso e a cobranca. Os dados ficam guardados pelo prazo de retencao, para exportacao, e
+              depois sao apagados pela rotina semanal. Ate la, da para reativar.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                aria-label="Motivo do encerramento"
+                className="campo max-w-sm"
+                placeholder="Motivo (ex.: escritorio de teste)"
+                value={motivoDoEncerramento}
+                maxLength={300}
+                onChange={(e) => setMotivoDoEncerramento(e.target.value)}
+              />
+              <button
+                type="button"
+                disabled={ocupado || motivoDoEncerramento.trim().length < 3}
+                onClick={() => {
+                  if (window.confirm("Encerrar este escritorio? O acesso e interrompido na hora.")) {
+                    void agir({ acao: "encerrar", motivo: motivoDoEncerramento.trim() });
+                  }
+                }}
+                className="rounded border border-red-300 px-3 py-1.5 font-semibold text-red-800 disabled:opacity-60"
+              >
+                Encerrar escritorio
+              </button>
+            </div>
+          </>
         )}
       </div>
 

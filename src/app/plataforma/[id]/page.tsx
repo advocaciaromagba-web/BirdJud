@@ -116,6 +116,7 @@ export default async function EscritorioNoPainel({
           ativo: m.ativo,
         }))}
         emCortesia={Boolean(escritorio.assinatura?.cortesiaDesde)}
+        encerrado={escritorio.status === "ENCERRADO"}
       />
 
       <section className="mt-6">
