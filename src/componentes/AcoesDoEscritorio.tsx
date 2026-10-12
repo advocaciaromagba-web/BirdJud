@@ -190,6 +190,22 @@ export function AcoesDoEscritorio({
       </div>
 
       <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="font-semibold">Processos do DJEN</p>
+        <p className="mt-1 text-slate-600">
+          Busca agora os processos dos ultimos 12 meses das OABs que ainda nao foram buscadas, sem esperar a captura da
+          madrugada.
+        </p>
+        <button
+          type="button"
+          disabled={ocupado}
+          onClick={() => agir({ acao: "processos" })}
+          className="mt-2 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+        >
+          Buscar processos agora
+        </button>
+      </div>
+
+      <div className="mt-4 border-t border-slate-200 pt-4">
         <p className="font-semibold">Encerramento</p>
         {encerrado ? (
           <button

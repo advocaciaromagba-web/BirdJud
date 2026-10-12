@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { encerrarEscritorio, reativarEscritorio } from "@/lib/encerramento";
 import { PRAZO_DE_RETENCAO_DIAS } from "@/lib/juridico";
 import { z } from "zod";
+import { enfileirar } from "@/lib/fila";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "@/lib/prisma";
 import {
   exigirOperador,
@@ -36,6 +37,9 @@ const acao = z.discriminatedUnion("acao", [
   // (encerramento.ts); reativar desfaz enquanto o prazo corre.
   z.object({ acao: z.literal("encerrar"), motivo: z.string().trim().min(3).max(300) }),
   z.object({ acao: z.literal("reativar") }),
+  // Busca dos processos das OABs no DJEN (12 meses) agora, sem esperar a
+  // captura da madrugada. So poe o trabalho na fila.
+  z.object({ acao: z.literal("processos") }),
   // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
   // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
@@ -181,6 +185,17 @@ export async function POST(
           (canceladas.count ? ` ${canceladas.count} fatura(s) nao emitida(s) cancelada(s).` : "") +
           (emitidas ? ` Atencao: ${emitidas} fatura(s) ja emitida(s) no meio de pagamento continuam abertas — cancele no provedor.` : ""),
       });
+    }
+
+    if (corpo.data.acao === "processos") {
+      const oabs = await comEscritorio(escritorio.id, (db) =>
+        db.oabMonitorada.count({ where: { ativo: true, processosImportadosEm: null } }),
+      );
+      if (oabs === 0) {
+        return NextResponse.json({ detalhe: "Nenhuma OAB esperando a busca dos processos." });
+      }
+      await enfileirar("IMPORTAR_PROCESSOS", escritorio.id);
+      return NextResponse.json({ detalhe: `Busca dos processos de ${oabs} OAB(s) na fila.` });
     }
 
     if (corpo.data.acao === "reativar") {
