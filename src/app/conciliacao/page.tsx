@@ -5,6 +5,7 @@ import { diaBR } from "@/lib/datas";
 import { emReais } from "@/lib/dinheiro";
 import { PREFIXO_DA_PARCELA, pendentesComSugestao } from "@/lib/extrato";
 import { Estrutura } from "@/componentes/Estrutura";
+import { AbasDoFinanceiro } from "@/componentes/AbasDoFinanceiro";
 import {
   PainelConciliacao,
   type EntradaNaTela,
@@ -70,13 +71,19 @@ export default async function PaginaConciliacao() {
       nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
-      titulo="Conferir o extrato"
+      titulo={modulos.includes("FINANCEIRO") ? "Financeiro" : "Conferir o extrato"}
       chamada={
         naTela.length === 0
           ? "Nada pendente."
           : `${naTela.length} lancamento(s) a conferir.`
       }
     >
+      <AbasDoFinanceiro
+        ativa="EXTRATO"
+        temLivroCaixa={modulos.includes("FINANCEIRO") && Boolean(contexto.acesso.FINANCEIRO)}
+        temExtrato
+        pendentes={naTela.length}
+      />
       <PainelConciliacao
         entradas={naTela}
         temConta={integracao.some((i) => i.tipo === "ASAAS")}

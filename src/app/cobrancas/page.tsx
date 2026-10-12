@@ -84,6 +84,15 @@ export default async function PaginaCobrancas() {
       <p className="mt-1 text-sm text-slate-500">
         {emReais(emAberto)} em aberto · cobranca na conta Asaas do proprio
         escritorio
+        {/* Sem o modulo Financeiro nao ha aba onde a conferencia more. */}
+        {!modulos.includes("FINANCEIRO") && contexto.acesso.CONCILIACAO ? (
+          <>
+            {" · "}
+            <a href="/conciliacao" className="text-marca underline">
+              conferir o extrato
+            </a>
+          </>
+        ) : null}
       </p>
 
       {dados.contaConectada === 0 ? (

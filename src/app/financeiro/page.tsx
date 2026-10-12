@@ -1,5 +1,6 @@
 import { diaBR } from "@/lib/datas";
 import Link from "next/link";
+import { AbasDoFinanceiro } from "@/componentes/AbasDoFinanceiro";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
@@ -130,6 +131,9 @@ export default async function PaginaFinanceiro({
   );
 
   const resumo = resumoDoMes(lancamentos, competencia);
+  const pendentesDoExtrato = modulos.includes("COBRANCAS")
+    ? await comEscritorio(contexto.escritorioId, (db) => db.entradaDeExtrato.count({ where: { situacao: "PENDENTE" } }))
+    : 0;
 
   return (
     <Estrutura
@@ -142,7 +146,13 @@ export default async function PaginaFinanceiro({
       titulo="Financeiro"
       chamada={`Competencia de ${nomeDaCompetencia(competencia)}.`}
     >
-      <nav className="mt-1 flex items-center gap-3 text-sm">
+      <AbasDoFinanceiro
+        ativa="LANCAMENTOS"
+        temLivroCaixa
+        temExtrato={modulos.includes("COBRANCAS") && Boolean(contexto.acesso.CONCILIACAO)}
+        pendentes={pendentesDoExtrato}
+      />
+      <nav className="mt-3 flex items-center gap-3 text-sm">
         <Link className="botao-discreto" href={`/financeiro?competencia=${vizinha(competencia, -1)}`}>
           ← {nomeDaCompetencia(vizinha(competencia, -1))}
         </Link>

@@ -58,12 +58,6 @@ const AREAS: Area[] = [
     icone: "financeiro",
     modulo: "FINANCEIRO",
   },
-  {
-    href: "/conciliacao",
-    rotulo: "Conferir extrato",
-    icone: "extrato",
-    modulo: "COBRANCAS",
-  },
   { href: "/modelos", rotulo: "Modelos", icone: "modelos" },
   { href: "/arquivos", rotulo: "Arquivos", icone: "arquivos", modulo: "NUVEM" },
   { href: "/usuarios", rotulo: "Equipe", icone: "usuarios", soAdmin: true },
