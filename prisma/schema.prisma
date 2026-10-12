@@ -277,6 +277,10 @@ model Processo {
   classe       String?
   /// Partes intimadas [{nome, polo}] — o que permite achar o cliente depois.
   partes       Json?
+  /// O ultimo andamento conhecido (a comunicacao mais recente do DJEN).
+  ultimoAndamentoEm    DateTime?
+  ultimoAndamentoTipo  String?
+  ultimoAndamentoTexto String?
   criadoEm     DateTime  @default(now())
 
   escritorio   Escritorio    @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -292,6 +296,7 @@ model Processo {
 
   itensDeChecklist ItemDeChecklist[]
 
+  @@index([escritorioId, ultimoAndamentoEm])
   @@unique([escritorioId, numero])
   @@index([escritorioId])
 }

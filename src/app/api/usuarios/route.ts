@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { monitorarOabDoAdvogado } from "@/lib/implantacao";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirAdmin, exigirSessao } from "@/lib/sessao";
@@ -79,6 +80,9 @@ export async function POST(req: Request) {
 
     // Vaga na faixa, senha impossivel de adivinhar e convite: ver equipe.ts.
     const usuario = await incluirPessoa(escritorioId, corpo.data);
+    // Advogado com OAB: a OAB entra no monitoramento do DJEN e os processos
+    // dele (12 meses) sao buscados e cadastrados (processos-do-djen.ts).
+    await monitorarOabDoAdvogado(escritorioId, corpo.data.oab).catch(() => false);
     if (!convidar) return NextResponse.json({ usuario }, { status: 201 });
 
     const quemConvidou = await comEscritorio(escritorioId, (db) =>

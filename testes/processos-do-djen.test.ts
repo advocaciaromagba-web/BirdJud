@@ -147,6 +147,30 @@ d("cadastro de processos pelo DJEN", () => {
     expect(await comEscritorio(escritorio, (db) => db.publicacao.count({ where: { idExterno: { in: ["10", "11", "12"] } } }))).toBe(0);
   });
 
+  it("guarda o ultimo andamento, e comunicacao mais antiga nao o sobrescreve", async () => {
+    itens = [
+      comunicacao(20, "1000020-20.2026.8.26.0222", ["ANA BEATRIZ COSTA"], {
+        data_disponibilizacao: "2026-10-01",
+        tipoComunicacao: "Sentenca",
+        texto: "Julgo procedente o pedido.",
+      }),
+    ];
+    await capturarPublicacoes(escritorio);
+    itens = [
+      comunicacao(21, "1000020-20.2026.8.26.0222", ["ANA BEATRIZ COSTA"], {
+        data_disponibilizacao: "2026-08-01",
+        tipoComunicacao: "Despacho",
+        texto: "Cite-se.",
+      }),
+    ];
+    await capturarPublicacoes(escritorio);
+    const p = await comEscritorio(escritorio, (db) => db.processo.findFirstOrThrow({ where: { numero: "10000202020268260222" } }));
+    expect(p.ultimoAndamentoTipo).toBe("Sentenca");
+    expect(p.ultimoAndamentoTexto).toBe("Julgo procedente o pedido.");
+    expect(p.ultimoAndamentoEm?.toISOString().slice(0, 10)).toBe("2026-10-01");
+    expect(p.partes).toEqual([{ nome: "ANA BEATRIZ COSTA", polo: "A" }]);
+  });
+
   it("cliente cadastrado depois puxa os processos com o nome dele", async () => {
     const pedro = await comEscritorio(escritorio, (db) =>
       db.cliente.create({ data: semEscritorio({ nome: "Pedro Henrique Alves" }) }),

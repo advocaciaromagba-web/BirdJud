@@ -165,3 +165,23 @@ cadastra processos.
 3. pausa entre paginas (limite de taxa; `DJEN_PAUSA_MS`);
 4. `datadisponibilizacao` em DD/MM/AAAA;
 5. texto em HTML cru e limpo (`limpar-html.ts`).
+
+### A aba Processos como base
+
+Os processos entram **so pelas OABs dos advogados do escritorio**: todo
+advogado incluido com OAB (na implantacao ou pela tela Equipe) passa a ser
+monitorado, e os processos dele dos ultimos 12 meses sao importados. Cada
+processo guarda, do DJEN:
+
+- **partes** (com o polo ativo/passivo);
+- **ultimo andamento**: data, tipo e texto da comunicacao mais recente — a
+  busca do ano e as capturas diarias so movem o andamento para a frente;
+- classe processual, tribunal e vara.
+
+A aba **Processos** mostra tudo isso, ordenada pelo andamento mais recente,
+com o filtro **Sem cliente**. Em processo sem cliente, cada parte tem
+**tornar cliente**: o cliente e criado com o nome (ou reaproveitado, se ja
+existe), o processo passa a ser dele, e os outros processos em que ele
+aparece tambem. E assim que a base de clientes nasce dos processos que o
+escritorio ja tem; o resto do cadastro completa-se na ficha (ou lendo o
+documento pela IA).

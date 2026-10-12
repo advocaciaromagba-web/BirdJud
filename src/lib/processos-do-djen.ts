@@ -93,9 +93,35 @@ export async function processoDaComunicacao(
   const segredo = pareceSegredo(c);
   if (!numero) return { processoId: null, criado: false, clienteId: null, segredo };
 
+  const andamento = {
+    ultimoAndamentoEm: c.dataDisponibilizacao,
+    ultimoAndamentoTipo: c.tipoComunicacao,
+    ultimoAndamentoTexto: c.texto.slice(0, 2000),
+  };
+
   return comEscritorio(escritorioId, async (db) => {
-    const existente = await db.processo.findFirst({ where: { numero }, select: { id: true, clienteId: true } });
-    if (existente) return { processoId: existente.id, criado: false, clienteId: existente.clienteId, segredo };
+    const existente = await db.processo.findFirst({
+      where: { numero },
+      select: { id: true, clienteId: true, ultimoAndamentoEm: true, partes: true },
+    });
+    if (existente) {
+      // O andamento so anda para a frente: comunicacao antiga (a busca do ano
+      // vem do mais recente para o mais antigo) nao sobrescreve a nova.
+      const maisNovo = !existente.ultimoAndamentoEm || existente.ultimoAndamentoEm <= c.dataDisponibilizacao;
+      const semPartes = !Array.isArray(existente.partes) || existente.partes.length === 0;
+      if (maisNovo || (semPartes && (c.partes ?? []).length > 0)) {
+        await db.processo.update({
+          where: { id: existente.id },
+          data: {
+            ...(maisNovo ? andamento : {}),
+            ...(semPartes && (c.partes ?? []).length > 0 && !segredo
+              ? { partes: c.partes as unknown as Prisma.InputJsonValue }
+              : {}),
+          },
+        });
+      }
+      return { processoId: existente.id, criado: false, clienteId: existente.clienteId, segredo };
+    }
     if (segredo) return { processoId: null, criado: false, clienteId: null, segredo };
 
     const partes = c.partes ?? [];
@@ -115,6 +141,7 @@ export async function processoDaComunicacao(
           origem: "DJEN",
           partes: partes as unknown as Prisma.InputJsonValue,
           clienteId,
+          ...andamento,
         }),
         select: { id: true },
       });
