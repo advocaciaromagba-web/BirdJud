@@ -291,3 +291,75 @@ describe("leitura de conta de consumo", () => {
     expect(instrucao).toContain("TOTAL A PAGAR");
   });
 });
+
+describe("cliente por documento de identidade e comprovante de endereco", () => {
+  const campo = (valor: string, confianca = "ALTA") => ({ valor, confianca });
+
+  it("preenche qualificacao e endereco, normalizando cada um", () => {
+    const leitura = interpretar(
+      "CLIENTE",
+      JSON.stringify({
+        campos: {
+          nome: campo("Maria de Souza"),
+          documento: campo("52998224725"),
+          rg: campo("12.345.678-9 SSP/SP"),
+          nascimento: campo("07/03/1985"),
+          nacionalidade: campo("brasileira"),
+          estadoCivil: campo("casada"),
+          profissao: campo("professora"),
+          cep: campo("14840000"),
+          logradouro: campo("Rua das Flores"),
+          numero: campo("120"),
+          bairro: campo("Centro"),
+          cidade: campo("Guariba"),
+          uf: campo("sp"),
+        },
+        observacoes: ["Conta de energia em nome do marido."],
+      }),
+    );
+
+    const v = (k: string) => leitura.campos[k]?.valor;
+    expect(v("documento")).toBe("529.982.247-25");
+    expect(v("nascimento")).toBe("1985-03-07");
+    expect(v("cep")).toBe("14840-000");
+    expect(v("uf")).toBe("SP");
+    // O numero da casa nao passa pelo formato de numero de processo.
+    expect(v("numero")).toBe("120");
+    expect(v("rg")).toBe("12.345.678-9 SSP/SP");
+    expect(leitura.observacoes).toContain("Conta de energia em nome do marido.");
+  });
+
+  it("CEP, UF e nascimento que nao servem ficam de fora, explicados", () => {
+    const leitura = interpretar(
+      "CLIENTE",
+      JSON.stringify({
+        campos: {
+          cep: campo("1484-000"),
+          uf: campo("Sao Paulo"),
+          nascimento: campo("mil novecentos e oitenta"),
+        },
+        observacoes: [],
+      }),
+    );
+    expect(leitura.campos).toEqual({});
+    expect(leitura.observacoes.join(" ")).toMatch(/CEP/);
+    expect(leitura.observacoes.join(" ")).toMatch(/UF/);
+    expect(leitura.observacoes.join(" ")).toMatch(/nascimento/);
+  });
+
+  it("a instrucao separa identidade de comprovante e nao usa o telefone da conta", () => {
+    const instrucao = montarInstrucao("CLIENTE");
+    expect(instrucao).toMatch(/comprovante/);
+    expect(instrucao).toMatch(/nome de outra pessoa/);
+    expect(instrucao).toMatch(/nao use/);
+    expect(instrucao).not.toMatch(/conta com valores de varios meses/);
+  });
+
+  it("no processo, numero continua sendo o numero unico do CNJ", () => {
+    const leitura = interpretar(
+      "PROCESSO",
+      JSON.stringify({ campos: { numero: campo("120") }, observacoes: [] }),
+    );
+    expect(leitura.campos.numero.confianca).toBe("BAIXA");
+  });
+});

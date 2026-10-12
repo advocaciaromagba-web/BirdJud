@@ -38,13 +38,32 @@ export type Leitura = {
   observacoes: string[];
 };
 
+const UFS_DO_BRASIL = new Set([
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA",
+  "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+]);
+
 /** Os campos que cada perfil aceita, com o rotulo que a tela mostra. */
 const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
+  // Cliente: o documento de identidade da a qualificacao; o comprovante de
+  // residencia, o endereco. Os dois juntos preenchem o cadastro inteiro.
   CLIENTE: {
     nome: "Nome / razao social",
     documento: "CPF / CNPJ",
+    rg: "RG / CIN",
+    nascimento: "Nascimento",
+    nacionalidade: "Nacionalidade",
+    estadoCivil: "Estado civil",
+    profissao: "Profissao",
     email: "E-mail",
     telefone: "Telefone",
+    cep: "CEP",
+    logradouro: "Rua / avenida",
+    numero: "Numero",
+    complemento: "Complemento",
+    bairro: "Bairro",
+    cidade: "Cidade",
+    uf: "UF",
   },
   PROCESSO: {
     numero: "Numero do processo",
@@ -73,7 +92,7 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
 
 const AJUDA_DO_PERFIL: Record<Perfil, string> = {
   CLIENTE:
-    "Documento de identificacao (CIN, RG), CNH, cartao CNPJ, contrato social, procuracao ou ficha preenchida a mao.",
+    "Documento de identificacao (CIN, RG, CNH) e comprovante de endereco (conta de luz, agua, telefone), juntos. Serve tambem cartao CNPJ, contrato social, procuracao ou ficha preenchida a mao.",
   PROCESSO:
     "Peticao inicial, capa dos autos, despacho, sentenca ou print do andamento.",
   AGENDA:
@@ -122,6 +141,18 @@ export function montarInstrucao(perfil: Perfil): string {
           `- "categoria" e exatamente uma destas: ${CATEGORIAS_DE_DESPESA.join(", ")}. Se nenhuma servir, nao devolva o campo;`,
           '- "descricao" e curta ("Conta de energia - setembro"), nao o texto do documento;',
           "- conta com valores de varios meses no historico: use o do mes corrente, e diga em observacoes qual mes voce usou.",
+        ]
+      : []),
+    ...(perfil === "CLIENTE"
+      ? [
+          "- nome, CPF, RG e nascimento saem do documento de identificacao; o endereco sai do comprovante de endereco;",
+          "- o comprovante pode estar no nome de outra pessoa (conjuge, pai, locador): use o ENDERECO dele, nunca o nome, e diga em observacoes de quem e a conta;",
+          '- "nascimento" sai no formato aaaa-mm-dd;',
+          '- "rg" e o numero do RG ou da CIN com o orgao emissor e a UF quando aparecerem ("12.345.678-9 SSP/SP");',
+          '- "cep" so com os 8 digitos; "uf" so a sigla de 2 letras; "numero" e o numero do imovel (ou "S/N"), nao o numero da conta nem do medidor;',
+          '- "logradouro" e o nome da rua com o tipo ("Rua das Flores"), sem o numero, sem o bairro;',
+          '- "nacionalidade", "estadoCivil" e "profissao" so quando estiverem escritos (CIN nova, certidao, procuracao, ficha). Nao deduza estado civil do sobrenome nem nacionalidade do local de nascimento;',
+          "- telefone e e-mail impressos na conta sao da empresa que emitiu a conta: nao use.",
         ]
       : []),
     ...(perfil === "AGENDA"
@@ -325,7 +356,38 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
       valor = emMaiuscula;
     }
 
-    if (chave === "numero") {
+    if (perfil === "CLIENTE" && chave === "nascimento") {
+      const data = normalizarData(valor);
+      if (!data) {
+        observacoes.push(`A data de nascimento lida ("${valor}") nao pode ser entendida. Preencha a mao.`);
+        continue;
+      }
+      valor = data;
+    }
+
+    if (perfil === "CLIENTE" && chave === "cep") {
+      // CEP com digito a mais ou a menos nao serve nem para a busca do
+      // endereco: melhor vazio, para a pessoa digitar e a busca completar.
+      const digitos = digitosDe(valor);
+      if (digitos.length !== 8) {
+        observacoes.push(`O CEP lido ("${valor}") nao tem 8 digitos. Digite o CEP para o endereco se completar.`);
+        continue;
+      }
+      valor = `${digitos.slice(0, 5)}-${digitos.slice(5)}`;
+    }
+
+    if (perfil === "CLIENTE" && chave === "uf") {
+      const uf = valor.toUpperCase().replace(/[^A-Z]/g, "");
+      if (!UFS_DO_BRASIL.has(uf)) {
+        observacoes.push(`A UF lida ("${valor}") nao e uma sigla de estado. Confira.`);
+        continue;
+      }
+      valor = uf;
+    }
+
+    // So o numero de PROCESSO passa pelo formato do CNJ. No cliente,
+    // "numero" e o numero da casa — formatar como processo o destruiria.
+    if (perfil === "PROCESSO" && chave === "numero") {
       const normalizado = normalizarNumeroProcesso(valor);
       if (normalizado) {
         valor = normalizado;

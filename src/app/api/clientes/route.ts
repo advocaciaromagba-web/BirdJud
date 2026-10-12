@@ -18,6 +18,13 @@ const novoCliente = z.object({
   email: z.string().email().optional(),
   telefone: z.string().max(20).optional(),
 
+  // Qualificacao. Nascimento chega como aaaa-mm-dd (campo de data).
+  rg: z.string().max(40).optional(),
+  nascimento: z.string().max(10).optional(),
+  nacionalidade: z.string().max(60).optional(),
+  estadoCivil: z.string().max(60).optional(),
+  profissao: z.string().max(120).optional(),
+
   // Endereco, em partes. O CEP chega com ou sem hifen.
   cep: z.string().max(12).optional(),
   logradouro: z.string().max(200).optional(),
@@ -137,6 +144,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const nascimento = d.nascimento?.trim() ? new Date(`${d.nascimento.trim()}T12:00:00Z`) : null;
+    if (nascimento && (!DIA.test(d.nascimento!.trim()) || Number.isNaN(nascimento.getTime()) || nascimento > new Date())) {
+      return NextResponse.json({ erro: "Data de nascimento invalida." }, { status: 400 });
+    }
+
     // escritorioId nunca vem do corpo: a extensao injeta o da sessao.
     const cliente = await comEscritorio(escritorioId, (db) =>
       db.cliente.create({
@@ -145,6 +157,11 @@ export async function POST(req: Request) {
           documento: d.documento,
           email: d.email,
           telefone: d.telefone,
+          rg: d.rg?.trim() || undefined,
+          nascimento: nascimento ?? undefined,
+          nacionalidade: d.nacionalidade?.trim() || undefined,
+          estadoCivil: d.estadoCivil?.trim() || undefined,
+          profissao: d.profissao?.trim() || undefined,
           endereco: enderecoDoCadastro(d) ?? undefined,
         }),
       }),

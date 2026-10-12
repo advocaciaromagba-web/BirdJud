@@ -129,6 +129,12 @@ export function FormularioCriar({
       }
       return juntos;
     });
+    // O documento trouxe o CEP mas nao a rua (comprovante borrado, ficha a
+    // mao): a busca do CEP completa o resto, como se a pessoa tivesse digitado.
+    const campoCep = campos.find((campo) => campo.tipo === "cep" && novos[campo.nome]);
+    if (campoCep && campoCep.preenche?.logradouro && !novos[campoCep.preenche.logradouro]) {
+      void mudarCep(campoCep, novos[campoCep.nome]);
+    }
   }
 
   async function enviar(

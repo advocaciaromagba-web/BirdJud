@@ -56,6 +56,14 @@ export default async function PaginaClientes() {
           { nome: "telefone", rotulo: "Telefone" },
           { nome: "email", rotulo: "E-mail", tipo: "email" },
 
+          // Qualificacao: e o que vai na procuracao e na inicial. A leitura
+          // do documento de identidade preenche estes sozinha.
+          { nome: "rg", rotulo: "RG / CIN" },
+          { nome: "nascimento", rotulo: "Nascimento", tipo: "date" },
+          { nome: "nacionalidade", rotulo: "Nacionalidade" },
+          { nome: "estadoCivil", rotulo: "Estado civil" },
+          { nome: "profissao", rotulo: "Profissao" },
+
           // Endereco: o CEP primeiro, e o resto vem sozinho — falta o numero.
           {
             nome: "cep",
