@@ -22,7 +22,7 @@ import { paraCentavos } from "./dinheiro";
 import { calcularPrazo, PrazoInvalido, recuarDiasUteis, type Calendario } from "./prazos";
 import { ANTECEDENCIA_SUGERIDA_DIAS } from "./triagem-de-publicacao";
 
-export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA", "CONTA", "TAREFA"] as const;
+export const PERFIS = ["CLIENTE", "PROCESSO", "AGENDA", "CONTA", "TAREFA", "FISCAL"] as const;
 export type Perfil = (typeof PERFIS)[number];
 
 export type Confianca = "ALTA" | "MEDIA" | "BAIXA";
@@ -94,6 +94,22 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
     prazoFatal: "Prazo fatal (calculado pelo sistema)",
     entrega: "Entrega sugerida (calculada pelo sistema)",
   },
+  // Cadastro fiscal do escritorio (NFS-e): cartao CNPJ, contrato social,
+  // inscricao municipal. Codigo IBGE e codigo do servico o SISTEMA deriva
+  // (do CEP e do CNAE): a IA nao sabe tabela de cabeca, e chute ali vira nota
+  // recusada pela prefeitura.
+  FISCAL: {
+    razaoSocial: "Razao social",
+    cnpj: "CNPJ",
+    inscricaoMunicipal: "Inscricao municipal",
+    cep: "CEP da sede",
+    cidade: "Cidade",
+    uf: "UF",
+    cnae: "CNAE principal",
+    regime: "Regime tributario",
+    codigoMunicipio: "Codigo IBGE do municipio (pelo CEP)",
+    codigoTributacao: "Codigo do servico (pelo CNAE)",
+  },
   // Conta de consumo e boleto. O escritorio recebe estas contas todo mes e
   // digita as mesmas quatro coisas; a IA le e ja classifica.
   CONTA: {
@@ -114,6 +130,8 @@ const AJUDA_DO_PERFIL: Record<Perfil, string> = {
     "Intimacao de audiencia, mandado, carta precatoria, e-mail de reuniao ou print do despacho que marcou a data.",
   TAREFA:
     "Intimacao, despacho, decisao, sentenca ou mandado que manda fazer algo (contestar, manifestar, recorrer, juntar). A IA le o que fazer e o prazo; o sistema calcula o prazo fatal e a entrega.",
+  FISCAL:
+    "Cartao CNPJ (comprovante de inscricao), contrato social ou alteracao, ficha de inscricao municipal e, se houver, o termo de opcao pelo Simples. Codigo do servico e aliquota: confirme com o contador.",
   CONTA:
     "Conta de agua, energia, internet, telefone, boleto do aluguel, guia de imposto ou nota do fornecedor.",
 };
@@ -131,7 +149,7 @@ export function ajudaDoPerfil(perfil: Perfil): string {
 }
 
 /** Campos que o SISTEMA calcula. O modelo nao propoe; se propuser, cai fora. */
-const CALCULADOS = new Set(["prazoFatal", "entrega"]);
+const CALCULADOS = new Set(["prazoFatal", "entrega", "codigoMunicipio", "codigoTributacao"]);
 
 export function montarInstrucao(perfil: Perfil): string {
   const campos = Object.entries(CAMPOS_DO_PERFIL[perfil])
@@ -174,6 +192,18 @@ export function montarInstrucao(perfil: Perfil): string {
           '- "logradouro" e o nome da rua com o tipo ("Rua das Flores"), sem o numero, sem o bairro;',
           '- "nacionalidade", "estadoCivil" e "profissao" so quando estiverem escritos (CIN nova, certidao, procuracao, ficha). Nao deduza estado civil do sobrenome nem nacionalidade do local de nascimento;',
           "- telefone e e-mail impressos na conta sao da empresa que emitiu a conta: nao use.",
+        ]
+      : []),
+    ...(perfil === "FISCAL"
+      ? [
+          "- e o cadastro da PROPRIA sociedade de advogados (ou do advogado), nao de cliente;",
+          '- "razaoSocial" exatamente como no cartao CNPJ; se o contrato social mais recente trouxer outro nome, use o do contrato, marque MEDIA e explique em observacoes;',
+          '- "cnpj" com os digitos como estao no papel;',
+          '- "inscricaoMunicipal" so quando estiver escrita (ficha da prefeitura, alvara, contrato). Nao confunda com inscricao estadual nem com o numero de registro na OAB;',
+          '- "cep" so com os 8 digitos, do endereco da SEDE (nao de filial);',
+          '- "cnae" e o codigo da atividade economica PRINCIPAL ("6911-7/01"), so o codigo;',
+          '- "regime": SIMPLES, MEI ou NORMAL, e so quando um documento disser (termo de opcao pelo Simples, "optante pelo Simples", certificado MEI). O cartao CNPJ sozinho nao diz o regime: nesse caso nao devolva o campo;',
+          "- se o cartao CNPJ estiver com situacao cadastral diferente de ATIVA, diga em observacoes.",
         ]
       : []),
     ...(perfil === "TAREFA"
@@ -416,6 +446,37 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
       valor = uf;
     }
 
+    if (perfil === "FISCAL" && chave === "cep") {
+      const digitos = digitosDe(valor);
+      if (digitos.length !== 8) {
+        observacoes.push(`O CEP lido ("${valor}") nao tem 8 digitos. Sem ele o codigo IBGE nao sai sozinho.`);
+        continue;
+      }
+      valor = `${digitos.slice(0, 5)}-${digitos.slice(5)}`;
+    }
+
+    if (perfil === "FISCAL" && chave === "uf") {
+      const uf = valor.toUpperCase().replace(/[^A-Z]/g, "");
+      if (!UFS_DO_BRASIL.has(uf)) continue;
+      valor = uf;
+    }
+
+    if (perfil === "FISCAL" && chave === "regime") {
+      const r = semAcentoMaiusculo(valor);
+      const regime = r.includes("MEI") || r.includes("MICROEMPREENDEDOR")
+        ? "MEI"
+        : r.includes("SIMPLES")
+          ? "SIMPLES"
+          : r.includes("NORMAL") || r.includes("PRESUMIDO") || r.includes("REAL")
+            ? "NORMAL"
+            : null;
+      if (!regime) {
+        observacoes.push(`O regime lido ("${valor}") nao e Simples, MEI nem normal. Escolha na tela.`);
+        continue;
+      }
+      valor = regime;
+    }
+
     if (perfil === "TAREFA" && chave === "dataDoAto") {
       const data = normalizarData(valor);
       if (!data) {
@@ -511,5 +572,56 @@ export function calcularPrazoDaLeitura(
     if (!(erro instanceof PrazoInvalido)) throw erro;
     observacoes.push(`Nao deu para calcular o prazo: ${erro.message}`);
   }
+  return { campos, observacoes: observacoes.slice(0, 20) };
+}
+
+function semAcentoMaiusculo(texto: string): string {
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+}
+
+/**
+ * Codigo de tributacao nacional (cTribNac, LC 116) sugerido pelo CNAE.
+ *
+ * So o que e certo para escritorio de advocacia: CNAE 6911-7/01 (servicos
+ * advocaticios) e o subitem 17.14 da lista, "advocacia" — 171401. Qualquer
+ * outro CNAE fica sem sugestao: o codigo e do contador.
+ */
+const TRIBUTACAO_DO_CNAE: Record<string, string> = {
+  "6911701": "171401",
+};
+
+/**
+ * Cadastro fiscal lido: o que o SISTEMA completa a partir do que a IA leu.
+ *
+ * O codigo IBGE vem do CEP (o servico de CEP informa), e o codigo do servico
+ * vem do CNAE. Os dois chegam com confianca MEDIA e origem dizendo de onde
+ * sairam, para quem confere saber que nao foi lido no papel.
+ */
+export function completarCadastroFiscal(
+  leitura: Leitura,
+  ibgeDoCep: string | null,
+): Leitura {
+  const campos = { ...leitura.campos };
+  const observacoes = [...leitura.observacoes];
+
+  if (ibgeDoCep && /^\d{7}$/.test(ibgeDoCep)) {
+    campos.codigoMunicipio = { valor: ibgeDoCep, confianca: "MEDIA", origem: "pelo CEP da sede" };
+  } else if (campos.cep) {
+    observacoes.push("Nao achei o codigo IBGE pelo CEP. Consulte em ibge.gov.br e preencha.");
+  }
+
+  const cnae = campos.cnae ? digitosDe(campos.cnae.valor) : "";
+  const codigo = TRIBUTACAO_DO_CNAE[cnae];
+  if (codigo) {
+    campos.codigoTributacao = {
+      valor: codigo,
+      confianca: "MEDIA",
+      origem: "subitem 17.14 (advocacia), pelo CNAE 6911-7/01",
+    };
+  } else if (campos.cnae) {
+    observacoes.push(`O CNAE ${campos.cnae.valor} nao e o de servicos advocaticios. O codigo do servico fica com o contador.`);
+  }
+  observacoes.push("A aliquota do ISS nao esta nesses documentos: confirme com o contador.");
+
   return { campos, observacoes: observacoes.slice(0, 20) };
 }

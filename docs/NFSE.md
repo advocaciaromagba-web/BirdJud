@@ -92,3 +92,21 @@ modulo se fecha.
 
 `NFSE_BASE_URL` aponta o ambiente para outro endereco. E assim que a bateria
 roda e como se confere o formato do que sai sem emitir nota de verdade.
+
+## Cadastro fiscal lendo os documentos
+
+Com o modulo IA, o cadastro fiscal (Notas fiscais, so administrador) abre o
+leitor de documentos (perfil `FISCAL`): cartao CNPJ, contrato social ou
+alteracao, ficha de inscricao municipal e termo de opcao pelo Simples, juntos.
+
+- A IA le razao social, CNPJ (digito conferido), inscricao municipal, CEP da
+  sede, cidade, UF, CNAE principal e o regime — este so quando um documento
+  diz (o cartao CNPJ sozinho nao diz).
+- O **codigo IBGE** sai do CEP (servico de CEP), e o **codigo do servico** do
+  CNAE: 6911-7/01 sugere `171401` (subitem 17.14, advocacia). Outro CNAE fica
+  sem sugestao. Codigo que a IA tente devolver e descartado
+  (`completarCadastroFiscal`).
+- A aliquota do ISS nao esta nesses documentos: fica com o contador.
+
+Nada e gravado pela leitura: o formulario chega preenchido, marcado como
+sugestao da IA, e so vale depois de "Guardar cadastro".

@@ -20,6 +20,8 @@ export type EnderecoDoCep = {
   uf: string;
   /** CEP geral da cidade: sem rua nem bairro, a pessoa digita. */
   geral: boolean;
+  /** Codigo IBGE do municipio (7 digitos), quando o servico informa. */
+  ibge?: string | null;
   fonte: "VIACEP" | "BRASILAPI" | "OPENCEP";
 };
 
@@ -41,22 +43,33 @@ function montar(
   cidade: unknown,
   uf: unknown,
   fonte: EnderecoDoCep["fonte"],
+  ibge?: unknown,
 ): EnderecoDoCep | null {
   const c = texto(cidade);
   const u = texto(uf)?.toUpperCase();
   if (!c || !u || !/^[A-Z]{2}$/.test(u)) return null;
   const rua = texto(logradouro);
-  return { cep, logradouro: rua, bairro: texto(bairro), cidade: c, uf: u, geral: !rua, fonte };
+  const codigo = texto(ibge);
+  return {
+    cep,
+    logradouro: rua,
+    bairro: texto(bairro),
+    cidade: c,
+    uf: u,
+    geral: !rua,
+    fonte,
+    ibge: codigo && /^\d{7}$/.test(codigo) ? codigo : null,
+  };
 }
 
 /** Respostas de cada servico, ja no nosso formato. Puras: tem teste. */
 export const LER = {
   VIACEP: (cep: string, j: Record<string, unknown>) =>
-    j.erro ? null : montar(cep, j.logradouro, j.bairro, j.localidade, j.uf, "VIACEP"),
+    j.erro ? null : montar(cep, j.logradouro, j.bairro, j.localidade, j.uf, "VIACEP", j.ibge),
   BRASILAPI: (cep: string, j: Record<string, unknown>) =>
     montar(cep, j.street, j.neighborhood, j.city, j.state, "BRASILAPI"),
   OPENCEP: (cep: string, j: Record<string, unknown>) =>
-    montar(cep, j.logradouro, j.bairro, j.localidade, j.uf, "OPENCEP"),
+    montar(cep, j.logradouro, j.bairro, j.localidade, j.uf, "OPENCEP", j.ibge),
 };
 
 function servicos(cep: string) {

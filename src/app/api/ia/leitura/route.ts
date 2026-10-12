@@ -17,8 +17,10 @@ import {
   type Anexo,
 } from "@/lib/ia";
 import { calendarioDoEscritorio, hoje } from "@/lib/prazos-do-escritorio";
+import { buscarCep } from "@/lib/cep";
 import {
   calcularPrazoDaLeitura,
+  completarCadastroFiscal,
   interpretar,
   LeituraIlegivel,
   montarInstrucao,
@@ -123,6 +125,13 @@ export async function POST(req: Request) {
     // do escritorio.
     if (perfil === "TAREFA") {
       leitura = calcularPrazoDaLeitura(leitura, hoje(), await calendarioDoEscritorio(escritorioId));
+    }
+    // Cadastro fiscal: o codigo IBGE sai do CEP. Servico de CEP fora do ar
+    // nao derruba a leitura — o campo so fica para preencher a mao.
+    if (perfil === "FISCAL") {
+      const cep = leitura.campos.cep?.valor;
+      const endereco = cep ? await buscarCep(cep).catch(() => null) : null;
+      leitura = completarCadastroFiscal(leitura, endereco?.ibge ?? null);
     }
 
     // Fica gravado o que a IA propos, nao o que o escritorio aceitou: e o

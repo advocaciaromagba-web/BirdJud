@@ -112,6 +112,7 @@ export default async function PaginaNotas() {
             : null
         }
         podeConfigurar={contexto.papel === "ADMIN"}
+        temIA={modulos.includes("IA")}
       />
     </Estrutura>
   );

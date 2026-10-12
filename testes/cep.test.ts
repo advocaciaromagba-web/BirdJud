@@ -19,8 +19,8 @@ describe("digitos e mascara", () => {
 describe("leitura das respostas", () => {
   it("ViaCEP com rua", () => {
     expect(
-      LER.VIACEP("01310100", { logradouro: "Avenida Paulista", bairro: "Bela Vista", localidade: "São Paulo", uf: "SP" }),
-    ).toEqual({ cep: "01310100", logradouro: "Avenida Paulista", bairro: "Bela Vista", cidade: "São Paulo", uf: "SP", geral: false, fonte: "VIACEP" });
+      LER.VIACEP("01310100", { logradouro: "Avenida Paulista", bairro: "Bela Vista", localidade: "São Paulo", uf: "SP", ibge: "3550308" }),
+    ).toEqual({ cep: "01310100", logradouro: "Avenida Paulista", bairro: "Bela Vista", cidade: "São Paulo", uf: "SP", geral: false, fonte: "VIACEP", ibge: "3550308" });
   });
 
   it("ViaCEP com erro (verdadeiro ou texto) vira nada", () => {

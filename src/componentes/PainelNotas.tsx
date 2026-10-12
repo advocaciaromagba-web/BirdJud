@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
 
 export type NotaNaTela = {
   id: string;
@@ -41,15 +42,22 @@ export function PainelNotas({
   clientes,
   fiscal,
   podeConfigurar,
+  temIA = false,
 }: {
   notas: NotaNaTela[];
   clientes: { id: string; nome: string; temDocumento: boolean }[];
   fiscal: Fiscal;
   podeConfigurar: boolean;
+  temIA?: boolean;
 }) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
+  // O que a leitura dos documentos propos. O formulario e nao controlado:
+  // trocar a `versao` o remonta com estes valores, e ele segue editavel.
+  const [lido, setLido] = useState<Record<string, string>>({});
+  const [versao, setVersao] = useState(0);
+  const atual = (campo: keyof NonNullable<Fiscal>) => lido[campo] ?? fiscal?.[campo];
 
   async function chamar(
     rota: string,
@@ -127,31 +135,49 @@ export function PainelNotas({
             vem do contador do escritorio — nao ha padrao que sirva para todo
             mundo.
           </p>
+          {temIA ? (
+            <div className="mt-3">
+              <LeitorDeDocumentos
+                perfil="FISCAL"
+                aoAplicar={(campos) => {
+                  setLido(campos);
+                  setVersao((v) => v + 1);
+                }}
+              />
+            </div>
+          ) : null}
+          {Object.keys(lido).length > 0 ? (
+            <p className="mt-3 rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
+              Sugestao da IA no formulario abaixo: confira cada campo, e o
+              codigo do servico e a aliquota com o contador, antes de guardar.
+            </p>
+          ) : null}
           <form
+            key={versao}
             onSubmit={salvarCadastro}
             className="cartao-aperto mt-3 grid gap-3 sm:grid-cols-2"
           >
             <Campo
               nome="razaoSocial"
               rotulo="Razao social"
-              valor={fiscal?.razaoSocial}
+              valor={atual("razaoSocial")}
             />
-            <Campo nome="cnpj" rotulo="CNPJ" valor={fiscal?.cnpj} />
+            <Campo nome="cnpj" rotulo="CNPJ" valor={atual("cnpj")} />
             <Campo
               nome="inscricaoMunicipal"
               rotulo="Inscricao municipal"
-              valor={fiscal?.inscricaoMunicipal}
+              valor={atual("inscricaoMunicipal")}
             />
             <Campo
               nome="codigoMunicipio"
               rotulo="Codigo IBGE do municipio (7 digitos)"
-              valor={fiscal?.codigoMunicipio}
+              valor={atual("codigoMunicipio")}
             />
             <label className="grid gap-1 text-sm">
               Regime
               <select
                 name="regime"
-                defaultValue={fiscal?.regime ?? "SIMPLES"}
+                defaultValue={atual("regime") ?? "SIMPLES"}
                 className="campo"
               >
                 <option value="SIMPLES">Simples Nacional</option>
@@ -162,7 +188,7 @@ export function PainelNotas({
             <Campo
               nome="codigoTributacao"
               rotulo="Codigo do servico"
-              valor={fiscal?.codigoTributacao}
+              valor={atual("codigoTributacao")}
             />
             <Campo
               nome="aliquota"

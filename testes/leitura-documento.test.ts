@@ -11,6 +11,7 @@ import {
   formatarDocumento,
 } from "../src/lib/documentos";
 import {
+  completarCadastroFiscal,
   interpretar,
   LeituraIlegivel,
   montarInstrucao,
@@ -361,5 +362,53 @@ describe("cliente por documento de identidade e comprovante de endereco", () => 
       JSON.stringify({ campos: { numero: campo("120") }, observacoes: [] }),
     );
     expect(leitura.campos.numero.confianca).toBe("BAIXA");
+  });
+});
+
+describe("cadastro fiscal por cartao CNPJ e contrato social", () => {
+  const resposta = JSON.stringify({
+    campos: {
+      razaoSocial: { valor: "Roma Sociedade de Advogados", confianca: "ALTA" },
+      cnpj: { valor: "11.222.333/0001-81", confianca: "ALTA" },
+      cep: { valor: "14840000", confianca: "ALTA" },
+      cnae: { valor: "6911-7/01", confianca: "ALTA" },
+      regime: { valor: "Optante pelo Simples Nacional", confianca: "ALTA" },
+      // O modelo nao escolhe codigo de tabela: isto cai fora.
+      codigoTributacao: { valor: "999999", confianca: "ALTA" },
+      codigoMunicipio: { valor: "1234567", confianca: "ALTA" },
+    },
+    observacoes: [],
+  });
+
+  it("a instrucao nao pede o que o sistema deriva", () => {
+    const instrucao = montarInstrucao("FISCAL");
+    expect(instrucao).toContain('"cnae"');
+    expect(instrucao).not.toContain('"codigoMunicipio"');
+    expect(instrucao).not.toContain('"codigoTributacao"');
+  });
+
+  it("IBGE sai do CEP e o codigo do servico do CNAE", () => {
+    const lida = interpretar("FISCAL", resposta);
+    expect(lida.campos.codigoTributacao).toBeUndefined();
+    expect(lida.campos.codigoMunicipio).toBeUndefined();
+    expect(lida.campos.cep.valor).toBe("14840-000");
+    expect(lida.campos.regime.valor).toBe("SIMPLES");
+
+    const completa = completarCadastroFiscal(lida, "3518602");
+    expect(completa.campos.codigoMunicipio.valor).toBe("3518602");
+    expect(completa.campos.codigoTributacao.valor).toBe("171401");
+    expect(completa.campos.codigoTributacao.confianca).toBe("MEDIA");
+    expect(completa.observacoes.join(" ")).toContain("aliquota");
+  });
+
+  it("CNAE que nao e de advocacia fica sem codigo, e sem IBGE avisa", () => {
+    const lida = interpretar(
+      "FISCAL",
+      JSON.stringify({ campos: { cnae: { valor: "8211-3/00" }, cep: { valor: "14840-000" } }, observacoes: [] }),
+    );
+    const completa = completarCadastroFiscal(lida, null);
+    expect(completa.campos.codigoTributacao).toBeUndefined();
+    expect(completa.campos.codigoMunicipio).toBeUndefined();
+    expect(completa.observacoes.join(" ")).toContain("IBGE");
   });
 });
