@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/sessao";
+import { ModuloNaoContratado, modulosAtivos } from "@/lib/modulos";
 import { tratarErro } from "@/lib/respostas";
 import { paraCentavos } from "@/lib/dinheiro";
 import { FORMAS } from "@/lib/cobrancas";
@@ -37,7 +38,13 @@ function paraCentesimos(texto: string): number | null {
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    // O contrato mora na ficha do cliente: vale com cobrancas OU financeiro.
+    // Emitir boleto/Pix continua exigindo o modulo de cobrancas.
+    const { escritorioId } = await exigirSessao();
+    const modulos = await modulosAtivos(escritorioId);
+    if (!modulos.includes("COBRANCAS") && !modulos.includes("FINANCEIRO")) {
+      throw new ModuloNaoContratado("FINANCEIRO");
+    }
     const corpo = contrato.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
       return NextResponse.json({ erro: "Contrato invalido." }, { status: 400 });

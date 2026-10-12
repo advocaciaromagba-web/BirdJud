@@ -60,7 +60,10 @@ describe("bilhete do OAuth (state)", () => {
     const dados = JSON.parse(Buffer.from(corpo, "base64url").toString());
     const outro = Buffer.from(JSON.stringify({ ...dados, e: "escritorio-alheio" })).toString("base64url");
     expect(lerEstado(`${outro}.${assinatura}`)).toBeNull();
-    expect(lerEstado(`${corpo}.x${assinatura.slice(1)}`)).toBeNull();
+    // Troca o primeiro caractere por OUTRO: "x" fixo nao mudava nada quando a
+    // assinatura ja comecava com "x" (1 vez em 64), e o teste falhava a toa.
+    const trocado = assinatura[0] === "x" ? "y" : "x";
+    expect(lerEstado(`${corpo}.${trocado}${assinatura.slice(1)}`)).toBeNull();
     expect(lerEstado("lixo")).toBeNull();
     expect(lerEstado(null)).toBeNull();
   });

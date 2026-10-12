@@ -422,6 +422,39 @@ export async function darBaixa(
   if (cobranca.lancamentoId) return cobranca.lancamentoId;
   if (!(await moduloAtivo(escritorioId, "FINANCEIRO"))) return null;
 
+  // Parcela de contrato ja prevista no financeiro: a baixa e NESTA linha. Criar
+  // outra contaria o mesmo honorario duas vezes — uma a receber, uma recebida.
+  const origem = await comEscritorio(escritorioId, (db) =>
+    db.cobranca.findFirst({
+      where: { id: cobranca.id },
+      select: { contratoId: true, parcelaNumero: true },
+    }),
+  );
+  if (origem?.contratoId && origem.parcelaNumero !== null) {
+    const prevista = await comEscritorio(escritorioId, (db) =>
+      db.lancamento.findFirst({
+        where: { contratoId: origem.contratoId, parcelaNumero: origem.parcelaNumero },
+        select: { id: true, pagoEm: true, cobrancaId: true },
+      }),
+    );
+    if (prevista) {
+      if (!prevista.pagoEm) {
+        await comEscritorio(escritorioId, (db) =>
+          db.lancamento.update({
+            where: { id: prevista.id },
+            data: {
+              pagoEm: quando,
+              valorCentavos,
+              competencia: competenciaDe(quando),
+              cobrancaId: prevista.cobrancaId ?? cobranca.id,
+            },
+          }),
+        );
+      }
+      return prevista.id;
+    }
+  }
+
   // cobrancaId tem indice unico por escritorio: se duas sincronizacoes
   // correrem juntas, a segunda esbarra no banco em vez de criar a receita
   // duas vezes. A guarda por lancamentoId acima resolve o caso comum; esta

@@ -3,7 +3,7 @@ import { modulosAtivos } from "@/lib/modulos";
 import { comEscritorio } from "@/lib/prisma";
 import { diaBR } from "@/lib/datas";
 import { emReais } from "@/lib/dinheiro";
-import { pendentesComSugestao } from "@/lib/extrato";
+import { PREFIXO_DA_PARCELA, pendentesComSugestao } from "@/lib/extrato";
 import { Estrutura } from "@/componentes/Estrutura";
 import {
   PainelConciliacao,
@@ -29,10 +29,15 @@ export default async function PaginaConciliacao() {
   const naTela: EntradaNaTela[] = entradas.map((e) => {
     let sugestao: string | null = null;
     let ambigua = false;
+    let parcelaId: string | null = null;
     if (e.sugestao.tipo === "CERTA" || e.sugestao.tipo === "PROVAVEL") {
       const c = porId.get(e.sugestao.cobrancaId);
+      const ehParcela = e.sugestao.cobrancaId.startsWith(PREFIXO_DA_PARCELA);
+      if (ehParcela && c) parcelaId = c.id;
       sugestao = c
-        ? `${e.sugestao.tipo === "CERTA" ? "E" : "Parece ser"} a cobranca de ${c.nomeDoCliente} — ${c.descricao}`
+        ? ehParcela
+          ? `Parece ser a parcela a receber de ${c.nomeDoCliente} — ${c.descricao}`
+          : `${e.sugestao.tipo === "CERTA" ? "E" : "Parece ser"} a cobranca de ${c.nomeDoCliente} — ${c.descricao}`
         : null;
     } else if (e.sugestao.tipo === "AMBIGUA") {
       ambigua = true;
@@ -53,6 +58,7 @@ export default async function PaginaConciliacao() {
       automatico: e.automatico,
       sugestao,
       ambigua,
+      parcelaId,
     };
   });
 

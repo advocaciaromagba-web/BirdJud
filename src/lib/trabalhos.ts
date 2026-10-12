@@ -21,7 +21,7 @@ import {
   espelharArquivo,
   organizarPastas,
 } from "./nuvem-do-escritorio";
-import { emitirParcelasDevidas } from "./honorarios-do-escritorio";
+import { emitirParcelasDevidas, preverTodosOsRecebimentos } from "./honorarios-do-escritorio";
 import { gerarContasDoMes } from "./contas-do-escritorio";
 import { marcarPublicacoesRepetidas } from "./duplicados-do-escritorio";
 import {
@@ -239,6 +239,11 @@ async function limparVencidos(): Promise<void> {
  */
 async function emitirHonorarios({ escritorioId }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("EMITIR_HONORARIOS exige escritorio.");
+
+  // Antes de emitir: todo contrato com as parcelas a receber no financeiro.
+  // Idempotente; pega os contratos gravados antes de a previsao existir.
+  const previstas = await preverTodosOsRecebimentos(escritorioId);
+  if (previstas > 0) console.log(`EMITIR_HONORARIOS ${escritorioId}: ${previstas} parcela(s) prevista(s) no financeiro.`);
 
   let r;
   try {

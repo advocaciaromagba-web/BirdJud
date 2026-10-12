@@ -793,6 +793,12 @@ model Lancamento {
   cobrancaId    String?
   despesaFixaId String?
   arquivoId     String?
+  /// Parcela de contrato de honorarios que esta linha preve. Nasce A RECEBER
+  /// (pagoEm nulo) quando o contrato e gravado na ficha do cliente, e a baixa
+  /// (cobranca paga ou conferencia do extrato) preenche pagoEm nesta mesma
+  /// linha — nunca cria outra.
+  contratoId    String?
+  parcelaNumero Int?
   criadoEm      DateTime  @default(now())
 
   escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -805,6 +811,8 @@ model Lancamento {
   @@index([escritorioId, competencia])
   @@index([escritorioId, categoria])
   @@index([escritorioId, vencimento])
+  @@index([escritorioId, contratoId])
+  @@unique([contratoId, parcelaNumero])
 }
 
 // ---------------------------------------------------------------------------

@@ -130,6 +130,51 @@ export async function cobrancasAbertas(
   }));
 }
 
+/** Prefixo do id de parcela prevista na lista de candidatos da conferencia. */
+export const PREFIXO_DA_PARCELA = "parcela:";
+
+/**
+ * Parcelas de honorarios A RECEBER no financeiro, como candidatas da
+ * conferencia: o Pix ou a transferencia que o cliente fez direto na conta
+ * aparece no extrato e acha a parcela pelo nome e pelo valor.
+ *
+ * Parcela com cobranca emitida fica de fora: quem casa com o pagamento dela e
+ * a propria cobranca, e listar as duas faria todo pagamento parecer ambiguo.
+ */
+export async function parcelasAReceber(escritorioId: string): Promise<CobrancaAberta[]> {
+  return comEscritorio(escritorioId, async (db) => {
+    const linhas = await db.lancamento.findMany({
+      where: { tipo: "RECEITA", pagoEm: null, contratoId: { not: null } },
+      select: { id: true, descricao: true, valorCentavos: true, contratoId: true, parcelaNumero: true },
+      orderBy: { vencimento: "asc" },
+      take: 1000,
+    });
+    if (linhas.length === 0) return [];
+    const ids = [...new Set(linhas.map((l) => l.contratoId!))];
+    const [contratos, cobradas] = await Promise.all([
+      db.contratoDeHonorarios.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, cliente: { select: { nome: true } } },
+      }),
+      db.cobranca.findMany({
+        where: { contratoId: { in: ids }, NOT: { status: "CANCELADA" } },
+        select: { contratoId: true, parcelaNumero: true },
+      }),
+    ]);
+    const nome = new Map(contratos.map((c) => [c.id, c.cliente.nome]));
+    const comCobranca = new Set(cobradas.map((c) => `${c.contratoId}:${c.parcelaNumero}`));
+    return linhas
+      .filter((l) => !comCobranca.has(`${l.contratoId}:${l.parcelaNumero}`))
+      .map((l) => ({
+        id: `${PREFIXO_DA_PARCELA}${l.id}`,
+        idNoProvedor: "",
+        nomeDoCliente: nome.get(l.contratoId!) ?? "",
+        descricao: l.descricao,
+        faltaCentavos: l.valorCentavos,
+      }));
+  });
+}
+
 /** As entradas pendentes, com a sugestao de cada uma. */
 export async function pendentesComSugestao(escritorioId: string): Promise<{
   entradas: Array<{
@@ -153,7 +198,9 @@ export async function pendentesComSugestao(escritorioId: string): Promise<{
         take: 300,
       }),
     ),
-    cobrancasAbertas(escritorioId),
+    Promise.all([cobrancasAbertas(escritorioId), parcelasAReceber(escritorioId)]).then(
+      ([cobrancas, parcelas]) => [...cobrancas, ...parcelas],
+    ),
   ]);
 
   const paraSugerir: EntradaDoExtrato[] = linhas.map((l) => ({
@@ -193,6 +240,22 @@ export class EntradaNaoEncontrada extends Error {
   }
 }
 
+export class ParcelaJaRecebida extends Error {
+  readonly status = 409;
+  constructor() {
+    super("Esta parcela ja foi recebida ou nao existe mais. Atualize a tela.");
+    this.name = "ParcelaJaRecebida";
+  }
+}
+
+export class ValorDiferenteDaParcela extends Error {
+  readonly status = 400;
+  constructor() {
+    super("O valor recebido nao e o da parcela. Lance como receita avulsa e ajuste a parcela no financeiro.");
+    this.name = "ValorDiferenteDaParcela";
+  }
+}
+
 /**
  * Lanca a entrada no financeiro, ou a marca como ignorada.
  *
@@ -203,7 +266,9 @@ export class EntradaNaoEncontrada extends Error {
 export async function decidirEntrada(
   escritorioId: string,
   id: string,
-  acao: { tipo: "LANCAR"; categoria?: string } | { tipo: "IGNORAR" },
+  acao:
+    | { tipo: "LANCAR"; categoria?: string; parcelaId?: string | null }
+    | { tipo: "IGNORAR" },
 ): Promise<{ lancamentoId: string | null }> {
   const entrada = await comEscritorio(escritorioId, (db) =>
     db.entradaDeExtrato.findFirst({ where: { id, situacao: "PENDENTE" } }),
@@ -246,6 +311,32 @@ export async function decidirEntrada(
   }
 
   const quando = entrada.data;
+
+  // Pagamento de parcela de honorarios ja prevista: a baixa e na propria
+  // parcela. Lancar outra receita contaria o mesmo dinheiro duas vezes.
+  if (acao.parcelaId) {
+    const parcelaId = acao.parcelaId.replace(PREFIXO_DA_PARCELA, "");
+    const parcela = await comEscritorio(escritorioId, (db) =>
+      db.lancamento.findFirst({
+        where: { id: parcelaId, tipo: "RECEITA", pagoEm: null, contratoId: { not: null } },
+        select: { id: true, valorCentavos: true },
+      }),
+    );
+    if (!parcela) throw new ParcelaJaRecebida();
+    if (parcela.valorCentavos !== Math.abs(entrada.valorCentavos)) throw new ValorDiferenteDaParcela();
+    await comEscritorio(escritorioId, async (db) => {
+      await db.lancamento.update({
+        where: { id: parcela.id },
+        data: { pagoEm: quando, competencia: competenciaDe(quando) },
+      });
+      await db.entradaDeExtrato.updateMany({
+        where: { id, situacao: "PENDENTE" },
+        data: { situacao: "LANCADO", lancamentoId: parcela.id, decididoEm: new Date() },
+      });
+    });
+    return { lancamentoId: parcela.id };
+  }
+
   // "Tarifa de cobranca: Tarifa de cobranca" nao informa nada. Quando o
   // provedor ja descreve o que o rotulo diria, fica so a descricao dele.
   const descricao =

@@ -2,12 +2,22 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
-import { EntradaNaoEncontrada, decidirEntrada } from "@/lib/extrato";
+import {
+  EntradaNaoEncontrada,
+  ParcelaJaRecebida,
+  ValorDiferenteDaParcela,
+  decidirEntrada,
+} from "@/lib/extrato";
 
 export const dynamic = "force-dynamic";
 
 const acao = z.union([
-  z.object({ acao: z.literal("lancar"), categoria: z.string().max(40).optional() }),
+  z.object({
+    acao: z.literal("lancar"),
+    categoria: z.string().max(40).optional(),
+    // Parcela de honorarios a receber que este pagamento quita.
+    parcelaId: z.string().min(1).max(80).nullish(),
+  }),
   z.object({ acao: z.literal("ignorar") }),
 ]);
 
@@ -27,13 +37,16 @@ export async function POST(
       escritorioId,
       id,
       corpo.data.acao === "lancar"
-        ? { tipo: "LANCAR", categoria: corpo.data.categoria }
+        ? { tipo: "LANCAR", categoria: corpo.data.categoria, parcelaId: corpo.data.parcelaId }
         : { tipo: "IGNORAR" },
     );
     return NextResponse.json(r);
   } catch (erro) {
     if (erro instanceof EntradaNaoEncontrada) {
       return NextResponse.json({ erro: erro.message }, { status: 404 });
+    }
+    if (erro instanceof ParcelaJaRecebida || erro instanceof ValorDiferenteDaParcela) {
+      return NextResponse.json({ erro: erro.message }, { status: erro.status });
     }
     return tratarErro(erro);
   }

@@ -18,6 +18,8 @@ export type ContratoNaTela = {
     valor: string;
     vencimentoBR: string;
     emitida: boolean;
+    /** Ja entrou no financeiro como recebida. */
+    recebida: boolean;
   }>;
   /** Por que o contrato nao gera parcela, quando nao gera. */
   motivo: string | null;
@@ -30,7 +32,11 @@ export type ContratoNaTela = {
 export type ClienteNaTela = { id: string; nome: string };
 
 /**
- * Contratos de honorarios.
+ * Contratos de honorarios de UM cliente, na ficha dele.
+ *
+ * O contrato nasce aqui, junto da procuracao, da declaracao e do contrato em
+ * documento. Gravado, as parcelas entram sozinhas no financeiro, A RECEBER,
+ * com as datas — e a baixa vem da cobranca paga ou da conferencia do extrato.
  *
  * O QUE ESTA TELA FAZ DE DIFERENTE: mostra o plano inteiro antes de qualquer
  * cobranca existir. Dá para ver as doze parcelas, as datas e os valores, e
@@ -39,12 +45,18 @@ export type ClienteNaTela = { id: string; nome: string };
  */
 export function PainelHonorarios({
   contratos,
-  clientes,
+  cliente,
   temConta,
+  temCobrancas,
+  temFinanceiro,
 }: {
   contratos: ContratoNaTela[];
-  clientes: ClienteNaTela[];
+  cliente: ClienteNaTela;
   temConta: boolean;
+  /** Modulo COBRANCAS: emitir boleto/Pix pela conta do escritorio. */
+  temCobrancas: boolean;
+  /** Modulo FINANCEIRO: as parcelas entram a receber no livro-caixa. */
+  temFinanceiro: boolean;
 }) {
   const router = useRouter();
   const [salvando, setSalvando] = useState(false);
@@ -66,7 +78,7 @@ export function PainelHonorarios({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        clienteId: String(d.get("clienteId") ?? ""),
+        clienteId: cliente.id,
         tipo: String(d.get("tipo") ?? "VALOR"),
         valor: String(d.get("valor") ?? ""),
         percentual: String(d.get("percentual") ?? ""),
@@ -86,7 +98,11 @@ export function PainelHonorarios({
     formulario.reset();
     setTipo("VALOR");
     setAberto(false);
-    setAviso("Contrato gravado. Confira o plano de parcelas abaixo.");
+    setAviso(
+      temFinanceiro
+        ? "Contrato gravado. As parcelas ja estao no financeiro, a receber. Confira o plano abaixo."
+        : "Contrato gravado. Confira o plano de parcelas abaixo.",
+    );
     router.refresh();
   }
 
@@ -110,16 +126,18 @@ export function PainelHonorarios({
   }
 
   return (
-    <div className="grid gap-6">
-      <section className="cartao">
+    <div className="grid gap-4">
+      <section>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-semibold">Contrato de honorarios</h2>
+            <h2 className="font-semibold">Honorarios</h2>
             <p className="mt-1 text-sm text-slate-600">
-              O contrato diz o valor, a forma e quantas parcelas. O sistema
-              monta o plano e emite uma parcela por vez, perto do vencimento —
-              assim da para corrigir ou encerrar no meio sem deixar cobranca na
-              rua.
+              O valor, a forma e as parcelas combinadas com {cliente.nome}. E
+              daqui que sai o contrato de honorarios em documento
+              {temFinanceiro
+                ? ", e as parcelas entram no financeiro a receber, com as datas, para a conferencia do extrato dar baixa"
+                : ""}
+              .
             </p>
           </div>
           <button
@@ -131,29 +149,15 @@ export function PainelHonorarios({
           </button>
         </div>
 
-        {!temConta ? (
+        {temCobrancas && !temConta ? (
           <p className="mt-3 text-sm text-amber-700">
-            Conecte a conta de cobranca em Integracoes para emitir as parcelas.
-            O contrato pode ser gravado antes disso.
+            Para emitir boleto ou Pix das parcelas, conecte a conta de cobranca
+            em Integracoes. O contrato pode ser gravado antes disso.
           </p>
         ) : null}
 
         {aberto ? (
           <form onSubmit={salvar} className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <label htmlFor="h-cliente" className="rotulo">
-                Cliente
-              </label>
-              <select id="h-cliente" name="clienteId" required className="campo">
-                <option value="">Escolha...</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div>
               <label htmlFor="h-tipo" className="rotulo">
                 Tipo
@@ -236,10 +240,12 @@ export function PainelHonorarios({
               />
             </div>
 
-            <label className="flex items-center gap-2 text-sm md:col-span-2">
-              <input type="checkbox" name="emissaoAutomatica" className="h-4 w-4" />
-              Emitir as parcelas sozinho, perto do vencimento
-            </label>
+            {temCobrancas ? (
+              <label className="flex items-center gap-2 text-sm md:col-span-2">
+                <input type="checkbox" name="emissaoAutomatica" className="h-4 w-4" />
+                Emitir boleto/Pix das parcelas sozinho, perto do vencimento
+              </label>
+            ) : null}
 
             <div className="md:col-span-2">
               <button
@@ -258,9 +264,8 @@ export function PainelHonorarios({
       </section>
 
       <section>
-        <h2 className="font-semibold">Contratos</h2>
         {contratos.length === 0 ? (
-          <p className="vazio mt-3">Nenhum contrato de honorarios ainda.</p>
+          <p className="vazio">Nenhum contrato de honorarios com este cliente ainda.</p>
         ) : (
           <ul className="mt-3 grid gap-3">
             {contratos.map((c) => (
@@ -270,13 +275,10 @@ export function PainelHonorarios({
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium">
-                      {c.clienteNome}
-                      <span className="ml-2 text-sm text-slate-600">{c.resumo}</span>
-                    </p>
+                    <p className="font-medium">{c.resumo}</p>
                     <p className="text-xs text-slate-500">
                       {c.forma}
-                      {c.automatico ? " · emite sozinho" : " · emite so por clique"}
+                      {temCobrancas ? (c.automatico ? " · emite sozinho" : " · emite so por clique") : ""}
                       {c.ativo ? "" : " · encerrado"}
                     </p>
                     {c.motivo ? (
@@ -295,7 +297,7 @@ export function PainelHonorarios({
                     ) : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    {c.ativo && c.proximaNumero !== null && !c.atrasada ? (
+                    {temCobrancas && c.ativo && c.proximaNumero !== null && !c.atrasada ? (
                       <button
                         type="button"
                         disabled={agindo === c.id || c.impedimentos.length > 0}
@@ -320,7 +322,7 @@ export function PainelHonorarios({
                         onClick={() => {
                           if (
                             !confirm(
-                              "Encerrar o contrato? As parcelas que ainda nao sairam deixam de ser emitidas. As cobrancas ja emitidas continuam valendo.",
+                              "Encerrar o contrato? As parcelas que ainda nao foram cobradas saem do financeiro (a receber). Cobrancas ja emitidas e parcelas recebidas continuam valendo.",
                             )
                           )
                             return;
@@ -348,10 +350,14 @@ export function PainelHonorarios({
                           <span className="tabular-nums text-slate-600">{p.valor}</span>
                           <span
                             className={
-                              p.emitida ? "text-emerald-700" : "text-slate-500"
+                              p.recebida
+                                ? "font-semibold text-emerald-700"
+                                : p.emitida
+                                  ? "text-sky-700"
+                                  : "text-slate-500"
                             }
                           >
-                            {p.emitida ? "cobrada" : "a cobrar"}
+                            {p.recebida ? "recebida" : p.emitida ? "cobranca emitida" : "a receber"}
                           </span>
                         </span>
                       </li>

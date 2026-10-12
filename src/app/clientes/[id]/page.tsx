@@ -31,6 +31,8 @@ import {
 } from "@/componentes/RepresentantesDoCliente";
 import { enviosDoCliente } from "@/lib/assinatura-do-escritorio";
 import { PecasDoCliente } from "@/componentes/PecasDoCliente";
+import { PainelHonorarios } from "@/componentes/PainelHonorarios";
+import { contratosDoCliente } from "@/lib/honorarios-na-tela";
 
 const COR = {
   IMPEDE: "border-l-red-500 bg-red-50 text-red-900",
@@ -97,6 +99,20 @@ export default async function FichaCliente({
   const envios = assinaturaLigada
     ? await enviosDoCliente(contexto.escritorioId, cliente.id)
     : [];
+
+  // Honorarios: o contrato e cadastrado aqui (a aba lateral saiu). Aparece com
+  // cobrancas ou financeiro; sem nenhum dos dois nao ha o que fazer com ele.
+  const temCobrancas = modulos.includes("COBRANCAS");
+  const temFinanceiro = modulos.includes("FINANCEIRO");
+  const mostraHonorarios = temCobrancas || temFinanceiro;
+  const [contratos, contaDeCobranca] = mostraHonorarios
+    ? await Promise.all([
+        contratosDoCliente(contexto.escritorioId, cliente.id),
+        comEscritorio(contexto.escritorioId, (db) =>
+          db.integracao.count({ where: { tipo: { in: ["ASAAS", "INFINITEPAY"] } } }),
+        ),
+      ])
+    : [[], 0];
 
   const pendencias = pendenciasDoCliente(cliente, modulos, {
     arquivos: cliente.arquivos.length,
@@ -324,6 +340,18 @@ export default async function FichaCliente({
           textoParaCliente={textoParaCliente}
         />
       </div>
+
+      {mostraHonorarios ? (
+        <section className="cartao mt-6">
+          <PainelHonorarios
+            contratos={contratos}
+            cliente={{ id: cliente.id, nome: cliente.nome }}
+            temConta={contaDeCobranca > 0}
+            temCobrancas={temCobrancas}
+            temFinanceiro={temFinanceiro}
+          />
+        </section>
+      ) : null}
 
       <PecasDoCliente
         clienteId={cliente.id}

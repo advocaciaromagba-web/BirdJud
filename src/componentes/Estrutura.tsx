@@ -47,12 +47,6 @@ const AREAS: Area[] = [
     modulo: "COBRANCAS",
   },
   {
-    href: "/honorarios",
-    rotulo: "Honorarios",
-    icone: "honorarios",
-    modulo: "COBRANCAS",
-  },
-  {
     href: "/notas",
     rotulo: "Notas fiscais",
     icone: "notas",

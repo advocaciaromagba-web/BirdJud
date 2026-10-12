@@ -14,6 +14,8 @@ export type EntradaNaTela = {
   automatico: boolean;
   sugestao: string | null;
   ambigua: boolean;
+  /** Parcela de honorarios a receber que este pagamento parece quitar. */
+  parcelaId: string | null;
 };
 
 const COR: Record<string, string> = {
@@ -103,13 +105,13 @@ export function PainelConciliacao({
     router.refresh();
   }
 
-  async function decidir(id: string, acao: "lancar" | "ignorar") {
+  async function decidir(id: string, acao: "lancar" | "ignorar", parcelaId?: string | null) {
     setDecidindo(id);
     setErro(null);
     const resposta = await fetch(`/api/extrato/${id}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ acao }),
+      body: JSON.stringify({ acao, parcelaId: parcelaId ?? null }),
     });
     setDecidindo(null);
     if (!resposta.ok) {
@@ -229,14 +231,24 @@ export function PainelConciliacao({
                     ) : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
+                    {e.parcelaId ? (
+                      <button
+                        type="button"
+                        disabled={decidindo === e.id}
+                        onClick={() => decidir(e.id, "lancar", e.parcelaId)}
+                        className="botao-principal disabled:opacity-50"
+                      >
+                        Dar baixa na parcela
+                      </button>
+                    ) : null}
                     {e.destino !== "IGNORAR" ? (
                       <button
                         type="button"
                         disabled={decidindo === e.id}
                         onClick={() => decidir(e.id, "lancar")}
-                        className="botao-principal disabled:opacity-50"
+                        className={`${e.parcelaId ? "botao-secundario" : "botao-principal"} disabled:opacity-50`}
                       >
-                        Lancar
+                        {e.parcelaId ? "Lancar avulso" : "Lancar"}
                       </button>
                     ) : null}
                     <button

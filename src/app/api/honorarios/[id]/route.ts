@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/sessao";
+import { ModuloNaoContratado, modulosAtivos } from "@/lib/modulos";
 import { tratarErro } from "@/lib/respostas";
 import { encerrarContrato, gerarProximaParcela } from "@/lib/honorarios-do-escritorio";
 import { erroDeDominio } from "@/lib/honorarios-respostas";
@@ -18,7 +19,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    // O contrato mora na ficha do cliente: vale com cobrancas OU financeiro.
+    // Emitir boleto/Pix continua exigindo o modulo de cobrancas.
+    const { escritorioId } = await exigirSessao();
+    const modulos = await modulosAtivos(escritorioId);
+    if (!modulos.includes("COBRANCAS") && !modulos.includes("FINANCEIRO")) {
+      throw new ModuloNaoContratado("FINANCEIRO");
+    }
     const { id } = await params;
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
@@ -30,6 +37,7 @@ export async function POST(
       return NextResponse.json({ ok: true });
     }
 
+    if (!modulos.includes("COBRANCAS")) throw new ModuloNaoContratado("COBRANCAS");
     const r = await gerarProximaParcela(escritorioId, id, {
       forcar: corpo.data.antecipar === true,
     });
