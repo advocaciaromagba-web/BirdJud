@@ -828,12 +828,49 @@ model Fiscal {
   escritorioId       String   @unique
   razaoSocial        String
   cnpj               String
-  inscricaoMunicipal String
+  /// So quando a prefeitura exige. A emissao manda e, se a prefeitura nao a
+  /// tiver no cadastro nacional (E0120), reenvia sozinha sem ela.
+  inscricaoMunicipal String?
   codigoMunicipio    String // IBGE, 7 digitos
-  regime             String // SIMPLES | MEI | NORMAL
-  codigoTributacao   String // item da lista de servicos, do contador
-  aliquotaMilesimos  Int // 2% = 2000
+  telefone           String?
+  email              String?
+  /// Legado (antes do leiaute nacional). Vale `opSimpNac`.
+  regime             String   @default("SIMPLES")
+  /// Codigo de tributacao nacional (cTribNac). 171401 = advocacia.
+  codigoTributacao   String   @default("171401")
+  /// Legado: a nota nao manda aliquota (E0604/E0625); quem calcula e a Sefin.
+  aliquotaMilesimos  Int      @default(0)
+
+  // Regime no leiaute nacional. opSimpNac 1 nao optante | 2 MEI | 3 ME/EPP;
+  // regApTribSN 1 tudo pelo SN | 2 federais pelo SN e ISS por fora;
+  // regEspTrib 0 nenhum | 6 sociedade de profissionais (ISS fixo). Ver
+  // src/lib/nfse/regime.ts.
+  opSimpNac   Int      @default(3)
+  regApTribSN Int?     @default(1)
+  regEspTrib  Int      @default(0)
+  /// % aproximado de tributos (Lei 12.741), informado pelo contador.
+  pTotTribSN  Decimal? @db.Decimal(5, 2)
+  pTotTribFed Decimal? @db.Decimal(5, 2)
+  pTotTribEst Decimal? @db.Decimal(5, 2)
+  pTotTribMun Decimal? @db.Decimal(5, 2)
+
+  /// Reforma tributaria: o grupo IBS/CBS entra a partir desta competencia.
+  ibsCbsDesde      DateTime?
+  cIndOp           String?   @default("100301")
+  cstIbsCbs        String?   @default("000")
+  cClassTribIbsCbs String?   @default("000001")
+  regApIBSCBSSN    Int?
+  cAtvSN           Int?
+
+  /// Mudanca de regime ja contratada: a nota usa o regime da COMPETENCIA.
+  regimeFuturoDesde DateTime?
+  regimeFuturo      Json?
+
+  codigoNbs       String? @default("113012000")
+  descricaoPadrao String?
+
   serie              String   @default("1")
+  /// Proximo numero de DPS. Reservado so na assinatura.
   proximoNumero      Int      @default(1)
   ambiente           String   @default("HOMOLOGACAO") // HOMOLOGACAO | PRODUCAO
   atualizadoEm       DateTime @updatedAt
@@ -846,20 +883,40 @@ model NotaFiscal {
   escritorioId       String
   clienteId          String?
   cobrancaId         String?
+  /// AGUARDANDO_ASSINATURA -> PROCESSANDO -> EMITIDA | REJEITADA; EMITIDA ->
+  /// CANCELADA. A equipe PREPARA; o titular do e-CNPJ ASSINA (src/lib/nfse).
+  status             String    @default("AGUARDANDO_ASSINATURA")
+  ambiente           String    @default("HOMOLOGACAO")
   serie              String
-  numero             Int
+  /// Numero da DPS. So existe depois da assinatura.
+  numero             Int?
+  idDps              String?   @unique
   descricao          String
   valorCentavos      Int
-  // RASCUNHO -> EMITIDA | RECUSADA | INDETERMINADA; EMITIDA -> CANCELADA
-  status             String    @default("RASCUNHO")
+  dataCompetencia    DateTime?
+  informacoesComplementares String?
+  tomadorNome        String    @default("")
+  tomadorDocumento   String?
   chaveAcesso        String?
   numeroNaPrefeitura String?
   linkPdf            String?
-  xmlEnviado         String? // o DPS assinado, como foi mandado
+  xmlEnviado         String? // a DPS assinada, como foi mandada
   xmlRetorno         String? // a NFS-e como voltou
   erro               String?
+  /// Erros da Sefin, [{codigo, descricao, complemento}].
+  erros              Json?
   emitidaEm          DateTime?
   canceladaEm        DateTime?
+  motivoCancelamento String?
+  eventoXml          String?
+  criadoPorId        String?
+  assinadaPorId      String?
+  assinadaEm         DateTime?
+  /// Canais pedidos para mandar a nota ao cliente depois de emitida.
+  envioCliente       String[]  @default([])
+  enviadaClienteEm   DateTime?
+  /// O PDF (DANFSe) guardado nos documentos do cliente.
+  arquivoId          String?
   criadoEm           DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)

@@ -92,6 +92,11 @@ export const conectorCertificado: Conector = {
     },
   ],
   resumo: (dados) => {
+    // Enviado pela tela de Notas fiscais: a senha nao fica guardada, entao o
+    // resumo vem do que foi lido no envio.
+    if (!dados.senha && dados.titular && dados.validoAte) {
+      return `${dados.titular} · vence em ${new Date(dados.validoAte).toLocaleDateString("pt-BR")}`;
+    }
     try {
       const leitura = lerCertificado(dados.arquivo, dados.senha);
       return `${leitura.titular} · vence em ${leitura.ate.toLocaleDateString("pt-BR")}`;
@@ -101,6 +106,13 @@ export const conectorCertificado: Conector = {
   },
 
   async testar(dados) {
+    if (!dados.senha && dados.validoAte) {
+      return avaliarValidade({
+        titular: dados.titular ?? "titular",
+        de: new Date(0),
+        ate: new Date(dados.validoAte),
+      });
+    }
     let leitura: Leitura;
     try {
       leitura = lerCertificado(dados.arquivo, dados.senha);

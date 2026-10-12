@@ -1,97 +1,101 @@
 # NFS-e (nota fiscal de servico)
 
-O escritorio emite a nota com o **certificado e-CNPJ dele**, pelo cadastro
-fiscal dele. A plataforma nao tem certificado proprio: assinar nota de terceiro
-com certificado da plataforma seria falsidade, nao conveniencia.
+Emissao pelo **Sistema Nacional da NFS-e** (Sefin Nacional), no metodo do
+sistema da Advocacia Roma, que ja emite nota real em producao. Codigo em
+`src/lib/nfse/`.
 
-## Leia isto antes de emitir a primeira nota
+## O fluxo: preparar, depois assinar
 
-**O layout do XML e o endereco do ambiente nacional foram escritos a partir da
-documentacao e ainda NAO foram conferidos contra a homologacao.** Enquanto
-`npm run conferir-nfse` nao rodar limpo, trate `src/lib/nfse/layout.ts` e
-`src/lib/nfse/nacional.ts` como suposicoes — do mesmo jeito que o mapeamento do
-DJEN foi tratado ate alguem rodar do Brasil.
+1. **Preparar** (qualquer pessoa com acesso a Notas fiscais): cliente, valor,
+   data de competencia (nao pode ser futura — E0015), descricao e
+   informacoes complementares; opcionalmente "mandar ao cliente por e-mail /
+   WhatsApp depois de emitida". A nota fica **Aguardando assinatura**. Nada
+   vai para a Receita e nenhum numero de DPS e gasto. O tomador ja e
+   conferido aqui (cliente empresa sem endereco completo e recusado — E0235).
+   O titular do certificado recebe aviso por e-mail e WhatsApp.
+2. **Assinar** (so o titular do certificado): marca uma ou varias notas,
+   digita a **senha do e-CNPJ** — ela **nao fica guardada** — e o sistema
+   reserva o numero da DPS, monta, assina e transmite, nota por nota.
+3. Resultado de cada nota:
+   - **Emitida**: numero da NFS-e, XML autorizado, PDF (DANFSe) gerado pelo
+     sistema. Em producao o PDF entra nos documentos do cliente (e na pasta
+     dele na nuvem) e, se foi pedido, vai ao cliente por e-mail/WhatsApp.
+   - **Recusada**: fica com os erros da Sefin (codigo e descricao). Corrige-se
+     o cadastro e assina-se de novo — com numero novo.
+   - **Confirmacao pendente**: a conexao caiu depois do envio. "Verificar
+     situacao" pergunta a Sefin pela DPS: se a nota foi gerada, vira emitida;
+     se nao, volta para assinar.
+4. **Cancelar** (titular, com a senha): motivo (erro na emissao, servico nao
+   prestado, outros) e justificativa de pelo menos 15 caracteres.
+5. **Descartar**: so nota que nao foi emitida.
 
-O que **esta** provado, com teste que roda a cada push: a assinatura digital
-(assina e confere de verdade, e documento adulterado depois de assinado deixa de
-conferir), a numeracao sem buraco nem repeticao, o que acontece quando a
-prefeitura recusa, e o isolamento entre escritorios.
+Atalhos para preparar: no **recibo** da ficha do cliente ("Preparar a nota
+fiscal deste recibo") e na **parcela recebida** dos honorarios ("preparar
+nota"). Nunca automatico: so quando o cliente pede.
 
-O sistema nasce em **homologacao**, e a tela avisa disso. Nota de homologacao
-nao tem valor fiscal e nao gera ISS.
+## O que o sistema trata sozinho
 
-## Um aviso sobre padroes municipais
+- **E0120** — a inscricao municipal existe na prefeitura mas nao no cadastro
+  nacional: reenvia na hora sem ela, com numero novo.
+- **E0008** — a DPS sai com horario um minuto antes, para nao ficar a frente
+  do relogio da Sefin.
+- **E0718** — certificado tem de ser o e-CNPJ do proprio emitente: e-CPF ou
+  CNPJ diferente do cadastro sao recusados ja no envio do certificado.
+- **Regime pela competencia** — mudanca de regime marcada (ex.: entra no
+  Simples em 1/1) vira sozinha; nota de dezembro emitida em janeiro sai pelo
+  regime de dezembro.
+- **IBS/CBS** — o grupo entra a partir da competencia configurada (obrigatorio
+  para optante do Simples desde 1/1/2027; antes de 1/1/2026 a Receita recusa —
+  E0850). Com IBS/CBS a nota exige o endereco do cliente.
 
-NFS-e nao e um padrao so. Existe o **padrao nacional** (o que este modulo fala)
-e dezenas de padroes municipais — ABRASF em varias versoes, e prefeituras com
-sistema proprio. Municipios vem migrando para o nacional, mas nao todos, e nao
-ao mesmo tempo.
+## Cadastro do emissor
 
-Se a prefeitura do escritorio ainda nao estiver no padrao nacional, o caminho e
-acrescentar um emissor: `layout.ts` e `nacional.ts` sao os dois unicos arquivos
-que conhecem o formato. Banco, tela, fila e numeracao continuam valendo.
+Em **Notas fiscais > Configurar emissor** (administrador): razao social, CNPJ,
+inscricao municipal (se a prefeitura exigir), codigo IBGE, telefone e e-mail
+da nota e o **regime em linguagem de escritorio**:
 
-## Cadastro fiscal
+| Na tela | No leiaute |
+| --- | --- |
+| Optante do Simples, ISS dentro do DAS | opSimpNac 3, regApTribSN 1, regEspTrib 0, pTotTribSN |
+| Optante do Simples, ISS fixo (sociedade de profissionais) | opSimpNac 3, regApTribSN 2, regEspTrib 6 |
+| Nao optante, ISS normal | opSimpNac 1, regEspTrib 0, pTotTrib federal/estadual/municipal |
+| Nao optante, ISS fixo | opSimpNac 1, regEspTrib 6 |
 
-**Notas > Cadastro fiscal**, so admin. Estes dados saem impressos na nota:
-
-| Campo | De onde vem |
-|---|---|
-| Razao social, CNPJ | contrato social |
-| Inscricao municipal | cadastro na prefeitura |
-| Codigo IBGE do municipio | 7 digitos, do IBGE |
-| Regime | Simples Nacional, MEI ou normal |
-| Codigo do servico | **do contador** — advocacia costuma cair no item 17.14 da LC 116, mas quem confirma e ele |
-| Aliquota do ISS | **do contador** — varia por municipio e por regime |
-| Serie e ambiente | serie 1 serve para a maioria; comece em homologacao |
-
-Codigo de servico e aliquota nao tem padrao que sirva para todo mundo, e errar
-ali nao aparece na hora: aparece no fim do mes, na apuracao.
+A nota **nao manda aliquota** (E0604/E0625): quem calcula o ISS e a Sefin com
+o cadastro do municipio. O percentual aproximado de tributos (Lei 12.741) vem
+do contador. Padroes: codigo de tributacao 171401 (advocacia), NBS 113012000.
+Comece em **Testes** (producao restrita, sem valor fiscal); passar para
+producao pede confirmacao.
 
 ## Certificado
 
-**Integracoes > Certificado e-CNPJ (NFS-e)**: o `.pfx` em base64 e a senha. O
-teste de conexao abre o arquivo de verdade, mostra o titular e avisa quando
-falta menos de 30 dias para vencer.
+Enviado em **Configuracoes** (administracao destravada): arquivo .pfx/.p12 e
+senha. A senha so confere o arquivo e e descartada; o arquivo fica cifrado
+(Integracoes, NFSE_CERT). **Quem envia vira o titular**: so essa pessoa
+assina, cancela e verifica notas. Certificado enviado antes deste fluxo (sem
+titular) pode ser usado por qualquer administrador — reenviar define o titular.
 
-Converter o `.pfx` para base64:
-
-```bash
-base64 -w0 certificado.pfx        # Linux
-base64 -i certificado.pfx         # macOS
-```
-
-O arquivo fica cifrado no banco, como toda credencial de escritorio.
+A conexao com a Sefin e por **TLS mutuo** com o proprio certificado; o .pfx e
+reempacotado em AES so em memoria (o OpenSSL 3 recusa as cifras antigas que
+as certificadoras usam).
 
 ## Conferir contra a homologacao
 
-```bash
-npm run conferir-nfse -- <slug-do-escritorio>
+```
+NFSE_SENHA='...' npm run conferir-nfse -- <slug> [--emitir]
 ```
 
-Ele monta um DPS com o cadastro e o certificado do escritorio, assina, manda
-para a homologacao e imprime o que foi e o que voltou. **Cada campo reclamado na
-resposta e um ponto a corrigir em `layout.ts`.** E assim que a incerteza deste
-modulo se fecha.
+Sem `--emitir`: abre o certificado e consulta o convenio do municipio (prova
+certificado, conexao e municipio). Com `--emitir`: manda uma DPS de R$ 1,00 a
+homologacao e mostra o retorno.
 
-## Como a emissao se comporta
+## Testes
 
-- **O numero e reservado antes do envio.** Se a prefeitura recusar, a nota fica
-  RECUSADA com aquele numero e o motivo, e a proxima usa o numero seguinte.
-  Numero gasto e o que o contador espera ver; numero repetido, nao.
-- **A recusa chega inteira ate a tela**, com o codigo da prefeitura — e ele que
-  o contador procura no manual.
-- **Cancelar so depois que a prefeitura aceita.** Marcar antes deixaria o
-  escritorio achando que cancelou uma nota que continua valendo, e pagando ISS
-  sobre servico que nao houve. Prazo e regra de cancelamento sao municipais:
-  quem diz "nao" e o ambiente nacional, nao nos.
-- Cliente sem CPF/CNPJ nao vira nota, e a mensagem diz de quem e o cadastro que
-  falta.
-
-## Para testar sem a prefeitura
-
-`NFSE_BASE_URL` aponta o ambiente para outro endereco. E assim que a bateria
-roda e como se confere o formato do que sai sem emitir nota de verdade.
+`testes/nfse.test.ts`: leiaute (Simples, nao optante, ISS fixo, IBS/CBS),
+assinatura real com certificado gerado na hora, e o fluxo inteiro contra uma
+Sefin servida localmente (`NFSE_BASE_URL`): preparar, so o titular, E0120,
+recusa e nova assinatura, queda de conexao e verificacao, cancelamento,
+descarte e isolamento entre escritorios.
 
 ## Cadastro fiscal lendo os documentos
 

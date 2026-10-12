@@ -349,6 +349,7 @@ export default async function FichaCliente({
             temConta={contaDeCobranca > 0}
             temCobrancas={temCobrancas}
             temFinanceiro={temFinanceiro}
+            temNotaFiscal={modulos.includes("NFSE")}
           />
         </section>
       ) : null}
@@ -360,6 +361,7 @@ export default async function FichaCliente({
         assinaturaLigada={assinaturaLigada}
         whatsappLigado={modulos.includes("WHATSAPP")}
         telefoneDoCliente={cliente.telefone}
+        notaFiscalLigada={modulos.includes("NFSE")}
         envios={envios.map((e) => ({
           id: e.id,
           especie: e.especie,

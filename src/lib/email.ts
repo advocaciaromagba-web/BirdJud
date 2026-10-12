@@ -18,6 +18,8 @@ export type Mensagem = {
   para: string;
   assunto: string;
   texto: string;
+  /** PDF da nota fiscal, recibo... Opcional. */
+  anexos?: { nome: string; conteudo: Buffer; tipo: string }[];
 };
 
 export class SemRemetente extends Error {
@@ -76,6 +78,11 @@ export async function enviarLote(
           to: mensagem.para,
           subject: mensagem.assunto,
           text: mensagem.texto,
+          attachments: mensagem.anexos?.map((a) => ({
+            filename: a.nome,
+            content: a.conteudo,
+            contentType: a.tipo,
+          })),
         });
         enviadas += 1;
       } catch (erro) {

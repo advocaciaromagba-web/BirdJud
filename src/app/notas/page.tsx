@@ -1,12 +1,20 @@
+import Link from "next/link";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { dataBR } from "@/lib/datas";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
-import { emReais } from "@/lib/dinheiro";
+import { certificadoGuardado, pendenciasDoEmissor } from "@/lib/nfse";
 import { Estrutura } from "@/componentes/Estrutura";
 import { PainelNotas, type NotaNaTela } from "@/componentes/PainelNotas";
+import { ConfigFiscal, type FiscalNaTela } from "@/componentes/ConfigFiscal";
 
-export default async function PaginaNotas() {
+const dec = (v: unknown) => (v === null || v === undefined ? "" : String(Number(v)).replace(".", ","));
+
+export default async function PaginaNotas({
+  searchParams,
+}: {
+  searchParams: Promise<{ clienteId?: string; valor?: string; descricao?: string; cobrancaId?: string }>;
+}) {
   let contexto;
   try {
     contexto = await contextoDaPagina("NFSE", "NOTAS");
@@ -15,48 +23,93 @@ export default async function PaginaNotas() {
       return (
         <main className="mx-auto max-w-2xl p-10">
           <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-slate-600">
-            O modulo de notas fiscais nao faz parte do plano deste escritorio.
-          </p>
+          <p className="mt-3 text-slate-600">O modulo de notas fiscais nao faz parte do plano deste escritorio.</p>
         </main>
       );
     }
     throw erro;
   }
+  const pedido = await searchParams;
 
-  const [modulos, dados] = await Promise.all([
+  const [modulos, dados, cert] = await Promise.all([
     modulosAtivos(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, async (db) => ({
-      notas: await db.notaFiscal.findMany({
-        orderBy: { criadoEm: "desc" },
-        take: 200,
-        include: { cliente: { select: { nome: true } } },
-      }),
+      notas: await db.notaFiscal.findMany({ orderBy: { criadoEm: "desc" }, take: 200 }),
       clientes: await db.cliente.findMany({
         orderBy: { nome: "asc" },
         select: { id: true, nome: true, documento: true },
+        take: 2000,
       }),
       fiscal: await db.fiscal.findFirst(),
-      temCertificado: await db.integracao.count({
-        where: { tipo: "NFSE_CERT" },
-      }),
     })),
+    certificadoGuardado(contexto.escritorioId),
   ]);
 
-  const data = dataBR;
+  const pendencias = pendenciasDoEmissor(dados.fiscal, cert);
+  // Quem assina: o titular do certificado; sem titular gravado, um admin.
+  const souTitular = cert ? (cert.titularId ? cert.titularId === contexto.usuarioId : contexto.papel === "ADMIN") : false;
+  const titularNome = cert?.titularNome ?? (cert ? "um administrador" : null);
 
-  const notas: NotaNaTela[] = dados.notas.map((nota) => ({
-    id: nota.id,
-    numero: `${nota.serie}/${nota.numero}`,
-    cliente: nota.cliente?.nome ?? "—",
-    descricao: nota.descricao,
-    valor: emReais(nota.valorCentavos),
-    status: nota.status,
-    data: data.format(nota.criadoEm),
-    chaveAcesso: nota.chaveAcesso,
-    linkPdf: nota.linkPdf,
-    erro: nota.erro,
+  const notas: NotaNaTela[] = dados.notas.map((n) => ({
+    id: n.id,
+    // Status de antes deste fluxo: RECUSADA e INDETERMINADA.
+    status: n.status === "RECUSADA" ? "REJEITADA" : n.status === "INDETERMINADA" ? "PROCESSANDO" : n.status,
+    ambiente: n.ambiente,
+    numeroDps: n.numero,
+    numeroNfse: n.numeroNaPrefeitura,
+    dataCompetencia: dataBR.format(n.dataCompetencia ?? n.criadoEm),
+    criadaEm: dataBR.format(n.criadoEm),
+    valorCentavos: n.valorCentavos,
+    descricao: n.descricao,
+    tomadorNome: n.tomadorNome || "—",
+    erros:
+      Array.isArray(n.erros) && n.erros.length > 0
+        ? (n.erros as { codigo: string; descricao: string }[])
+        : n.erro
+          ? [{ codigo: "", descricao: n.erro }]
+          : [],
+    motivoCancelamento: n.motivoCancelamento,
+    vaiAoCliente: n.envioCliente.length > 0,
+    temXml: Boolean(n.xmlRetorno),
   }));
+
+  const f = dados.fiscal;
+  const futuro = (f?.regimeFuturo ?? null) as Record<string, unknown> | null;
+  const fiscal: FiscalNaTela | null = f
+    ? {
+        razaoSocial: f.razaoSocial,
+        cnpj: f.cnpj,
+        inscricaoMunicipal: f.inscricaoMunicipal ?? "",
+        codigoMunicipio: f.codigoMunicipio,
+        telefone: f.telefone ?? "",
+        email: f.email ?? "",
+        opSimpNac: f.opSimpNac,
+        regEspTrib: f.regEspTrib,
+        pTotTribSN: dec(f.pTotTribSN),
+        pTotTribFed: dec(f.pTotTribFed),
+        pTotTribEst: dec(f.pTotTribEst),
+        pTotTribMun: dec(f.pTotTribMun),
+        regimeFuturoDesde: f.regimeFuturoDesde?.toISOString().slice(0, 10) ?? "",
+        futuroOpSimpNac: Number(futuro?.opSimpNac ?? 3),
+        futuroRegEspTrib: Number(futuro?.regEspTrib ?? 0),
+        futuroPTotTribSN: String(futuro?.pTotTribSN ?? ""),
+        futuroPTotTribFed: String(futuro?.pTotTribFed ?? ""),
+        futuroPTotTribEst: String(futuro?.pTotTribEst ?? ""),
+        futuroPTotTribMun: String(futuro?.pTotTribMun ?? ""),
+        ibsCbsDesde: f.ibsCbsDesde?.toISOString().slice(0, 10) ?? "",
+        cIndOp: f.cIndOp ?? "100301",
+        cstIbsCbs: f.cstIbsCbs ?? "000",
+        cClassTribIbsCbs: f.cClassTribIbsCbs ?? "000001",
+        regApIBSCBSSN: f.regApIBSCBSSN !== null ? String(f.regApIBSCBSSN) : "",
+        cAtvSN: f.cAtvSN !== null ? String(f.cAtvSN) : "",
+        codigoTributacao: f.codigoTributacao,
+        codigoNbs: f.codigoNbs ?? "",
+        descricaoPadrao: f.descricaoPadrao ?? "",
+        serie: f.serie,
+        proximoNumero: f.proximoNumero,
+        ambiente: f.ambiente,
+      }
+    : null;
 
   return (
     <Estrutura
@@ -67,52 +120,67 @@ export default async function PaginaNotas() {
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Notas fiscais"
+      chamada="NFS-e pelo Sistema Nacional. A equipe prepara; o titular do certificado assina e emite."
     >
-      <p className="mt-1 text-sm text-slate-500">
-        {dados.fiscal
-          ? `Serie ${dados.fiscal.serie} · proxima nota ${dados.fiscal.proximoNumero} · ambiente ${dados.fiscal.ambiente}`
-          : "Cadastro fiscal ainda nao preenchido"}
-      </p>
-
-      {dados.fiscal?.ambiente === "HOMOLOGACAO" ? (
-        <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
-          Ambiente de <strong>homologacao</strong>: as notas emitidas aqui
-          servem para conferir o cadastro e nao tem valor fiscal. Troque para
-          producao quando o contador conferir os dados.
+      <section className="cartao mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="font-semibold">{f?.razaoSocial ?? "Escritorio emissor"}</p>
+            <p className="text-xs text-slate-500">
+              {cert
+                ? `Certificado: ${cert.titular ?? "cadastrado"}${cert.validoAte ? `, valido ate ${dataBR.format(new Date(cert.validoAte))}` : ""} · assina: ${titularNome}`
+                : "Sem certificado e-CNPJ"}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {f ? (
+              <span
+                className={`rounded px-2 py-0.5 text-xs font-semibold ${f.ambiente === "PRODUCAO" ? "bg-red-100 text-red-800" : "bg-slate-100 text-slate-700"}`}
+              >
+                {f.ambiente === "PRODUCAO" ? "Producao" : "Testes"}
+              </span>
+            ) : null}
+            <span
+              className={`rounded px-2 py-0.5 text-xs font-semibold ${pendencias.length === 0 ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"}`}
+            >
+              {pendencias.length === 0 ? "Pronto para emitir" : "Configuracao pendente"}
+            </span>
+          </div>
         </div>
-      ) : null}
-
-      {dados.temCertificado === 0 ? (
-        <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
-          O certificado e-CNPJ ainda nao foi enviado. Sem ele nao ha assinatura,
-          e sem assinatura nao ha nota: cadastre em Integracoes.
-        </div>
-      ) : null}
+        {pendencias.length > 0 ? (
+          <ul className="mt-2 list-disc pl-5 text-sm text-amber-900">
+            {pendencias.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        ) : null}
+        {contexto.papel === "ADMIN" ? (
+          <p className="mt-2 text-sm text-slate-600">
+            O certificado e-CNPJ e enviado em{" "}
+            <Link href="/administracao" className="text-marca underline">
+              Configuracoes
+            </Link>
+            . Quem envia vira o titular: so essa pessoa assina as notas, digitando a senha a cada assinatura (ela nao
+            fica guardada).
+          </p>
+        ) : null}
+        {contexto.papel === "ADMIN" ? <ConfigFiscal fiscal={fiscal} temIA={modulos.includes("IA")} /> : null}
+      </section>
 
       <PainelNotas
         notas={notas}
-        clientes={dados.clientes.map((c) => ({
-          id: c.id,
-          nome: c.nome,
-          temDocumento: Boolean(c.documento),
-        }))}
-        fiscal={
-          dados.fiscal
-            ? {
-                razaoSocial: dados.fiscal.razaoSocial,
-                cnpj: dados.fiscal.cnpj,
-                inscricaoMunicipal: dados.fiscal.inscricaoMunicipal,
-                codigoMunicipio: dados.fiscal.codigoMunicipio,
-                regime: dados.fiscal.regime,
-                codigoTributacao: dados.fiscal.codigoTributacao,
-                aliquota: (dados.fiscal.aliquotaMilesimos / 1000).toString(),
-                serie: dados.fiscal.serie,
-                ambiente: dados.fiscal.ambiente,
-              }
-            : null
-        }
-        podeConfigurar={contexto.papel === "ADMIN"}
-        temIA={modulos.includes("IA")}
+        clientes={dados.clientes.map((c) => ({ id: c.id, nome: c.nome, documento: c.documento }))}
+        pronto={pendencias.length === 0}
+        producao={f?.ambiente === "PRODUCAO"}
+        souTitular={souTitular}
+        titularNome={titularNome}
+        descricaoPadrao={f?.descricaoPadrao ?? ""}
+        inicial={{
+          clienteId: pedido.clienteId ?? "",
+          valor: pedido.valor ?? "",
+          descricao: pedido.descricao ?? "",
+          cobrancaId: pedido.cobrancaId ?? "",
+        }}
       />
     </Estrutura>
   );

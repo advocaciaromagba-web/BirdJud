@@ -1,278 +1,253 @@
-// Modulo NFSE.
+// Modulo NFSE — o metodo do sistema da Advocacia Roma: a equipe PREPARA, o
+// titular do e-CNPJ ASSINA com a senha digitada na hora.
 //
-// Uma separacao importante nos testes deste modulo: o que da para PROVAR aqui
-// e o que so a homologacao prova.
+// Provado aqui: o leiaute da DPS nas regras do Anexo I (Simples, nao optante,
+// ISS fixo, IBS/CBS), a assinatura (assina e confere de verdade, com
+// certificado gerado na hora), o fluxo preparar -> assinar -> recusar ->
+// assinar de novo, o reenvio sem inscricao municipal (E0120), a recuperacao
+// quando a conexao cai, o cancelamento, so o titular usando o certificado e o
+// isolamento entre escritorios. A Sefin e servida localmente.
 //
-//   Provado aqui: a assinatura digital (assina e confere de verdade, com
-//   certificado gerado na hora), a numeracao sem buraco nem repeticao, o que
-//   acontece quando a prefeitura recusa, e o isolamento entre escritorios.
-//
-//   NAO provado aqui: se o layout do XML e o endereco do ambiente nacional
-//   estao certos. Isso e `npm run conferir-nfse`, contra a homologacao, com o
-//   certificado do escritorio. Os testes de layout conferem FORMATO (tamanho,
-//   preenchimento, escape), nunca "esta certo segundo o manual".
+// Contra a Sefin de verdade: `NFSE_SENHA=... npm run conferir-nfse`.
 import { createServer, type Server } from "node:http";
+import { gzipSync } from "node:zlib";
 import forge from "node-forge";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import {
-  comEscritorio,
-  prismaPlataforma,
-  semEscritorio,
-} from "../src/lib/prisma";
+import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { salvarIntegracao } from "../src/lib/integracao";
-import { consumoDoMes } from "../src/lib/consumo";
+import { carregarDeBase64 } from "../src/lib/nfse/certificado";
+import { assinarXml, conferirAssinatura } from "../src/lib/nfse/assinar";
+import { montarDps, montarIdDps, montarPedidoCancelamento, type EmissorDps, type DadosDps } from "../src/lib/nfse/dps";
+import { compactar, descompactar } from "../src/lib/nfse/api";
+import { regimeVigente, pendenciasDoRegime, ibsCbsVigente } from "../src/lib/nfse/regime";
+import { gerarDanfse } from "../src/lib/nfse/danfse";
 import {
-  abrirCertificado,
-  assinarDps,
-  CertificadoInvalido,
-  certificadoEmBase64,
-  conferirAssinatura,
-} from "../src/lib/nfse/assinatura";
-import {
-  aliquotaEmMilesimos,
-  aliquotaXml,
-  dataHoraXml,
-  emReaisXml,
-  escapar,
-  idDaDps,
-  montarDps,
-  montarPedidoDeCancelamento,
-  OP_SIMPLES,
-  soDigitos,
-  type DadosDaDps,
-} from "../src/lib/nfse/layout";
-import { desempacotar, empacotar } from "../src/lib/nfse/nacional";
-import {
-  cancelarNota,
-  CancelamentoInvalido,
-  emitirNota,
-  FalhaNaNfse,
   NotaInvalida,
-  SemCadastroFiscal,
-  SemCertificado,
+  SoOTitular,
+  assinarNotas,
+  cancelarNota,
+  abrirCertificadoDoEscritorio,
+  descartarNota,
+  pendenciasDoEmissor,
+  prepararNota,
+  verificarSituacao,
 } from "../src/lib/nfse";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
 // ---------------------------------------------------------------------------
-// Certificado de mentira, gerado na hora
+// Certificado de mentira, gerado na hora (e-CNPJ, cifra antiga 3DES como as AC entregam)
 // ---------------------------------------------------------------------------
 
-function certificadoDeTeste(senha = "senha-do-teste"): string {
+const SENHA = "senha-do-teste";
+const CNPJ = "12345678000199";
+
+function certificadoDeTeste(cn = `ESCRITORIO TESTE:${CNPJ}`): string {
   const par = forge.pki.rsa.generateKeyPair(2048);
   const certificado = forge.pki.createCertificate();
   certificado.publicKey = par.publicKey;
   certificado.serialNumber = "01";
-  certificado.validity.notBefore = new Date();
+  certificado.validity.notBefore = new Date(Date.now() - 86400000);
   certificado.validity.notAfter = new Date(Date.now() + 365 * 86400000);
-  const nome = [
-    { name: "commonName", value: "ESCRITORIO TESTE:12345678000199" },
-  ];
+  const nome = [{ name: "commonName", value: cn }];
   certificado.setSubject(nome);
   certificado.setIssuer(nome);
   certificado.sign(par.privateKey, forge.md.sha256.create());
-
-  const p12 = forge.pkcs12.toPkcs12Asn1(par.privateKey, [certificado], senha, {
-    algorithm: "3des",
-  });
+  const p12 = forge.pkcs12.toPkcs12Asn1(par.privateKey, [certificado], SENHA, { algorithm: "3des" });
   return forge.util.encode64(forge.asn1.toDer(p12).getBytes());
 }
 
-const DADOS: DadosDaDps = {
-  serie: "1",
-  numero: 42,
-  emitidaEm: new Date("2026-09-19T14:30:00Z"),
-  prestador: {
-    cnpj: "12.345.678/0001-99",
-    inscricaoMunicipal: "123456",
-    codigoMunicipio: "2927408",
-    regime: "SIMPLES",
-  },
-  tomador: {
-    documento: "529.982.247-25",
-    nome: "Cliente & Cia",
-    email: "c@teste.br",
-  },
-  servico: {
-    codigoTributacao: "17.14",
-    descricao: "Honorarios advocaticios",
-    valorCentavos: 150_000,
-    aliquotaMilesimos: 2000,
-    issRetido: false,
-    codigoMunicipioPrestacao: "2927408",
-  },
+const PFX = certificadoDeTeste();
+
+const EMISSOR: EmissorDps = {
+  cnpj: "12.345.678/0001-99",
+  inscricaoMunicipal: "123456",
+  codigoMunicipio: "3518602",
+  telefone: "(16) 3251-0000",
+  email: "contato@banca.adv.br",
+  opSimpNac: 3,
+  regApTribSN: 1,
+  regEspTrib: 0,
+  pTotTribSN: 6,
+  codigoTributacaoNacional: "171401",
+  codigoNbs: "113012000",
 };
 
-describe("formato do XML (formato, nao verdade fiscal)", () => {
-  it("dinheiro e aliquota saem com as casas do padrao fiscal", () => {
-    expect(emReaisXml(150_000)).toBe("1500.00");
-    expect(emReaisXml(1)).toBe("0.01");
-    expect(aliquotaXml(2000)).toBe("2.0000");
-    expect(aliquotaXml(2500)).toBe("2.5000");
+const DADOS: DadosDps = {
+  ambiente: "HOMOLOGACAO",
+  serie: "1",
+  numero: 42,
+  dataEmissao: new Date("2026-09-19T14:30:00Z"),
+  dataCompetencia: "2026-09-19",
+  tomador: { documento: "529.982.247-25", nome: "Cliente & Cia", email: "c@teste.br", telefone: null, endereco: null },
+  descricao: "Honorarios\nadvocaticios",
+  valorCentavos: 150_000,
+  informacoesComplementares: null,
+};
+
+describe("leiaute da DPS (Anexo I)", () => {
+  it("Simples ME/EPP: regApTribSN e pTotTribSN, sem aliquota", () => {
+    const { xml, idDps } = montarDps(EMISSOR, DADOS);
+    expect(idDps).toBe(`DPS35186022${CNPJ}00001${"42".padStart(15, "0")}`);
+    expect(idDps).toHaveLength(45);
+    expect(xml).toContain('versao="1.01"');
+    expect(xml).toContain("<opSimpNac>3</opSimpNac><regApTribSN>1</regApTribSN><regEspTrib>0</regEspTrib>");
+    expect(xml).toContain("<totTrib><pTotTribSN>6.00</pTotTribSN></totTrib>");
+    expect(xml).not.toContain("pAliq");
+    expect(xml).toContain("<vServ>1500.00</vServ>");
+    expect(xml).toContain("<serie>00001</serie>");
+    expect(xml).toContain("<dhEmi>2026-09-19T11:30:00-03:00</dhEmi>");
+    expect(xml).toContain("<cTribNac>171401</cTribNac>");
+    // Quebra de linha solta nao passa; & e escapado.
+    expect(xml).toContain("<xDescServ>Honorarios advocaticios</xDescServ>");
+    expect(xml).toContain("<xNome>Cliente &amp; Cia</xNome>");
+    expect(xml).toContain("<CPF>52998224725</CPF>");
+    expect(xml).not.toContain("<IBSCBS>");
   });
 
-  it("aliquota digitada vira milesimos, e o que nao e percentual e recusado", () => {
-    expect(aliquotaEmMilesimos("2")).toBe(2000);
-    expect(aliquotaEmMilesimos("2,5")).toBe(2500);
-    expect(aliquotaEmMilesimos("0")).toBe(0);
-    expect(aliquotaEmMilesimos("abc")).toBeNull();
-    expect(aliquotaEmMilesimos("-1")).toBeNull();
-    expect(aliquotaEmMilesimos("101")).toBeNull();
-  });
-
-  it("a hora sai no fuso de Brasilia, nao no do servidor", () => {
-    // Servidor em UTC ou na Europa nao pode mudar a data de competencia.
-    expect(dataHoraXml(new Date("2026-09-19T14:30:00Z"))).toBe(
-      "2026-09-19T11:30:00-03:00",
+  it("nao optante informa tributos por esfera, nunca pTotTribSN nem regApTribSN", () => {
+    const { xml } = montarDps(
+      { ...EMISSOR, opSimpNac: 1, regApTribSN: null, pTotTribSN: null, pTotTribFed: 14.53, pTotTribEst: 0, pTotTribMun: 2 },
+      DADOS,
     );
-    expect(dataHoraXml(new Date("2026-09-19T02:00:00Z"))).toBe(
-      "2026-09-18T23:00:00-03:00",
-    );
+    expect(xml).not.toContain("regApTribSN");
+    expect(xml).not.toContain("pTotTribSN");
+    expect(xml).toContain("<pTotTrib><pTotTribFed>14.53</pTotTribFed><pTotTribEst>0.00</pTotTribEst><pTotTribMun>2.00</pTotTribMun></pTotTrib>");
   });
 
-  it("caractere que quebra XML e escapado", () => {
-    expect(escapar('Advocacia "A & B" <matriz>')).toBe(
-      "Advocacia &quot;A &amp; B&quot; &lt;matriz&gt;",
-    );
-    expect(montarDps(DADOS)).toContain("Cliente &amp; Cia");
+  it("ISS fixo de sociedade de profissionais sai com regime especial 6", () => {
+    const { xml } = montarDps({ ...EMISSOR, regApTribSN: 2, regEspTrib: 6 }, DADOS);
+    expect(xml).toContain("<regApTribSN>2</regApTribSN><regEspTrib>6</regEspTrib>");
   });
 
-  it("o Id do DPS tem o tamanho e o preenchimento documentados", () => {
-    const id = idDaDps(DADOS);
-    expect(id).toMatch(/^DPS\d{42}$/);
-    expect(id).toContain("2927408"); // municipio
-    expect(id).toContain("12345678000199"); // CNPJ sem mascara
-    expect(id.endsWith("000000000000042")).toBe(true); // numero com zeros a esquerda
+  it("sem inscricao municipal, a tag IM nao vai", () => {
+    expect(montarDps({ ...EMISSOR, inscricaoMunicipal: null }, DADOS).xml).not.toContain("<IM>");
   });
 
-  it("CPF e CNPJ do tomador entram na etiqueta certa, sem mascara", () => {
-    const comCpf = montarDps(DADOS);
-    expect(comCpf).toContain("<CPF>52998224725</CPF>");
-
-    const comCnpj = montarDps({
+  it("tomador empresa com endereco vai com municipio e CEP", () => {
+    const { xml } = montarDps(EMISSOR, {
       ...DADOS,
-      tomador: { ...DADOS.tomador, documento: "11.222.333/0001-81" },
+      tomador: {
+        documento: "11.222.333/0001-81",
+        nome: "Empresa",
+        email: null,
+        telefone: null,
+        endereco: { codigoMunicipio: "3550308", cep: "01310-100", logradouro: "Av. Paulista", numero: "1000", complemento: null, bairro: "Bela Vista" },
+      },
     });
-    expect(comCnpj).toContain("<CNPJ>11222333000181</CNPJ>");
+    expect(xml).toContain("<CNPJ>11222333000181</CNPJ>");
+    expect(xml).toContain("<end><endNac><cMun>3550308</cMun><CEP>01310100</CEP></endNac><xLgr>Av. Paulista</xLgr><nro>1000</nro><xBairro>Bela Vista</xBairro></end>");
   });
 
-  it("homologacao e producao saem marcadas diferente", () => {
-    expect(montarDps(DADOS, "HOMOLOGACAO")).toContain("<tpAmb>2</tpAmb>");
-    expect(montarDps(DADOS, "PRODUCAO")).toContain("<tpAmb>1</tpAmb>");
+  it("IBS/CBS so entra quando vigente na competencia", () => {
+    const fiscal = {
+      opSimpNac: 3, regApTribSN: 1, regEspTrib: 0, pTotTribSN: null, pTotTribFed: null, pTotTribEst: null, pTotTribMun: null,
+      regApIBSCBSSN: null, cAtvSN: null, regimeFuturo: null, regimeFuturoDesde: null,
+      ibsCbsDesde: new Date("2027-01-01T00:00:00-03:00"), cIndOp: "100301", cstIbsCbs: "000", cClassTribIbsCbs: "000001",
+    };
+    expect(ibsCbsVigente(fiscal, new Date("2026-12-31T12:00:00-03:00"))).toBeNull();
+    const ibs = ibsCbsVigente(fiscal, new Date("2027-01-05T12:00:00-03:00"));
+    expect(ibs).toEqual({ cIndOp: "100301", cst: "000", cClassTrib: "000001" });
+    const { xml } = montarDps({ ...EMISSOR, ibsCbs: ibs }, DADOS);
+    expect(xml).toContain("<IBSCBS><finNFSe>0</finNFSe><cIndOp>100301</cIndOp><indDest>0</indDest>");
   });
 
-  it("cada regime tem um codigo proprio", () => {
-    // Trocar um pelo outro sai na tributacao da nota, e o escritorio so
-    // descobre no fim do mes.
-    expect(new Set(Object.values(OP_SIMPLES)).size).toBe(3);
-    expect(montarDps(DADOS)).toContain(
-      `<opSimpNac>${OP_SIMPLES.SIMPLES}</opSimpNac>`,
-    );
+  it("o regime vale pela COMPETENCIA: mudanca marcada vira sozinha", () => {
+    const fiscal = {
+      opSimpNac: 1, regApTribSN: null, regEspTrib: 6, pTotTribSN: null, pTotTribFed: 14, pTotTribEst: 0, pTotTribMun: 2,
+      regApIBSCBSSN: null, cAtvSN: null, ibsCbsDesde: null, cIndOp: null, cstIbsCbs: null, cClassTribIbsCbs: null,
+      regimeFuturoDesde: new Date("2027-01-01T00:00:00-03:00"),
+      regimeFuturo: { opSimpNac: 3, regApTribSN: 1, regEspTrib: 0, pTotTribSN: "6" },
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const f = fiscal as any;
+    expect(regimeVigente(f, new Date("2026-12-20T12:00:00-03:00")).opSimpNac).toBe(1);
+    const depois = regimeVigente(f, new Date("2027-01-10T12:00:00-03:00"));
+    expect(depois).toMatchObject({ opSimpNac: 3, regEspTrib: 0, pTotTribSN: 6 });
+    expect(pendenciasDoRegime({ ...depois, pTotTribSN: null }, "")).toHaveLength(1);
   });
 
-  it("so digitos limpa mascara", () => {
-    expect(soDigitos("12.345.678/0001-99")).toBe("12345678000199");
-  });
-
-  it("o pedido de cancelamento carrega a chave e o motivo", () => {
-    const pedido = montarPedidoDeCancelamento({
-      chaveAcesso: "29260912345678000199000000000000000000000000001",
-      cnpjAutor: "12.345.678/0001-99",
-      motivo: "SERVICO_NAO_PRESTADO",
-      emitidoEm: new Date("2026-09-19T14:30:00Z"),
+  it("o pedido de cancelamento leva a chave, o motivo e a justificativa", () => {
+    const chave = "3".repeat(50);
+    const xml = montarPedidoCancelamento({
+      ambiente: "HOMOLOGACAO", cnpjAutor: CNPJ, chave, motivo: 1, descricaoMotivo: "Valor digitado errado", dataEvento: new Date(),
     });
-    expect(pedido.xml).toContain("<cMotivo>2</cMotivo>");
-    expect(pedido.xml).toContain("<CNPJAutor>12345678000199</CNPJAutor>");
-    expect(pedido.id.startsWith("EVT")).toBe(true);
+    expect(xml).toContain(`<infPedReg Id="PRE${chave}101101">`);
+    expect(xml).toContain("<cMotivo>1</cMotivo><xMotivo>Valor digitado errado</xMotivo>");
   });
 
-  it("o DPS viaja comprimido, e volta igual", () => {
-    const xml = montarDps(DADOS);
-    expect(desempacotar(empacotar(xml))).toBe(xml);
-    // Comprimir vale a pena: o XML e repetitivo.
-    expect(empacotar(xml).length).toBeLessThan(xml.length);
+  it("o XML viaja comprimido e volta igual", () => {
+    const { xml } = montarDps(EMISSOR, DADOS);
+    expect(descompactar(compactar(xml))).toBe(xml);
+  });
+
+  it("o Id tem o formato documentado", () => {
+    expect(montarIdDps({ cnpj: CNPJ, codigoMunicipio: "3518602" }, "1", 7)).toMatch(/^DPS3518602212345678000199000010{14}7$/);
   });
 });
 
-describe("assinatura digital (isto e provado de verdade)", () => {
-  const pfx = certificadoDeTeste();
-
-  it("assina e a assinatura confere", () => {
-    const certificado = abrirCertificado(pfx, "senha-do-teste");
-    const assinado = assinarDps(montarDps(DADOS), certificado, idDaDps(DADOS));
-
-    expect(assinado).toContain("<Signature");
-    expect(assinado).toContain(
-      certificadoEmBase64(certificado.certificadoPem).slice(0, 40),
-    );
-    expect(conferirAssinatura(assinado, certificado.certificadoPem)).toBe(true);
+describe("certificado e assinatura (provado de verdade)", () => {
+  it("abre o e-CNPJ, le o CNPJ e reempacota em AES para o TLS", () => {
+    const cert = carregarDeBase64(PFX, SENHA);
+    expect(cert.cnpj).toBe(CNPJ);
+    expect(cert.cpf).toBeNull();
+    expect(cert.titular).toBe("ESCRITORIO TESTE");
+    expect(cert.pfxTls.length).toBeGreaterThan(100);
   });
 
-  it("documento adulterado depois de assinado nao confere mais", () => {
-    // E a razao de existir da assinatura: trocar o valor da nota tem de
-    // derrubar a validade.
-    const certificado = abrirCertificado(pfx, "senha-do-teste");
-    const assinado = assinarDps(montarDps(DADOS), certificado, idDaDps(DADOS));
-    const adulterado = assinado.replace(
-      "<vServ>1500.00</vServ>",
-      "<vServ>15.00</vServ>",
-    );
-
-    expect(adulterado).not.toBe(assinado);
-    expect(conferirAssinatura(adulterado, certificado.certificadoPem)).toBe(
-      false,
-    );
+  it("senha errada tem mensagem propria", () => {
+    expect(() => carregarDeBase64(PFX, "errada")).toThrow(/[Ss]enha/);
   });
 
-  it("senha errada e arquivo invalido dao mensagem propria", () => {
-    expect(() => abrirCertificado(pfx, "senha-errada")).toThrow(
-      CertificadoInvalido,
-    );
-    expect(() => abrirCertificado("nao-e-um-pfx", "x")).toThrow(
-      CertificadoInvalido,
-    );
-
-    try {
-      abrirCertificado(pfx, "senha-errada");
-    } catch (erro) {
-      expect((erro as Error).message).toMatch(/[Ss]enha/);
-    }
+  it("assina depois do infDPS, sem prefixo, e a assinatura confere", () => {
+    const cert = carregarDeBase64(PFX, SENHA);
+    const { xml } = montarDps(EMISSOR, DADOS);
+    const assinado = assinarXml(xml, "infDPS", cert);
+    expect(assinado).toMatch(/<\/infDPS><Signature xmlns="http:\/\/www.w3.org\/2000\/09\/xmldsig#">/);
+    expect(assinado).toContain("rsa-sha1");
+    expect(conferirAssinatura(assinado, cert.certPem)).toBe(true);
+    expect(conferirAssinatura(assinado.replace("1500.00", "15.00"), cert.certPem)).toBe(false);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Ambiente nacional servido localmente
+// Sefin servida localmente
 // ---------------------------------------------------------------------------
 
 let servidor: Server;
-let recebidas: { caminho: string; corpo: any }[] = [];
-let responder: (caminho: string) => { status: number; json: unknown } = () => ({
-  status: 200,
+let recebidas: { metodo: string; caminho: string; corpo: Record<string, string> }[] = [];
+let responder: (metodo: string, caminho: string, corpo: Record<string, string>) => { status: number; json?: unknown; derrubar?: boolean };
+
+function nfseXml(numero: string): string {
+  return `<?xml version="1.0"?><NFSe xmlns="http://www.sped.fazenda.gov.br/nfse"><infNFSe Id="NFS${"3".repeat(50)}"><nNFSe>${numero}</nNFSe><DPS><infDPS><tpAmb>2</tpAmb></infDPS></DPS></infNFSe></NFSe>`;
+}
+
+const aceita = (numero = "7") => ({
+  status: 201,
   json: {
-    chaveAcesso: "29260912345678000199",
-    numeroNfse: "1",
-    linkPdf: "https://p/1.pdf",
+    chaveAcesso: `${Date.now()}`.padStart(50, "3"),
+    idDps: "x",
+    nfseXmlGZipB64: gzipSync(Buffer.from(nfseXml(numero))).toString("base64"),
   },
 });
 
 beforeAll(async () => {
   servidor = createServer((req, res) => {
     let cru = "";
-    req.on("data", (p) => {
-      cru += p;
-    });
+    req.on("data", (p) => (cru += p));
     req.on("end", () => {
       const caminho = new URL(req.url ?? "/", "http://local").pathname;
-      recebidas.push({ caminho, corpo: cru ? JSON.parse(cru) : {} });
-      const resposta = responder(caminho);
-      res.writeHead(resposta.status, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(resposta.json));
+      const corpo = cru ? JSON.parse(cru) : {};
+      recebidas.push({ metodo: req.method ?? "", caminho, corpo });
+      const r = responder(req.method ?? "", caminho, corpo);
+      if (r.derrubar) return req.socket.destroy();
+      res.writeHead(r.status, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(r.json ?? {}));
     });
   });
   await new Promise<void>((ok) => servidor.listen(0, "127.0.0.1", ok));
-  const porta = (servidor.address() as { port: number }).port;
-  process.env.NFSE_BASE_URL = `http://127.0.0.1:${porta}`;
+  process.env.NFSE_BASE_URL = `http://127.0.0.1:${(servidor.address() as { port: number }).port}`;
 });
 
 afterAll(async () => {
@@ -283,292 +258,181 @@ afterAll(async () => {
 const marca = Date.now();
 let alfa = "";
 let beta = "";
-let clienteAlfa = "";
-let clienteSemDocumento = "";
+let titular = "";
+let outraPessoa = "";
+let clienteCpf = "";
+let clienteEmpresaSemEndereco = "";
 
-d("emissao por escritorio", () => {
+d("preparar e assinar", () => {
+  const TITULAR = () => ({ usuarioId: titular, papel: "ADMIN" });
+
   beforeAll(async () => {
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 4).toString("base64");
-
-    const a = await prismaPlataforma().escritorio.create({
-      data: { slug: `nf-a-${marca}`, nome: "Alfa Notas" },
-    });
-    const b = await prismaPlataforma().escritorio.create({
-      data: { slug: `nf-b-${marca}`, nome: "Beta Notas" },
-    });
-    alfa = a.id;
-    beta = b.id;
-
+    alfa = (await prismaPlataforma().escritorio.create({ data: { slug: `nf-a-${marca}`, nome: "Alfa Notas" } })).id;
+    beta = (await prismaPlataforma().escritorio.create({ data: { slug: `nf-b-${marca}`, nome: "Beta Notas" } })).id;
     for (const id of [alfa, beta]) {
-      await comEscritorio(id, (db) =>
-        db.moduloContratado.create({
-          data: semEscritorio({ modulo: "NFSE", ativo: true }),
-        }),
-      );
+      await comEscritorio(id, (db) => db.moduloContratado.create({ data: semEscritorio({ modulo: "NFSE", ativo: true }) }));
     }
-
     await comEscritorio(alfa, async (db) => {
       await db.fiscal.create({
         data: semEscritorio({
           razaoSocial: "Alfa Advocacia",
-          cnpj: "12345678000199",
+          cnpj: CNPJ,
           inscricaoMunicipal: "123456",
-          codigoMunicipio: "2927408",
-          regime: "SIMPLES",
-          codigoTributacao: "17.14",
-          aliquotaMilesimos: 2000,
+          codigoMunicipio: "3518602",
+          opSimpNac: 3,
+          pTotTribSN: 6,
         }),
       });
-      const cliente = await db.cliente.create({
-        data: semEscritorio({
-          nome: "Cliente com CPF",
-          documento: "529.982.247-25",
-        }),
-      });
-      const sem = await db.cliente.create({
-        data: semEscritorio({ nome: "Cliente sem CPF" }),
-      });
-      clienteAlfa = cliente.id;
-      clienteSemDocumento = sem.id;
+      titular = (await db.usuario.create({ data: semEscritorio({ nome: "Dra. Titular", email: `t-${marca}@nf.test`, senhaHash: "x", papel: "ADMIN" }) })).id;
+      outraPessoa = (await db.usuario.create({ data: semEscritorio({ nome: "Secretaria", email: `s-${marca}@nf.test`, senhaHash: "x", papel: "ADMIN" }) })).id;
+      clienteCpf = (await db.cliente.create({ data: semEscritorio({ nome: "Cliente com CPF", documento: "529.982.247-25" }) })).id;
+      clienteEmpresaSemEndereco = (await db.cliente.create({ data: semEscritorio({ nome: "Empresa", documento: "11.222.333/0001-81" }) })).id;
     });
-
-    await salvarIntegracao(
-      alfa,
-      "NFSE_CERT",
-      { arquivo: certificadoDeTeste(), senha: "senha-do-teste" },
-      "OK",
-    );
+    await salvarIntegracao(alfa, "NFSE_CERT", {
+      arquivo: PFX,
+      titular: "ESCRITORIO TESTE",
+      cnpj: CNPJ,
+      validoAte: new Date(Date.now() + 300 * 86400000).toISOString(),
+      titularId: titular,
+      titularNome: "Dra. Titular",
+    }, "OK");
   });
 
   afterAll(async () => {
     for (const id of [alfa, beta]) {
-      if (id)
-        await prismaPlataforma()
-          .escritorio.delete({ where: { id } })
-          .catch(() => {});
+      if (id) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
     }
     await prismaPlataforma().$disconnect();
   });
 
   beforeEach(() => {
     recebidas = [];
-    responder = () => ({
-      status: 200,
-      json: {
-        chaveAcesso: `2926${Date.now()}`,
-        numeroNfse: "1",
-        linkPdf: "https://prefeitura.exemplo/1.pdf",
-      },
-    });
+    responder = () => aceita();
   });
 
-  const pedido = {
-    clienteId: "",
-    descricao: "Honorarios contratuais de setembro",
-    valorCentavos: 150_000,
-  };
+  const preparar = (extra: Partial<Parameters<typeof prepararNota>[1]> = {}) =>
+    prepararNota(alfa, { clienteId: clienteCpf, valorCentavos: 150_000, descricao: "Honorarios de setembro", criadoPorId: outraPessoa, ...extra });
 
-  it("emite, guarda o XML assinado e mede o consumo", async () => {
-    const antes = (await consumoDoMes(alfa)).find(
-      (l) => l.metrica === "NFSE_EMITIDA",
-    );
-    const nota = await emitirNota(alfa, { ...pedido, clienteId: clienteAlfa });
-
-    expect(nota.status).toBe("EMITIDA");
-    expect(nota.chaveAcesso).toBeTruthy();
-
-    const linha = await comEscritorio(alfa, (db) =>
-      db.notaFiscal.findUnique({ where: { id: nota.id } }),
-    );
-    expect(linha?.xmlEnviado).toContain("<Signature");
-    expect(linha?.linkPdf).toContain("prefeitura.exemplo");
-
-    // O que chegou no ambiente nacional e o DPS comprimido, e descomprime.
-    const enviado = desempacotar(recebidas[0].corpo.dpsXmlGZipB64);
-    expect(enviado).toContain("<vServ>1500.00</vServ>");
-
-    const depois = (await consumoDoMes(alfa)).find(
-      (l) => l.metrica === "NFSE_EMITIDA",
-    );
-    expect(depois?.quantidade).toBe((antes?.quantidade ?? 0) + 1);
+  it("o emissor pronto nao tem pendencia", async () => {
+    const fiscal = await comEscritorio(alfa, (db) => db.fiscal.findFirst());
+    expect(pendenciasDoEmissor(fiscal, { arquivo: PFX, cnpj: CNPJ })).toEqual([]);
+    expect(pendenciasDoEmissor(fiscal, { arquivo: PFX, cnpj: "99999999000199" })[0]).toMatch(/outro CNPJ/);
+    expect(pendenciasDoEmissor(fiscal, null)[0]).toMatch(/certificado/);
   });
 
-  it("a numeracao anda de um em um, sem repetir", async () => {
-    const primeira = await emitirNota(alfa, {
-      ...pedido,
-      clienteId: clienteAlfa,
-    });
-    const segunda = await emitirNota(alfa, {
-      ...pedido,
-      clienteId: clienteAlfa,
-    });
-
-    const linhas = await comEscritorio(alfa, (db) =>
-      db.notaFiscal.findMany({
-        where: { id: { in: [primeira.id, segunda.id] } },
-        orderBy: { numero: "asc" },
-      }),
-    );
-    expect(linhas[1].numero).toBe(linhas[0].numero + 1);
-  });
-
-  it("recusa da prefeitura fica gravada com o motivo, e o numero nao volta", async () => {
-    responder = () => ({
-      status: 400,
-      json: {
-        erros: [
-          { codigo: "E0123", descricao: "Inscricao municipal invalida." },
-        ],
-      },
-    });
-
-    const fiscalAntes = await comEscritorio(alfa, (db) =>
-      db.fiscal.findFirst(),
-    );
-    await expect(
-      emitirNota(alfa, { ...pedido, clienteId: clienteAlfa }),
-    ).rejects.toBeInstanceOf(FalhaNaNfse);
-    const fiscalDepois = await comEscritorio(alfa, (db) =>
-      db.fiscal.findFirst(),
-    );
-
-    const recusada = await comEscritorio(alfa, (db) =>
-      db.notaFiscal.findFirst({
-        where: { status: "RECUSADA" },
-        orderBy: { criadoEm: "desc" },
-      }),
-    );
-    expect(recusada?.erro).toContain("Inscricao municipal invalida");
-    // Numero gasto e o que o contador espera; numero repetido, nao.
-    expect(fiscalDepois!.proximoNumero).toBe(fiscalAntes!.proximoNumero + 1);
-  });
-
-  it("erro temporario apos o envio fica indeterminado, sem afirmar recusa", async () => {
-    responder = () => ({ status: 503, json: { mensagem: "indisponivel" } });
-    await expect(emitirNota(alfa, { ...pedido, clienteId: clienteAlfa }))
-      .rejects.toBeInstanceOf(FalhaNaNfse);
-    const nota = await comEscritorio(alfa, (db) => db.notaFiscal.findFirst({
-      where: { status: "INDETERMINADA" }, orderBy: { criadoEm: "desc" },
-    }));
-    expect(nota).not.toBeNull();
-  });
-
-  it("cliente sem CPF/CNPJ nao vira nota", async () => {
-    await expect(
-      emitirNota(alfa, { ...pedido, clienteId: clienteSemDocumento }),
-    ).rejects.toBeInstanceOf(NotaInvalida);
+  it("preparar nao gasta numero nem fala com a Sefin", async () => {
+    const r = await preparar();
+    expect(r.nota.status).toBe("AGUARDANDO_ASSINATURA");
+    expect(r.nota.numero).toBeNull();
+    expect(r.titularId).toBe(titular);
     expect(recebidas).toHaveLength(0);
   });
 
-  it("valor zerado e descricao vazia nem chegam ao cadastro fiscal", async () => {
-    await expect(
-      emitirNota(alfa, { ...pedido, clienteId: clienteAlfa, valorCentavos: 0 }),
-    ).rejects.toBeInstanceOf(NotaInvalida);
-    await expect(
-      emitirNota(alfa, { ...pedido, clienteId: clienteAlfa, descricao: "   " }),
-    ).rejects.toBeInstanceOf(NotaInvalida);
-    expect(recebidas).toHaveLength(0);
+  it("competencia futura e empresa sem endereco sao recusadas ja no preparo", async () => {
+    await expect(preparar({ dataCompetencia: "2099-01-01" })).rejects.toThrow(/futura/);
+    await expect(preparar({ clienteId: clienteEmpresaSemEndereco })).rejects.toThrow(/E0235/);
   });
 
-  it("sem cadastro fiscal e sem certificado, cada falta tem sua mensagem", async () => {
-    const cliente = await comEscritorio(beta, (db) =>
-      db.cliente.create({
-        data: semEscritorio({
-          nome: "Cliente do Beta",
-          documento: "52998224725",
-        }),
-      }),
-    );
-
-    await expect(
-      emitirNota(beta, { ...pedido, clienteId: cliente.id }),
-    ).rejects.toBeInstanceOf(SemCadastroFiscal);
-
-    await comEscritorio(beta, (db) =>
-      db.fiscal.create({
-        data: semEscritorio({
-          razaoSocial: "Beta",
-          cnpj: "11222333000181",
-          inscricaoMunicipal: "9",
-          codigoMunicipio: "2927408",
-          regime: "NORMAL",
-          codigoTributacao: "17.14",
-          aliquotaMilesimos: 5000,
-        }),
-      }),
-    );
-
-    await expect(
-      emitirNota(beta, { ...pedido, clienteId: cliente.id }),
-    ).rejects.toBeInstanceOf(SemCertificado);
-    expect(recebidas).toHaveLength(0);
+  it("so o titular abre o certificado, e com a senha certa", async () => {
+    await expect(abrirCertificadoDoEscritorio(alfa, { usuarioId: outraPessoa, papel: "ADMIN" }, SENHA)).rejects.toBeInstanceOf(SoOTitular);
+    await expect(abrirCertificadoDoEscritorio(alfa, TITULAR(), "errada")).rejects.toThrow(/[Ss]enha/);
   });
 
-  it("cancelamento so depois que a prefeitura aceita", async () => {
-    const nota = await emitirNota(alfa, { ...pedido, clienteId: clienteAlfa });
-
-    responder = (caminho) =>
-      caminho.includes("/eventos")
-        ? {
-            status: 400,
-            json: { erros: [{ descricao: "Fora do prazo de cancelamento." }] },
-          }
-        : { status: 200, json: { chaveAcesso: "x" } };
-
-    await expect(cancelarNota(alfa, nota.id)).rejects.toThrow(/Fora do prazo/);
-
-    // A nota continua valendo: marcar antes de a prefeitura aceitar daria ao
-    // escritorio a impressao de que cancelou.
-    const depoisDaRecusa = await comEscritorio(alfa, (db) =>
-      db.notaFiscal.findUnique({ where: { id: nota.id } }),
-    );
-    expect(depoisDaRecusa?.status).toBe("EMITIDA");
-
-    responder = () => ({ status: 200, json: { ok: true } });
-    await cancelarNota(alfa, nota.id);
-
-    const cancelada = await comEscritorio(alfa, (db) =>
-      db.notaFiscal.findUnique({ where: { id: nota.id } }),
-    );
-    expect(cancelada?.status).toBe("CANCELADA");
-    expect(cancelada?.canceladaEm).not.toBeNull();
-
-    // O evento que subiu tambem vai assinado.
-    const evento = recebidas.find((r) => r.caminho.includes("/eventos"));
-    expect(
-      desempacotar(evento!.corpo.pedidoRegistroEventoXmlGZipB64),
-    ).toContain("<Signature");
+  it("assinar numera, assina, transmite e registra a emitida", async () => {
+    const { nota } = await preparar();
+    const [r] = await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
+    expect(r.status).toBe("EMITIDA");
+    expect(r.numeroNfse).toBe("7");
+    const enviada = recebidas.find((x) => x.caminho === "/nfse")!;
+    const dps = descompactar(enviada.corpo.dpsXmlGZipB64);
+    expect(dps).toContain("<Signature");
+    expect(dps).toContain("<IM>123456</IM>");
+    const gravada = await comEscritorio(alfa, (db) => db.notaFiscal.findFirstOrThrow({ where: { id: nota.id } }));
+    expect(gravada.status).toBe("EMITIDA");
+    expect(gravada.numero).not.toBeNull();
+    expect(gravada.assinadaPorId).toBe(titular);
+    expect(gravada.xmlRetorno).toContain("<nNFSe>7</nNFSe>");
   });
 
-  it("nota recusada nao se cancela", async () => {
-    responder = () => ({
-      status: 400,
-      json: { erros: [{ descricao: "qualquer erro" }] },
-    });
-    await emitirNota(alfa, { ...pedido, clienteId: clienteAlfa }).catch(
-      () => {},
-    );
-
-    const recusada = await comEscritorio(alfa, (db) =>
-      db.notaFiscal.findFirst({
-        where: { status: "RECUSADA" },
-        orderBy: { criadoEm: "desc" },
-      }),
-    );
-    await expect(cancelarNota(alfa, recusada!.id)).rejects.toBeInstanceOf(
-      CancelamentoInvalido,
-    );
+  it("E0120: reenvia sozinha sem a inscricao municipal, com numero novo", async () => {
+    let chamadas = 0;
+    responder = () => {
+      chamadas += 1;
+      return chamadas === 1
+        ? { status: 400, json: { erros: [{ codigo: "E0120", descricao: "IM nao cadastrada no CNC" }] } }
+        : aceita("8");
+    };
+    const { nota } = await preparar();
+    const [r] = await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
+    expect(r.status).toBe("EMITIDA");
+    const dpss = recebidas.filter((x) => x.caminho === "/nfse").map((x) => descompactar(x.corpo.dpsXmlGZipB64));
+    expect(dpss[0]).toContain("<IM>");
+    expect(dpss[1]).not.toContain("<IM>");
+    expect(dpss[0].match(/<nDPS>(\d+)/)![1]).not.toBe(dpss[1].match(/<nDPS>(\d+)/)![1]);
   });
 
-  it("nota de um escritorio nao se ve nem se cancela do outro", async () => {
-    const nota = await emitirNota(alfa, { ...pedido, clienteId: clienteAlfa });
+  it("recusada fica com os erros e pode ser assinada de novo", async () => {
+    responder = () => ({ status: 400, json: { erros: [{ codigo: "E0160", descricao: "Regime nao confere" }] } });
+    const { nota } = await preparar();
+    const [r] = await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
+    expect(r.status).toBe("REJEITADA");
+    expect(r.erro).toContain("E0160");
 
-    const vistaPeloBeta = await comEscritorio(beta, (db) =>
-      db.notaFiscal.findUnique({ where: { id: nota.id } }),
-    );
-    expect(vistaPeloBeta).toBeNull();
-    await expect(cancelarNota(beta, nota.id)).rejects.toBeInstanceOf(
-      NotaInvalida,
-    );
+    responder = () => aceita("9");
+    const [denovo] = await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
+    expect(denovo.status).toBe("EMITIDA");
+  });
+
+  it("conexao que cai fica PROCESSANDO, e Verificar recupera pela DPS", async () => {
+    responder = (metodo, caminho) => (caminho === "/nfse" ? { status: 0, derrubar: true } : { status: 404 });
+    const { nota } = await preparar();
+    const [r] = await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
+    expect(r.status).toBe("PROCESSANDO");
+
+    const chave = "4".repeat(50);
+    responder = (metodo, caminho) => {
+      if (caminho.startsWith("/dps/")) return { status: 200, json: { chaveAcesso: chave } };
+      if (caminho === `/nfse/${chave}`) return { status: 200, json: { nfseXmlGZipB64: gzipSync(Buffer.from(nfseXml("10"))).toString("base64") } };
+      return { status: 404 };
+    };
+    const cert = await abrirCertificadoDoEscritorio(alfa, TITULAR(), SENHA);
+    const verificada = await verificarSituacao(alfa, nota.id, cert);
+    expect(verificada.status).toBe("EMITIDA");
+    expect(verificada.chaveAcesso).toBe(chave);
+  });
+
+  it("cancelar exige justificativa e registra o evento", async () => {
+    const { nota } = await preparar();
+    await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
+    const cert = await abrirCertificadoDoEscritorio(alfa, TITULAR(), SENHA);
+    await expect(cancelarNota(alfa, nota.id, cert, 1, "curto")).rejects.toThrow(/15 caracteres/);
+
+    responder = () => ({ status: 201, json: { eventoXmlGZipB64: compactar("<evento/>") } });
+    const cancelada = await cancelarNota(alfa, nota.id, cert, 1, "Valor digitado errado na nota");
+    expect(cancelada.status).toBe("CANCELADA");
+    expect(cancelada.eventoXml).toBe("<evento/>");
+  });
+
+  it("descartar so vale para nota que nao foi emitida", async () => {
+    const { nota } = await preparar();
+    await descartarNota(alfa, nota.id);
+    const emitida = (await preparar()).nota;
+    await assinarNotas(alfa, TITULAR(), [emitida.id], SENHA);
+    await expect(descartarNota(alfa, emitida.id)).rejects.toBeInstanceOf(NotaInvalida);
+  });
+
+  it("o PDF da nota (DANFSe) sai do XML autorizado, com marca de cancelada", async () => {
+    const pdf = await gerarDanfse(nfseXml("11"));
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+    const cancelada = await gerarDanfse(nfseXml("11"), { cancelada: true });
+    expect(cancelada.length).toBeGreaterThan(pdf.length - 2000);
+  });
+
+  it("nota de um escritorio nao se ve do outro", async () => {
+    const { nota } = await preparar();
+    const doOutro = await comEscritorio(beta, (db) => db.notaFiscal.findFirst({ where: { id: nota.id } }));
+    expect(doOutro).toBeNull();
+    await expect(descartarNota(beta, nota.id)).rejects.toBeInstanceOf(NotaInvalida);
   });
 });

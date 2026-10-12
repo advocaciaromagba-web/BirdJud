@@ -49,6 +49,7 @@ export function PainelHonorarios({
   temConta,
   temCobrancas,
   temFinanceiro,
+  temNotaFiscal = false,
 }: {
   contratos: ContratoNaTela[];
   cliente: ClienteNaTela;
@@ -57,6 +58,8 @@ export function PainelHonorarios({
   temCobrancas: boolean;
   /** Modulo FINANCEIRO: as parcelas entram a receber no livro-caixa. */
   temFinanceiro: boolean;
+  /** Modulo NFSE: parcela recebida oferece preparar a nota. */
+  temNotaFiscal?: boolean;
 }) {
   const router = useRouter();
   const [salvando, setSalvando] = useState(false);
@@ -359,6 +362,18 @@ export function PainelHonorarios({
                           >
                             {p.recebida ? "recebida" : p.emitida ? "cobranca emitida" : "a receber"}
                           </span>
+                          {p.recebida && temNotaFiscal ? (
+                            <a
+                              className="text-marca underline"
+                              href={`/notas?${new URLSearchParams({
+                                clienteId: cliente.id,
+                                valor: p.valor.replace(/[^\d,]/g, ""),
+                                descricao: `Honorarios advocaticios — ${c.resumo}, parcela ${p.numero}/${p.total}`,
+                              }).toString()}`}
+                            >
+                              preparar nota
+                            </a>
+                          ) : null}
                         </span>
                       </li>
                     ))}

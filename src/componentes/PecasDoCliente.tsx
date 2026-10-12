@@ -96,6 +96,7 @@ export function PecasDoCliente({
   whatsappLigado = false,
   telefoneDoCliente = null,
   envios = [],
+  notaFiscalLigada = false,
 }: {
   clienteId: string;
   /** Quem assina pecas no escritorio. */
@@ -109,6 +110,8 @@ export function PecasDoCliente({
   /** Telefone do CADASTRO. Nao ha campo para digitar outro, de proposito. */
   telefoneDoCliente?: string | null;
   envios?: EnvioNaTela[];
+  /** Modulo NFSE: o recibo oferece preparar a nota fiscal (nunca sozinho). */
+  notaFiscalLigada?: boolean;
 }) {
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
   // PDF por padrao: e o que se assina, o que se imprime igual em qualquer
@@ -560,6 +563,22 @@ export function PecasDoCliente({
               onChange={(e) => setRecibo({ ...recibo, forma: e.target.value })}
             />
           </div>
+          {notaFiscalLigada ? (
+            <p className="text-sm sm:col-span-2">
+              O cliente pediu nota fiscal?{" "}
+              <a
+                className="font-semibold text-marca underline"
+                href={`/notas?${new URLSearchParams({
+                  clienteId,
+                  valor: recibo.valor,
+                  descricao: recibo.referenteA ? `Honorarios advocaticios — ${recibo.referenteA}` : "",
+                }).toString()}`}
+              >
+                Preparar a nota fiscal deste recibo
+              </a>
+              <span className="text-slate-500"> — ela so e emitida depois que o titular do certificado assina.</span>
+            </p>
+          ) : null}
         </div>
       ) : null}
 

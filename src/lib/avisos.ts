@@ -1280,3 +1280,93 @@ export async function gerarLembretesDeTarefas(escritorioId: string, agora = new 
   }
   return criados;
 }
+
+/**
+ * Avisa o titular do certificado que ha nota fiscal esperando a assinatura
+ * dele. Sem titular gravado (certificado anterior a este fluxo), avisa os
+ * administradores — alguem com o e-CNPJ precisa saber.
+ *
+ * O WhatsApp usa o modelo de designacao, que ja esta aprovado: e, de fato,
+ * uma tarefa que ficou com ele.
+ */
+export async function avisarNotaParaAssinar(
+  escritorioId: string,
+  notaId: string,
+  titularId: string | null,
+  preparadaPor: string | null,
+): Promise<number> {
+  const nota = await comEscritorio(escritorioId, (db) =>
+    db.notaFiscal.findFirst({
+      where: { id: notaId },
+      select: { id: true, valorCentavos: true, tomadorNome: true, ambiente: true },
+    }),
+  );
+  if (!nota) return 0;
+  const pessoas = await comEscritorio(escritorioId, (db) =>
+    db.usuario.findMany({
+      where: titularId ? { id: titularId, ativo: true } : { ativo: true, papel: "ADMIN" },
+      select: { id: true, nome: true, email: true, telefone: true, recebeWhatsapp: true },
+    }),
+  );
+  if (pessoas.length === 0) return 0;
+
+  const banca = await daBanca(escritorioId);
+  const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
+  const valor = (nota.valorCentavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const teste = nota.ambiente === "PRODUCAO" ? "" : " (teste)";
+  const titulo = `Assinar NFS-e de ${valor} para ${nota.tomadorNome}${teste}`;
+  const assunto = `NFS-e aguardando sua assinatura: ${valor} para ${nota.tomadorNome}${teste}`;
+  const corpo = [
+    `No escritorio ${banca.nome}, uma nota fiscal de ${valor} para ${nota.tomadorNome} foi preparada${teste}.`,
+    "Ela so e emitida depois da sua assinatura com o certificado e-CNPJ (a senha e pedida na hora).",
+    "",
+    `Abra em ${banca.endereco}/notas`,
+  ].join("\n");
+
+  let criados = 0;
+  for (const p of pessoas) {
+    if (preparadaPor && preparadaPor === p.id) continue;
+    const chave = `nfse-assinar:${nota.id}:${p.id}`;
+    if (
+      await criarAviso(escritorioId, {
+        usuarioId: p.id,
+        canal: "EMAIL",
+        tipo: "NFSE_ASSINATURA",
+        chave,
+        destino: p.email,
+        assunto,
+        corpo,
+        enviadoPorId: preparadaPor,
+      })
+    ) {
+      criados += 1;
+    }
+    const modelo = modeloDoTipo("TAREFA_DESIGNADA");
+    const telefone = telefoneDoUsuario(p, comWhatsapp);
+    if (telefone && modelo) {
+      if (
+        await criarAviso(escritorioId, {
+          usuarioId: p.id,
+          canal: "WHATSAPP",
+          tipo: "NFSE_ASSINATURA",
+          chave: `zap:${chave}`,
+          destino: telefone,
+          assunto,
+          corpo,
+          enviadoPorId: preparadaPor,
+          modelo: modelo.nome,
+          parametros: [
+            limparParametro(banca.nome),
+            limparParametro(titulo),
+            limparParametro("agora"),
+            limparParametro("Notas fiscais"),
+            limparParametro(banca.telefone),
+          ],
+        })
+      ) {
+        criados += 1;
+      }
+    }
+  }
+  return criados;
+}

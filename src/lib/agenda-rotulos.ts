@@ -24,6 +24,7 @@ export const ROTULO_DO_TIPO_DE_AVISO: Record<string, string> = {
   LEMBRETE_COMPROMISSO: "Lembrete a equipe",
   TAREFA_DESIGNADA: "Designacao",
   LEMBRETE_TAREFA: "Lembrete de tarefa",
+  NFSE_ASSINATURA: "Nota fiscal para assinar",
   DOCUMENTO: "Documento por WhatsApp",
   RESUMO_PUBLICACOES: "Resumo de publicacoes",
   RESUMO_DO_DIA: "Resumo do dia",

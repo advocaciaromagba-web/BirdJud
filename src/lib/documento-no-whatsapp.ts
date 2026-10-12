@@ -95,29 +95,106 @@ export async function mandarPecaNoWhatsapp(
   });
 
   const peca = await gerarPeca(escritorioId, especie, dados, "PDF");
+  const recibo = especie === "RECIBO" && peca.semValor.some((c) => c.startsWith("recibo."));
 
   // Recibo com buraco no valor e quitacao de um valor que ninguem conferiu.
   // Baixar assim e ruim; MANDAR assim para o cliente e pior, porque sai da
   // mao de quem conferiria.
-  if (especie === "RECIBO" && peca.semValor.some((c) => c.startsWith("recibo."))) {
+  if (recibo) {
     throw new NaoDaParaMandar(
       `O recibo sairia com campo em branco: ${peca.semValor.join(", ")}. Confira na tela antes de mandar.`,
     );
   }
 
+  return mandarPdfAoCliente(
+    escritorioId,
+    {
+      clienteId: dados.clienteId,
+      nomeDoCliente: dados.cliente.nome,
+      telefone,
+      arquivo: peca.arquivo,
+      nomeDoArquivo: peca.nomeDoArquivo,
+      oQueE: NOME_DA_ESPECIE[especie],
+      oQueFazer: O_QUE_FAZER[especie],
+      rotulo: especie,
+    },
+    modelo,
+    escritorio,
+    enviadoPorId,
+  );
+}
+
+/** O que cabe a qualquer PDF que vai ao cliente pelo WhatsApp. */
+type PdfAoCliente = {
+  clienteId: string;
+  nomeDoCliente: string;
+  /** Ja em E164, do cadastro. */
+  telefone: string;
+  arquivo: Buffer;
+  nomeDoArquivo: string;
+  oQueE: string;
+  oQueFazer: string;
+  /** Vai na chave do aviso: "RECIBO", "NFSE"... */
+  rotulo: string;
+};
+
+/**
+ * Manda um PDF pronto ao cliente (nota fiscal, por exemplo), com as mesmas
+ * travas da peca: modulo, telefone do CADASTRO, pedido de parar respeitado e
+ * registro do envio como aviso.
+ */
+export async function mandarArquivoNoWhatsapp(
+  escritorioId: string,
+  pdf: Omit<PdfAoCliente, "telefone"> & { telefoneDoCadastro: string | null },
+  enviadoPorId: string | null = null,
+): Promise<PecaMandada> {
+  if (!(await moduloAtivo(escritorioId, "WHATSAPP"))) {
+    throw new NaoDaParaMandar("O modulo de WhatsApp nao esta contratado.");
+  }
+  const telefone = paraE164BR(pdf.telefoneDoCadastro);
+  if (!telefone) {
+    throw new NaoDaParaMandar(
+      pdf.telefoneDoCadastro
+        ? `O telefone do cadastro nao da para ler como celular: ${pdf.telefoneDoCadastro}.`
+        : "O cliente esta sem telefone no cadastro.",
+    );
+  }
+  const bloqueado = await comEscritorio(escritorioId, (db) =>
+    db.bloqueioDeWhatsapp.findFirst({ where: { telefone }, select: { id: true } }),
+  );
+  if (bloqueado) {
+    throw new NaoDaParaMandar("Esta pessoa pediu para nao receber mais mensagens deste escritorio no WhatsApp.");
+  }
+  const modelo = modeloDoTipo("DOCUMENTO");
+  if (!modelo) throw new NaoDaParaMandar("Modelo de documento nao configurado.");
+  const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
+    where: { id: escritorioId },
+    select: { nome: true, telefoneAtendimento: true },
+  });
+  return mandarPdfAoCliente(escritorioId, { ...pdf, telefone }, modelo, escritorio, enviadoPorId);
+}
+
+async function mandarPdfAoCliente(
+  escritorioId: string,
+  pdf: PdfAoCliente,
+  modelo: { nome: string; idioma: string },
+  escritorio: { nome: string; telefoneAtendimento: string | null },
+  enviadoPorId: string | null,
+): Promise<PecaMandada> {
+  const { telefone } = pdf;
   let idNaMeta: string;
   try {
-    const midia = await subirDocumento(peca.arquivo, peca.nomeDoArquivo);
+    const midia = await subirDocumento(pdf.arquivo, pdf.nomeDoArquivo);
     const enviado = await enviarModeloComDocumento({
       para: telefone,
       modelo: modelo.nome,
       idioma: modelo.idioma,
-      documento: { id: midia, nomeDoArquivo: peca.nomeDoArquivo },
+      documento: { id: midia, nomeDoArquivo: pdf.nomeDoArquivo },
       parametros: [
-        limparParametro(dados.cliente.nome),
+        limparParametro(pdf.nomeDoCliente),
         limparParametro(escritorio.nome),
-        limparParametro(NOME_DA_ESPECIE[especie].toLowerCase()),
-        limparParametro(O_QUE_FAZER[especie]),
+        limparParametro(pdf.oQueE.toLowerCase()),
+        limparParametro(pdf.oQueFazer),
         limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritorio"),
       ],
     });
@@ -137,23 +214,23 @@ export async function mandarPecaNoWhatsapp(
       data: semEscritorio({
         canal: "WHATSAPP",
         tipo: "DOCUMENTO",
-        chave: `zap:documento:${especie}:${dados.clienteId}:${Date.now()}`,
+        chave: `zap:documento:${pdf.rotulo}:${pdf.clienteId}:${Date.now()}`,
         destino: telefone,
-        assunto: `${NOME_DA_ESPECIE[especie]} enviada por WhatsApp`,
-        corpo: `${NOME_DA_ESPECIE[especie]} de ${dados.cliente.nome} enviada para ${telefone}.`,
+        assunto: `${pdf.oQueE} enviada por WhatsApp`,
+        corpo: `${pdf.oQueE} de ${pdf.nomeDoCliente} enviada para ${telefone}.`,
         modelo: modelo.nome,
-        parametros: [peca.nomeDoArquivo] as unknown as Prisma.InputJsonValue,
+        parametros: [pdf.nomeDoArquivo] as unknown as Prisma.InputJsonValue,
         estado: "ENVIADO",
         enviadoEm: new Date(),
         // O retorno de entrega da Meta acha o aviso por este id. Repetido
         // (nao deveria) fica de fora: o registro do envio vale mais.
         idNaMeta: idRepetido ? null : idNaMeta,
-        clienteId: dados.clienteId,
+        clienteId: pdf.clienteId,
         enviadoPorId,
       }),
     }),
   );
   await registrarConsumo(escritorioId, "WHATSAPP_MSG", 1);
 
-  return { telefone, idNaMeta, nomeDoArquivo: peca.nomeDoArquivo };
+  return { telefone, idNaMeta, nomeDoArquivo: pdf.nomeDoArquivo };
 }
