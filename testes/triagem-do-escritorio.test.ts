@@ -10,6 +10,7 @@ import {
   aceitarTriagem,
   recusarTriagem,
   triarPendentes,
+  recontarPrazosPendentes,
   triarPublicacao,
 } from "../src/lib/triagem-do-escritorio";
 
@@ -135,6 +136,24 @@ d("triagem da publicacao", () => {
     expect(t.prazoSugerido?.toISOString().slice(0, 10)).toBe("2026-11-23");
     expect(t.explicacao).toContain("publicada em 04/11/2026");
     expect(t.explicacao).toBeTruthy();
+  });
+
+  it("sugestao pendente contada pela regra antiga e recontada", async () => {
+    const p = await publicacao("Manifeste-se em 15 dias.");
+    const t = await triarPublicacao(escritorio, p.id);
+    // Como a regra antiga gravava: direto da disponibilizacao, um dia util curto.
+    await comEscritorio(escritorio, (db) =>
+      db.triagemDePublicacao.update({
+        where: { id: t.id },
+        data: { prazoFatal: new Date("2026-11-25T12:00:00Z"), explicacao: "15 dias uteis (CPC 219)." },
+      }),
+    );
+    expect(await recontarPrazosPendentes(escritorio)).toBeGreaterThanOrEqual(1);
+    const depois = await comEscritorio(escritorio, (db) => db.triagemDePublicacao.findFirstOrThrow({ where: { id: t.id } }));
+    expect(depois.prazoFatal?.toISOString().slice(0, 10)).toBe("2026-11-26");
+    expect(depois.explicacao).toContain("publicada em 04/11/2026");
+    // Ja recontada: a segunda passada nao mexe nela.
+    expect(await recontarPrazosPendentes(escritorio)).toBe(0);
   });
 
   it("audiencia com data marcada vira agendamento naquela data", async () => {

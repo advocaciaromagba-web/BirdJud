@@ -29,7 +29,10 @@ export type FatosDoDia = {
   /** Prazos que venceram e ninguem cumpriu. */
   prazosVencidos: PrazoNoResumo[];
   prazosHoje: PrazoNoResumo[];
+  /** Vence no proximo dia util (na sexta, o da segunda). */
   prazosAmanha: PrazoNoResumo[];
+  /** Vence em 2 a 4 dias uteis: da tempo de fazer, se comecar agora. */
+  prazosProximos: PrazoNoResumo[];
   compromissosHoje: CompromissoNoResumo[];
   /** So a contagem: a lista inteira iria para a tela, nao para o e-mail. */
   audienciasAmanha: number;
@@ -62,6 +65,7 @@ export function mereceMensagem(f: FatosDoDia): boolean {
     f.prazosVencidos.length > 0 ||
     f.prazosHoje.length > 0 ||
     f.prazosAmanha.length > 0 ||
+    f.prazosProximos.length > 0 ||
     f.compromissosHoje.length > 0 ||
     f.audienciasAmanha > 0
   );
@@ -85,7 +89,10 @@ export function assuntoDoResumo(f: FatosDoDia, nomeDoEscritorio: string): string
     return `${inicio}: ${plural(f.compromissosHoje.length, "compromisso", "compromissos")}`;
   }
   if (f.prazosAmanha.length > 0) {
-    return `${inicio}: ${plural(f.prazosAmanha.length, "prazo vence amanha", "prazos vencem amanha")}`;
+    return `${inicio}: ${plural(f.prazosAmanha.length, "prazo vence no proximo dia util", "prazos vencem no proximo dia util")}`;
+  }
+  if (f.prazosProximos.length > 0) {
+    return `${inicio}: ${plural(f.prazosProximos.length, "prazo nos proximos 4 dias uteis", "prazos nos proximos 4 dias uteis")}`;
   }
   return `${inicio}: ${plural(f.audienciasAmanha, "audiencia amanha", "audiencias amanha")}`;
 }
@@ -97,7 +104,8 @@ export function linhaDoResumo(f: FatosDoDia): string {
     partes.push(`${plural(f.prazosVencidos.length, "prazo vencido", "prazos vencidos")}`);
   }
   if (f.prazosHoje.length > 0) partes.push(`${f.prazosHoje.length} vencendo hoje`);
-  if (f.prazosAmanha.length > 0) partes.push(`${f.prazosAmanha.length} amanha`);
+  if (f.prazosAmanha.length > 0) partes.push(`${f.prazosAmanha.length} no proximo dia util`);
+  if (f.prazosProximos.length > 0) partes.push(`${f.prazosProximos.length} nos proximos 4 dias uteis`);
   if (f.compromissosHoje.length > 0) {
     partes.push(plural(f.compromissosHoje.length, "compromisso hoje", "compromissos hoje"));
   }
@@ -164,8 +172,14 @@ export function corpoDoResumo(
   }
   if (f.prazosAmanha.length > 0) {
     blocos.push(
-      `<p style="margin:0 0 4px"><strong>Vence amanha</strong></p>` +
-        lista(f.prazosAmanha.map((p) => linhaDePrazo(p, false))),
+      `<p style="margin:0 0 4px"><strong>Vence no proximo dia util</strong></p>` +
+        lista(f.prazosAmanha.map((p) => linhaDePrazo(p, true))),
+    );
+  }
+  if (f.prazosProximos.length > 0) {
+    blocos.push(
+      `<p style="margin:0 0 4px"><strong>Prazo fatal nos proximos 4 dias uteis</strong></p>` +
+        lista(f.prazosProximos.map((p) => linhaDePrazo(p, true))),
     );
   }
 

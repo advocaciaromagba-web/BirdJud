@@ -6,6 +6,9 @@ import { comEscritorio } from "./prisma";
 import { hojeNoEscritorio } from "./contas-do-escritorio";
 import { diaEmBrasilia, horaBR } from "./datas";
 import type { FatosDoDia } from "./resumo-do-dia";
+import { diasUteisAte } from "./prazos";
+import { calendarioDoEscritorio } from "./prazos-do-escritorio";
+import { AVISO_DO_FATAL_EM_DIAS_UTEIS } from "./regua-de-lembretes";
 
 function emISO(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -35,8 +38,9 @@ export async function fatosDoDia(
   const inicioDeHoje = new Date(`${hoje}T00:00:00Z`);
   const inicioDeAmanha = new Date(`${amanha}T00:00:00Z`);
   const inicioDeDepois = new Date(`${amanhaDe(amanha)}T00:00:00Z`);
-  // Tarefa tem hora: o "amanha" dela termina a meia-noite de Brasilia.
-  const fimDeAmanha = new Date(`${amanhaDe(amanha)}T03:00:00Z`);
+  // Quatro dias uteis podem atravessar feriado prolongado e o recesso
+  // (20/12 a 20/01): a busca olha longe e quem separa e a conta em dias uteis.
+  const limite = new Date(inicioDeHoje.getTime() + 45 * 86_400_000);
 
   const dados = await comEscritorio(escritorioId, async (db) => ({
     // Prazo mora na tarefa (natureza.ts): o fatal quando ha, senao a entrega.
@@ -45,12 +49,12 @@ export async function fatosDoDia(
         situacao: { not: "CONCLUIDA" },
         meta: false,
         OR: [
-          { prazoFatal: { lt: fimDeAmanha } },
-          { prazoFatal: null, vencimento: { lt: fimDeAmanha } },
+          { prazoFatal: { lt: limite } },
+          { prazoFatal: null, vencimento: { lt: limite } },
         ],
       },
       orderBy: { vencimento: "asc" },
-      take: 100,
+      take: 300,
       select: { titulo: true, vencimento: true, prazoFatal: true, numeroProcesso: true },
     }),
     compromissos: await db.compromisso.findMany({
@@ -73,16 +77,26 @@ export async function fatosDoDia(
     }),
   }));
 
-  const prazos = dados.prazos.map((p) => ({
-    titulo: p.titulo,
-    vencimento: diaEmBrasilia(p.prazoFatal ?? p.vencimento),
-    numeroProcesso: p.numeroProcesso,
-  }));
+  const calendario = await calendarioDoEscritorio(escritorioId);
+  const prazos = dados.prazos.map((p) => {
+    const vencimento = diaEmBrasilia(p.prazoFatal ?? p.vencimento);
+    return {
+      titulo: p.titulo,
+      vencimento,
+      numeroProcesso: p.numeroProcesso,
+      // Dias UTEIS: na sexta, o prazo da segunda e o do proximo dia util.
+      uteis: vencimento > hoje ? diasUteisAte(hoje, vencimento, calendario) : 0,
+    };
+  });
+  const semConta = ({ uteis: _u, ...p }: (typeof prazos)[number]) => p;
 
   return {
-    prazosVencidos: prazos.filter((p) => p.vencimento < hoje),
-    prazosHoje: prazos.filter((p) => p.vencimento === hoje),
-    prazosAmanha: prazos.filter((p) => p.vencimento === amanha),
+    prazosVencidos: prazos.filter((p) => p.vencimento < hoje).map(semConta),
+    prazosHoje: prazos.filter((p) => p.vencimento === hoje).map(semConta),
+    prazosAmanha: prazos.filter((p) => p.vencimento > hoje && p.uteis <= 1).map(semConta),
+    prazosProximos: prazos
+      .filter((p) => p.vencimento > hoje && p.uteis > 1 && p.uteis <= AVISO_DO_FATAL_EM_DIAS_UTEIS)
+      .map(semConta),
     compromissosHoje: dados.compromissos.map((c) => ({
       titulo: c.titulo,
       tipo: c.tipo,

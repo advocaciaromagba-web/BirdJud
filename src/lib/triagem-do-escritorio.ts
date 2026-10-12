@@ -117,6 +117,72 @@ async function lerComIA(p: PublicacaoParaTriar): Promise<{
   }
 }
 
+/**
+ * O fatal e a entrega sugerida de uma publicacao: a mesma conta para a
+ * triagem nova e para a recontagem das pendentes.
+ */
+function contarPrazo(
+  disponibilizacao: string,
+  prazoDias: number | null | undefined,
+  contagem: string | null | undefined,
+  calendario: Set<string>,
+): { prazoFatal: Date | null; prazoSugerido: Date | null; explicacao: string | null } {
+  if (!prazoDias || prazoDias <= 0) return { prazoFatal: null, prazoSugerido: null, explicacao: null };
+  try {
+    const conta = calcularPrazoDaPublicacao(
+      disponibilizacao,
+      prazoDias,
+      contagem === "CORRIDOS" ? "CORRIDOS" : "UTEIS",
+      calendario,
+    );
+    const sugerida = recuarDiasUteis(conta.vencimento, ANTECEDENCIA_SUGERIDA_DIAS, hoje(), calendario);
+    // Meio-dia: data de calendario guardada em instante, lida de volta em
+    // Brasilia sem virar o dia anterior.
+    return {
+      prazoFatal: new Date(`${conta.vencimento}T12:00:00Z`),
+      prazoSugerido: new Date(`${sugerida}T12:00:00Z`),
+      explicacao: conta.explicacao,
+    };
+  } catch (erro) {
+    if (!(erro instanceof PrazoInvalido)) throw erro;
+    return { prazoFatal: null, prazoSugerido: null, explicacao: `Nao deu para contar o prazo: ${erro.message}` };
+  }
+}
+
+/**
+ * Sugestoes ainda NAO aceitas que foram contadas pela regra antiga (direto da
+ * disponibilizacao, um dia util curto) ganham a conta certa. Aceita nao se
+ * mexe: a tarefa ja existe e alguem ja olhou aquela data. A marca de que a
+ * conta e nova e a explicacao citar a data da publicacao.
+ */
+export async function recontarPrazosPendentes(escritorioId: string): Promise<number> {
+  const antigas = await comEscritorio(escritorioId, (db) =>
+    db.triagemDePublicacao.findMany({
+      where: {
+        aceitaEm: null,
+        prazoDias: { gt: 0 },
+        NOT: { explicacao: { contains: "publicada em" } },
+      },
+      select: { id: true, prazoDias: true, contagem: true, publicacao: { select: { dataDisponibilizacao: true } } },
+      take: 500,
+    }),
+  );
+  if (antigas.length === 0) return 0;
+  const calendario = await calendarioDoEscritorio(escritorioId);
+  for (const t of antigas) {
+    const conta = contarPrazo(
+      t.publicacao.dataDisponibilizacao.toISOString().slice(0, 10),
+      t.prazoDias,
+      t.contagem,
+      calendario,
+    );
+    await comEscritorio(escritorioId, (db) =>
+      db.triagemDePublicacao.update({ where: { id: t.id }, data: conta }),
+    );
+  }
+  return antigas.length;
+}
+
 export type TriagemGravada = {
   id: string;
   publicacaoId: string;
@@ -186,35 +252,12 @@ export async function triarPublicacao(
   }
 
   // ----- a conta do prazo, aqui e so aqui -----
-  const calendario = await calendarioDoEscritorio(escritorioId);
-  let prazoFatal: Date | null = null;
-  let prazoSugerido: Date | null = null;
-  let explicacao: string | null = null;
-
-  if (sugestao.prazoDias && sugestao.prazoDias > 0) {
-    try {
-      const conta = calcularPrazoDaPublicacao(
-        disponibilizadaEm(publicacao),
-        sugestao.prazoDias,
-        sugestao.contagem === "CORRIDOS" ? "CORRIDOS" : "UTEIS",
-        calendario,
-      );
-      const sugerida = recuarDiasUteis(
-        conta.vencimento,
-        ANTECEDENCIA_SUGERIDA_DIAS,
-        hoje(),
-        calendario,
-      );
-      // Meio-dia: data de calendario guardada em instante, lida de volta em
-      // Brasilia sem virar o dia anterior.
-      prazoFatal = new Date(`${conta.vencimento}T12:00:00Z`);
-      prazoSugerido = new Date(`${sugerida}T12:00:00Z`);
-      explicacao = conta.explicacao;
-    } catch (erro) {
-      if (!(erro instanceof PrazoInvalido)) throw erro;
-      explicacao = `Nao deu para contar o prazo: ${erro.message}`;
-    }
-  }
+  const { prazoFatal, prazoSugerido, explicacao } = contarPrazo(
+    disponibilizadaEm(publicacao),
+    sugestao.prazoDias,
+    sugestao.contagem,
+    await calendarioDoEscritorio(escritorioId),
+  );
 
   const dados = {
     especie: sugestao.especie,
@@ -285,6 +328,9 @@ export async function triarPendentes(
   escritorioId: string,
   limite = 50,
 ): Promise<number> {
+  const recontadas = await recontarPrazosPendentes(escritorioId);
+  if (recontadas) console.log(`TRIAGEM ${escritorioId}: ${recontadas} prazo(s) recontado(s) pela data da publicacao.`);
+
   const pendentes = await comEscritorio(escritorioId, (db) =>
     db.publicacao.findMany({
       where: { arquivada: false, triagem: { is: null } },

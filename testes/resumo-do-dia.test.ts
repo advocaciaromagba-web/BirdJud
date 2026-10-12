@@ -18,6 +18,7 @@ const VAZIO: FatosDoDia = {
   prazosVencidos: [],
   prazosHoje: [],
   prazosAmanha: [],
+  prazosProximos: [],
   compromissosHoje: [],
   audienciasAmanha: 0,
   publicacoesNovas: 0,
@@ -66,6 +67,7 @@ describe("assunto", () => {
       prazosVencidos: [PRAZO("Recurso")],
       prazosHoje: [PRAZO("Contestacao")],
       prazosAmanha: [PRAZO("Replica")],
+      prazosProximos: [],
       compromissosHoje: [COMPROMISSO("Audiencia")],
       audienciasAmanha: 2,
       publicacoesNovas: 9,
@@ -104,6 +106,7 @@ describe("linha do WhatsApp", () => {
       prazosVencidos: [PRAZO("a")],
       prazosHoje: [PRAZO("b"), PRAZO("c")],
       prazosAmanha: [],
+      prazosProximos: [],
       compromissosHoje: [COMPROMISSO("d")],
       audienciasAmanha: 0,
       publicacoesNovas: 4,
@@ -126,6 +129,7 @@ describe("corpo do e-mail", () => {
       prazosVencidos: [PRAZO("Recurso de apelacao")],
       prazosHoje: [PRAZO("Contestacao")],
       prazosAmanha: [PRAZO("Replica")],
+      prazosProximos: [],
       compromissosHoje: [COMPROMISSO("Audiencia de instrucao", "09:00")],
       audienciasAmanha: 1,
       publicacoesNovas: 3,
@@ -166,5 +170,25 @@ describe("corpo do e-mail", () => {
     const html = corpoDoResumo({ ...VAZIO, compromissosHoje: [COMPROMISSO("a")] }, "Roma", "https://x");
     expect(html).not.toContain("Vence hoje");
     expect(html).not.toContain("Prazo vencido");
+  });
+});
+
+describe("prazo fatal nos proximos 4 dias uteis", () => {
+  it("sozinho ja vale a mensagem, com a data de cada um", () => {
+    const f = { ...VAZIO, prazosProximos: [PRAZO("Contestacao", "2026-10-26")] };
+    expect(mereceMensagem(f)).toBe(true);
+    expect(assuntoDoResumo(f, "Banca")).toBe("Banca — seu dia: 1 prazo nos proximos 4 dias uteis");
+    expect(linhaDoResumo(f)).toBe("1 nos proximos 4 dias uteis.");
+    expect(corpoDoResumo(f, "Banca", "https://x")).toContain("Prazo fatal nos proximos 4 dias uteis");
+    expect(corpoDoResumo(f, "Banca", "https://x")).toContain("(26/10/2026)");
+  });
+
+  it("o do proximo dia util pesa mais que os dos proximos dias", () => {
+    const f = {
+      ...VAZIO,
+      prazosAmanha: [PRAZO("Replica", "2026-10-26")],
+      prazosProximos: [PRAZO("Contestacao", "2026-10-29")],
+    };
+    expect(assuntoDoResumo(f, "Banca")).toContain("1 prazo vence no proximo dia util");
   });
 });
