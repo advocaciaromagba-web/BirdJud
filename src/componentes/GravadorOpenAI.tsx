@@ -32,8 +32,9 @@ function relogio(segundos: number): string {
  * Os trechos vao EM ORDEM, um de cada vez — dois ao mesmo tempo poderiam
  * chegar trocados e embaralhar a conversa.
  *
- * O audio nao fica guardado: so o texto. O aviso de sigilo vem antes do
- * primeiro clique, igual ao envio de arquivo.
+ * Em paralelo, um segundo gravador pega a conversa INTEIRA num arquivo so:
+ * ao parar, ele vai para a pasta do cliente ligado a entrevista. O aviso de
+ * sigilo vem antes do primeiro clique, igual ao envio de arquivo.
  */
 export function GravadorOpenAI({
   entrevistaId,
@@ -42,6 +43,7 @@ export function GravadorOpenAI({
   onTexto,
   onGravando,
   onErro,
+  onPasta,
 }: {
   entrevistaId: string;
   /** false quando ha texto digitado sem salvar: a gravacao escreveria por cima. */
@@ -50,6 +52,8 @@ export function GravadorOpenAI({
   onTexto: (texto: string) => void;
   onGravando: (gravando: boolean) => void;
   onErro: (mensagem: string | null) => void;
+  /** O que aconteceu com a gravacao inteira: foi para a pasta, ou por que nao. */
+  onPasta?: (mensagem: string) => void;
 }) {
   const [ciente, setCiente] = useState(false);
   const [gravando, setGravando] = useState(false);
@@ -67,6 +71,9 @@ export function GravadorOpenAI({
   const continuar = useRef(false);
   const fila = useRef<Promise<void>>(Promise.resolve());
   const numero = useRef(0);
+  const inteiro = useRef<MediaRecorder | null>(null);
+  const tipoRef = useRef("audio/webm");
+  const pedacosInteiros = useRef<Blob[]>([]);
 
   function enfileirar(blob: Blob, tipo: string) {
     if (blob.size < MINIMO_BYTES) return;
@@ -105,6 +112,7 @@ export function GravadorOpenAI({
       // se abre outro gravador, em vez de fatiar um so.
       if (continuar.current) abrirTrecho(tipo);
       else {
+        guardarInteira(tipo);
         desligarMicrofone();
         terminarDepoisDaFila();
       }
@@ -137,6 +145,38 @@ export function GravadorOpenAI({
   /** Avisa que acabou so depois que o ultimo trecho voltou: e ai que o texto esta inteiro. */
   function terminarDepoisDaFila() {
     fila.current = fila.current.then(() => onGravando(false));
+  }
+
+  /** A gravacao inteira vai para a pasta do cliente, depois dos trechos. */
+  function guardarInteira(tipo: string) {
+    const g = inteiro.current;
+    if (!g) return;
+    inteiro.current = null;
+    const mandar = () => {
+      const blob = new Blob(pedacosInteiros.current, { type: tipo });
+      pedacosInteiros.current = [];
+      if (blob.size < MINIMO_BYTES) return;
+      fila.current = fila.current.then(async () => {
+        try {
+          const extensao = tipo.includes("mp4") ? "m4a" : tipo.includes("ogg") ? "ogg" : "webm";
+          const corpo = new FormData();
+          corpo.append("audio", new File([blob], `gravacao.${extensao}`, { type: tipo.split(";")[0] }));
+          const r = await fetch(`/api/entrevistas/${entrevistaId}/gravacao`, { method: "POST", body: corpo });
+          const dados = await r.json().catch(() => ({}));
+          onPasta?.(
+            dados.guardado
+              ? `Gravacao guardada na pasta do cliente: ${dados.nome}.`
+              : (dados.motivo ?? dados.erro ?? "A gravacao nao foi guardada na pasta."),
+          );
+        } catch {
+          onPasta?.("A gravacao nao foi guardada na pasta (falha de conexao). A transcricao esta salva.");
+        }
+      });
+    };
+    if (g.state === "recording") {
+      g.onstop = mandar;
+      g.stop();
+    } else mandar();
   }
 
   function desligarMicrofone() {
@@ -176,6 +216,16 @@ export function GravadorOpenAI({
     onGravando(true);
     medir(fluxo.current);
     relogioRef.current = setInterval(() => setSegundos((s) => s + 1), 1000);
+    // A conversa inteira, para a pasta do cliente. timeslice: os dados chegam
+    // aos poucos e uma queda no meio nao perde tudo.
+    pedacosInteiros.current = [];
+    const g = new MediaRecorder(fluxo.current, { mimeType: tipo });
+    g.ondataavailable = (ev) => {
+      if (ev.data.size > 0) pedacosInteiros.current.push(ev.data);
+    };
+    g.start(10_000);
+    inteiro.current = g;
+    tipoRef.current = tipo;
     abrirTrecho(tipo);
   }
 
@@ -187,6 +237,7 @@ export function GravadorOpenAI({
     // O onstop do gravador manda o ultimo trecho e chama terminarDepoisDaFila.
     if (gravador.current?.state === "recording") gravador.current.stop();
     else {
+      guardarInteira(tipoRef.current);
       desligarMicrofone();
       terminarDepoisDaFila();
     }
@@ -208,8 +259,8 @@ export function GravadorOpenAI({
       <p className="text-sm font-semibold text-sky-950">Gravar a conversa e transcrever na hora</p>
       <p className="text-xs text-sky-900">
         O sistema grava pelo microfone e manda cada minuto para a transcricao da OpenAI: o texto vai aparecendo
-        abaixo enquanto a conversa acontece. O audio nao fica guardado, so o texto. Grave so com a ciencia do
-        cliente — o audio sai do escritorio para virar texto.
+        abaixo enquanto a conversa acontece. Ao parar, a gravacao inteira vai para a pasta do cliente ligado a
+        entrevista. Grave so com a ciencia do cliente — o audio sai do escritorio para virar texto.
       </p>
 
       {!ciente ? (

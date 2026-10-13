@@ -101,6 +101,8 @@ export function PainelEntrevistas({
   const [assunto, setAssunto] = useState("");
   const [tipoNovo, setTipoNovo] = useState<"TRIAGEM" | "TESTEMUNHA" | "COLETA">("TRIAGEM");
   const [processoNovo, setProcessoNovo] = useState("");
+  /** O cliente da entrevista: na triagem e quem e ouvido; nas outras, o dono do caso. */
+  const [clienteNovo, setClienteNovo] = useState("");
   const [aberta, setAberta] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -113,6 +115,11 @@ export function PainelEntrevistas({
   /** O que a leitura da procuracao achou, para mostrar ao lado do roteiro. */
   const [lidoDaProcuracao, setLidoDaProcuracao] = useState<Record<string, string>>({});
   const [enviadoPorZap, setEnviadoPorZap] = useState<Record<string, string>>({});
+  /** O que foi (ou nao foi) para a pasta do cliente: gravacao, audio, PDF. */
+  const [naPasta, setNaPasta] = useState<Record<string, string>>({});
+  const anotarPasta = (id: string, msg: string | null) => {
+    if (msg) setNaPasta((p) => ({ ...p, [id]: msg }));
+  };
 
   async function mandarPerguntas(id: string) {
     setOcupado(`${id}:zap`);
@@ -201,7 +208,9 @@ export function PainelEntrevistas({
         telefone: telefone || null,
         tipo: tipoNovo,
         numeroProcesso: processoNovo.trim() || null,
+        clienteId: clienteNovo || null,
       });
+      setClienteNovo("");
       setNome("");
       setTelefone("");
       setAssunto("");
@@ -246,7 +255,12 @@ export function PainelEntrevistas({
               <span className="text-slate-600">Tipo de entrevista</span>
               <select
                 value={tipoNovo}
-                onChange={(e) => setTipoNovo(e.target.value as typeof tipoNovo)}
+                onChange={(e) => {
+                  const novo = e.target.value as typeof tipoNovo;
+                  setTipoNovo(novo);
+                  // Triagem: quem e ouvido e o cliente. Testemunha e coleta: outra pessoa.
+                  if (clienteNovo) setNome(novo === "TRIAGEM" ? (clientes.find((c) => c.id === clienteNovo)?.nome ?? "") : "");
+                }}
                 className="rounded-lg border border-slate-300 px-3 py-2"
               >
                 <option value="TRIAGEM">Triagem (primeiro atendimento)</option>
@@ -267,16 +281,44 @@ export function PainelEntrevistas({
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
               <span className="text-slate-600">
-                {tipoNovo === "TESTEMUNHA" ? "Nome da testemunha" : "Quem sera ouvido"}
+                {tipoNovo === "TRIAGEM" ? "Cliente (quem sera ouvido)" : "Cliente (de quem e o caso)"}
               </span>
-              <input
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                required
-                minLength={2}
+              <select
+                value={clienteNovo}
+                onChange={(ev) => {
+                  setClienteNovo(ev.target.value);
+                  // Na triagem, quem e ouvido e o proprio cliente.
+                  if (tipoNovo === "TRIAGEM") {
+                    setNome(clientes.find((c) => c.id === ev.target.value)?.nome ?? "");
+                  }
+                }}
                 className="rounded-lg border border-slate-300 px-3 py-2"
-              />
+              >
+                <option value="">Pessoa ainda nao cadastrada</option>
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-slate-500">
+                A gravacao e o PDF da transcricao vao para a pasta deste cliente.
+              </span>
             </label>
+            {tipoNovo !== "TRIAGEM" || !clienteNovo ? (
+              <label className="grid gap-1 text-sm">
+                <span className="text-slate-600">
+                  {tipoNovo === "TESTEMUNHA" ? "Nome da testemunha" : "Nome de quem sera ouvido"}
+                </span>
+                <input
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  required
+                  minLength={2}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
+              </label>
+            ) : null}
             <label className="grid gap-1 text-sm">
               <span className="text-slate-600">Telefone (opcional)</span>
               <input
@@ -518,10 +560,12 @@ export function PainelEntrevistas({
                           }
                         }}
                         onErro={setErro}
+                        onPasta={(msg) => anotarPasta(e.id, msg)}
                       />
                       <EnvioDeAudio
                         entrevistaId={e.id}
-                        onTranscrito={() => {
+                        onTranscrito={(pasta) => {
+                          anotarPasta(e.id, pasta);
                           setRascunho((r) => {
                             const { [e.id]: _fora, ...resto } = r;
                             return resto;
@@ -682,7 +726,28 @@ export function PainelEntrevistas({
                     ) : null}
                     <button
                       type="button"
-                      onClick={() => acao(e.id, "encerrar", "POST", e.encerrada ? { reabrir: true } : {})}
+                      onClick={async () => {
+                        setOcupado(`${e.id}:encerrar`);
+                        try {
+                          const r = await chamar(
+                            `/api/entrevistas/${e.id}/encerrar`,
+                            "POST",
+                            e.encerrada ? { reabrir: true } : {},
+                          );
+                          const pasta = (r as { pasta?: { guardado: boolean; nome?: string; motivo?: string } | null })?.pasta;
+                          if (pasta) {
+                            anotarPasta(
+                              e.id,
+                              pasta.guardado ? `PDF da transcricao guardado na pasta do cliente: ${pasta.nome}.` : (pasta.motivo ?? null),
+                            );
+                          }
+                          router.refresh();
+                        } catch (falha) {
+                          setErro((falha as Error).message);
+                        } finally {
+                          setOcupado(null);
+                        }
+                      }}
                       disabled={ocupado === `${e.id}:encerrar`}
                       className="botao-secundario text-xs"
                     >
@@ -707,6 +772,13 @@ export function PainelEntrevistas({
                       Excluir entrevista
                     </button>
                   </div>
+
+                  {naPasta[e.id] ? <p className="text-xs text-emerald-800">{naPasta[e.id]}</p> : null}
+                  {!e.clienteId ? (
+                    <p className="text-xs text-amber-800">
+                      Sem cliente ligado: a gravacao e o PDF nao vao para pasta nenhuma. Ligue ao cliente ao lado.
+                    </p>
+                  ) : null}
 
                   {e.tipo === "TRIAGEM" && e.clienteId && modelos.length > 0 ? (
                     <DocumentosDaEntrevista clienteId={e.clienteId} modelos={modelos} />

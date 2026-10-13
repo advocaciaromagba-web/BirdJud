@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
-import { ProcessoNaoCadastrado, criarEntrevista } from "@/lib/entrevista-do-escritorio";
+import { EntrevistaNaoEncontrada, ProcessoNaoCadastrado, criarEntrevista } from "@/lib/entrevista-do-escritorio";
 import { TIPOS_DE_ENTREVISTA } from "@/lib/entrevista";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,9 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ entrevista });
   } catch (erro) {
+    if (erro instanceof EntrevistaNaoEncontrada) {
+      return NextResponse.json({ erro: "Cliente nao encontrado neste escritorio." }, { status: 404 });
+    }
     if (erro instanceof ProcessoNaoCadastrado) {
       return NextResponse.json({ erro: erro.message }, { status: erro.status });
     }

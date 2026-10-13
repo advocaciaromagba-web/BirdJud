@@ -23,7 +23,8 @@ export function EnvioDeAudio({
   onErro,
 }: {
   entrevistaId: string;
-  onTranscrito: () => void;
+  /** pasta: o que aconteceu com o arquivo de audio na pasta do cliente. */
+  onTranscrito: (pasta: string | null) => void;
   onErro: (mensagem: string | null) => void;
 }) {
   const [enviando, setEnviando] = useState(false);
@@ -40,11 +41,15 @@ export function EnvioDeAudio({
         method: "POST",
         body: corpo,
       });
-      if (!r.ok) {
-        const dados = await r.json().catch(() => ({}));
-        throw new Error(dados.erro ?? "Nao deu para transcrever o audio.");
-      }
-      onTranscrito();
+      const dados = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(dados.erro ?? "Nao deu para transcrever o audio.");
+      onTranscrito(
+        dados.pasta
+          ? dados.pasta.guardado
+            ? `Audio guardado na pasta do cliente: ${dados.pasta.nome}.`
+            : dados.pasta.motivo
+          : null,
+      );
     } catch (falha) {
       onErro((falha as Error).message);
     } finally {
@@ -61,7 +66,7 @@ export function EnvioDeAudio({
         pela plataforma. E a mesma natureza de exposicao de quando o texto
         vai para a IA ser organizado — mas e o audio, com a voz de quem
         falou. Serve para a conversa gravada no celular, a audiencia ou a
-        reuniao; o audio nao fica guardado, so o texto.
+        reuniao; com a entrevista ligada a um cliente, o audio fica na pasta dele.
       </p>
 
       {!confirmado ? (

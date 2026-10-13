@@ -35,6 +35,8 @@ import {
 import { montarPromptMinuta, camposFaltando, type ClienteParaMinuta } from "./minuta-prompt";
 import { gerarPdfEntrevista, gerarPdfPerguntas } from "./entrevista-pdf";
 import { mandarArquivoNoWhatsapp } from "./documento-no-whatsapp";
+import { guardarArquivo } from "./arquivos";
+import { cutucarNuvem } from "./avisar-nuvem";
 import { prismaPlataforma } from "./prisma";
 import {
   MINIMO_DA_TRANSCRICAO,
@@ -71,6 +73,14 @@ export async function criarEntrevista(
   },
 ) {
   const processoId = await processoPeloNumero(escritorioId, dados.numeroProcesso);
+  // A chave estrangeira so prova que o cliente existe, nao que e DESTE
+  // escritorio: conferir dentro do escritorio antes de ligar.
+  if (dados.clienteId) {
+    const cliente = await comEscritorio(escritorioId, (db) =>
+      db.cliente.findFirst({ where: { id: dados.clienteId! }, select: { id: true } }),
+    );
+    if (!cliente) throw new EntrevistaNaoEncontrada();
+  }
   return comEscritorio(escritorioId, (db) =>
     db.entrevista.create({
       data: semEscritorio({
@@ -668,4 +678,92 @@ export async function mandarPerguntasNoWhatsapp(
     usuarioId,
   );
   return { telefone: enviado.telefone };
+}
+
+// ---------------------------------------------------------------------------
+// Na pasta do cliente: a gravacao e o PDF da transcricao
+// ---------------------------------------------------------------------------
+
+const EXTENSAO_DO_AUDIO: Record<string, string> = {
+  "audio/webm": "webm",
+  "audio/mp4": "m4a",
+  "audio/x-m4a": "m4a",
+  "audio/m4a": "m4a",
+  "audio/mpeg": "mp3",
+  "audio/mp3": "mp3",
+  "audio/ogg": "ogg",
+  "audio/wav": "wav",
+  "audio/x-wav": "wav",
+};
+
+function nomeNaPasta(e: { nome: string; criadaEm: Date }, sufixo: string, extensao: string): string {
+  const dia = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(e.criadaEm);
+  const quem = e.nome.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").slice(0, 60);
+  return `Entrevista ${dia} - ${quem} - ${sufixo}.${extensao}`;
+}
+
+export type Guardado = { guardado: true; nome: string } | { guardado: false; motivo: string };
+
+/**
+ * Guarda a gravacao da entrevista na pasta do cliente (e, com nuvem ligada,
+ * na pasta dele la). Sem cliente ligado nao ha pasta: a gravacao nao fica, e
+ * a resposta diz por que — a tela avisa para ligar ao cliente.
+ *
+ * Falha ao guardar NAO apaga a transcricao: o texto ja esta salvo, e e ele que
+ * o advogado usa. A resposta traz o motivo para a tela mostrar.
+ */
+export async function guardarGravacaoNaPasta(
+  escritorioId: string,
+  id: string,
+  usuarioId: string,
+  audio: { tipo: string; dados: Buffer },
+  sufixo = "gravacao",
+): Promise<Guardado> {
+  const e = await entrevistaPorId(escritorioId, id);
+  if (!e.clienteId) return { guardado: false, motivo: "Ligue a entrevista a um cliente para a gravacao ficar na pasta dele." };
+  const tipo = audio.tipo.split(";")[0].trim().toLowerCase();
+  const extensao = EXTENSAO_DO_AUDIO[tipo];
+  if (!extensao) return { guardado: false, motivo: `Formato de audio ${tipo || "desconhecido"} nao e guardado na pasta.` };
+  try {
+    const nome = nomeNaPasta(e, `${sufixo} ${new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(new Date()).replace(":", "h")}`, extensao);
+    await guardarArquivo(escritorioId, {
+      nome,
+      tipo,
+      conteudo: audio.dados,
+      usuarioId,
+      clienteId: e.clienteId,
+      processoId: e.processoId,
+      descricao: `Gravacao da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
+    });
+    await cutucarNuvem(escritorioId);
+    return { guardado: true, nome };
+  } catch (falha) {
+    return { guardado: false, motivo: `A gravacao nao foi guardada na pasta: ${(falha as Error).message}` };
+  }
+}
+
+/** Ao encerrar: o PDF da transcricao vai para a pasta do cliente. */
+export async function guardarPdfNaPasta(escritorioId: string, id: string, usuarioId: string): Promise<Guardado> {
+  const e = await entrevistaPorId(escritorioId, id);
+  if (!e.clienteId) return { guardado: false, motivo: "Sem cliente ligado, o PDF nao vai para pasta nenhuma." };
+  try {
+    const { pdf } = await pdfDaEntrevista(escritorioId, id);
+    const hora = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })
+      .format(new Date())
+      .replace(":", "h");
+    const nome = nomeNaPasta(e, `transcricao ${hora}`, "pdf");
+    await guardarArquivo(escritorioId, {
+      nome,
+      tipo: "application/pdf",
+      conteudo: Buffer.from(pdf),
+      usuarioId,
+      clienteId: e.clienteId,
+      processoId: e.processoId,
+      descricao: `Transcricao da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
+    });
+    await cutucarNuvem(escritorioId);
+    return { guardado: true, nome };
+  } catch (falha) {
+    return { guardado: false, motivo: `O PDF nao foi guardado na pasta: ${(falha as Error).message}` };
+  }
 }

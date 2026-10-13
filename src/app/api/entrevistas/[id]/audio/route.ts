@@ -9,6 +9,7 @@ import {
 } from "@/lib/transcricao-audio";
 import {
   EntrevistaNaoEncontrada,
+  guardarGravacaoNaPasta,
   transcreverAudio,
 } from "@/lib/entrevista-do-escritorio";
 
@@ -28,7 +29,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao("IA", "ENTREVISTAS");
+    const { escritorioId, usuarioId } = await exigirSessao("IA", "ENTREVISTAS");
     const { id } = await params;
 
     const formulario = await req.formData();
@@ -48,17 +49,20 @@ export async function POST(
 
     // O gravador da tela manda um trecho por minuto, marcado como continua.
     const continua = formulario.get("continua") === "true";
+    const dados = Buffer.from(await enviado.arrayBuffer());
     const resultado = await transcreverAudio(
       escritorioId,
       id,
-      {
-        nome: enviado.name || "audio",
-        tipo: enviado.type,
-        dados: Buffer.from(await enviado.arrayBuffer()),
-      },
+      { nome: enviado.name || "audio", tipo: enviado.type, dados },
       { continua, origem: continua ? "AUDIO_GRAVADO" : "AUDIO_ENVIADO" },
     );
-    return NextResponse.json(resultado);
+    // O audio importado (o cliente gravou em casa, a audiencia) vai para a
+    // pasta do cliente. Os trechos da gravacao na tela nao: a gravacao
+    // inteira chega depois, por /gravacao, num arquivo so.
+    const pasta = continua
+      ? null
+      : await guardarGravacaoNaPasta(escritorioId, id, usuarioId, { tipo: enviado.type, dados }, "audio enviado");
+    return NextResponse.json({ ...resultado, pasta });
   } catch (erro) {
     if (
       erro instanceof EntrevistaNaoEncontrada ||

@@ -48,6 +48,17 @@ export const TIPOS_ACEITOS: Record<string, string[]> = {
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ["xlsx"],
   "application/zip": ["zip"],
   "application/x-pkcs7-certificates": ["p7b", "p7s"],
+  // Gravacao de entrevista: a feita na tela (webm/mp4, conforme o navegador)
+  // e a que o cliente grava no celular e manda.
+  "audio/webm": ["webm"],
+  "audio/mp4": ["m4a", "mp4"],
+  "audio/x-m4a": ["m4a"],
+  "audio/m4a": ["m4a"],
+  "audio/mpeg": ["mp3", "mpga", "mpeg"],
+  "audio/mp3": ["mp3"],
+  "audio/ogg": ["ogg", "oga", "opus"],
+  "audio/wav": ["wav"],
+  "audio/x-wav": ["wav"],
 };
 
 export class ArquivoRecusado extends Error {

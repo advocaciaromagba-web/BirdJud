@@ -31,6 +31,8 @@ import {
   lerRespostaDaProcuracao,
   pdfDasPerguntas,
   roteiroDaProcuracao,
+  guardarGravacaoNaPasta,
+  guardarPdfNaPasta,
 } from "../src/lib/entrevista-do-escritorio";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
@@ -407,6 +409,41 @@ d("entrevista de triagem", () => {
     expect(lido.observacao).toMatch(/ad judicia/);
     expect(() => lerRespostaDaProcuracao("nao consegui ler")).toThrow(ProcuracaoIlegivel);
     expect(lerRespostaDaProcuracao('{"perguntas": []}').perguntas).toEqual([...ROTEIRO_BASICO]);
+  });
+
+  it("a gravacao e o PDF vao para a pasta do cliente escolhido; sem cliente, nao", async () => {
+    const usuario = await comEscritorio(escritorio, (db) =>
+      db.usuario.create({ data: semEscritorio({ nome: "Dra. Pasta", email: `pasta-${Date.now()}@e.test`, senhaHash: "x", papel: "ADMIN" }) }),
+    );
+    const cliente = await comEscritorio(escritorio, (db) =>
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente da Pasta" }) }),
+    );
+    // Cliente de OUTRO escritorio nao se liga.
+    await expect(
+      criarEntrevista(escritorio, { nome: "X", assunto: "Assunto qualquer longo", usuarioId: usuario.id, clienteId: "nao-e-daqui" }),
+    ).rejects.toBeInstanceOf(EntrevistaNaoEncontrada);
+
+    const sem = await criarEntrevista(escritorio, { nome: "Sem Cliente", assunto: "Ainda nao e cliente do escritorio", usuarioId: usuario.id });
+    const r0 = await guardarGravacaoNaPasta(escritorio, sem.id, usuario.id, { tipo: "audio/webm", dados: Buffer.alloc(8 * 1024, 7) });
+    expect(r0.guardado).toBe(false);
+
+    const e = await criarEntrevista(escritorio, {
+      nome: "Cliente da Pasta",
+      assunto: "Demissao sem justa causa e verbas",
+      usuarioId: usuario.id,
+      clienteId: cliente.id,
+    });
+    const r1 = await guardarGravacaoNaPasta(escritorio, e.id, usuario.id, { tipo: "audio/webm;codecs=opus", dados: Buffer.alloc(8 * 1024, 7) });
+    expect(r1.guardado).toBe(true);
+    await anotar(escritorio, e.id, RELATO);
+    const r2 = await guardarPdfNaPasta(escritorio, e.id, usuario.id);
+    expect(r2.guardado).toBe(true);
+
+    const naPasta = await comEscritorio(escritorio, (db) =>
+      db.arquivo.findMany({ where: { clienteId: cliente.id }, select: { nome: true, tipo: true } }),
+    );
+    expect(naPasta.map((a) => a.tipo).sort()).toEqual(["application/pdf", "audio/webm"]);
+    expect(naPasta.find((a) => a.tipo === "audio/webm")?.nome).toMatch(/^Entrevista .* - Cliente da Pasta - gravacao .*\.webm$/);
   });
 
   it("liga ao cliente quando o caso e aceito", async () => {
