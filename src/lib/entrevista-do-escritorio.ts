@@ -34,6 +34,7 @@ import {
 } from "./transcricao-audio";
 import { montarPromptMinuta, camposFaltando, type ClienteParaMinuta } from "./minuta-prompt";
 import { gerarPdfEntrevista, gerarPdfPerguntas } from "./entrevista-pdf";
+import { mandarArquivoNoWhatsapp } from "./documento-no-whatsapp";
 import { prismaPlataforma } from "./prisma";
 import {
   MINIMO_DA_TRANSCRICAO,
@@ -631,4 +632,40 @@ export async function pdfDasPerguntas(escritorioId: string, id: string): Promise
   });
   const nome = `Perguntas - ${e.nome.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").slice(0, 60)}.pdf`;
   return { pdf, nome };
+}
+
+/**
+ * Manda o PDF das perguntas ao entrevistado pelo WhatsApp.
+ *
+ * O telefone e o do cliente, quando a entrevista ja esta ligada a um; senao,
+ * o que foi informado ao abrir a entrevista — quem esta na triagem ainda nao
+ * e cliente. As respostas voltam em audio e entram por "Importar audio".
+ */
+export async function mandarPerguntasNoWhatsapp(
+  escritorioId: string,
+  id: string,
+  usuarioId: string | null,
+): Promise<{ telefone: string }> {
+  const e = await entrevistaPorId(escritorioId, id);
+  const cliente = e.clienteId
+    ? await comEscritorio(escritorioId, (db) =>
+        db.cliente.findFirst({ where: { id: e.clienteId! }, select: { id: true, nome: true, telefone: true } }),
+      )
+    : null;
+  const { pdf, nome } = await pdfDasPerguntas(escritorioId, id);
+  const enviado = await mandarArquivoNoWhatsapp(
+    escritorioId,
+    {
+      clienteId: cliente?.id ?? null,
+      nomeDoCliente: cliente?.nome ?? e.nome,
+      telefoneDoCadastro: cliente?.telefone?.trim() || e.telefone,
+      arquivo: Buffer.from(pdf),
+      nomeDoArquivo: nome,
+      oQueE: "Perguntas para a sua entrevista",
+      oQueFazer: "Responda gravando audios no celular, como explica o documento, e envie ao escritorio",
+      rotulo: "PERGUNTAS",
+    },
+    usuarioId,
+  );
+  return { telefone: enviado.telefone };
 }

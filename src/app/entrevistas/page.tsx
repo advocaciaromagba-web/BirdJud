@@ -80,6 +80,7 @@ export default async function PaginaEntrevistas() {
         clientes={clientes}
         podeMinuta={contexto.papel === "ADVOGADO" || contexto.papel === "ADMIN"}
         modelos={modelos}
+        temWhatsapp={modulos.includes("WHATSAPP")}
       />
     </Estrutura>
   );

@@ -73,7 +73,7 @@ export async function mandarPecaNoWhatsapp(
     throw new NaoDaParaMandar(
       dados.cliente.telefone
         ? `O telefone do cadastro nao da para ler como celular: ${dados.cliente.telefone}.`
-        : "O cliente esta sem telefone no cadastro.",
+        : "Sem telefone para mandar: preencha o telefone no cadastro (ou na entrevista).",
     );
   }
 
@@ -126,7 +126,8 @@ export async function mandarPecaNoWhatsapp(
 
 /** O que cabe a qualquer PDF que vai ao cliente pelo WhatsApp. */
 type PdfAoCliente = {
-  clienteId: string;
+  /** Null para quem ainda nao e cliente (ex.: perguntas de uma entrevista de triagem). */
+  clienteId: string | null;
   nomeDoCliente: string;
   /** Ja em E164, do cadastro. */
   telefone: string;
@@ -214,7 +215,7 @@ async function mandarPdfAoCliente(
       data: semEscritorio({
         canal: "WHATSAPP",
         tipo: "DOCUMENTO",
-        chave: `zap:documento:${pdf.rotulo}:${pdf.clienteId}:${Date.now()}`,
+        chave: `zap:documento:${pdf.rotulo}:${pdf.clienteId ?? telefone}:${Date.now()}`,
         destino: telefone,
         assunto: `${pdf.oQueE} enviada por WhatsApp`,
         corpo: `${pdf.oQueE} de ${pdf.nomeDoCliente} enviada para ${telefone}.`,

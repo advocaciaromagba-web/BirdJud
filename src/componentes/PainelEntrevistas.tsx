@@ -82,12 +82,15 @@ export function PainelEntrevistas({
   clientes = [],
   podeMinuta = false,
   modelos = [],
+  temWhatsapp = false,
 }: {
   entrevistas: EntrevistaNaTela[];
   temIA: boolean;
   clientes?: { id: string; nome: string }[];
   /** Qual modelo de cada documento esta fixado: o do escritorio ou o do sistema. */
   modelos?: ModeloEmUso[];
+  /** Modulo de WhatsApp: libera mandar o PDF das perguntas direto ao entrevistado. */
+  temWhatsapp?: boolean;
   /** Advogado ou administrador: libera o texto da peticao inicial. */
   podeMinuta?: boolean;
 }) {
@@ -109,6 +112,22 @@ export function PainelEntrevistas({
   const [gravandoIA, setGravandoIA] = useState<Record<string, boolean>>({});
   /** O que a leitura da procuracao achou, para mostrar ao lado do roteiro. */
   const [lidoDaProcuracao, setLidoDaProcuracao] = useState<Record<string, string>>({});
+  const [enviadoPorZap, setEnviadoPorZap] = useState<Record<string, string>>({});
+
+  async function mandarPerguntas(id: string) {
+    setOcupado(`${id}:zap`);
+    setErro(null);
+    try {
+      const r = await fetch(`/api/entrevistas/${id}/perguntas-whatsapp`, { method: "POST" });
+      const dados = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(dados.erro ?? "Nao consegui mandar pelo WhatsApp.");
+      setEnviadoPorZap((z) => ({ ...z, [id]: `Enviado pelo WhatsApp para ${dados.telefone}.` }));
+    } catch (falha) {
+      setErro((falha as Error).message);
+    } finally {
+      setOcupado(null);
+    }
+  }
 
   async function lerProcuracao(id: string, arquivo: File) {
     setOcupado(`${id}:procuracao`);
@@ -445,6 +464,19 @@ export function PainelEntrevistas({
                       >
                         PDF das perguntas para o cliente
                       </a>
+                      {temWhatsapp ? (
+                        <button
+                          type="button"
+                          onClick={() => mandarPerguntas(e.id)}
+                          disabled={ocupado === `${e.id}:zap`}
+                          className="botao-secundario text-xs disabled:opacity-50"
+                        >
+                          {ocupado === `${e.id}:zap` ? "Enviando..." : "Enviar pelo WhatsApp"}
+                        </button>
+                      ) : null}
+                      {enviadoPorZap[e.id] ? (
+                        <span className="text-xs text-emerald-800">{enviadoPorZap[e.id]}</span>
+                      ) : null}
                       <span className="text-xs text-slate-500">
                         Para o cliente responder gravando em casa e mandar o audio: ele entra aqui por
                         &quot;Importar audio gravado&quot; e e transcrito.

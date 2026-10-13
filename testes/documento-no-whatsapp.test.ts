@@ -12,6 +12,7 @@ import {
   NaoDaParaMandar,
   mandarPecaNoWhatsapp,
 } from "../src/lib/documento-no-whatsapp";
+import { criarEntrevista, mandarPerguntasNoWhatsapp } from "../src/lib/entrevista-do-escritorio";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -125,6 +126,28 @@ d("mandar a peca no WhatsApp", () => {
     expect(cabecalho).toContain("document");
     // O PDF NAO vai dentro do JSON.
     expect(JSON.stringify(corpo)).not.toContain("%PDF");
+  });
+
+  it("perguntas da entrevista vao para quem ainda nao e cliente, pelo telefone da entrevista", async () => {
+    subidos = [];
+    mandadas = [];
+    const e = await criarEntrevista(escritorio, {
+      nome: "Joao Ainda Nao Cliente",
+      assunto: "Foi demitido e nao recebeu as verbas",
+      telefone: "(77) 97777-1111",
+      usuarioId: "x",
+    });
+    await comEscritorio(escritorio, (db) =>
+      db.entrevista.update({ where: { id: e.id }, data: { roteiro: ["Quando voce foi demitido?"] } }),
+    );
+    const r = await mandarPerguntasNoWhatsapp(escritorio, e.id, null);
+    expect(r.telefone).toBe("5577977771111");
+    expect(subidos[0].nome).toMatch(/^Perguntas - /);
+    const aviso = await comEscritorio(escritorio, (db) =>
+      db.aviso.findFirstOrThrow({ where: { chave: { startsWith: "zap:documento:PERGUNTAS:" } } }),
+    );
+    expect(aviso.clienteId).toBeNull();
+    expect(aviso.estado).toBe("ENVIADO");
   });
 
   it("conta a mensagem no consumo do mes", async () => {
