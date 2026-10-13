@@ -9,7 +9,7 @@ import { dataHoraBR } from "./datas";
 import { paraE164BR } from "./whatsapp";
 import { rotuloDoAviso } from "./agenda-rotulos";
 import { moduloAtivo } from "./modulos";
-import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
+import { limparParametro, MODELOS, modeloDoTipo } from "./modelos-whatsapp";
 import {
   O_QUE_FAZER,
   PREFIXO_DO_REENVIO_AUTOMATICO,
@@ -353,6 +353,16 @@ export async function reenviar(
     throw new NaoDaParaReenviar("Documento se manda de novo pela ficha do cliente: o PDF e gerado na hora.");
   }
   if (original.tipo === TIPO_DO_ALERTA) throw new NaoDaParaReenviar("Alerta interno nao se reenvia.");
+  if (original.canal === "WHATSAPP") {
+    // Mensagem montada errada pelo sistema (#132000) falharia de novo igual.
+    const esperado = Object.values(MODELOS).find((m) => m.nome === original.modelo)?.parametros.length;
+    const tinha = Array.isArray(original.parametros) ? original.parametros.length : 0;
+    if (esperado !== undefined && esperado !== tinha) {
+      throw new NaoDaParaReenviar(
+        "Esta mensagem saiu montada errada pelo sistema e falharia de novo. Ja foi corrigido: as proximas saem certas. Marque esta como resolvida.",
+      );
+    }
+  }
 
   const contato = await contatoAtual(escritorioId, original);
   const novoDestino =

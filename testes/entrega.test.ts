@@ -350,6 +350,15 @@ d("entrega no banco", () => {
     expect(await alertasDe(copia.id)).toHaveLength(1);
   });
 
+  it("mensagem montada com parametros a menos (#132000) nao se reenvia igual", async () => {
+    const { id, idNaMeta } = await enviarERetornarId(`t132:${marca}`, {
+      parametros: ["Maria", "Banca", "Audiencia", "amanha", "Forum"],
+    });
+    await webhook([{ id: idNaMeta, status: "failed", errors: [{ code: 132000 }] }]);
+    await expect(reenviar(esc, id, { automatico: false, quem: "x" })).rejects.toThrow(/montada errada/);
+    await marcarResolvida(esc, id, "DESCARTADO", "Secretaria", null);
+  });
+
   it("reenvio manual vai para o telefone corrigido no cadastro", async () => {
     const { id, idNaMeta } = await enviarERetornarId(`t4:${marca}`);
     await webhook([{ id: idNaMeta, status: "failed", errors: [{ code: 131026 }] }]);
