@@ -11,6 +11,12 @@ nova em serviço de monitoramento.
   minutos**, de fora do Railway.
 - O workflow executa `scripts/vigia-externo.sh`, que confere:
   - `https://birdjud.com.br/api/saude`: a aplicação e o banco;
+  - `https://birdjud.com.br/api/saude/rotinas`: o trabalhador está concluindo
+    trabalho (algum nos últimos 90 minutos) e nenhuma rotina essencial de
+    escritório — avisos, lembretes, captura e triagem de publicações — tem a
+    última execução em falha. Responde só números, nunca qual escritório: o
+    detalhe está no log do serviço TRABALHADOR. Existe desde 13/10/2026, quando
+    os lembretes de um escritório ficaram horas parados com o site "verde";
   - `https://birdjud.com.br/entrar`: a tela de entrada;
   - `https://www.birdjud.com.br`: o site;
   - o certificado de `birdjud.com.br`, com pelo menos 14 dias de validade.
