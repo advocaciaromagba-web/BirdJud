@@ -206,15 +206,13 @@ async function alertarQuemEnviou(escritorioId: string, aviso: AvisoComCompromiss
       .filter((l) => l !== null)
       .join("\n");
 
+    // Ja alertado: a chave e unica. ON CONFLICT DO NOTHING, e NAO try/catch do
+    // P2002: dentro da transacao, a violacao aborta tudo e o comando seguinte
+    // falha com 25P02 — foi o que derrubou a rotina LEMBRAR inteira quando a
+    // pessoa alertada recebia por e-mail e por WhatsApp.
     const criar = async (dados: Omit<Prisma.AvisoUncheckedCreateInput, "escritorioId">): Promise<number> => {
-      try {
-        await db.aviso.create({ data: semEscritorio(dados) });
-        return 1;
-      } catch (erro) {
-        // Ja alertado: a chave e unica.
-        if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") return 0;
-        throw erro;
-      }
+      const r = await db.aviso.createMany({ data: [semEscritorio(dados)], skipDuplicates: true });
+      return r.count;
     };
 
     let criados = 0;
@@ -284,7 +282,13 @@ export async function conferirEntregas(escritorioId: string, agora = new Date())
         // Sem como reenviar (contato apagado, pessoa bloqueou): vai para a equipe.
       }
     }
-    alertas += await alertarQuemEnviou(escritorioId, f);
+    try {
+      alertas += await alertarQuemEnviou(escritorioId, f);
+    } catch (erro) {
+      // Uma falha estranha nao pode travar a rotina LEMBRAR inteira: depois
+      // daqui saem os lembretes e resumos de todo o escritorio.
+      console.error(`alerta da falha ${f.id}: ${erro instanceof Error ? erro.message : String(erro)}`.slice(0, 500));
+    }
   }
   return { reenviados, alertas };
 }

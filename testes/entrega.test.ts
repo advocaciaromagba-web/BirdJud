@@ -350,6 +350,22 @@ d("entrega no banco", () => {
     expect(await alertasDe(copia.id)).toHaveLength(1);
   });
 
+  it("quem enviou recebe por e-mail E WhatsApp: a rodada seguinte nao quebra (chave repetida na transacao)", async () => {
+    const { id, idNaMeta } = await enviarERetornarId(`tdup:${marca}`, { enviadoPorId: quemEnviou });
+    await webhook([{ id: idNaMeta, status: "failed", errors: [{ code: 131026 }] }]);
+    const canais = (await alertasDe(id)).map((a) => a.canal).sort();
+    expect(canais).toEqual(["EMAIL"]);
+    const zap = await comEscritorio(esc, (db) =>
+      db.aviso.count({ where: { tipo: TIPO_DO_ALERTA, chave: `zap:falha:${id}:${quemEnviou}` } }),
+    );
+    expect(zap).toBe(1);
+    // Antes: P2002 no e-mail abortava a transacao e o WhatsApp derrubava a
+    // rotina LEMBRAR inteira (25P02). Agora as duas rodadas passam sem repetir.
+    expect((await conferirEntregas(esc)).alertas).toBe(0);
+    expect((await conferirEntregas(esc)).alertas).toBe(0);
+    await marcarResolvida(esc, id, "DESCARTADO", "Secretaria", null);
+  });
+
   it("mensagem montada com parametros a menos (#132000) nao se reenvia igual", async () => {
     const { id, idNaMeta } = await enviarERetornarId(`t132:${marca}`, {
       parametros: ["Maria", "Banca", "Audiencia", "amanha", "Forum"],
