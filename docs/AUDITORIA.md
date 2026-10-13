@@ -58,6 +58,12 @@ O GitHub Actions confere o sistema de fora do Railway a cada 10 minutos
 (saúde com banco, entrada, site, certificado). Quando cai, abre uma issue e o
 GitHub manda e-mail ao dono do repositório. Ver `docs/VIGIA-EXTERNO.md`.
 
+Em 13/10/2026 a rotina LEMBRAR de um escritório ficou horas parada (erro
+25P02: alerta de falha repetido dentro da transação) com o site respondendo
+normalmente. Corrigido no mesmo dia, e o vigia passou a conferir também
+`/api/saude/rotinas`: trabalhador parado ou rotina essencial com a última
+execução em falha abre o mesmo alarme.
+
 ### 5. Regra de 90 dias no balde do R2 `[voce]`
 
 O backup cifrado sobe todo dia e a restauracao foi ensaiada, mas sem a regra
