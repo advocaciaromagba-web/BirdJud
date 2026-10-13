@@ -11,11 +11,18 @@ import { entrevistasDoEscritorio } from "@/lib/entrevista-do-escritorio";
 import { comEscritorio } from "@/lib/prisma";
 import { Estrutura } from "@/componentes/Estrutura";
 import { PainelEntrevistas } from "@/componentes/PainelEntrevistas";
+import { modelosVigentes } from "@/lib/modelos-do-escritorio";
+import { NOME_DA_ESPECIE } from "@/lib/modelos";
 
 export default async function PaginaEntrevistas() {
   const contexto = await contextoDaPagina(undefined, "ENTREVISTAS");
   const modulos = await modulosAtivos(contexto.escritorioId);
   const lista = await entrevistasDoEscritorio(contexto.escritorioId);
+  const modelos = (await modelosVigentes(contexto.escritorioId)).map((m) => ({
+    especie: m.especie,
+    nome: NOME_DA_ESPECIE[m.especie],
+    doEscritorio: m.doEscritorio,
+  }));
   const clientes = await comEscritorio(contexto.escritorioId, (db) =>
     db.cliente.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true }, take: 3000 }),
   );
@@ -67,6 +74,7 @@ export default async function PaginaEntrevistas() {
         temIA={modulos.includes("IA")}
         clientes={clientes}
         podeMinuta={contexto.papel === "ADVOGADO" || contexto.papel === "ADMIN"}
+        modelos={modelos}
       />
     </Estrutura>
   );

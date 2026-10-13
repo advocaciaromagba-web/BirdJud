@@ -437,6 +437,9 @@ model ModeloDeDocumento {
   /// { usados: string[], desconhecidos: string[] }
   campos        Json?
   ativo         Boolean   @default(true)
+  /// Do ativo: true = sai o modelo do escritorio; false = fica guardado e sai o
+  /// do sistema. O escritorio fixa a escolha na aba Modelos.
+  emUso         Boolean   @default(true)
   enviadoPor    String?
   criadoEm      DateTime  @default(now())
   substituidoEm DateTime?

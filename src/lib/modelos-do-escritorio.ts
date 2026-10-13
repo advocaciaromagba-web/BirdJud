@@ -133,10 +133,11 @@ export async function guardarModelo(
 }
 
 /**
- * Volta a usar o modelo que ja vem no sistema.
+ * Exclui o modelo que o escritorio mandou; passa a valer o do sistema.
  *
- * O arquivo enviado some do disco: e papel do escritorio, e ele pediu para
- * tirar. O registro fica inativo, com o nome e a data, para a conferencia.
+ * Para so trocar qual sai na peca sem perder o arquivo, e fixarModelo. Aqui o
+ * arquivo some do disco: e papel do escritorio, e ele pediu para tirar. O
+ * registro fica inativo, com o nome e a data, para a conferencia.
  */
 export async function voltarAoPadrao(
   escritorioId: string,
@@ -158,9 +159,12 @@ export async function voltarAoPadrao(
 
 export type ModeloVigente = {
   especie: Especie;
-  /** false quando e o que ja vem no sistema. */
+  /** O que sai na peca HOJE: true = o do escritorio; false = o do sistema. */
   doEscritorio: boolean;
+  /** O escritorio tem um modelo proprio guardado, em uso ou nao. */
+  temProprio: boolean;
   id: string | null;
+  /** O nome do arquivo do escritorio, quando ha. */
   nomeDoArquivo: string;
   usados: string[];
   desconhecidos: string[];
@@ -179,6 +183,7 @@ export async function modelosVigentes(escritorioId: string): Promise<ModeloVigen
       return {
         especie,
         doEscritorio: false,
+        temProprio: false,
         id: null,
         nomeDoArquivo: nomeDoArquivoPadrao(especie),
         usados: [],
@@ -189,7 +194,8 @@ export async function modelosVigentes(escritorioId: string): Promise<ModeloVigen
     const campos = (m.campos ?? {}) as { usados?: string[]; desconhecidos?: string[] };
     return {
       especie,
-      doEscritorio: true,
+      doEscritorio: m.emUso,
+      temProprio: true,
       id: m.id,
       nomeDoArquivo: m.nomeDoArquivo,
       usados: campos.usados ?? [],
@@ -199,18 +205,60 @@ export async function modelosVigentes(escritorioId: string): Promise<ModeloVigen
   });
 }
 
-/** O .docx que vale hoje para a especie: o do escritorio, ou o do sistema. */
+/** Qual arquivo baixar: o que sai hoje, ou um dos dois de proposito. */
+export type QualModelo = "VIGENTE" | "SISTEMA" | "ESCRITORIO";
+
+/**
+ * O .docx da especie.
+ *
+ * VIGENTE (o padrao, e o que a peca usa) e o do escritorio quando ele esta
+ * fixado em uso; senao, o do sistema. SISTEMA e ESCRITORIO servem para baixar
+ * um dos dois de proposito — para comparar, ou adaptar o do sistema mesmo
+ * tendo o proprio guardado.
+ */
 export async function arquivoDoModelo(
   escritorioId: string,
   especie: Especie,
-): Promise<{ conteudo: Buffer; doEscritorio: boolean }> {
-  const m = await comEscritorio(escritorioId, (db) =>
-    db.modeloDeDocumento.findFirst({ where: { especie, ativo: true } }),
-  );
-  if (!m) {
-    return { conteudo: await montarDocx(MODELO_PADRAO[especie]), doEscritorio: false };
+  qual: QualModelo = "VIGENTE",
+): Promise<{ conteudo: Buffer; doEscritorio: boolean; nomeDoArquivo: string }> {
+  const m =
+    qual === "SISTEMA"
+      ? null
+      : await comEscritorio(escritorioId, (db) =>
+          db.modeloDeDocumento.findFirst({ where: { especie, ativo: true } }),
+        );
+  if (qual === "ESCRITORIO" && !m) throw new ModeloNaoEncontrado();
+  if (!m || (qual === "VIGENTE" && !m.emUso)) {
+    return {
+      conteudo: await montarDocx(MODELO_PADRAO[especie]),
+      doEscritorio: false,
+      nomeDoArquivo: nomeDoArquivoPadrao(especie),
+    };
   }
-  return { conteudo: await ler(escritorioId, m.id), doEscritorio: true };
+  return { conteudo: await ler(escritorioId, m.id), doEscritorio: true, nomeDoArquivo: m.nomeDoArquivo };
+}
+
+/**
+ * Fixa qual modelo sai na peca: o do escritorio ou o do sistema.
+ *
+ * O arquivo do escritorio fica guardado nos dois casos — trocar e um clique,
+ * e nada se perde. Fixar o do escritorio sem ter mandado um e erro.
+ */
+export async function fixarModelo(
+  escritorioId: string,
+  especie: Especie,
+  usar: "ESCRITORIO" | "SISTEMA",
+): Promise<void> {
+  const atual = await comEscritorio(escritorioId, (db) =>
+    db.modeloDeDocumento.findFirst({ where: { especie, ativo: true }, select: { id: true } }),
+  );
+  if (!atual) {
+    if (usar === "SISTEMA") return;
+    throw new ModeloNaoEncontrado();
+  }
+  await comEscritorio(escritorioId, (db) =>
+    db.modeloDeDocumento.update({ where: { id: atual.id }, data: { emUso: usar === "ESCRITORIO" } }),
+  );
 }
 
 /** Como a forma aparece na peca: em portugues, nao em caixa alta de banco. */

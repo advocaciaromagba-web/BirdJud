@@ -15,6 +15,7 @@ export default async function PaginaModelos() {
     especie: m.especie,
     nome: NOME_DA_ESPECIE[m.especie],
     doEscritorio: m.doEscritorio,
+    temProprio: m.temProprio,
     nomeDoArquivo: m.nomeDoArquivo,
     usados: m.usados,
     desconhecidos: m.desconhecidos,

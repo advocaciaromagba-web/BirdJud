@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 export type ModeloNaTela = {
   especie: string;
   nome: string;
+  /** O que sai na peca hoje. */
   doEscritorio: boolean;
+  /** Ha um modelo do escritorio guardado, em uso ou nao. */
+  temProprio: boolean;
   nomeDoArquivo: string;
   usados: string[];
   desconhecidos: string[];
@@ -21,6 +24,10 @@ export type CampoNaTela = { chave: string; sobre: string };
  * A ideia da tela em uma frase: baixe o que tem, edite no Word com o seu
  * timbre, devolva. "Usar o que ja vem" e "mandar o meu" sao o mesmo caminho,
  * com um passo no meio — e por isso nao ha editor aqui dentro.
+ *
+ * Com o modelo do escritorio guardado, a escolha de qual sai na peca e FIXADA
+ * aqui (o do escritorio ou o do sistema), sem apagar nenhum dos dois. Excluir
+ * o do escritorio e outra acao, com confirmacao.
  */
 export function PainelModelos({
   modelos,
@@ -62,10 +69,33 @@ export function PainelModelos({
     router.refresh();
   }
 
-  async function voltarAoPadrao(especie: string) {
+  async function fixar(especie: string, usar: "ESCRITORIO" | "SISTEMA") {
+    setOcupado(especie);
+    setErro(null);
+    setAviso(null);
+    const resposta = await fetch(`/api/modelos/${especie}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ usar }),
+    });
+    setOcupado(null);
+    if (!resposta.ok) {
+      const det = await resposta.json().catch(() => null);
+      setErro(det?.erro ?? "Nao consegui trocar o modelo.");
+      return;
+    }
+    setAviso(
+      usar === "ESCRITORIO"
+        ? "Fixado: as pecas saem no modelo do escritorio."
+        : "Fixado: as pecas saem no modelo do sistema. O do escritorio continua guardado.",
+    );
+    router.refresh();
+  }
+
+  async function excluirOMeu(especie: string) {
     if (
       !confirm(
-        "Voltar ao modelo do sistema? O arquivo que o escritorio enviou sai do ar. As pecas ja geradas continuam como estao.",
+        "Excluir o modelo que o escritorio enviou? O arquivo sai do sistema e passa a valer o modelo do sistema. As pecas ja geradas continuam como estao.",
       )
     )
       return;
@@ -76,10 +106,10 @@ export function PainelModelos({
     setOcupado(null);
     if (!resposta.ok) {
       const det = await resposta.json().catch(() => null);
-      setErro(det?.erro ?? "Nao consegui voltar ao modelo do sistema.");
+      setErro(det?.erro ?? "Nao consegui excluir o modelo.");
       return;
     }
-    setAviso("De volta ao modelo do sistema.");
+    setAviso("Modelo do escritorio excluido. Vale o do sistema.");
     router.refresh();
   }
 
@@ -97,6 +127,11 @@ export function PainelModelos({
             clausulas. Os campos entre chaves ficam como estao.
           </li>
           <li>3. Mande o arquivo de volta aqui. A partir dai, e esse que sai.</li>
+          <li>
+            4. Com o do escritorio guardado, fixe qual sai nas pecas — o do
+            escritorio ou o do sistema. Os dois ficam guardados, e trocar e um
+            clique.
+          </li>
         </ol>
         <p className="mt-3 text-sm text-amber-700">
           O modelo que ja vem no sistema e so o ponto de partida, para o
@@ -121,15 +156,40 @@ export function PainelModelos({
                   <p className="font-medium">{m.nome}</p>
                   <p className="text-xs text-slate-500">
                     {m.doEscritorio
-                      ? `Modelo do escritorio — ${m.nomeDoArquivo}${m.enviadoEmBR ? `, enviado em ${m.enviadoEmBR}` : ""}`
-                      : "Usando o modelo que ja vem no sistema"}
+                      ? `Em uso: modelo do escritorio — ${m.nomeDoArquivo}${m.enviadoEmBR ? `, enviado em ${m.enviadoEmBR}` : ""}`
+                      : m.temProprio
+                        ? `Em uso: modelo do sistema. Guardado: ${m.nomeDoArquivo}${m.enviadoEmBR ? `, enviado em ${m.enviadoEmBR}` : ""}`
+                        : "Em uso: modelo que ja vem no sistema"}
                   </p>
-                  {m.doEscritorio && m.usados.length > 0 ? (
+                  {m.temProprio && podeTrocar ? (
+                    <fieldset className="mt-2 flex flex-wrap gap-4 text-sm" disabled={ocupado === m.especie}>
+                      <legend className="sr-only">Qual modelo sai nas pecas de {m.nome}</legend>
+                      <label className="flex items-center gap-1">
+                        <input
+                          type="radio"
+                          name={`usar-${m.especie}`}
+                          checked={m.doEscritorio}
+                          onChange={() => fixar(m.especie, "ESCRITORIO")}
+                        />
+                        Usar o do escritorio
+                      </label>
+                      <label className="flex items-center gap-1">
+                        <input
+                          type="radio"
+                          name={`usar-${m.especie}`}
+                          checked={!m.doEscritorio}
+                          onChange={() => fixar(m.especie, "SISTEMA")}
+                        />
+                        Usar o do sistema
+                      </label>
+                    </fieldset>
+                  ) : null}
+                  {m.temProprio && m.usados.length > 0 ? (
                     <p className="mt-1 text-xs text-slate-500">
                       Campos no modelo: {m.usados.map((u) => `{{${u}}}`).join(", ")}
                     </p>
                   ) : null}
-                  {m.doEscritorio && m.usados.length === 0 ? (
+                  {m.temProprio && m.usados.length === 0 ? (
                     <p className="mt-1 text-xs text-amber-700">
                       Nenhum campo reconhecido: a peca vai sair igual para todo
                       cliente. Confira se os campos estao escritos entre chaves
@@ -146,12 +206,21 @@ export function PainelModelos({
 
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <a
-                    href={`/api/modelos/${m.especie}`}
+                    href={`/api/modelos/${m.especie}?qual=sistema`}
                     className="botao-secundario"
                     download
                   >
-                    Baixar
+                    Baixar o do sistema
                   </a>
+                  {m.temProprio ? (
+                    <a
+                      href={`/api/modelos/${m.especie}?qual=escritorio`}
+                      className="botao-secundario"
+                      download
+                    >
+                      Baixar o do escritorio
+                    </a>
+                  ) : null}
                   {podeTrocar ? (
                     <>
                       <input
@@ -173,16 +242,16 @@ export function PainelModelos({
                         onClick={() => entradas.current[m.especie]?.click()}
                         className="botao-principal disabled:opacity-50"
                       >
-                        {ocupado === m.especie ? "Enviando..." : "Enviar o meu"}
+                        {ocupado === m.especie ? "Enviando..." : m.temProprio ? "Enviar outro" : "Enviar o meu"}
                       </button>
-                      {m.doEscritorio ? (
+                      {m.temProprio ? (
                         <button
                           type="button"
                           disabled={ocupado === m.especie}
-                          onClick={() => voltarAoPadrao(m.especie)}
+                          onClick={() => excluirOMeu(m.especie)}
                           className="botao-secundario disabled:opacity-50"
                         >
-                          Voltar ao do sistema
+                          Excluir o do escritorio
                         </button>
                       ) : null}
                     </>
@@ -194,8 +263,8 @@ export function PainelModelos({
         </ul>
         {!podeTrocar ? (
           <p className="mt-3 text-sm text-slate-600">
-            Só o administrador do escritorio troca o modelo. Baixar, todo mundo
-            pode.
+            Só o administrador do escritorio envia, fixa ou exclui modelo.
+            Baixar, todo mundo pode.
           </p>
         ) : null}
       </section>

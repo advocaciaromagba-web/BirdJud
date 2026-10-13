@@ -9,6 +9,7 @@ import {
 } from "@/lib/entrevista";
 import { GravadorDeFala } from "./GravadorDeFala";
 import { EnvioDeAudio } from "./EnvioDeAudio";
+import { DocumentosDaEntrevista, type ModeloEmUso } from "./DocumentosDaEntrevista";
 
 export type EntrevistaNaTela = {
   id: string;
@@ -76,10 +77,13 @@ export function PainelEntrevistas({
   temIA,
   clientes = [],
   podeMinuta = false,
+  modelos = [],
 }: {
   entrevistas: EntrevistaNaTela[];
   temIA: boolean;
   clientes?: { id: string; nome: string }[];
+  /** Qual modelo de cada documento esta fixado: o do escritorio ou o do sistema. */
+  modelos?: ModeloEmUso[];
   /** Advogado ou administrador: libera o texto da peticao inicial. */
   podeMinuta?: boolean;
 }) {
@@ -464,7 +468,7 @@ export function PainelEntrevistas({
                   </section>
                 ) : null}
 
-                {/* 4. Fechamento: cliente, encerrar, PDF e texto da inicial */}
+                {/* 4. Fechamento: cliente, encerrar, PDF, documentos do cliente e texto da inicial */}
                 <section className="grid gap-3 border-t border-slate-100 pt-4">
                   <div className="flex flex-wrap items-center gap-2">
                     {!e.temCliente ? (
@@ -494,6 +498,10 @@ export function PainelEntrevistas({
                       PDF da entrevista
                     </a>
                   </div>
+
+                  {e.clienteId && modelos.length > 0 ? (
+                    <DocumentosDaEntrevista clienteId={e.clienteId} modelos={modelos} />
+                  ) : null}
 
                   {podeMinuta && e.encerrada && e.analise && e.temCliente ? (
                     <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
