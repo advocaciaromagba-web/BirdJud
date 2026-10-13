@@ -22,6 +22,8 @@ import {
   ESQUEMA_ROTEIRO,
   SISTEMA_ANALISE_ENTREVISTA,
   SISTEMA_ROTEIRO,
+  SISTEMA_ROTEIRO_COLETA,
+  SISTEMA_ROTEIRO_TESTEMUNHA,
 } from "./prompts-ia";
 import {
   minutosDe,
@@ -38,6 +40,10 @@ import {
   TranscricaoCurta,
   arrumarRoteiro,
   urgenciaDe,
+  tipoDe,
+  ROTULO_DO_TIPO,
+  TITULO_DO_TIPO,
+  type TipoDeEntrevista,
   type AnaliseDaEntrevista,
 } from "./entrevista";
 
@@ -57,8 +63,12 @@ export async function criarEntrevista(
     telefone?: string | null;
     clienteId?: string | null;
     usuarioId: string;
+    tipo?: TipoDeEntrevista;
+    /** Numero do processo de que a entrevista trata (com ou sem pontuacao). */
+    numeroProcesso?: string | null;
   },
 ) {
+  const processoId = await processoPeloNumero(escritorioId, dados.numeroProcesso);
   return comEscritorio(escritorioId, (db) =>
     db.entrevista.create({
       data: semEscritorio({
@@ -68,9 +78,67 @@ export async function criarEntrevista(
         clienteId: dados.clienteId ?? null,
         usuarioId: dados.usuarioId,
         situacao: "RASCUNHO",
+        tipo: dados.tipo ?? "TRIAGEM",
+        processoId,
       }),
     }),
   );
+}
+
+export class ProcessoNaoCadastrado extends Error {
+  readonly status = 404;
+  constructor(numero: string) {
+    super(`O processo ${numero} nao esta cadastrado em Processos. Cadastre antes, ou deixe o campo vazio.`);
+    this.name = "ProcessoNaoCadastrado";
+  }
+}
+
+/** O processo do escritorio pelo numero. Vazio e null; numero que nao existe e erro. */
+async function processoPeloNumero(escritorioId: string, numero?: string | null): Promise<string | null> {
+  const digitos = (numero ?? "").replace(/\D/g, "");
+  if (!digitos) return null;
+  const p = await comEscritorio(escritorioId, (db) =>
+    db.processo.findFirst({ where: { numero: digitos }, select: { id: true } }),
+  );
+  if (!p) throw new ProcessoNaoCadastrado(numero!.trim());
+  return p.id;
+}
+
+/** O que o roteiro precisa saber do processo: classe, partes e ultimo andamento. */
+async function contextoDoProcesso(escritorioId: string, processoId: string | null): Promise<string | null> {
+  if (!processoId) return null;
+  const p = await comEscritorio(escritorioId, (db) =>
+    db.processo.findFirst({
+      where: { id: processoId },
+      select: { numero: true, classe: true, tribunal: true, partes: true, ultimoAndamentoTipo: true, ultimoAndamentoTexto: true },
+    }),
+  );
+  if (!p) return null;
+  const partes = Array.isArray(p.partes)
+    ? (p.partes as { nome?: string; polo?: string }[])
+        .map((x) => `${x.nome ?? "?"}${x.polo ? ` (polo ${x.polo})` : ""}`)
+        .join("; ")
+    : null;
+  return [
+    `Processo: ${p.numero}${p.classe ? ` — ${p.classe}` : ""}${p.tribunal ? ` (${p.tribunal})` : ""}`,
+    partes ? `Partes: ${partes}` : null,
+    p.ultimoAndamentoTipo || p.ultimoAndamentoTexto
+      ? `Ultimo andamento: ${[p.ultimoAndamentoTipo, (p.ultimoAndamentoTexto ?? "").slice(0, 600)].filter(Boolean).join(" — ")}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/**
+ * Exclui a entrevista de vez: a transcricao, as anotacoes e a organizacao.
+ *
+ * De vez, e nao arquivada: e conversa sigilosa, e quem pede para apagar quer
+ * que ela deixe de existir. A tela pede confirmacao antes.
+ */
+export async function excluirEntrevista(escritorioId: string, id: string): Promise<void> {
+  await entrevistaPorId(escritorioId, id);
+  await comEscritorio(escritorioId, (db) => db.entrevista.delete({ where: { id } }));
 }
 
 export async function entrevistasDoEscritorio(escritorioId: string) {
@@ -79,6 +147,7 @@ export async function entrevistasDoEscritorio(escritorioId: string) {
       where: { situacao: { not: "ARQUIVADA" } },
       orderBy: { criadaEm: "desc" },
       take: 100,
+      include: { processo: { select: { numero: true } } },
     }),
   );
 }
@@ -106,6 +175,10 @@ export async function gerarRoteiro(
 ): Promise<{ perguntas: string[]; comIA: boolean }> {
   const entrevista = await entrevistaPorId(escritorioId, id);
   const tipo = tipoAcao?.trim() ? tipoAcao.trim().slice(0, 300) : entrevista.tipoAcao;
+  const especie = tipoDe(entrevista.tipo);
+  const processo = await contextoDoProcesso(escritorioId, entrevista.processoId);
+  const sistema =
+    especie === "TESTEMUNHA" ? SISTEMA_ROTEIRO_TESTEMUNHA : especie === "COLETA" ? SISTEMA_ROTEIRO_COLETA : SISTEMA_ROTEIRO;
 
   let perguntas = [...ROTEIRO_BASICO];
   let comIA = false;
@@ -115,9 +188,11 @@ export async function gerarRoteiro(
       const { dados, tokensEntrada, tokensSaida } = await pedirEstruturado<{
         perguntas: unknown;
       }>(
-        SISTEMA_ROTEIRO,
+        sistema,
         [
+          `Entrevista: ${ROTULO_DO_TIPO[especie]}`,
           tipo ? `Tipo de acao: ${tipo}` : null,
+          processo,
           `Assunto, nas palavras de quem procurou o escritorio:\n${entrevista.assunto}`,
         ]
           .filter(Boolean)
@@ -206,6 +281,12 @@ export async function organizar(
     await pedirEstruturado<AnaliseDaEntrevista>(
       SISTEMA_ANALISE_ENTREVISTA,
       [
+        `Entrevista: ${ROTULO_DO_TIPO[tipoDe(entrevista.tipo)]}` +
+          (tipoDe(entrevista.tipo) === "TESTEMUNHA"
+            ? " — quem fala e a TESTEMUNHA, nao o cliente. Em pretensoes, ponha o que o depoimento ajuda a provar."
+            : tipoDe(entrevista.tipo) === "COLETA"
+              ? " — o objetivo e reunir informacoes para um documento. Em pretensoes, ponha o que o documento deve conter."
+              : ""),
         `Assunto informado: ${entrevista.assunto}`,
         entrevista.tipoAcao ? `Tipo de acao: ${entrevista.tipoAcao}` : "",
         "",
@@ -370,6 +451,9 @@ export async function gerarMinuta(
   opcoes: { observacoes?: string; ignorarPendencias?: boolean } = {},
 ): Promise<{ prompt: string | null; faltando: string[] }> {
   const e = await entrevistaPorId(escritorioId, id);
+  if (tipoDe(e.tipo) !== "TRIAGEM") {
+    throw new EntrevistaIncompleta("O texto da peticao inicial e da entrevista de triagem. Desta, gere o PDF.");
+  }
   if (!e.encerradaEm) throw new EntrevistaIncompleta("Encerre a entrevista antes de gerar o texto da peticao inicial.");
   if (!e.analise) throw new EntrevistaIncompleta("Organize a entrevista primeiro — o texto e montado a partir dessa organizacao.");
   if (!e.clienteId) throw new EntrevistaIncompleta("Ligue a entrevista ao cliente: a qualificacao vem do cadastro dele.");
@@ -424,7 +508,8 @@ export async function pdfDaEntrevista(escritorioId: string, id: string): Promise
   const roteiro = Array.isArray(e.roteiro) ? (e.roteiro as unknown[]).filter((p): p is string => typeof p === "string") : [];
   const pdf = await gerarPdfEntrevista({
     escritorio: escritorio?.nome ?? "Escritorio",
-    titulo: e.tipoAcao ? `Entrevista — ${e.tipoAcao}` : "Entrevista de triagem",
+    titulo: `${TITULO_DO_TIPO[tipoDe(e.tipo)]}${e.tipoAcao ? ` — ${e.tipoAcao}` : ""}`,
+    rotuloDoEntrevistado: tipoDe(e.tipo) === "TESTEMUNHA" ? "Testemunha" : tipoDe(e.tipo) === "COLETA" ? "Entrevistado" : "Cliente",
     nomeCliente: e.nome,
     documentoCliente: cliente?.documento ?? null,
     nomeAdvogado: quem?.nome ?? "-",

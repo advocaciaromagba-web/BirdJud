@@ -11,6 +11,8 @@ import { entrevistasDoEscritorio } from "@/lib/entrevista-do-escritorio";
 import { comEscritorio } from "@/lib/prisma";
 import { Estrutura } from "@/componentes/Estrutura";
 import { PainelEntrevistas } from "@/componentes/PainelEntrevistas";
+import { ROTULO_DO_TIPO, tipoDe } from "@/lib/entrevista";
+import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { modelosVigentes } from "@/lib/modelos-do-escritorio";
 import { NOME_DA_ESPECIE } from "@/lib/modelos";
 
@@ -41,6 +43,9 @@ export default async function PaginaEntrevistas() {
     temCliente: Boolean(e.clienteId),
     clienteId: e.clienteId,
     tipoAcao: e.tipoAcao ?? "",
+    tipo: tipoDe(e.tipo),
+    rotuloDoTipo: ROTULO_DO_TIPO[tipoDe(e.tipo)],
+    numeroProcesso: e.processo ? formatarNumeroProcesso(e.processo.numero) : null,
     anotacoes: e.anotacoes ?? "",
     encerrada: e.encerradaEm !== null,
     minutaPrompt: e.minutaPrompt,

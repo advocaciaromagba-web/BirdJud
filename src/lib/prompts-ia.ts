@@ -205,6 +205,52 @@ COMO ESCREVER:
 - nao pergunte o que o cadastro ja tem (nome, CPF, endereco).
 `.trim();
 
+/** Roteiro da oitiva de testemunha. As regras de escrita sao as do SISTEMA_ROTEIRO. */
+export const SISTEMA_ROTEIRO_TESTEMUNHA = `
+Voce prepara um advogado brasileiro para ouvir uma TESTEMUNHA, antes do
+processo ou durante ele, para entender o caso.
+
+A partir do assunto, do tipo de acao e do processo informados, sugira
+perguntas objetivas para a testemunha. No maximo 15.
+
+Cubra, nesta ordem:
+1. quem e a testemunha e como conhece as partes (parentesco, amizade,
+   trabalho, inimizade) — e o que mede o peso do que ela diz;
+2. o que ela VIU ou OUVIU pessoalmente, separado do que soube por outros;
+3. quando e onde: data, horario, lugar, quem mais estava presente;
+4. detalhes que confirmam a lembranca (como estava o tempo, o que vestiam,
+   o que foi dito com as palavras de quem disse);
+5. documentos, fotos, mensagens ou outras pessoas que confirmem o relato.
+
+COMO ESCREVER:
+- pergunta ABERTA e NEUTRA: "o que aconteceu?", nunca "ele bateu no
+  carro, nao foi?". Pergunta que sugere a resposta estraga o depoimento;
+- pergunta de gente para gente, uma ideia por pergunta;
+- nada de numero de artigo, sumula ou tese.
+`.trim();
+
+/** Roteiro da coleta de informacoes para gerar um documento. */
+export const SISTEMA_ROTEIRO_COLETA = `
+Voce prepara um advogado brasileiro para uma conversa de COLETA DE
+INFORMACOES: o objetivo e reunir o que falta para escrever um documento
+(declaracao, relato, peca, manifestacao) sobre o assunto informado.
+
+A partir do assunto, do tipo de acao e do processo informados, sugira
+perguntas objetivas que levantem os dados que o documento precisa. No maximo 15.
+
+Cubra, nesta ordem:
+1. os fatos que o documento vai narrar, com datas e lugares;
+2. valores, quantidades, nomes e numeros que precisam sair certos;
+3. os documentos que comprovam cada fato;
+4. o que mudou desde a ultima informacao do processo, quando houver;
+5. o que a pessoa quer que conste — e o que ela prefere que nao conste.
+
+COMO ESCREVER:
+- pergunta de gente para gente, uma ideia por pergunta;
+- nada de numero de artigo, sumula ou tese;
+- nao pergunte o que o cadastro ja tem (nome, CPF, endereco).
+`.trim();
+
 export const ESQUEMA_ROTEIRO = {
   type: "object" as const,
   properties: {

@@ -21,6 +21,35 @@ export const SITUACOES = [
 ] as const;
 export type Situacao = (typeof SITUACOES)[number];
 
+/**
+ * Que conversa e esta.
+ *
+ * TRIAGEM e o primeiro atendimento de quem procurou o escritorio. TESTEMUNHA e
+ * a oitiva de uma testemunha, para entender o caso. COLETA e a conversa para
+ * levantar informacoes e gerar um documento (declaracao, relato, peca).
+ * Todas se gravam, se transcrevem e geram PDF; o roteiro e a organizacao
+ * mudam conforme o tipo, e o texto da peticao inicial e so da triagem.
+ */
+export const TIPOS_DE_ENTREVISTA = ["TRIAGEM", "TESTEMUNHA", "COLETA"] as const;
+export type TipoDeEntrevista = (typeof TIPOS_DE_ENTREVISTA)[number];
+
+export const ROTULO_DO_TIPO: Record<TipoDeEntrevista, string> = {
+  TRIAGEM: "Triagem (primeiro atendimento)",
+  TESTEMUNHA: "Oitiva de testemunha",
+  COLETA: "Coleta de informacoes para documento",
+};
+
+/** Titulo do PDF de cada tipo. */
+export const TITULO_DO_TIPO: Record<TipoDeEntrevista, string> = {
+  TRIAGEM: "Entrevista de triagem",
+  TESTEMUNHA: "Termo de oitiva de testemunha",
+  COLETA: "Entrevista de coleta de informacoes",
+};
+
+export function tipoDe(valor: unknown): TipoDeEntrevista {
+  return (TIPOS_DE_ENTREVISTA as readonly string[]).includes(String(valor)) ? (valor as TipoDeEntrevista) : "TRIAGEM";
+}
+
 export const URGENCIAS = ["BAIXA", "MEDIA", "ALTA", "URGENTE"] as const;
 export type Urgencia = (typeof URGENCIAS)[number];
 

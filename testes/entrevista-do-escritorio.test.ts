@@ -21,6 +21,11 @@ import {
   gerarRoteiro,
   ligarAoCliente,
   organizar,
+  excluirEntrevista,
+  gerarMinuta,
+  EntrevistaIncompleta,
+  EntrevistaNaoEncontrada,
+  ProcessoNaoCadastrado,
 } from "../src/lib/entrevista-do-escritorio";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
@@ -41,6 +46,8 @@ d("entrevista de triagem", () => {
   let saida: Record<string, unknown> = {};
   let chamadas = 0;
   let quebrado = false;
+  /** O que foi mandado a IA na ultima chamada. */
+  let ultimoCorpo = "";
 
   beforeAll(async () => {
     servidor = createServer((req, res) => {
@@ -48,6 +55,7 @@ d("entrevista de triagem", () => {
       req.on("data", (p) => (corpo += p));
       req.on("end", () => {
         chamadas += 1;
+        ultimoCorpo = corpo;
         if (quebrado) {
           res.writeHead(500, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: { message: "fora do ar" } }));
@@ -315,6 +323,50 @@ d("entrevista de triagem", () => {
       delete process.env.OPENAI_BASE_URL;
       await new Promise<void>((ok) => audio.close(() => ok()));
     }
+  });
+
+  it("oitiva de testemunha: roteiro proprio, com o processo; sem peticao inicial; exclui de vez", async () => {
+    await comEscritorio(escritorio, (db) =>
+      db.processo.create({
+        data: semEscritorio({
+          numero: "10000771220268260222",
+          classe: "RECLAMACAO TRABALHISTA",
+          partes: [{ nome: "JOAO DA SILVA", polo: "A" }, { nome: "FAZENDA BOA VISTA LTDA", polo: "P" }],
+          ultimoAndamentoTipo: "Despacho",
+          ultimoAndamentoTexto: "Designo audiencia de instrucao.",
+        }),
+      }),
+    );
+    await expect(
+      criarEntrevista(escritorio, {
+        nome: "Pedro", assunto: "Viu a discussao na fazenda", usuarioId: "x", tipo: "TESTEMUNHA", numeroProcesso: "9999999-99.2026.8.26.0222",
+      }),
+    ).rejects.toBeInstanceOf(ProcessoNaoCadastrado);
+
+    const e = await criarEntrevista(escritorio, {
+      nome: "Pedro Colega",
+      assunto: "Viu a discussao com o gerente na fazenda",
+      usuarioId: "x",
+      tipo: "TESTEMUNHA",
+      numeroProcesso: "1000077-12.2026.8.26.0222",
+    });
+    expect(e.tipo).toBe("TESTEMUNHA");
+    expect(e.processoId).not.toBeNull();
+
+    await gerarRoteiro(escritorio, e.id, "x", "reclamacao trabalhista");
+    // O pedido a IA leva o roteiro de testemunha e o contexto do processo.
+    expect(ultimoCorpo).toContain("TESTEMUNHA");
+    expect(ultimoCorpo).toContain("Oitiva de testemunha");
+    expect(ultimoCorpo).toContain("RECLAMACAO TRABALHISTA");
+    expect(ultimoCorpo).toContain("FAZENDA BOA VISTA LTDA");
+    expect(ultimoCorpo).toContain("Designo audiencia de instrucao.");
+
+    // Texto da peticao inicial e so da triagem.
+    await expect(gerarMinuta(escritorio, e.id, "x")).rejects.toBeInstanceOf(EntrevistaIncompleta);
+
+    await excluirEntrevista(escritorio, e.id);
+    expect(await comEscritorio(escritorio, (db) => db.entrevista.count({ where: { id: e.id } }))).toBe(0);
+    await expect(excluirEntrevista(escritorio, e.id)).rejects.toBeInstanceOf(EntrevistaNaoEncontrada);
   });
 
   it("liga ao cliente quando o caso e aceito", async () => {

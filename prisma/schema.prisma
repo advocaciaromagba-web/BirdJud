@@ -299,6 +299,7 @@ model Processo {
   @@index([escritorioId, ultimoAndamentoEm])
   @@unique([escritorioId, numero])
   @@index([escritorioId])
+  entrevistas Entrevista[]
 }
 
 model Compromisso {
@@ -585,6 +586,11 @@ model Entrevista {
   anotacoes    String?
   /// Tipo de acao ("despejo por falta de pagamento"): orienta o roteiro.
   tipoAcao     String?
+  /// TRIAGEM (primeiro atendimento) | TESTEMUNHA (oitiva) | COLETA (coleta de
+  /// informacoes para gerar documento). Muda o roteiro, a organizacao e o PDF.
+  tipo         String  @default("TRIAGEM")
+  /// O processo de que a entrevista trata, quando ha: orienta o roteiro.
+  processoId   String?
   /// Como a transcricao foi feita, para constar no PDF:
   /// LOCAL | NUVEM | DIGITADA | AUDIO_ENVIADO
   origemTranscricao String?
@@ -608,8 +614,10 @@ model Entrevista {
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente    Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
 
   @@index([escritorioId, criadaEm])
+  @@index([processoId])
   @@index([escritorioId, situacao])
 }
 

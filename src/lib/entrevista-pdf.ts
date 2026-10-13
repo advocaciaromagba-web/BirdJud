@@ -26,6 +26,8 @@ export type DadosPdfEntrevista = {
   escritorio: string;
   titulo: string;
   nomeCliente: string;
+  /** Como o PDF chama quem foi ouvido: Cliente, Testemunha, Entrevistado. */
+  rotuloDoEntrevistado?: string;
   documentoCliente: string | null;
   nomeAdvogado: string;
   iniciadaEm: Date;
@@ -169,7 +171,7 @@ export async function gerarPdfEntrevista(dados: DadosPdfEntrevista): Promise<Uin
 
   const encerrada = dados.encerradaEm ?? new Date();
   const ficha: [string, string][] = [
-    ["Cliente", dados.nomeCliente],
+    [dados.rotuloDoEntrevistado ?? "Cliente", dados.nomeCliente],
     ["CPF/CNPJ", dados.documentoCliente || "não informado"],
     ["Atendimento por", dados.nomeAdvogado],
     ["Início", dataHoraBR(dados.iniciadaEm)],

@@ -24,6 +24,9 @@ export type EntrevistaNaTela = {
   temCliente: boolean;
   clienteId: string | null;
   tipoAcao: string;
+  tipo: "TRIAGEM" | "TESTEMUNHA" | "COLETA";
+  rotuloDoTipo: string;
+  numeroProcesso: string | null;
   anotacoes: string;
   encerrada: boolean;
   minutaPrompt: string | null;
@@ -93,6 +96,8 @@ export function PainelEntrevistas({
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [assunto, setAssunto] = useState("");
+  const [tipoNovo, setTipoNovo] = useState<"TRIAGEM" | "TESTEMUNHA" | "COLETA">("TRIAGEM");
+  const [processoNovo, setProcessoNovo] = useState("");
   const [aberta, setAberta] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -145,10 +150,14 @@ export function PainelEntrevistas({
         nome,
         assunto,
         telefone: telefone || null,
+        tipo: tipoNovo,
+        numeroProcesso: processoNovo.trim() || null,
       });
       setNome("");
       setTelefone("");
       setAssunto("");
+      setProcessoNovo("");
+      setTipoNovo("TRIAGEM");
       setCriando(false);
       router.refresh();
     } catch (falha) {
@@ -161,7 +170,7 @@ export function PainelEntrevistas({
   async function acao(id: string, caminho: string, metodo: string, corpo?: unknown) {
     setOcupado(`${id}:${caminho}`);
     try {
-      await chamar(`/api/entrevistas/${id}/${caminho}`, metodo, corpo);
+      await chamar(`/api/entrevistas/${id}${caminho ? `/${caminho}` : ""}`, metodo, corpo);
       router.refresh();
     } catch (falha) {
       setErro((falha as Error).message);
@@ -185,7 +194,32 @@ export function PainelEntrevistas({
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
-              <span className="text-slate-600">Quem foi atendido</span>
+              <span className="text-slate-600">Tipo de entrevista</span>
+              <select
+                value={tipoNovo}
+                onChange={(e) => setTipoNovo(e.target.value as typeof tipoNovo)}
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              >
+                <option value="TRIAGEM">Triagem (primeiro atendimento)</option>
+                <option value="TESTEMUNHA">Oitiva de testemunha</option>
+                <option value="COLETA">Coleta de informacoes para documento</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm">
+              <span className="text-slate-600">Processo (opcional)</span>
+              <input
+                value={processoNovo}
+                onChange={(e) => setProcessoNovo(e.target.value)}
+                placeholder="0000000-00.0000.0.00.0000"
+                className="rounded-lg border border-slate-300 px-3 py-2"
+              />
+            </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm">
+              <span className="text-slate-600">
+                {tipoNovo === "TESTEMUNHA" ? "Nome da testemunha" : "Quem sera ouvido"}
+              </span>
               <input
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
@@ -205,7 +239,11 @@ export function PainelEntrevistas({
           </div>
           <label className="grid gap-1 text-sm">
             <span className="text-slate-600">
-              Assunto, nas palavras de quem procurou
+              {tipoNovo === "TRIAGEM"
+                ? "Assunto, nas palavras de quem procurou"
+                : tipoNovo === "TESTEMUNHA"
+                  ? "Sobre o que a testemunha vai ser ouvida"
+                  : "Que documento vai sair e sobre o que"}
             </span>
             <textarea
               value={assunto}
@@ -277,6 +315,10 @@ export function PainelEntrevistas({
                   {e.assunto}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
+                  <span className="mr-1 rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-700">
+                    {e.rotuloDoTipo}
+                  </span>
+                  {e.numeroProcesso ? `Processo ${e.numeroProcesso} · ` : ""}
                   {e.criadaEmBR} · {e.rotuloDaSituacao}
                   {e.temCliente ? " · ja e cliente" : ""}
                   {e.encerrada ? " · encerrada" : ""}
@@ -332,11 +374,18 @@ export function PainelEntrevistas({
                     </ol>
                   ) : (
                     <p className="text-sm text-slate-500">
-                      Apoio para nao sair da sala sem a data, o documento e a
-                      testemunha. Voce pergunta o que quiser, na ordem que a
-                      conversa pedir.
+                      {e.tipo === "TESTEMUNHA"
+                        ? "Perguntas abertas e neutras para a testemunha: o que viu, quando, onde e como conhece as partes."
+                        : e.tipo === "COLETA"
+                          ? "Perguntas para reunir o que o documento precisa: fatos, datas, valores e o que comprova cada um."
+                          : "Apoio para nao sair da sala sem a data, o documento e a testemunha. Voce pergunta o que quiser, na ordem que a conversa pedir."}
                     </p>
                   )}
+                  {e.numeroProcesso ? (
+                    <p className="text-xs text-slate-500">
+                      As perguntas levam em conta o tipo de acao e o processo {e.numeroProcesso}: classe, partes e ultimo andamento.
+                    </p>
+                  ) : null}
                 </section>
 
                 {/* 2. Durante — e depois, para conferir a organizacao */}
@@ -538,15 +587,30 @@ export function PainelEntrevistas({
                       {e.encerrada ? "Reabrir entrevista" : "Encerrar entrevista"}
                     </button>
                     <a href={`/api/entrevistas/${e.id}/pdf`} target="_blank" rel="noreferrer" className="botao-secundario text-xs">
-                      PDF da entrevista
+                      PDF da transcricao
                     </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          confirm(
+                            `Excluir a entrevista de ${e.nome}? A transcricao, as anotacoes e a organizacao somem de vez. Se quiser guardar, gere o PDF antes.`,
+                          )
+                        )
+                          void acao(e.id, "", "DELETE");
+                      }}
+                      disabled={ocupado === `${e.id}:` || Boolean(gravandoIA[e.id])}
+                      className="botao-secundario text-xs text-red-700"
+                    >
+                      Excluir entrevista
+                    </button>
                   </div>
 
-                  {e.clienteId && modelos.length > 0 ? (
+                  {e.tipo === "TRIAGEM" && e.clienteId && modelos.length > 0 ? (
                     <DocumentosDaEntrevista clienteId={e.clienteId} modelos={modelos} />
                   ) : null}
 
-                  {podeMinuta && e.encerrada && e.analise && e.temCliente ? (
+                  {e.tipo !== "TRIAGEM" ? null : podeMinuta && e.encerrada && e.analise && e.temCliente ? (
                     <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Texto para a peticao inicial
