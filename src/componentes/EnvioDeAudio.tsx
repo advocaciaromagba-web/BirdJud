@@ -9,9 +9,9 @@ import {
 /**
  * Audio gravado virando texto.
  *
- * Isto e para audiencia e reuniao JA GRAVADAS. Para a conversa que esta
- * acontecendo agora, o gravador local acima e melhor — ele nao manda nada
- * para fora.
+ * Isto e para audio JA GRAVADO — a conversa gravada no celular, a audiencia,
+ * a reuniao. Para a conversa que esta acontecendo agora, o gravador acima
+ * (GravadorOpenAI) grava e transcreve na hora.
  *
  * O AVISO DE SIGILO E PARTE DO RECURSO, nao enfeite. O audio sai do
  * escritorio para a OpenAI virar texto. Quem clica precisa saber disso
@@ -56,12 +56,12 @@ export function EnvioDeAudio({
   return (
     <div className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
       <p className="text-xs text-amber-900">
-        <strong>Audio gravado vira texto fora do escritorio.</strong> O
+        <strong>Importar audio gravado (celular, audiencia, reuniao).</strong> O
         arquivo e enviado ao servico de transcricao da OpenAI, contratado
         pela plataforma. E a mesma natureza de exposicao de quando o texto
         vai para a IA ser organizado — mas e o audio, com a voz de quem
-        falou. Para a conversa ao vivo, prefira a transcricao acima, que roda
-        no proprio computador.
+        falou. Serve para a conversa gravada no celular, a audiencia ou a
+        reuniao; o audio nao fica guardado, so o texto.
       </p>
 
       {!confirmado ? (

@@ -176,7 +176,10 @@ export async function transcrever(
   formulario.append("model", MODELO_DE_TRANSCRICAO);
   formulario.append("language", "pt");
   formulario.append("prompt", VOCABULARIO);
-  formulario.append("response_format", "verbose_json");
+  // verbose_json traz a duracao, mas SO o whisper-1 aceita: o gpt-4o-transcribe
+  // (o padrao) recusa com 400 e so devolve "json". Mandar verbose_json para ele
+  // fazia toda transcricao de audio falhar.
+  formulario.append("response_format", MODELO_DE_TRANSCRICAO === "whisper-1" ? "verbose_json" : "json");
 
   let resposta: Response;
   try {

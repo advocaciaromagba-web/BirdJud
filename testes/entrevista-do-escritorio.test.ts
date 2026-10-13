@@ -277,6 +277,46 @@ d("entrevista de triagem", () => {
     }
   });
 
+  it("gravacao na tela: trechos pela OpenAI, como ela responde de verdade", async () => {
+    // Como a API real do gpt-4o-transcribe: verbose_json e recusado (400) e a
+    // resposta traz so o texto. Antes, toda transcricao de audio falhava aqui.
+    const respostas = ["Bom dia, doutor.", "", "Fui demitido em marco."];
+    const audio = createServer((req, res) => {
+      let corpo = "";
+      req.on("data", (c) => (corpo += c));
+      req.on("end", () => {
+        if (corpo.includes("verbose_json")) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: { message: "response_format 'verbose_json' is not compatible with model 'gpt-4o-transcribe'. Use 'json' or 'text' instead." } }));
+          return;
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ text: respostas.shift() ?? "" }));
+      });
+    });
+    await new Promise<void>((ok) => audio.listen(0, "127.0.0.1", ok));
+    process.env.OPENAI_BASE_URL = `http://127.0.0.1:${(audio.address() as { port: number }).port}`;
+    process.env.OPENAI_API_KEY = "chave-de-teste";
+
+    const e = await nova();
+    const trecho = { nome: "trecho.webm", tipo: "audio/webm", dados: Buffer.alloc(40 * 1024, 5) };
+    try {
+      const um = await transcreverAudio(escritorio, e.id, trecho, { continua: true, origem: "AUDIO_GRAVADO" });
+      expect(um.texto).toBe("Bom dia, doutor.");
+      // Um minuto de silencio: nao e erro e nao mexe no texto.
+      const dois = await transcreverAudio(escritorio, e.id, trecho, { continua: true, origem: "AUDIO_GRAVADO" });
+      expect(dois).toEqual({ texto: "Bom dia, doutor.", acrescentado: "" });
+      // O trecho seguinte continua na mesma linha.
+      const tres = await transcreverAudio(escritorio, e.id, trecho, { continua: true, origem: "AUDIO_GRAVADO" });
+      expect(tres.texto).toBe("Bom dia, doutor. Fui demitido em marco.");
+      const gravada = await comEscritorio(escritorio, (db) => db.entrevista.findFirstOrThrow({ where: { id: e.id } }));
+      expect(gravada.origemTranscricao).toBe("AUDIO_GRAVADO");
+    } finally {
+      delete process.env.OPENAI_BASE_URL;
+      await new Promise<void>((ok) => audio.close(() => ok()));
+    }
+  });
+
   it("liga ao cliente quando o caso e aceito", async () => {
     const e = await nova();
     const cliente = await comEscritorio(escritorio, (db) =>

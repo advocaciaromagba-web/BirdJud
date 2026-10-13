@@ -46,11 +46,18 @@ export async function POST(
       );
     }
 
-    const resultado = await transcreverAudio(escritorioId, id, {
-      nome: enviado.name || "audio",
-      tipo: enviado.type,
-      dados: Buffer.from(await enviado.arrayBuffer()),
-    });
+    // O gravador da tela manda um trecho por minuto, marcado como continua.
+    const continua = formulario.get("continua") === "true";
+    const resultado = await transcreverAudio(
+      escritorioId,
+      id,
+      {
+        nome: enviado.name || "audio",
+        tipo: enviado.type,
+        dados: Buffer.from(await enviado.arrayBuffer()),
+      },
+      { continua, origem: continua ? "AUDIO_GRAVADO" : "AUDIO_ENVIADO" },
+    );
     return NextResponse.json(resultado);
   } catch (erro) {
     if (

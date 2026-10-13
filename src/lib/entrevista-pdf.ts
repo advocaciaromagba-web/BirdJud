@@ -18,6 +18,7 @@ const ORIGEM_TEXTO: Record<string, string> = {
   NUVEM: "transcrição por voz processada por serviço externo de reconhecimento de fala",
   DIGITADA: "conteúdo digitado manualmente durante o atendimento",
   AUDIO_ENVIADO: "gravação da conversa transcrita automaticamente a partir do áudio",
+  AUDIO_GRAVADO: "conversa gravada no sistema e transcrita automaticamente pela OpenAI durante o atendimento",
 };
 
 export type DadosPdfEntrevista = {

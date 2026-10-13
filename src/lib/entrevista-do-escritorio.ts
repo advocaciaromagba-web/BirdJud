@@ -26,6 +26,7 @@ import {
 import {
   minutosDe,
   transcrever,
+  TranscricaoFalhou,
   type ResultadoDaTranscricao,
 } from "./transcricao-audio";
 import { montarPromptMinuta, camposFaltando, type ClienteParaMinuta } from "./minuta-prompt";
@@ -274,26 +275,46 @@ export async function arquivar(escritorioId: string, id: string) {
  * TRANSCRICAO_MIN existe para a plataforma saber quanto gasta, e nao gera
  * excedente para o escritorio (ver catalogo.ts).
  */
+export type OrigemDoAudio = "AUDIO_ENVIADO" | "AUDIO_GRAVADO";
+
 export async function transcreverAudio(
   escritorioId: string,
   id: string,
   audio: { nome: string; tipo: string; dados: Buffer },
+  opcoes: {
+    /**
+     * Trecho de uma gravacao em andamento (o gravador manda um por minuto):
+     * entra na mesma linha do anterior, e trecho em silencio nao e erro.
+     */
+    continua?: boolean;
+    origem?: OrigemDoAudio;
+  } = {},
 ): Promise<{ texto: string; acrescentado: string }> {
   const entrevista = await entrevistaPorId(escritorioId, id);
+  const antes = (entrevista.transcricao ?? "").trimEnd();
 
   // Lanca quando o audio e recusado ou a transcricao falha, e e isso que se
   // quer: nada e gravado e nada e medido se o texto nao veio.
-  const resultado: ResultadoDaTranscricao = await transcrever(audio);
+  let resultado: ResultadoDaTranscricao;
+  try {
+    resultado = await transcrever(audio);
+  } catch (erro) {
+    // Um minuto de silencio no meio da conversa (o cliente procurando um
+    // documento) nao pode virar erro na tela de quem esta gravando.
+    if (opcoes.continua && erro instanceof TranscricaoFalhou && erro.status === 422) {
+      return { texto: antes, acrescentado: "" };
+    }
+    throw erro;
+  }
 
-  const antes = (entrevista.transcricao ?? "").trimEnd();
-  const juntos = antes ? `${antes}\n\n${resultado.texto}` : resultado.texto;
+  const juntos = antes ? `${antes}${opcoes.continua ? " " : "\n\n"}${resultado.texto}` : resultado.texto;
 
   await comEscritorio(escritorioId, (db) =>
     db.entrevista.update({
       where: { id },
       data: {
         transcricao: juntos,
-        origemTranscricao: entrevista.origemTranscricao ?? "AUDIO_ENVIADO",
+        origemTranscricao: entrevista.origemTranscricao ?? opcoes.origem ?? "AUDIO_ENVIADO",
         // A analise anterior descrevia um texto menor: vale a mesma regra de
         // anotar().
         analise: Prisma.DbNull,

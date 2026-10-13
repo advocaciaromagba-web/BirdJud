@@ -9,6 +9,7 @@ import {
 } from "@/lib/entrevista";
 import { GravadorDeFala } from "./GravadorDeFala";
 import { EnvioDeAudio } from "./EnvioDeAudio";
+import { GravadorOpenAI } from "./GravadorOpenAI";
 import { DocumentosDaEntrevista, type ModeloEmUso } from "./DocumentosDaEntrevista";
 
 export type EntrevistaNaTela = {
@@ -99,6 +100,8 @@ export function PainelEntrevistas({
   const [notas, setNotas] = useState<Record<string, string>>({});
   const [tipos, setTipos] = useState<Record<string, string>>({});
   const [origens, setOrigens] = useState<Record<string, "LOCAL" | "NUVEM">>({});
+  /** Entrevista gravando pela OpenAI: o texto chega do servidor, o campo fica so de leitura. */
+  const [gravandoIA, setGravandoIA] = useState<Record<string, boolean>>({});
   const [minuta, setMinuta] = useState<Record<string, { prompt: string | null; faltando: string[] }>>({});
   const [observacoes, setObservacoes] = useState<Record<string, string>>({});
   const [copiado, setCopiado] = useState<string | null>(null);
@@ -341,24 +344,64 @@ export function PainelEntrevistas({
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     O que foi dito
                   </p>
-                  {/* O gravador escreve no MESMO campo que se digita: o que
-                      ele transcreve e corrigivel na hora, sem copiar nada. */}
-                  <GravadorDeFala
-                    texto={texto}
-                    onTexto={(novo) =>
-                      setRascunho((r) => ({ ...r, [e.id]: novo }))
-                    }
-                    onOrigem={(origem) => setOrigens((o) => ({ ...o, [e.id]: origem }))}
-                  />
+                  {/* Como no sistema da Advocacia Roma: o audio vira texto pela
+                      OpenAI — gravado aqui mesmo, na hora, ou importado do
+                      celular. O reconhecimento do navegador fica como
+                      alternativa, para quem nao quer o audio saindo. */}
                   {temIA ? (
-                    <EnvioDeAudio
-                      entrevistaId={e.id}
-                      onTranscrito={() => router.refresh()}
-                      onErro={setErro}
+                    <>
+                      <GravadorOpenAI
+                        entrevistaId={e.id}
+                        podeGravar={!mudou || Boolean(gravandoIA[e.id])}
+                        motivoBloqueio="Salve a anotacao antes de gravar: a transcricao entra no texto salvo."
+                        onTexto={(novo) => setRascunho((r) => ({ ...r, [e.id]: novo }))}
+                        onGravando={(sim) => {
+                          setGravandoIA((g) => ({ ...g, [e.id]: sim }));
+                          if (!sim) {
+                            // O texto ja esta salvo no servidor: le de la.
+                            setRascunho((r) => {
+                              const { [e.id]: _fora, ...resto } = r;
+                              return resto;
+                            });
+                            router.refresh();
+                          }
+                        }}
+                        onErro={setErro}
+                      />
+                      <EnvioDeAudio
+                        entrevistaId={e.id}
+                        onTranscrito={() => {
+                          setRascunho((r) => {
+                            const { [e.id]: _fora, ...resto } = r;
+                            return resto;
+                          });
+                          router.refresh();
+                        }}
+                        onErro={setErro}
+                      />
+                      <details className="rounded-lg border border-slate-200 p-3">
+                        <summary className="cursor-pointer text-xs font-semibold text-slate-600">
+                          Preferir transcrever pelo navegador, sem enviar o audio para a OpenAI
+                        </summary>
+                        <div className="mt-3">
+                          <GravadorDeFala
+                            texto={texto}
+                            onTexto={(novo) => setRascunho((r) => ({ ...r, [e.id]: novo }))}
+                            onOrigem={(origem) => setOrigens((o) => ({ ...o, [e.id]: origem }))}
+                          />
+                        </div>
+                      </details>
+                    </>
+                  ) : (
+                    <GravadorDeFala
+                      texto={texto}
+                      onTexto={(novo) => setRascunho((r) => ({ ...r, [e.id]: novo }))}
+                      onOrigem={(origem) => setOrigens((o) => ({ ...o, [e.id]: origem }))}
                     />
-                  ) : null}
+                  )}
                   <textarea
                     value={texto}
+                    readOnly={Boolean(gravandoIA[e.id])}
                     onChange={(ev) =>
                       setRascunho((r) => ({ ...r, [e.id]: ev.target.value }))
                     }

@@ -44,6 +44,9 @@ export const CABECALHOS_DE_SEGURANCA: [string, string][] = [
   ["X-Content-Type-Options", "nosniff"],
   ["X-Frame-Options", "DENY"],
   ["Referrer-Policy", "strict-origin-when-cross-origin"],
-  ["Permissions-Policy", "camera=(), microphone=(), geolocation=()"],
+  // Microfone so para o proprio site: a entrevista grava a conversa. Com
+  // "microphone=()" o navegador recusava TODA gravacao (NotAllowedError), sem
+  // nem perguntar a pessoa. Camera e localizacao seguem fechadas.
+  ["Permissions-Policy", "camera=(), microphone=(self), geolocation=()"],
   ["Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload"],
 ];

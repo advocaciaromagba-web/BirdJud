@@ -13,7 +13,7 @@ const corpo = z.object({
   transcricao: z.string().max(LIMITE_DE_CARACTERES),
   anotacoes: z.string().max(LIMITE_DE_CARACTERES).nullish(),
   /** Como a transcricao foi feita: vai para o PDF. */
-  origem: z.enum(["LOCAL", "NUVEM", "DIGITADA", "AUDIO_ENVIADO"]).nullish(),
+  origem: z.enum(["LOCAL", "NUVEM", "DIGITADA", "AUDIO_ENVIADO", "AUDIO_GRAVADO"]).nullish(),
 });
 
 export async function PUT(
