@@ -34,6 +34,14 @@ saude() {
   echo "HTTP $codigo ${corpo:0:120}"; return 1
 }
 
+rotinas() {
+  local corpo codigo
+  corpo=$(curl -sS --max-time 15 -w '\n%{http_code}' "https://$DOMINIO/api/saude/rotinas") || { echo "sem resposta"; return 1; }
+  codigo="${corpo##*$'\n'}"; corpo="${corpo%$'\n'*}"
+  [ "$codigo" = "200" ] && [[ "$corpo" == *'"ok":true'* ]] && return 0
+  echo "HTTP $codigo ${corpo:0:160} (trabalhadorParado: nada concluido em 90 min; rotinasFalhando: avisos, lembretes ou publicacoes de algum escritorio com a ultima execucao em falha — ver o log do TRABALHADOR)"; return 1
+}
+
 pagina() { # pagina <url>
   local codigo
   codigo=$(curl -sS -o /dev/null --max-time 15 -L -w '%{http_code}' "$1") || { echo "sem resposta"; return 1; }
@@ -52,6 +60,7 @@ certificado() {
 }
 
 tentar "Aplicacao e banco (https://$DOMINIO/api/saude)" saude
+tentar "Rotinas internas (https://$DOMINIO/api/saude/rotinas)" rotinas
 tentar "Pagina de entrada (https://$DOMINIO/entrar)" pagina "https://$DOMINIO/entrar"
 tentar "Site (https://www.$DOMINIO)" pagina "https://www.$DOMINIO/"
 tentar "Certificado de $DOMINIO" certificado
