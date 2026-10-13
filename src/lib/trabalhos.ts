@@ -491,7 +491,15 @@ export async function espalhar(
 
   for (const escritorio of escritorios) {
     if (modulo && !(await moduloAtivo(escritorio.id, modulo))) continue;
-    await enfileirar(tipo, escritorio.id, dados);
+    try {
+      await enfileirar(tipo, escritorio.id, dados);
+    } catch (erro) {
+      // Escritorio purgado entre a lista e a fila: a chave estrangeira recusa.
+      // Pula ele, e so ele — parar aqui deixaria os escritorios seguintes sem
+      // a rotina da vez.
+      if ((erro as { code?: string }).code === "P2003") continue;
+      throw erro;
+    }
     agendados += 1;
   }
   return agendados;

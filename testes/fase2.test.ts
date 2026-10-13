@@ -1,5 +1,5 @@
 // Fase 2: modulo contratado, limite da faixa, medicao e fila.
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   comEscritorio,
   prismaPlataforma,
@@ -299,6 +299,27 @@ d("fase 2", () => {
       const agendados = await espalhar("APURAR_CONSUMO");
       expect(agendados).toBeGreaterThanOrEqual(2);
 
+      const deAlfa = await prismaPlataforma().trabalho.count({
+        where: { escritorioId: alfa, estado: "PENDENTE", tipo: "APURAR_CONSUMO" },
+      });
+      expect(deAlfa).toBe(1);
+    });
+
+    it("escritorio apagado no meio do espalhamento nao tira a rotina dos outros", async () => {
+      await prismaPlataforma().trabalho.deleteMany({
+        where: { escritorioId: { in: [alfa, beta] }, tipo: "APURAR_CONSUMO" },
+      });
+      // Entre a lista e a fila, um escritorio foi purgado (ou outro teste o
+      // apagou): antes, a chave estrangeira derrubava o espalhar inteiro e os
+      // escritorios seguintes ficavam sem a rotina.
+      const lista = vi
+        .spyOn(prismaPlataforma().escritorio, "findMany")
+        .mockResolvedValueOnce([{ id: "escritorio-que-sumiu" }, { id: alfa }] as never);
+      try {
+        expect(await espalhar("APURAR_CONSUMO")).toBe(1);
+      } finally {
+        lista.mockRestore();
+      }
       const deAlfa = await prismaPlataforma().trabalho.count({
         where: { escritorioId: alfa, estado: "PENDENTE", tipo: "APURAR_CONSUMO" },
       });

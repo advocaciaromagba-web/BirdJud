@@ -289,7 +289,7 @@ d("avisos pelo WhatsApp", () => {
     expect(depois?.quantidade).toBe((antes?.quantidade ?? 0) + 1);
 
     const zap = await comEscritorio(alfa, (db) =>
-      db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
+      db.aviso.findFirst({ where: { canal: "WHATSAPP", tipo: "RESUMO_PUBLICACOES" } }),
     );
     expect(zap?.estado).toBe("ENVIADO");
     expect(zap?.enviadoEm).not.toBeNull();
@@ -315,7 +315,7 @@ d("avisos pelo WhatsApp", () => {
     expect(chamadas).toHaveLength(1);
 
     const zap = await comEscritorio(alfa, (db) =>
-      db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
+      db.aviso.findFirst({ where: { canal: "WHATSAPP", tipo: "RESUMO_PUBLICACOES" } }),
     );
     expect(zap?.estado).toBe("FALHOU");
     expect(zap?.erro).toMatch(/aprovado/);
@@ -331,7 +331,7 @@ d("avisos pelo WhatsApp", () => {
     await enviarAvisosNoWhatsapp(alfa);
 
     const zap = await comEscritorio(alfa, (db) =>
-      db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
+      db.aviso.findFirst({ where: { canal: "WHATSAPP", tipo: "RESUMO_PUBLICACOES" } }),
     );
     expect(zap?.estado).toBe("PENDENTE");
     expect(zap?.tentativas).toBe(1);
@@ -377,7 +377,7 @@ d("avisos pelo WhatsApp", () => {
       expect(resultado.semNumero).toBe(true);
       expect(chamadas).toHaveLength(0);
       const zap = await comEscritorio(semNumero.id, (db) =>
-        db.aviso.findFirst({ where: { canal: "WHATSAPP" } }),
+        db.aviso.findFirst({ where: { canal: "WHATSAPP", tipo: "RESUMO_PUBLICACOES" } }),
       );
       expect(zap?.estado).toBe("PENDENTE");
       expect(zap?.tentativas).toBe(0);
