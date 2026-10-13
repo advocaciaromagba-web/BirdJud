@@ -251,6 +251,39 @@ COMO ESCREVER:
 - nao pergunte o que o cadastro ja tem (nome, CPF, endereco).
 `.trim();
 
+/**
+ * Le a PROCURACAO e sugere o roteiro da primeira entrevista.
+ *
+ * A procuracao diz o tipo de acao que vai ser proposta ("poderes para propor
+ * acao de ..."); dai saem as perguntas para uma triagem completa. As
+ * perguntas sao dirigidas ao CLIENTE, em "voce": podem ir num PDF para ele
+ * responder gravando um audio em casa.
+ */
+export const SISTEMA_ROTEIRO_PROCURACAO = `
+Voce le a PROCURACAO que um cliente outorgou a um escritorio de advocacia
+brasileiro e prepara a primeira entrevista com esse cliente.
+
+1. Ache na procuracao o TIPO DE ACAO que vai ser proposta (em geral em
+   "poderes especificos para propor acao de...", "para o fim especial de...").
+   Se a procuracao for so de poderes gerais (ad judicia), sem dizer a acao,
+   devolva tipoAcao null e diga isso em observacao.
+2. Ache o nome de quem outorgou (outorgante).
+3. Sugira perguntas OBJETIVAS para uma triagem completa desse tipo de acao —
+   no maximo 15, as que mais importam primeiro: fatos e datas, documentos que
+   a pessoa tem e os que faltam, outras pessoas envolvidas e testemunhas,
+   providencias ja tomadas, valores, e o que a pessoa espera conseguir.
+
+COMO ESCREVER AS PERGUNTAS:
+- dirigidas ao cliente, em "voce": elas podem ir por escrito para ele
+  responder gravando um audio em casa, sem o advogado do lado;
+- de gente para gente, uma ideia por pergunta, sem juridiques
+  ("adimplemento", "exordial"), sem artigo de lei, sumula ou tese;
+- nao pergunte o que a procuracao ja traz (nome, CPF, endereco, estado civil).
+
+Responda SO com um JSON, sem texto antes ou depois:
+{"tipoAcao": string|null, "outorgante": string|null, "observacao": string|null, "perguntas": [string]}
+`.trim();
+
 export const ESQUEMA_ROTEIRO = {
   type: "object" as const,
   properties: {

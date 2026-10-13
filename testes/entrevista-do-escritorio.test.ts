@@ -26,6 +26,11 @@ import {
   EntrevistaIncompleta,
   EntrevistaNaoEncontrada,
   ProcessoNaoCadastrado,
+  ProcuracaoIlegivel,
+  SemPerguntas,
+  lerRespostaDaProcuracao,
+  pdfDasPerguntas,
+  roteiroDaProcuracao,
 } from "../src/lib/entrevista-do-escritorio";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
@@ -367,6 +372,41 @@ d("entrevista de triagem", () => {
     await excluirEntrevista(escritorio, e.id);
     expect(await comEscritorio(escritorio, (db) => db.entrevista.count({ where: { id: e.id } }))).toBe(0);
     await expect(excluirEntrevista(escritorio, e.id)).rejects.toBeInstanceOf(EntrevistaNaoEncontrada);
+  });
+
+  it("procuracao: le o tipo de acao, gera as perguntas e o PDF para o cliente", async () => {
+    const e = await nova();
+    // Sem perguntas ainda, nao ha PDF.
+    await expect(pdfDasPerguntas(escritorio, e.id)).rejects.toBeInstanceOf(SemPerguntas);
+
+    saida = {
+      tipoAcao: "reclamacao trabalhista por rescisao indireta",
+      outorgante: "JOAO DA SILVA",
+      observacao: null,
+      perguntas: ["Quando voce comecou a trabalhar la?", "Voce tinha carteira assinada?", "Quanto voce recebia por mes?"],
+    };
+    const procuracao = { nome: "procuracao.pdf", tipo: "application/pdf", dados: Buffer.from("%PDF-1.4 procuracao de teste") };
+    const r = await roteiroDaProcuracao(escritorio, e.id, procuracao);
+    expect(r.tipoAcao).toBe("reclamacao trabalhista por rescisao indireta");
+    expect(r.perguntas).toHaveLength(3);
+    // A procuracao foi junto, como documento, para a IA ler.
+    expect(ultimoCorpo).toContain('"type":"document"');
+
+    const gravada = await comEscritorio(escritorio, (db) => db.entrevista.findFirstOrThrow({ where: { id: e.id } }));
+    expect(gravada.tipoAcao).toBe("reclamacao trabalhista por rescisao indireta");
+    expect(gravada.roteiro).toEqual(r.perguntas);
+
+    const { pdf, nome } = await pdfDasPerguntas(escritorio, e.id);
+    expect(Buffer.from(pdf).subarray(0, 4).toString()).toBe("%PDF");
+    expect(nome).toMatch(/^Perguntas - /);
+  });
+
+  it("resposta da leitura: aceita cerca de codigo; sem JSON e erro; sem perguntas vale o basico", () => {
+    const lido = lerRespostaDaProcuracao('```json\n{"tipoAcao": null, "observacao": "Procuracao so ad judicia, sem a acao.", "perguntas": ["O que aconteceu?"]}\n```');
+    expect(lido.tipoAcao).toBeNull();
+    expect(lido.observacao).toMatch(/ad judicia/);
+    expect(() => lerRespostaDaProcuracao("nao consegui ler")).toThrow(ProcuracaoIlegivel);
+    expect(lerRespostaDaProcuracao('{"perguntas": []}').perguntas).toEqual([...ROTEIRO_BASICO]);
   });
 
   it("liga ao cliente quando o caso e aceito", async () => {

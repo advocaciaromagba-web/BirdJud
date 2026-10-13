@@ -28,6 +28,8 @@ export type DadosPdfEntrevista = {
   nomeCliente: string;
   /** Como o PDF chama quem foi ouvido: Cliente, Testemunha, Entrevistado. */
   rotuloDoEntrevistado?: string;
+  /** Linha abaixo do titulo. Padrao: "Registro de entrevista de triagem". */
+  subtitulo?: string;
   documentoCliente: string | null;
   nomeAdvogado: string;
   iniciadaEm: Date;
@@ -167,7 +169,7 @@ export async function gerarPdfEntrevista(dados: DadosPdfEntrevista): Promise<Uin
 
   // --- Cabeçalho ---
   escrever(dados.titulo, { fonte: negrito, tamanho: 15 });
-  escrever("Registro de entrevista de triagem", { fonte: normal, tamanho: 10.5, cor: CINZA, espacoDepois: 12 });
+  escrever(dados.subtitulo ?? "Registro de entrevista de triagem", { fonte: normal, tamanho: 10.5, cor: CINZA, espacoDepois: 12 });
 
   const encerrada = dados.encerradaEm ?? new Date();
   const ficha: [string, string][] = [
@@ -285,4 +287,77 @@ export function nomePastaCliente(nomeCliente: string, documento: string | null):
     .slice(0, 70);
   const doc = (documento ?? "").replace(/\D/g, "");
   return doc ? `${limpo} - ${doc}` : limpo;
+}
+
+export type DadosPdfPerguntas = {
+  escritorio: string;
+  /** Para o cliente saber para onde mandar o audio. */
+  telefoneDoEscritorio: string | null;
+  nomeCliente: string;
+  tipoAcao: string | null;
+  perguntas: string[];
+};
+
+/**
+ * As perguntas da entrevista, para o CLIENTE responder gravando em casa.
+ *
+ * Vai junto o passo a passo da gravacao: dizer o numero da pergunta antes de
+ * responder e o que faz a transcricao depois sair em ordem e conferivel. O
+ * audio volta ao escritorio e entra na entrevista por "Importar audio".
+ */
+export async function gerarPdfPerguntas(dados: DadosPdfPerguntas): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  const normal = await pdf.embedFont(StandardFonts.Helvetica);
+  const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const italico = await pdf.embedFont(StandardFonts.HelveticaOblique);
+  const largura = LARGURA_A4 - MARGEM_X * 2;
+  let pagina!: PDFPage;
+  let y = 0;
+
+  function novaPagina() {
+    pagina = pdf.addPage([LARGURA_A4, ALTURA_A4]);
+    pagina.drawText(limpar(dados.escritorio), { x: MARGEM_X, y: ALTURA_A4 - 40, size: 9, font: negrito, color: OURO });
+    pagina.drawText("Documento sujeito a sigilo profissional", { x: MARGEM_X, y: 30, size: 7.5, font: italico, color: CINZA });
+    y = ALTURA_A4 - TOPO;
+  }
+  function escrever(texto: string, o: { fonte?: PDFFont; tamanho?: number; cor?: ReturnType<typeof rgb>; recuo?: number; depois?: number } = {}) {
+    const fonte = o.fonte ?? normal;
+    const tamanho = o.tamanho ?? 11;
+    const altura = tamanho * 1.45;
+    for (const linha of quebrar(limpar(texto), fonte, tamanho, largura - (o.recuo ?? 0))) {
+      if (y - altura < BASE) novaPagina();
+      if (linha) pagina.drawText(linha, { x: MARGEM_X + (o.recuo ?? 0), y, size: tamanho, font: fonte, color: o.cor ?? NAVY });
+      y -= altura;
+    }
+    y -= o.depois ?? 0;
+  }
+
+  novaPagina();
+  escrever("Perguntas para a sua entrevista", { fonte: negrito, tamanho: 16, depois: 2 });
+  escrever(`${dados.nomeCliente}${dados.tipoAcao ? ` - ${dados.tipoAcao}` : ""}`, { cor: CINZA, tamanho: 10.5, depois: 14 });
+
+  escrever("COMO RESPONDER", { fonte: negrito, tamanho: 10.5, cor: OURO, depois: 4 });
+  const passos = [
+    "Escolha um lugar silencioso e grave com o gravador de voz do celular (ou mande áudio pelo WhatsApp).",
+    'Antes de cada resposta, diga o número da pergunta. Exemplo: "Pergunta 3: ...".',
+    "Responda com as suas palavras, com datas, valores e nomes sempre que lembrar. Se não souber, diga que não sabe.",
+    "Pode gravar em mais de um áudio. Tenha por perto os documentos que a pergunta citar.",
+    dados.telefoneDoEscritorio
+      ? `Envie os áudios ao escritório pelo telefone ${dados.telefoneDoEscritorio}.`
+      : "Envie os áudios ao escritório.",
+  ];
+  passos.forEach((p, i) => escrever(`${i + 1}. ${p}`, { recuo: 8, tamanho: 10, depois: 2 }));
+  y -= 10;
+
+  escrever("PERGUNTAS", { fonte: negrito, tamanho: 10.5, cor: OURO, depois: 6 });
+  dados.perguntas.forEach((p, i) => {
+    escrever(`${i + 1}. ${p}`, { recuo: 4, depois: 10 });
+  });
+
+  y -= 6;
+  escrever(
+    "Suas respostas são sigilosas e usadas só pelo escritório para cuidar do seu caso.",
+    { fonte: italico, tamanho: 9, cor: CINZA },
+  );
+  return pdf.save();
 }

@@ -107,6 +107,36 @@ export function PainelEntrevistas({
   const [origens, setOrigens] = useState<Record<string, "LOCAL" | "NUVEM">>({});
   /** Entrevista gravando pela OpenAI: o texto chega do servidor, o campo fica so de leitura. */
   const [gravandoIA, setGravandoIA] = useState<Record<string, boolean>>({});
+  /** O que a leitura da procuracao achou, para mostrar ao lado do roteiro. */
+  const [lidoDaProcuracao, setLidoDaProcuracao] = useState<Record<string, string>>({});
+
+  async function lerProcuracao(id: string, arquivo: File) {
+    setOcupado(`${id}:procuracao`);
+    setErro(null);
+    try {
+      const corpo = new FormData();
+      corpo.append("procuracao", arquivo);
+      const r = await fetch(`/api/entrevistas/${id}/procuracao`, { method: "POST", body: corpo });
+      const dados = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(dados.erro ?? "Nao consegui ler a procuracao.");
+      setTipos((t) => ({ ...t, [id]: dados.tipoAcao ?? t[id] ?? "" }));
+      setLidoDaProcuracao((l) => ({
+        ...l,
+        [id]: [
+          dados.tipoAcao ? `Tipo de acao na procuracao: ${dados.tipoAcao}.` : null,
+          dados.outorgante ? `Outorgante: ${dados.outorgante}.` : null,
+          dados.observacao ?? null,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      }));
+      router.refresh();
+    } catch (falha) {
+      setErro((falha as Error).message);
+    } finally {
+      setOcupado(null);
+    }
+  }
   const [minuta, setMinuta] = useState<Record<string, { prompt: string | null; faltando: string[] }>>({});
   const [observacoes, setObservacoes] = useState<Record<string, string>>({});
   const [copiado, setCopiado] = useState<string | null>(null);
@@ -361,6 +391,30 @@ export function PainelEntrevistas({
                           : "Sugerir roteiro"}
                     </button>
                   </div>
+                  {temIA && e.tipo === "TRIAGEM" ? (
+                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
+                      <label className="botao-secundario cursor-pointer text-xs">
+                        {ocupado === `${e.id}:procuracao` ? "Lendo a procuracao..." : "Gerar perguntas lendo a procuracao"}
+                        <input
+                          type="file"
+                          accept="application/pdf,image/jpeg,image/png,image/webp"
+                          className="sr-only"
+                          disabled={ocupado === `${e.id}:procuracao`}
+                          onChange={(ev) => {
+                            const f = ev.target.files?.[0];
+                            ev.target.value = "";
+                            if (f) void lerProcuracao(e.id, f);
+                          }}
+                        />
+                      </label>
+                      <span className="text-slate-600">
+                        PDF ou foto da procuracao: o sistema le o tipo de acao e sugere as perguntas da triagem.
+                      </span>
+                    </div>
+                  ) : null}
+                  {lidoDaProcuracao[e.id] ? (
+                    <p className="text-xs text-emerald-800">{lidoDaProcuracao[e.id]}</p>
+                  ) : null}
                   {e.roteiro.length > 0 ? (
                     <ol className="grid gap-1 text-sm text-slate-700">
                       {e.roteiro.map((pergunta, i) => (
@@ -381,6 +435,22 @@ export function PainelEntrevistas({
                           : "Apoio para nao sair da sala sem a data, o documento e a testemunha. Voce pergunta o que quiser, na ordem que a conversa pedir."}
                     </p>
                   )}
+                  {e.roteiro.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <a
+                        href={`/api/entrevistas/${e.id}/perguntas-pdf`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="botao-secundario text-xs"
+                      >
+                        PDF das perguntas para o cliente
+                      </a>
+                      <span className="text-xs text-slate-500">
+                        Para o cliente responder gravando em casa e mandar o audio: ele entra aqui por
+                        &quot;Importar audio gravado&quot; e e transcrito.
+                      </span>
+                    </div>
+                  ) : null}
                   {e.numeroProcesso ? (
                     <p className="text-xs text-slate-500">
                       As perguntas levam em conta o tipo de acao e o processo {e.numeroProcesso}: classe, partes e ultimo andamento.

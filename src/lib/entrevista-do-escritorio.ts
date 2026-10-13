@@ -15,7 +15,7 @@
 import { Prisma } from "@prisma/client";
 import { comEscritorio, semEscritorio } from "./prisma";
 import { moduloAtivo } from "./modulos";
-import { IARecusou, SemChaveDeIA, milTokens, pedirEstruturado } from "./ia";
+import { IARecusou, SemChaveDeIA, milTokens, pedirEstruturado, pedirSobreDocumentos, type Anexo } from "./ia";
 import { registrarConsumo } from "./consumo";
 import {
   ESQUEMA_ANALISE_ENTREVISTA,
@@ -23,6 +23,7 @@ import {
   SISTEMA_ANALISE_ENTREVISTA,
   SISTEMA_ROTEIRO,
   SISTEMA_ROTEIRO_COLETA,
+  SISTEMA_ROTEIRO_PROCURACAO,
   SISTEMA_ROTEIRO_TESTEMUNHA,
 } from "./prompts-ia";
 import {
@@ -32,7 +33,7 @@ import {
   type ResultadoDaTranscricao,
 } from "./transcricao-audio";
 import { montarPromptMinuta, camposFaltando, type ClienteParaMinuta } from "./minuta-prompt";
-import { gerarPdfEntrevista } from "./entrevista-pdf";
+import { gerarPdfEntrevista, gerarPdfPerguntas } from "./entrevista-pdf";
 import { prismaPlataforma } from "./prisma";
 import {
   MINIMO_DA_TRANSCRICAO,
@@ -227,6 +228,82 @@ export async function gerarRoteiro(
   );
   void usuarioId;
   return { perguntas, comIA };
+}
+
+export class ProcuracaoIlegivel extends Error {
+  readonly status = 422;
+  constructor() {
+    super("Nao consegui ler a procuracao. Envie um PDF ou uma foto nitida da procuracao inteira.");
+    this.name = "ProcuracaoIlegivel";
+  }
+}
+
+export type RoteiroDaProcuracao = {
+  perguntas: string[];
+  tipoAcao: string | null;
+  outorgante: string | null;
+  observacao: string | null;
+};
+
+/** O JSON que a IA devolveu, mesmo com cerca de codigo ou texto em volta. */
+export function lerRespostaDaProcuracao(texto: string): RoteiroDaProcuracao {
+  const inicio = texto.indexOf("{");
+  const fim = texto.lastIndexOf("}");
+  if (inicio < 0 || fim <= inicio) throw new ProcuracaoIlegivel();
+  let bruto: Record<string, unknown>;
+  try {
+    bruto = JSON.parse(texto.slice(inicio, fim + 1));
+  } catch {
+    throw new ProcuracaoIlegivel();
+  }
+  const textoOuNulo = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim().slice(0, 300) : null);
+  // Sem perguntas aproveitaveis, vale o roteiro basico: a entrevista nunca
+  // fica sem roteiro (arrumarRoteiro).
+  const perguntas = arrumarRoteiro(bruto.perguntas);
+  return {
+    perguntas,
+    tipoAcao: textoOuNulo(bruto.tipoAcao),
+    outorgante: textoOuNulo(bruto.outorgante),
+    observacao: textoOuNulo(bruto.observacao),
+  };
+}
+
+/**
+ * Le a procuracao e monta o roteiro da primeira entrevista.
+ *
+ * O tipo de acao sai da propria procuracao e fica gravado na entrevista;
+ * pedir de novo substitui o roteiro, como em gerarRoteiro. A procuracao NAO
+ * fica guardada aqui: e lida e descartada (o original mora na ficha do cliente).
+ */
+export async function roteiroDaProcuracao(
+  escritorioId: string,
+  id: string,
+  procuracao: Anexo,
+): Promise<RoteiroDaProcuracao> {
+  const entrevista = await entrevistaPorId(escritorioId, id);
+  const r = await pedirSobreDocumentos(
+    SISTEMA_ROTEIRO_PROCURACAO,
+    [procuracao],
+    [
+      `Assunto informado no atendimento: ${entrevista.assunto}`,
+      "Leia a procuracao acima e responda com o JSON pedido.",
+    ].join("\n"),
+    "medium",
+  );
+  await registrarConsumo(escritorioId, "IA_MIL_TOKENS", milTokens(r.tokensEntrada, r.tokensSaida));
+  const lido = lerRespostaDaProcuracao(r.texto);
+
+  await comEscritorio(escritorioId, (db) =>
+    db.entrevista.update({
+      where: { id },
+      data: {
+        roteiro: lido.perguntas,
+        situacao: entrevista.situacao === "RASCUNHO" ? "ROTEIRO" : entrevista.situacao,
+        tipoAcao: lido.tipoAcao ?? entrevista.tipoAcao,
+      },
+    }),
+  );
+  return lido;
 }
 
 /** Grava o que foi dito. Nao chama IA: anotar e organizar sao passos separados. */
@@ -510,6 +587,7 @@ export async function pdfDaEntrevista(escritorioId: string, id: string): Promise
     escritorio: escritorio?.nome ?? "Escritorio",
     titulo: `${TITULO_DO_TIPO[tipoDe(e.tipo)]}${e.tipoAcao ? ` — ${e.tipoAcao}` : ""}`,
     rotuloDoEntrevistado: tipoDe(e.tipo) === "TESTEMUNHA" ? "Testemunha" : tipoDe(e.tipo) === "COLETA" ? "Entrevistado" : "Cliente",
+    subtitulo: `Registro: ${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}`,
     nomeCliente: e.nome,
     documentoCliente: cliente?.documento ?? null,
     nomeAdvogado: quem?.nome ?? "-",
@@ -524,5 +602,33 @@ export async function pdfDaEntrevista(escritorioId: string, id: string): Promise
   });
   const dia = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(e.criadaEm);
   const nome = `Entrevista ${dia} - ${e.nome.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").slice(0, 60)}.pdf`;
+  return { pdf, nome };
+}
+
+export class SemPerguntas extends Error {
+  readonly status = 400;
+  constructor() {
+    super("Gere as perguntas antes: pela procuracao ou pelo tipo de acao.");
+    this.name = "SemPerguntas";
+  }
+}
+
+/** O PDF das perguntas, para o cliente responder gravando em casa. */
+export async function pdfDasPerguntas(escritorioId: string, id: string): Promise<{ pdf: Uint8Array; nome: string }> {
+  const e = await entrevistaPorId(escritorioId, id);
+  const perguntas = Array.isArray(e.roteiro) ? (e.roteiro as unknown[]).filter((p): p is string => typeof p === "string") : [];
+  if (perguntas.length === 0) throw new SemPerguntas();
+  const escritorio = await prismaPlataforma().escritorio.findUnique({
+    where: { id: escritorioId },
+    select: { nome: true, telefoneAtendimento: true },
+  });
+  const pdf = await gerarPdfPerguntas({
+    escritorio: escritorio?.nome ?? "Escritorio",
+    telefoneDoEscritorio: escritorio?.telefoneAtendimento?.trim() || null,
+    nomeCliente: e.nome,
+    tipoAcao: e.tipoAcao,
+    perguntas,
+  });
+  const nome = `Perguntas - ${e.nome.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").slice(0, 60)}.pdf`;
   return { pdf, nome };
 }
