@@ -17,7 +17,7 @@ import {
   paraE164BR,
   SemNumeroDeWhatsapp,
 } from "./whatsapp";
-import { limparParametro, modeloDoTipo } from "./modelos-whatsapp";
+import { limparParametro, MODELOS, modeloDoTipo } from "./modelos-whatsapp";
 import { dataHoraBR, diaEmBrasilia } from "./datas";
 import {
   MAIOR_ANTECEDENCIA_HORAS,
@@ -204,6 +204,7 @@ async function gerarResumos(
         limparParametro(nomeEscritorio),
         String(publicacoes.length),
         String(urgentes),
+        limparParametro(telefoneDoEscritorio),
       ],
     });
     if (criadoZap) criados += 1;
@@ -518,6 +519,17 @@ async function criarAviso(
     // pendente que nunca sai ficaria para sempre na fila, somando tentativa.
     // O e-mail continua: o pedido foi sobre o WhatsApp.
     if (aviso.canal === "WHATSAPP") {
+      // A Meta recusa (#132000) modelo com numero de parametros diferente do
+      // aprovado — e a recusa so aparece depois, como mensagem nao entregue.
+      // Aqui o erro e do codigo, nao do destinatario: nao entra na fila.
+      const esperado = Object.values(MODELOS).find((m) => m.nome === aviso.modelo)?.parametros.length;
+      const enviados = Array.isArray(aviso.parametros) ? aviso.parametros.length : 0;
+      if (esperado !== undefined && esperado !== enviados) {
+        console.error(
+          `aviso ${aviso.tipo}: modelo ${aviso.modelo} espera ${esperado} parametro(s), vieram ${enviados}. Nao enviado.`,
+        );
+        return false;
+      }
       const bloqueado = await db.bloqueioDeWhatsapp.findFirst({
         where: { telefone: aviso.destino },
         select: { id: true },

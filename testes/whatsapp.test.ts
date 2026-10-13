@@ -232,7 +232,7 @@ d("avisos pelo WhatsApp", () => {
     await enviarModelo({
       para: "5571999998888",
       modelo: "birdjud_resumo_publicacoes",
-      parametros: ["Alfa Zap", "3", "1"],
+      parametros: ["Alfa Zap", "3", "1", "16 99999-0000"],
     });
 
     expect(chamadas).toHaveLength(1);
@@ -244,7 +244,7 @@ d("avisos pelo WhatsApp", () => {
     expect(corpo.template.language.code).toBe("pt_BR");
     expect(
       corpo.template.components[0].parameters.map((p: any) => p.text),
-    ).toEqual(["Alfa Zap", "3", "1"]);
+    ).toEqual(["Alfa Zap", "3", "1", "16 99999-0000"]);
   });
 
   it("gera o aviso nos dois canais, sem duplicar quando roda de novo", async () => {
@@ -260,8 +260,10 @@ d("avisos pelo WhatsApp", () => {
     const zap = avisos.find((a) => a.canal === "WHATSAPP");
     expect(zap?.destino).toBe("5571999998888");
     expect(zap?.modelo).toBe("birdjud_resumo_publicacoes");
-    expect(zap?.parametros).toEqual(["Alfa Zap", "1", "1"]);
+    // O quarto e o telefone do rodape: sem ele a Meta recusa com #132000.
+    expect(zap?.parametros).toEqual(["Alfa Zap", "1", "1", "o escritorio"]);
   });
+
 
   it("sem o modulo contratado, nao ha aviso de WhatsApp — mesmo com o usuario querendo", async () => {
     await gerarAvisos(semModulo);
