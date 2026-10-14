@@ -7,6 +7,7 @@
 import { concluir, destravar, falhar, reclamar } from "../src/lib/fila";
 import { EXECUTORES } from "../src/lib/trabalhos";
 import { ligarGuarda } from "../src/lib/guarda-do-site";
+import { conferirViaAplicacao } from "../src/lib/armazenamento";
 
 const ESPERA_VAZIA = 5_000;
 const INTERVALO_DESTRAVE = 60_000;
@@ -22,6 +23,10 @@ for (const sinal of ["SIGINT", "SIGTERM"] as const) {
 
 async function main(): Promise<void> {
   console.log("Trabalhador no ar.");
+  // O disco de arquivos mora na aplicacao (armazenamento.ts): diz logo na
+  // partida se o caminho ate la esta aberto, em vez de descobrir na purga.
+  const arquivos = await conferirViaAplicacao();
+  if (arquivos) console.log(arquivos);
 
   // A guarda do site mora aqui porque este processo e outro servico: quando a
   // aplicacao cai, ele continua de pe. Nao depende do banco nem da fila — e
