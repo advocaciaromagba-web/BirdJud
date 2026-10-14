@@ -206,6 +206,22 @@ export function AcoesDoEscritorio({
       </div>
 
       <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="font-semibold">Nuvem do escritorio</p>
+        <p className="mt-1 text-slate-600">
+          Copia agora para a nuvem conectada os documentos que ficaram para tras. Roda sozinho todo dia e depois de
+          cada falha.
+        </p>
+        <button
+          type="button"
+          disabled={ocupado}
+          onClick={() => agir({ acao: "nuvem" })}
+          className="mt-2 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+        >
+          Copiar para a nuvem agora
+        </button>
+      </div>
+
+      <div className="mt-4 border-t border-slate-200 pt-4">
         <p className="font-semibold">Encerramento</p>
         {encerrado ? (
           <button

@@ -40,6 +40,7 @@ const acao = z.discriminatedUnion("acao", [
   // Busca dos processos das OABs no DJEN (12 meses) agora, sem esperar a
   // captura da madrugada. So poe o trabalho na fila.
   z.object({ acao: z.literal("processos"), refazer: z.boolean().optional() }),
+  z.object({ acao: z.literal("nuvem") }),
   // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
   // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
@@ -203,6 +204,13 @@ export async function POST(
       }
       await enfileirar("IMPORTAR_PROCESSOS", escritorio.id);
       return NextResponse.json({ detalhe: `Busca dos processos de ${oabs} OAB(s) na fila.` });
+    }
+
+    if (corpo.data.acao === "nuvem") {
+      // Copia agora para a nuvem do escritorio o que ficou para tras (falha,
+      // nuvem conectada depois). Sem nuvem conectada, o trabalho so confere.
+      await enfileirar("ORGANIZAR_NUVEM", escritorio.id);
+      return NextResponse.json({ detalhe: "Copia para a nuvem na fila." });
     }
 
     if (corpo.data.acao === "reativar") {

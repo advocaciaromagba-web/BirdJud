@@ -413,6 +413,16 @@ async function organizarNuvem({ escritorioId }: Contexto): Promise<void> {
   // Sobrou trabalho de verdade (e nao so falha repetida): mais um lote.
   if (pastas.restantes > 0 || (pendentes.length === 30 && copiados > 0)) {
     await enfileirar("ORGANIZAR_NUVEM", escritorioId, {}, new Date(Date.now() + 30_000));
+  } else if (falhas.length > 0) {
+    // Falhou: tenta de novo daqui a 6 horas, sem esperar o proximo documento
+    // anexado (antes, o arquivo que falhava ficava fora da nuvem ate alguem
+    // subir outro). Um pendente so na fila: nao empilha.
+    const jaNaFila = await prismaPlataforma().trabalho.count({
+      where: { escritorioId, tipo: "ORGANIZAR_NUVEM", estado: "PENDENTE" },
+    });
+    if (jaNaFila === 0) {
+      await enfileirar("ORGANIZAR_NUVEM", escritorioId, {}, new Date(Date.now() + 6 * 3_600_000));
+    }
   }
 }
 

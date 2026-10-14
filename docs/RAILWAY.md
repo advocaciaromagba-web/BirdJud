@@ -112,6 +112,9 @@ Para agendar as rotinas, crons do Railway chamando:
   de honorarios que entrou na janela dos dez dias. So em contrato com emissao
   automatica ligada. Parcela travada por cadastro incompleto, ou ja vencida sem
   nunca ter sido emitida, nao e falha: fica na tela esperando decisao.
+- `npm run espalhar ORGANIZAR_NUVEM` — todo dia (no `cron-diario`, desde
+  14/10/2026), copia para a nuvem conectada o que ficou para tras. Alem disso,
+  cada documento anexado ja dispara a copia, e uma falha se reagenda em 6 horas.
 
 ## O que existe hoje no Railway (23/09/2026)
 
@@ -122,7 +125,7 @@ do Railway, nao a mao — o que esta aqui e o retrato do que foi criado.
 |---|---|---|
 | `postgres` | PostgreSQL 16 (imagem oficial do Railway, com SSL) | volume proprio em `/var/lib/postgresql/data`; banco `birdjud` pertencente a `birdjud_owner` |
 | `aplicacao` | a aplicacao web, do repositorio, branch `main` | volume em `/dados/arquivos`; healthcheck em `/api/saude`; start `npm run start:producao` |
-| `trabalhador` | consome a fila (inclusive `ORGANIZAR_NUVEM`: precisa das variaveis `MICROSOFT_*` e `GOOGLE_*` tambem) | start `npm run trabalhador`, reinicio sempre |
+| `trabalhador` | consome a fila (inclusive `ORGANIZAR_NUVEM`: precisa das variaveis `MICROSOFT_*` e `GOOGLE_*` tambem) | start `npm run trabalhador`, reinicio sempre; **sem volume**: le e apaga arquivos pela aplicacao (ver abaixo) |
 | `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN, **triagem das publicacoes**, contas a pagar do mes e, em seguida, os avisos — nessa ordem |
 | `cron-diario` | `0 9 * * *` (06h de Brasilia) | consumo, regua de cobranca, sincronizacao de cobrancas, emissao de parcela de honorarios e **arquivamento da agenda** (`ARQUIVAR_AGENDA`, ver docs/AGENDA.md) |
 | `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados e `LIMPAR_VENCIDOS` (janelas de limite, pedidos de senha vencidos e acesso de suporte com mais de 12 meses) |
@@ -610,3 +613,25 @@ deve ter.
 Nota: o `trabalhador` ainda sobe por `npm run trabalhador` e sai 143 na
 troca. Ele nao dispara e-mail hoje, mas tem uma questao maior e separada —
 o que acontece com o trabalho em andamento quando o sinal chega.
+
+## Um disco, dois servicos (14/10/2026)
+
+O volume `/dados/arquivos` e so da `aplicacao` — volume do Railway nao se
+compartilha. Ate 14/10/2026 o trabalhador procurava os arquivos no proprio
+disco, vazio: a copia para a nuvem falhava com ENOENT e a purga de
+escritorio encerrado nao apagava os arquivos de verdade.
+
+Agora o trabalhador pede a aplicacao pela rede interna
+(`src/lib/armazenamento.ts`, rota `/api/interno/arquivos`):
+
+| Variavel | Onde | O que e |
+| --- | --- | --- |
+| `ARQUIVOS_SEGREDO` | aplicacao e trabalhador | segredo compartilhado, comparado em tempo constante |
+| `ARQUIVOS_DA_APLICACAO` | so no trabalhador | `http://aplicacao.railway.internal:8080` |
+
+A rota so responde pelo host interno (`RAILWAY_PRIVATE_DOMAIN`) e com o
+segredo; pelo dominio publico, 404. A partida do trabalhador registra
+"arquivos pela aplicacao: ok" — se aparecer outra coisa, a copia para a
+nuvem e a purga estao paradas. Logo depois de trocar as variaveis, o
+trabalhador pode subir antes da aplicacao e registrar 404 uma vez: reinicia-lo
+resolve.
