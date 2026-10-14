@@ -25,6 +25,7 @@ export function AcoesDoEscritorio({
   modulos,
   emCortesia = false,
   encerrado = false,
+  ciclo = null,
 }: {
   escritorioId: string;
   faixaAtual: string;
@@ -33,6 +34,8 @@ export function AcoesDoEscritorio({
   emCortesia?: boolean;
   /** Escritorio encerrado (ainda nao apagado). */
   encerrado?: boolean;
+  /** MENSAL | ANUAL; null sem assinatura. */
+  ciclo?: string | null;
 }) {
   const router = useRouter();
   const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
@@ -188,6 +191,24 @@ export function AcoesDoEscritorio({
           </div>
         )}
       </div>
+
+      {ciclo ? (
+        <div className="mt-4 border-t border-slate-200 pt-4">
+          <p className="font-semibold">Ciclo da assinatura</p>
+          <p className="mt-1 text-slate-600">
+            Hoje: {ciclo === "ANUAL" ? "anual, com 10% de desconto" : "mensal"}. No anual sai uma fatura de 12 meses;
+            nos meses do meio, so excedente de consumo.
+          </p>
+          <button
+            type="button"
+            disabled={ocupado}
+            onClick={() => agir({ acao: "ciclo", ciclo: ciclo === "ANUAL" ? "MENSAL" : "ANUAL" })}
+            className="mt-2 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+          >
+            {ciclo === "ANUAL" ? "Voltar para mensal" : "Passar para anual (10% de desconto)"}
+          </button>
+        </div>
+      ) : null}
 
       <div className="mt-4 border-t border-slate-200 pt-4">
         <p className="font-semibold">Processos do DJEN</p>

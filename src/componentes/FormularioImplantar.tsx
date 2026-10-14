@@ -46,7 +46,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
       ? Math.round(Number(valor.replace(/\./g, "").replace(",", ".")) * 100)
       : undefined;
     if (valorDigitado !== undefined && (!Number.isFinite(valorDigitado) || valorDigitado < 0)) {
-      setErro("Valor fechado invalido. Use o formato 299,00.");
+      setErro("Valor fechado invalido. Use o formato 279,00.");
       return;
     }
     setEnviando(true);

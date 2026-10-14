@@ -74,6 +74,9 @@ export default async function EscritorioNoPainel({
         <h2 className="font-semibold">Assinatura</h2>
         {escritorio.assinatura ? (
           <p className="mt-2 text-slate-700">
+            {escritorio.assinatura.ciclo === "ANUAL"
+              ? `Anual (10% de desconto)${escritorio.assinatura.anualAte ? `, pago ate ${escritorio.assinatura.anualAte.toLocaleDateString("pt-BR")}` : ""} · `
+              : "Mensal · "}
             {emReais(escritorio.assinatura.valorCentavos)} por mes · vencimento
             dia {escritorio.assinatura.diaVencimento} · teste ate{" "}
             {escritorio.assinatura.fimDoTeste.toLocaleDateString("pt-BR")}
@@ -116,6 +119,7 @@ export default async function EscritorioNoPainel({
           ativo: m.ativo,
         }))}
         emCortesia={Boolean(escritorio.assinatura?.cortesiaDesde)}
+        ciclo={escritorio.assinatura?.ciclo ?? null}
         encerrado={escritorio.status === "ENCERRADO"}
       />
 

@@ -50,7 +50,7 @@ export const LIMITES: Record<
  * A maior fica de fora de proposito. Escritorio de 50 advogados no Brasil e
  * escritorio grande: tem sistema, negocia, compara proposta. Tabela publica
  * nessa faixa so serve para ancorar a conversa no numero errado — e a nossa
- * ancora util e o Completo de R$ 299 para escritorio pequeno. O preco da
+ * ancora util e o Completo de R$ 279 para escritorio pequeno. O preco da
  * faixa maior continua existindo no sistema, como referencia interna para
  * quem monta a proposta.
  */

@@ -384,6 +384,10 @@ model Assinatura {
   valorCentavos Int
   diaVencimento Int       @default(10)
   fimDoTeste    DateTime
+  /// MENSAL | ANUAL. No anual, uma fatura de 12 meses com DESCONTO_ANUAL cobre
+  /// o escritorio ate anualAte; nos meses do meio, so excedente de consumo.
+  ciclo         String    @default("MENSAL")
+  anualAte      DateTime?
   canceladaEm   DateTime?
   criadaEm      DateTime  @default(now())
 

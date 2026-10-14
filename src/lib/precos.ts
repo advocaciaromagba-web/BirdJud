@@ -1,16 +1,16 @@
 // Tabela de precos da plataforma.
 //
-// Dois numeros amarram esta tabela, e o resto se acomoda entre eles:
+// TABELA FECHADA EM 14/10/2026, com a entrada mais baixa: a primeira linha
+// disputa com Astrea e ADVBOX (R$ 89 a R$ 229 de entrada) e o Completo, com
+// IA, WhatsApp, assinatura e nota fiscal inclusos, fica abaixo de quem cobra
+// IA a parte. Dois numeros amarram a tabela:
 //
-//   R$ 199 — o piso: o sistema simples, sem IA. Abaixo disso a conta nao
-//            fecha, porque o escritorio pequeno usa o mesmo servidor, o
-//            mesmo banco isolado e o mesmo suporte do grande;
-//   R$ 299 — o Completo para escritorio pequeno, que e o que o mercado
-//            brasileiro cobra por sistema "completo" nessa faixa. Cobrar o
-//            dobro por ser melhor nao vende: o escritorio compara a primeira
-//            linha da tabela, nao a lista de recursos.
+//   R$ 149 — o piso: o sistema simples, sem IA, para um advogado. O custo fixo
+//            da infraestrutura (perto de R$ 165/mes no total, medido em
+//            10/2026) se paga com poucos escritorios;
+//   R$ 279 — o Completo para quem advoga sozinho.
 //
-// Os cem reais entre um e outro sao curtos de proposito. Quem chega pelo piso
+// Os R$ 130 entre um e outro sao curtos de proposito. Quem chega pelo piso
 // e ve que a IA, a cobranca e a nota fiscal cabem em mais cem, sobe — e e no
 // Completo que o produto se defende.
 //
@@ -30,11 +30,11 @@ import type { Plano } from "./planos";
  * equipe de apoio ativos.
  */
 export const PRECO_DA_FAIXA: Record<Faixa, number> = {
-  ATE_1: 19_900,
-  ATE_3: 27_900,
-  ATE_10: 44_900,
-  ATE_25: 74_900,
-  ATE_50: 109_900,
+  ATE_1: 14_900,
+  ATE_3: 20_900,
+  ATE_10: 33_900,
+  ATE_25: 55_900,
+  ATE_50: 81_900,
 };
 
 /**
@@ -46,32 +46,32 @@ export const PRECO_DA_FAIXA: Record<Faixa, number> = {
  */
 export const PRECO_DO_PLANO: Record<Plano, Record<Faixa, number>> = {
   ESSENCIAL: {
-    ATE_1: 19_900,
-    ATE_3: 27_900,
-    ATE_10: 44_900,
-    ATE_25: 74_900,
-    ATE_50: 109_900,
+    ATE_1: 14_900,
+    ATE_3: 20_900,
+    ATE_10: 33_900,
+    ATE_25: 55_900,
+    ATE_50: 81_900,
   },
   PROFISSIONAL: {
-    ATE_1: 23_900,
-    ATE_3: 31_900,
-    ATE_10: 51_900,
-    ATE_25: 84_900,
-    ATE_50: 124_900,
+    ATE_1: 18_900,
+    ATE_3: 24_900,
+    ATE_10: 40_900,
+    ATE_25: 66_900,
+    ATE_50: 98_900,
   },
   AVANCADO: {
-    ATE_1: 26_900,
-    ATE_3: 35_900,
-    ATE_10: 57_900,
-    ATE_25: 94_900,
-    ATE_50: 137_900,
+    ATE_1: 22_900,
+    ATE_3: 30_900,
+    ATE_10: 48_900,
+    ATE_25: 80_900,
+    ATE_50: 117_900,
   },
   COMPLETO: {
-    ATE_1: 29_900,
-    ATE_3: 39_900,
-    ATE_10: 64_900,
-    ATE_25: 104_900,
-    ATE_50: 149_900,
+    ATE_1: 27_900,
+    ATE_3: 36_900,
+    ATE_10: 60_900,
+    ATE_25: 97_900,
+    ATE_50: 139_900,
   },
 };
 
@@ -209,6 +209,12 @@ export function franquiaDoModulo(modulo: Modulo, faixa: Faixa): number | null {
 }
 
 export const DIAS_DE_TESTE = 14;
+
+/**
+ * Desconto do plano anual (decidido em 14/10/2026): paga 12 meses de uma vez
+ * com 10% a menos. Sobre a mensalidade; excedente de consumo nao tem desconto.
+ */
+export const DESCONTO_ANUAL = 0.1;
 
 /**
  * Prazo minimo entre emitir a fatura e o vencimento.

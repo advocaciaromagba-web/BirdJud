@@ -17,13 +17,69 @@ import {
 } from "./email-plataforma";
 import type { Modulo } from "./modulos";
 import {
+  DESCONTO_ANUAL,
   excedentes,
-  mensalidade,
   PRAZO_MINIMO_DIAS,
   REGUA,
   somar,
   type ItemDaFatura,
 } from "./precos";
+import { contaMontada } from "./planos";
+import type { Faixa } from "./faixas";
+
+/**
+ * A mensalidade que a fatura cobra: a MESMA conta da vitrine (contaMontada).
+ *
+ * Ate 14/10/2026 a fatura somava a faixa e o preco de TABELA de cada modulo —
+ * sem o pacote e sem o fator da faixa. Um escritorio no Completo pagaria a
+ * soma avulsa, mais cara que o plano que a vitrine mostrou. Agora: plano
+ * pronto quando cobre e sai mais barato; senao faixa e modulos com o fator.
+ */
+export function mensalidadeDaConta(faixa: Faixa, modulos: Modulo[]): ItemDaFatura[] {
+  const conta = contaMontada(modulos, faixa);
+  if (conta.plano) {
+    return [{ descricao: `Plano ${conta.plano} (${faixa})`, valorCentavos: conta.totalCentavos }];
+  }
+  return [
+    { descricao: `Faixa ${faixa}`, valorCentavos: conta.faixaCentavos },
+    ...conta.modulos.map((m) => ({ descricao: `Modulo ${m.modulo}`, valorCentavos: m.valorCentavos })),
+  ];
+}
+
+/**
+ * A mensalidade de UM escritorio: o valor fechado na assinatura.
+ *
+ * Contrato assinado nao muda com a tabela (Assinatura.valorCentavos, ver
+ * docs/PLANOS.md). Ate 14/10/2026 a fatura recalculava pela tabela e ignorava
+ * esse valor — baixar a tabela, como se fez nesse dia, mudaria todo contrato.
+ * Sem valor gravado (zero), vale a conta da vitrine.
+ */
+export function mensalidadeDoEscritorio(
+  faixa: Faixa,
+  modulos: Modulo[],
+  valorFechado: number | null | undefined,
+): ItemDaFatura[] {
+  if (valorFechado && valorFechado > 0) {
+    return [{ descricao: "Mensalidade (valor fechado na assinatura)", valorCentavos: valorFechado }];
+  }
+  return mensalidadeDaConta(faixa, modulos);
+}
+
+/** Doze mensalidades, com o desconto do anual em linha propria. */
+export function anuidade(faixa: Faixa, modulos: Modulo[], valorFechado?: number | null): ItemDaFatura[] {
+  const mensal = somar(mensalidadeDoEscritorio(faixa, modulos, valorFechado));
+  const bruto = mensal * 12;
+  return [
+    { descricao: `Assinatura anual: 12 x ${(mensal / 100).toFixed(2).replace(".", ",")}`, valorCentavos: bruto },
+    { descricao: `Desconto do plano anual (${Math.round(DESCONTO_ANUAL * 100)}%)`, valorCentavos: -Math.round(bruto * DESCONTO_ANUAL) },
+  ];
+}
+
+function somarMeses(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setUTCMonth(r.getUTCMonth() + n);
+  return r;
+}
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -122,26 +178,43 @@ export async function aplicarRegua(
     });
 
     if (!existente) {
+      // Anual: a fatura de 12 meses sai quando o ano pago acaba (ou na
+      // primeira vez); nos meses do meio, so o excedente de consumo, se houver.
+      const anual = assinatura.ciclo === "ANUAL";
+      const renovaAnual = anual && (!assinatura.anualAte || assinatura.anualAte <= agora);
       const itens = await itensDaFatura(
         escritorioId,
         escritorio.faixa,
         competencia,
+        anual ? (renovaAnual ? "ANUAL" : "SO_EXCEDENTE") : "MENSAL",
+        assinatura.valorCentavos,
       );
-      const fatura = await prismaPlataforma().fatura.create({
-        data: {
-          escritorioId,
-          competencia,
-          valorCentavos: somar(itens),
-          detalhe: itens,
-          vencimento: vencimentoComPrazo(
+      if (somar(itens) > 0) {
+        const fatura = await prismaPlataforma().fatura.create({
+          data: {
+            escritorioId,
             competencia,
-            assinatura.diaVencimento,
-            agora,
-          ),
-        },
-      });
-      faturaGerada = fatura.id;
-      await cobrarEAvisar(fatura.id);
+            valorCentavos: somar(itens),
+            detalhe: itens,
+            vencimento: vencimentoComPrazo(
+              competencia,
+              assinatura.diaVencimento,
+              agora,
+            ),
+          },
+        });
+        faturaGerada = fatura.id;
+        if (renovaAnual) {
+          // O ano conta de onde o anterior acabou (ou do fim do teste): pagar
+          // com atraso nao encurta o ano de quem pagou.
+          const inicio = assinatura.anualAte ?? assinatura.fimDoTeste;
+          await prismaPlataforma().assinatura.update({
+            where: { escritorioId },
+            data: { anualAte: somarMeses(inicio, 12) },
+          });
+        }
+        await cobrarEAvisar(fatura.id);
+      }
     }
   }
 
@@ -175,21 +248,25 @@ export async function itensDaFatura(
   escritorioId: string,
   faixaBruta: string,
   competencia: string,
+  modo: "MENSAL" | "ANUAL" | "SO_EXCEDENTE" = "MENSAL",
+  valorFechado: number | null = null,
 ): Promise<ItemDaFatura[]> {
   const faixa = ehFaixa(faixaBruta) ? faixaBruta : "ATE_3";
 
   const modulos = await comEscritorio(escritorioId, (db) =>
     db.moduloContratado.findMany({ where: { ativo: true } }),
   );
+  const contratados = modulos.map((m) => m.modulo as Modulo);
 
   const consumo = await consumoDoMes(escritorioId, competencia);
+  const doConsumo = excedentes(consumo as { metrica: Metrica; excedente: number }[]);
 
+  if (modo === "SO_EXCEDENTE") return doConsumo;
   return [
-    ...mensalidade(
-      faixa,
-      modulos.map((m) => m.modulo as Modulo),
-    ),
-    ...excedentes(consumo as { metrica: Metrica; excedente: number }[]),
+    ...(modo === "ANUAL"
+      ? anuidade(faixa, contratados, valorFechado)
+      : mensalidadeDoEscritorio(faixa, contratados, valorFechado)),
+    ...doConsumo,
   ];
 }
 

@@ -7,12 +7,18 @@ mais do que o plano pronto que ja lhe daria aquilo.**
 
 | plano | o que entra alem do sistema | 1 advogado | ate 3 | ate 10 | ate 25 | acima |
 | --- | --- | --- | --- | --- | --- | --- |
-| Essencial | nada — clientes, processos, agenda e prazos, com cadastro digitado a mao | **199** | 279 | 449 | 749 | sob consulta |
-| Profissional | publicacoes do DJEN, arquivos, aviso por e-mail | 239 | 319 | 519 | 849 | sob consulta |
-| Avancado | + cobrancas, financeiro, nota fiscal de servico | 269 | 359 | 579 | 949 | sob consulta |
-| Completo | + inteligencia artificial, aviso por WhatsApp, assinatura eletronica | **299** | 399 | 649 | 1.049 | sob consulta |
+| Essencial | nada — clientes, processos, agenda e prazos, com cadastro digitado a mao | **149** | 209 | 339 | 559 | sob consulta |
+| Profissional | publicacoes do DJEN, arquivos, aviso por e-mail | 189 | 249 | 409 | 669 | sob consulta |
+| Avancado | + cobrancas, financeiro, nota fiscal de servico | 229 | 309 | 489 | 809 | sob consulta |
+| Completo | + inteligencia artificial, aviso por WhatsApp, assinatura eletronica | **279** | 369 | 609 | 979 | sob consulta |
 
-O sistema **comeca no advogado sozinho**. E dele que sai o piso de R$ 199, e e
+**Tabela fechada em 14/10/2026** (entrada mais baixa), depois de medir o custo
+real da infraestrutura (perto de US$ 30/mes no total, nao por escritorio) e
+comparar com Astrea, ADVBOX, Projuris e EasyJur, que entram entre R$ 89 e
+R$ 229 e cobram IA a parte ou adesao. Teste gratis de 14 dias. Plano anual
+com **10% de desconto** (ver "Assinatura anual").
+
+O sistema **comeca no advogado sozinho**. E dele que sai o piso de R$ 149, e e
 por essa faixa que todo escritorio novo entra — so sobe quando tiver gente
 para isso. A faixa Solo tem uma vaga de advogado e duas de apoio, porque quem
 advoga sozinho quase nunca trabalha sozinho.
@@ -21,23 +27,23 @@ advoga sozinho quase nunca trabalha sozinho.
 no Brasil e escritorio grande: tem sistema, negocia, compara proposta, e o
 preco depende de migracao e de volume proprio de uso. Tabela publica nessa
 faixa so ancora a conversa no numero errado — e a ancora util e o Completo de
-R$ 299 para escritorio pequeno. O preco continua existindo no sistema
+R$ 279 para escritorio pequeno. O preco continua existindo no sistema
 (`PRECO_DO_PLANO`) como **referencia interna** de quem monta a proposta, e
 continua obedecendo a escada; quem decide o que aparece na tela e
 `FAIXAS_PUBLICADAS`, em `catalogo.ts`.
 
 Dois numeros amarram a tabela, e o resto se acomoda entre eles:
 
-- **R$ 199**, o piso: o sistema simples, sem IA, para um advogado. Abaixo disso a conta nao
+- **R$ 149**, o piso: o sistema simples, sem IA, para um advogado. Abaixo disso a conta nao
   fecha, porque o escritorio pequeno usa o mesmo servidor, o mesmo banco
   isolado e o mesmo suporte do grande;
-- **R$ 299**, o Completo para quem advoga sozinho: e o que o mercado brasileiro
+- **R$ 279**, o Completo para quem advoga sozinho: e o que o mercado brasileiro
   cobra por sistema "completo" dessa faixa. O BirdJud entrega mais por esse
   preco — leitura de documento por IA, entre outras coisas — e nao cobra mais
   por isso, porque o escritorio compara a primeira linha da tabela, nao a
   lista de recursos.
 
-Os cem reais entre um e outro sao curtos de proposito: quem chega pelo piso e
+Os R$ 130 entre um e outro sao curtos de proposito: quem chega pelo piso e
 ve que a IA, a cobranca e a nota fiscal cabem em mais cem, sobe — e e no
 Completo que o produto se defende. Ha um teste que prende os dois numeros e
 exige que todo plano da faixa de entrada caiba entre eles.
@@ -119,6 +125,29 @@ e gente.
 acrescentar e quanto custa, mas contratar e mudanca de contrato: passa pela
 plataforma.
 
+## Assinatura anual
+
+Desde 14/10/2026: **10% de desconto** (`DESCONTO_ANUAL` em `precos.ts`) para
+quem paga o ano. `Assinatura.ciclo` = MENSAL | ANUAL, trocado no console da
+plataforma ("Passar para anual").
+
+- a fatura anual e **12 x a mensalidade fechada**, com o desconto em linha
+  propria, e marca `anualAte` (um ano depois do fim do teste, ou do fim do ano
+  anterior — pagar com atraso nao encurta o ano de quem pagou);
+- nos meses do meio, so sai fatura se houver **excedente de consumo** (sem
+  desconto);
+- acabado o ano, a regua emite a proxima fatura anual. Voltar ao mensal deixa
+  o ano pago valer ate o fim.
+
+## O que a fatura cobra (corrigido em 14/10/2026)
+
+A fatura cobra o **valor fechado na assinatura** (`Assinatura.valorCentavos`).
+Ate 14/10/2026 ela recalculava pela tabela, somando a faixa e o preco de
+tabela de cada modulo — sem o pacote e sem o fator da faixa: um escritorio no
+Completo pagaria a soma avulsa (R$ 386 no solo, contra R$ 279 na vitrine), e
+toda mudanca de tabela mudaria contrato assinado. Sem valor gravado, vale a
+conta da vitrine (`contaMontada`). Testes em `testes/assinatura-anual.test.ts`.
+
 ## O teste comeca completo
 
 Quem se cadastra sem escolher nada comeca o teste com o plano Completo. Quem
@@ -126,8 +155,8 @@ esta avaliando precisa ver o sistema inteiro — inclusive a leitura por IA, que
 e o que mais distingue o produto. Reduzir depois e conversa comercial;
 comecar cego nao ajuda ninguem.
 
-## Os valores sao provisorios
+## Os valores
 
-Como diz o topo de `precos.ts`: a tabela so pode ser fechada depois de
-levantar custo real de servidor, IA, mensagem e e-mail, e de conferir o preco
-dos concorrentes. Os descontos por plano estao na mesma condicao.
+Fechados em 14/10/2026 (ver o topo). Revisar quando houver escritorios
+pagando e consumo real de IA e mensagens por varios meses: as franquias e o
+excedente sao o que protege a margem.

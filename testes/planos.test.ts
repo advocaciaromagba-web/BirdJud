@@ -79,20 +79,20 @@ describe("planos", () => {
     }
   });
 
-  it("a tabela fica presa entre o piso de 199 e o teto de 299 no solo", () => {
-    // Os dois numeros que amarram o produto: R$ 199 e o sistema simples, sem
-    // IA, e R$ 299 e o Completo — que e o que o mercado brasileiro cobra por
+  it("a tabela fica presa entre o piso de 149 e o teto de 279 no solo", () => {
+    // Os dois numeros que amarram o produto (tabela fechada em 14/10/2026):
+    // R$ 149 e o sistema simples, sem IA, e R$ 279 e o Completo — que e o que o mercado brasileiro cobra por
     // sistema "completo" para escritorio pequeno. Este teste nao e sobre
     // codigo: e para a tabela nao andar sozinha, aos poucos, para fora do
     // preco que se pode praticar.
-    expect(contaDoPlano("ESSENCIAL", "ATE_1").totalCentavos).toBe(19_900);
-    expect(contaDoPlano("COMPLETO", "ATE_1").totalCentavos).toBe(29_900);
+    expect(contaDoPlano("ESSENCIAL", "ATE_1").totalCentavos).toBe(14_900);
+    expect(contaDoPlano("COMPLETO", "ATE_1").totalCentavos).toBe(27_900);
 
     // E nenhum plano escapa do intervalo na faixa de entrada.
     for (const plano of PLANOS) {
       const total = contaDoPlano(plano, "ATE_1").totalCentavos;
-      expect(total, plano).toBeGreaterThanOrEqual(19_900);
-      expect(total, plano).toBeLessThanOrEqual(29_900);
+      expect(total, plano).toBeGreaterThanOrEqual(14_900);
+      expect(total, plano).toBeLessThanOrEqual(27_900);
     }
   });
 
@@ -179,13 +179,13 @@ describe("planos", () => {
 
 describe("faixa de entrada", () => {
   it("o sistema comeca no advogado sozinho", () => {
-    // A primeira faixa e de UM advogado, e e dela que sai o piso de R$ 199.
+    // A primeira faixa e de UM advogado, e e dela que sai o piso de R$ 149.
     // Escritorio novo entra por aqui e so sobe quando tiver gente para isso.
     const primeira = FAIXAS[0];
     expect(primeira).toBe("ATE_1");
     expect(LIMITES[primeira].advogados).toBe(1);
     expect(rotuloDoTamanho(primeira)).toBe("1 advogado");
-    expect(contaDoPlano("ESSENCIAL", primeira).totalCentavos).toBe(19_900);
+    expect(contaDoPlano("ESSENCIAL", primeira).totalCentavos).toBe(14_900);
   });
 
   it("advogado sozinho tem onde por a secretaria", () => {

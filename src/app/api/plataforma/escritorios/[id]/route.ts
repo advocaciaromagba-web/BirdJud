@@ -41,6 +41,7 @@ const acao = z.discriminatedUnion("acao", [
   // captura da madrugada. So poe o trabalho na fila.
   z.object({ acao: z.literal("processos"), refazer: z.boolean().optional() }),
   z.object({ acao: z.literal("nuvem") }),
+  z.object({ acao: z.literal("ciclo"), ciclo: z.enum(["MENSAL", "ANUAL"]) }),
   // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
   // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
@@ -204,6 +205,25 @@ export async function POST(
       }
       await enfileirar("IMPORTAR_PROCESSOS", escritorio.id);
       return NextResponse.json({ detalhe: `Busca dos processos de ${oabs} OAB(s) na fila.` });
+    }
+
+    if (corpo.data.acao === "ciclo") {
+      // Mensal ou anual (10% de desconto). Passar para o anual: a fatura de
+      // 12 meses sai na proxima regua. Voltar ao mensal: o ano ja pago segue
+      // valendo ate acabar (anualAte fica), e so depois volta a fatura mensal.
+      const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
+      if (!assinatura) return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      await prismaPlataforma().assinatura.update({
+        where: { escritorioId: escritorio.id },
+        data: { ciclo: corpo.data.ciclo },
+      });
+      await registrarAcessoSuporte(operador.operadorId, escritorio.id, `Ciclo da assinatura: ${corpo.data.ciclo}`);
+      return NextResponse.json({
+        detalhe:
+          corpo.data.ciclo === "ANUAL"
+            ? "Assinatura anual: a fatura de 12 meses, com 10% de desconto, sai na proxima regua."
+            : "Assinatura mensal.",
+      });
     }
 
     if (corpo.data.acao === "nuvem") {

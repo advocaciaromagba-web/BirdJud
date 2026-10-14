@@ -9,7 +9,7 @@ import {
   type Faixa,
   type Modulo,
 } from "@/lib/catalogo";
-import { precoDoModulo } from "@/lib/precos";
+import { DESCONTO_ANUAL, precoDoModulo } from "@/lib/precos";
 import {
   contaDoPlano,
   contaMontada,
@@ -179,6 +179,10 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                       {" "}
                       /mes
                     </span>
+                  </p>
+                  <p className="ajuda">
+                    No anual: {emReais(Math.round(doPlano.totalCentavos * 12 * (1 - DESCONTO_ANUAL)))} por ano
+                    ({Math.round(DESCONTO_ANUAL * 100)}% de desconto).
                   </p>
                   {doPlano.descontoCentavos > 0 ? (
                     <p className="ajuda">
