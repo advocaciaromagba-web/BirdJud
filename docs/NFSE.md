@@ -4,6 +4,9 @@ Emissao pelo **Sistema Nacional da NFS-e** (Sefin Nacional), no metodo do
 sistema da Advocacia Roma, que ja emite nota real em producao. Codigo em
 `src/lib/nfse/`.
 
+> **Validada em producao em 13/10/2026**: a primeira nota real saiu pelo
+> BirdJud (Advocacia Roma), com DANFSe conferido pelo escritorio e sem ajuste.
+
 ## O fluxo: preparar, depois assinar
 
 1. **Preparar** (qualquer pessoa com acesso a Notas fiscais): cliente, valor,

@@ -96,8 +96,10 @@ mesma para os sete, e revogar por causa de um derruba os outros seis.
   pagamento e informacoes fiscais cadastradas na Meta (os erros 141006 e
   131042 acabaram). Nome de exibicao "BirdJud" pedido em 11/10, em analise
   na Meta.
-- **NFS-e**: layout marcado "a conferir"; rodar `npm run conferir-nfse` com
-  certificado A1 em homologacao antes de emitir nota de verdade.
+- **NFS-e**: **validada em producao em 13/10/2026** — primeira nota real
+  emitida pelo BirdJud (Advocacia Roma), conferida pelo escritorio e sem
+  ajuste. O PDF entrou na pasta do cliente; a copia para a nuvem, que falhou
+  pelo volume preso a aplicacao, foi corrigida e refeita em 14/10/2026.
 - **Acessibilidade**: auditoria automática (axe) feita e corrigida em
   11/10/2026, ver `docs/ACESSIBILIDADE.md`. Falta teste com leitor de tela
   de verdade.
