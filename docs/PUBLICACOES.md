@@ -42,6 +42,27 @@ A tarefa fica com o responsavel escolhido, ou com quem aceitou. Sugestao de
 **AGENDAMENTO** (audiencia, pericia) vira compromisso na Agenda. Ver
 `docs/AGENDA.md`, "Agenda nao e Tarefas".
 
+## De quando o prazo corre: a publicacao, nao a disponibilizacao
+
+O DJEN informa a **disponibilizacao**. O prazo nao corre dela, sao dois saltos
+(`calcularPrazoDaPublicacao` em `src/lib/prazos.ts`):
+
+1. **publicacao** = primeiro dia util depois da disponibilizacao (CPC 224 § 2º,
+   Lei 11.419/2006 art. 4º § 3º);
+2. **inicio do prazo** = primeiro dia util depois da publicacao (CPC 224 § 3º).
+
+Disponibilizada na sexta: publicada na segunda, o prazo corre da terca. Ate
+13/10/2026 a triagem contava direto da disponibilizacao e o fatal saia **um
+dia util curto**; as sugestoes ainda nao aceitas foram recontadas
+(`recontarPrazosPendentes`), as ja aceitas ficaram como estavam — do lado
+seguro, e alguem ja tinha olhado aquela data. A explicacao do prazo cita as
+tres datas.
+
+Na tarefa lida de documento, a IA diz se a data e de intimacao, publicacao
+ou disponibilizacao (`tipoDaData`); so a ultima ganha os dois saltos. Na
+duvida, um salto so: errar para mais cedo avisa antes, errar para mais tarde
+perde o prazo.
+
 ## A sugestao aparece como sugestao
 
 O bloco da sugestao tem cor propria (violeta), diferente do texto da

@@ -1,6 +1,22 @@
-# Entrevista de triagem
+# Entrevistas
 
-A primeira conversa com quem procura o escritorio, virando documento.
+A conversa com o cliente — ou com a testemunha — virando documento.
+
+> **Atualizado em 14/10/2026.** O que mudou desde o porte, em resumo (detalhes
+> nas secoes "Tipos de entrevista", "Gravar e transcrever pela OpenAI",
+> "Perguntas pela procuracao" e "Na pasta do cliente", no fim):
+>
+> - tres tipos: triagem, oitiva de testemunha e coleta de informacoes;
+> - a gravacao na tela e transcrita pela OpenAI **na hora**, em trechos de um
+>   minuto; o reconhecimento do navegador virou alternativa;
+> - perguntas geradas **lendo a procuracao**, e o PDF delas para o cliente
+>   responder gravando em casa (tambem pelo WhatsApp);
+> - a entrevista nasce **ligada ao cliente**, e a gravacao, o audio importado
+>   e o PDF da transcricao vao para a pasta dele;
+> - excluir a entrevista de vez, com confirmacao.
+>
+> As secoes "Por que a entrevista nasce sem cliente" e "Transcricao ao vivo:
+> LOCAL OU NADA" descrevem a decisao ORIGINAL e ficam como historico.
 
 Portada do sistema da Advocacia Roma em 08/10/2026. O que se trouxe foi a
 FUNCAO e as REGRAS DO PROMPT — nenhum dado, nenhum codigo. La a chamada e um
@@ -180,3 +196,79 @@ perder o que ja estava escrito, nao.
 Codigo: `src/lib/entrevista-do-escritorio.ts`, `src/lib/minuta-prompt.ts`,
 `src/lib/entrevista-pdf.ts`; migracao 57; testes em
 `testes/entrevista-completa.test.ts`.
+
+## Tipos de entrevista
+
+`Entrevista.tipo` (migracao 60): **TRIAGEM** (primeiro atendimento),
+**TESTEMUNHA** (oitiva, para entender o caso) e **COLETA** (levantar
+informacoes para gerar um documento). Todos gravam, transcrevem, organizam e
+geram PDF. Muda por tipo:
+
+| | Triagem | Testemunha | Coleta |
+| --- | --- | --- | --- |
+| roteiro (`SISTEMA_ROTEIRO*`) | fatos, documentos, pretensao | perguntas ABERTAS e NEUTRAS: o que viu, quando, onde, como conhece as partes | o que o documento precisa: fatos, datas, valores, provas |
+| PDF | Entrevista de triagem | Termo de oitiva de testemunha | Entrevista de coleta de informacoes |
+| texto da peticao inicial e documentos do cliente | sim | nao | nao |
+
+`processoId` liga a entrevista ao processo (informado pelo numero na
+abertura; numero nao cadastrado e erro, nao chute): o roteiro usa a classe,
+as partes e o ultimo andamento.
+
+## Gravar e transcrever pela OpenAI
+
+Como no sistema da Advocacia Roma, o audio vira texto pela OpenAI
+(`gpt-4o-transcribe`, chave da plataforma). Decisao do escritorio em
+13/10/2026, que substitui o "local ou nada" acima.
+
+- **Gravar e transcrever** (`GravadorOpenAI`): o microfone grava em trechos de
+  um minuto; cada trecho vai para `/api/entrevistas/[id]/audio` com
+  `continua=true`, EM ORDEM (fila), e o texto aparece enquanto a conversa
+  acontece. Trecho em silencio nao e erro. Durante a gravacao o campo fica so
+  de leitura — o texto e o salvo no servidor.
+- **Importar audio** (`EnvioDeAudio`): o arquivo do celular, da audiencia, ou
+  o que o cliente gravou em casa respondendo ao PDF das perguntas.
+- **Pelo navegador** (`GravadorDeFala`): alternativa recolhida, para quem nao
+  quer o audio saindo do escritorio.
+
+Dois defeitos impediam tudo isso em producao ate 13/10/2026, os dois com teste
+agora: `Permissions-Policy: microphone=()` bloqueava o microfone em todo o
+site (hoje `microphone=(self)`, `testes/cabecalhos.test.ts`), e o pedido de
+`verbose_json` ao `gpt-4o-transcribe` era recusado com 400 — so o `whisper-1`
+aceita esse formato.
+
+## Perguntas pela procuracao
+
+Na triagem, **"Gerar perguntas lendo a procuracao"** (PDF ou foto): a IA le o
+tipo de acao que a procuracao traz ("poderes para propor acao de..."), o
+outorgante, e sugere ate 15 perguntas objetivas para a triagem completa
+(`SISTEMA_ROTEIRO_PROCURACAO`, `roteiroDaProcuracao`). O tipo de acao fica
+gravado. Procuracao so ad judicia, sem a acao: a resposta diz isso e as
+perguntas saem pelo assunto. A procuracao e lida e descartada.
+
+As perguntas sao escritas para o CLIENTE, em "voce", porque podem ir por
+escrito: **"PDF das perguntas para o cliente"** traz o passo a passo de
+gravar em casa (dizer o numero da pergunta antes de responder) e o telefone
+do escritorio; **"Enviar pelo WhatsApp"** manda o PDF ao telefone do cliente
+ligado, ou ao informado na entrevista. O audio que volta entra por
+"Importar audio" e e transcrito.
+
+## Na pasta do cliente
+
+A nova entrevista escolhe o **cliente** (na triagem, e quem e ouvido; nas
+outras, o dono do caso; conferido dentro do escritorio). Com cliente ligado,
+vao para a pasta dele — e para a nuvem, se conectada:
+
+- a **gravacao feita na tela**, inteira, num arquivo so (um segundo gravador
+  roda em paralelo aos trechos; `/api/entrevistas/[id]/gravacao`);
+- o **audio importado**;
+- o **PDF da transcricao**, ao encerrar.
+
+Sem cliente ligado, nada vai para pasta nenhuma e o cartao avisa. Falha ao
+guardar (acima de 25 MB, espaco esgotado) nao apaga a transcricao: a tela diz
+o motivo.
+
+## Excluir
+
+"Excluir entrevista" apaga de vez — transcricao, anotacoes, organizacao —
+com confirmacao. De vez, e nao arquivada: e conversa sigilosa. O que ja foi
+para a pasta do cliente fica la.

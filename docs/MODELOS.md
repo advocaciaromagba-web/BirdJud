@@ -266,13 +266,31 @@ provedor chega inteira a tela.
 Nao ha webhook: a situacao se atualiza quando alguem clica em **conferir**. Um
 webhook por escritorio e o passo seguinte.
 
+## Fixar qual modelo sai: o do escritorio ou o do sistema
+
+Desde 13/10/2026 o modelo do escritorio fica **guardado** e a escolha de qual
+sai na peca e **fixada** na tela de Modelos ("Usar o do escritorio" / "Usar o
+do sistema"), por especie. Trocar e um clique, nos dois sentidos, e nada se
+apaga — coluna `emUso` do modelo ativo (migracao 59, `fixarModelo`).
+
+- **Baixar**: o do sistema sempre (`?qual=sistema`), e o do escritorio quando
+  ha (`?qual=escritorio`) — para corrigir, adaptar ou comparar.
+- **Enviar outro**: o novo passa a valer (emUso), o anterior vira historico.
+- **Excluir o do escritorio**: e a acao que apaga o arquivo, com confirmacao;
+  passa a valer o do sistema.
+
+Na **entrevista de triagem** ligada a um cliente, contrato, procuracao e
+declaracao tambem saem direto da tela da entrevista, em PDF ou Word, no
+modelo fixado (`DocumentosDaEntrevista`).
+
 ## Historico
 
 Modelo trocado vira inativo em vez de sumir. A peca que saiu ontem saiu daquele
 texto, e um dia alguem vai perguntar qual era. Um indice unico PARCIAL garante
 "um ativo por especie" sem impedir varios inativos (ver `28_modelos`).
 
-Quem troca o modelo e so o ADMIN do escritorio. Baixar, qualquer usuario pode.
+Quem envia, fixa ou exclui modelo e so o ADMIN do escritorio. Baixar,
+qualquer usuario pode.
 
 ## Limites conhecidos
 

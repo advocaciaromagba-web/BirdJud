@@ -18,7 +18,7 @@ Cada tarefa tem duas datas:
 | se errar | alguem cobra de novo | perde direito, sem conserto |
 
 O fatal e gravado as 23h59 de Brasilia do dia. A tela de Prazos saiu: os
-prazos antigos viraram tarefas, e o Inicio ("tarefas com prazo hoje, a tres
+prazos antigos viraram tarefas, e o Inicio ("tarefas com prazo hoje, a quatro
 dias uteis ou ja vencidas") e o resumo do dia contam pelo fatal, ou pela
 entrega quando nao ha fatal. Meta nao conta.
 
@@ -26,8 +26,18 @@ entrega quando nao ha fatal. Meta nao conta.
 
 Quem recebe a tarefa e avisado por e-mail e WhatsApp (modelo
 `TAREFA_DESIGNADA`), menos quando se designou a si mesmo. Vinte e quatro
-horas antes da entrega e do prazo fatal sai um lembrete (`LEMBRETE_TAREFA`),
-so para o responsavel.
+horas antes da ENTREGA sai um lembrete (`LEMBRETE_TAREFA`), so para o
+responsavel.
+
+O **prazo fatal** tem regua propria, em **dias uteis** (`marcoDoFatal` em
+`src/lib/regua-de-lembretes.ts`): **4 dias uteis antes**, no **dia util
+anterior** e **no proprio dia**. Fatal na segunda, visto na sexta, e a
+vespera — um dia de trabalho pela frente, nao tres. Tarefa criada a 3 dias
+uteis do fatal recebe o primeiro aviso na hora, com a conta de verdade. Os
+avisos do fatal saem a partir das 7h de Brasilia, nunca de madrugada, e cada
+marco avisa uma vez. O Inicio marca urgente a 4 dias uteis ou menos, e o
+resumo do dia traz "vence no proximo dia util" e "prazo fatal nos proximos
+4 dias uteis".
 
 ## Criar tarefa lendo o documento
 
