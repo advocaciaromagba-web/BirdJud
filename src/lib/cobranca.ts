@@ -7,6 +7,7 @@ import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { competenciaDe, consumoDoMes, type Metrica } from "./consumo";
 import { ehFaixa } from "./faixas";
 import {
+  ehFaturaAnual,
   emitirCobrancaDaFatura,
   mensagemDaFatura,
   temCobrancaDaPlataforma,
@@ -82,6 +83,13 @@ function somarMeses(d: Date, n: number): Date {
 }
 
 const DIA = 24 * 60 * 60 * 1000;
+
+/** Tolerancia para emendar o ano novo no anterior (a regua roda todo dia). */
+const EMENDA_DO_ANO_EM_DIAS = 35;
+
+export function inicioDoAno(marco: Date, agora: Date): Date {
+  return agora.getTime() - marco.getTime() <= EMENDA_DO_ANO_EM_DIAS * DIA ? marco : agora;
+}
 
 export function diasDeAtraso(vencimento: Date, agora = new Date()): number {
   return Math.floor((agora.getTime() - vencimento.getTime()) / DIA);
@@ -180,13 +188,15 @@ export async function aplicarRegua(
     if (!existente) {
       // Anual: a fatura de 12 meses sai quando o ano pago acaba (ou na
       // primeira vez); nos meses do meio, so o excedente de consumo, se houver.
-      const anual = assinatura.ciclo === "ANUAL";
-      const renovaAnual = anual && (!assinatura.anualAte || assinatura.anualAte <= agora);
+      // O ano ja faturado vale qualquer que seja o ciclo de hoje: quem pagou
+      // o anual e voltou ao mensal nao paga mensalidade ate o ano acabar.
+      const anoEmCurso = Boolean(assinatura.anualAte && assinatura.anualAte > agora);
+      const renovaAnual = assinatura.ciclo === "ANUAL" && !anoEmCurso;
       const itens = await itensDaFatura(
         escritorioId,
         escritorio.faixa,
         competencia,
-        anual ? (renovaAnual ? "ANUAL" : "SO_EXCEDENTE") : "MENSAL",
+        anoEmCurso ? "SO_EXCEDENTE" : renovaAnual ? "ANUAL" : "MENSAL",
         assinatura.valorCentavos,
       );
       if (somar(itens) > 0) {
@@ -205,9 +215,12 @@ export async function aplicarRegua(
         });
         faturaGerada = fatura.id;
         if (renovaAnual) {
-          // O ano conta de onde o anterior acabou (ou do fim do teste): pagar
-          // com atraso nao encurta o ano de quem pagou.
-          const inicio = assinatura.anualAte ?? assinatura.fimDoTeste;
+          // O ano conta de onde o anterior acabou (ou do fim do teste): a
+          // regua atrasar uns dias nao encurta o ano de quem pagou. Mas se
+          // essa data e antiga (quem foi mensal por meses e so agora passou
+          // ao anual), o ano conta de hoje — contar do fim do teste daria
+          // um "ano" ja meio gasto.
+          const inicio = inicioDoAno(assinatura.anualAte ?? assinatura.fimDoTeste, agora);
           await prismaPlataforma().assinatura.update({
             where: { escritorioId },
             data: { anualAte: somarMeses(inicio, 12) },
@@ -375,6 +388,7 @@ async function cobrarEAvisar(faturaId: string): Promise<void> {
     valorCentavos: fatura.valorCentavos,
     vencimento: fatura.vencimento,
     link: emitida.linkPagamento,
+    anual: ehFaturaAnual(fatura.detalhe),
   });
 
   try {

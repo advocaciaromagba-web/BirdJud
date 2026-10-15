@@ -11,6 +11,7 @@ import {
   PlataformaSemCobranca,
   assinanteNoAsaas,
   descricaoDaFatura,
+  ehFaturaAnual,
   emitirCobrancaDaFatura,
   mensagemDaFatura,
   temCobrancaDaPlataforma,
@@ -88,6 +89,18 @@ describe("descricao da cobranca", () => {
   it("leva a competencia", () => {
     expect(descricaoDaFatura("2026-10")).toBe("BirdJud — assinatura 10/2026");
   });
+
+  // A fatura anual cobra 12 meses: no boleto, "assinatura 10/2026" faria
+  // parecer uma mensalidade de R$ 3.000.
+  it("anual diz que sao 12 meses", () => {
+    expect(descricaoDaFatura("2026-10", true)).toBe("BirdJud — assinatura anual (12 meses) a partir de 10/2026");
+  });
+
+  it("reconhece a fatura anual pelos itens", () => {
+    expect(ehFaturaAnual([{ descricao: "Assinatura anual: 12 x 279,00", valorCentavos: 334_800 }])).toBe(true);
+    expect(ehFaturaAnual([{ descricao: "Plano Completo", valorCentavos: 27_900 }])).toBe(false);
+    expect(ehFaturaAnual(null)).toBe(false);
+  });
 });
 
 describe("chave da plataforma", () => {
@@ -122,6 +135,14 @@ describe("mensagem da fatura", () => {
     expect(m.texto).toContain("boleto, Pix ou cartao");
   });
 
+  it("anual: o e-mail diz que e o plano de 12 meses", () => {
+    const m = mensagemDaFatura({ ...base, valorCentavos: 301_320, link: "https://asaas.test/i/pay_1", anual: true });
+    expect(m.assunto).toContain("plano anual");
+    expect(m.texto).toContain("12 meses a partir de 2026-10");
+    expect(m.texto).toContain("10% de desconto");
+    expect(m.texto.replace(/\u00a0/g, " ")).toContain("R$ 3.013,20");
+  });
+
   // Sem link o e-mail ainda sai, mas nao promete o que nao tem.
   it("sem link, nao inventa botao de pagar", () => {
     const m = mensagemDaFatura({ ...base, link: null });
@@ -142,7 +163,7 @@ seTemBanco("emissao contra o banco", () => {
     }
   });
 
-  async function escritorioComFatura(opcoes: { cnpj: string | null }) {
+  async function escritorioComFatura(opcoes: { cnpj: string | null; detalhe?: object[] }) {
     const sufixo = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const escritorio = await prismaPlataforma().escritorio.create({
       data: {
@@ -159,6 +180,7 @@ seTemBanco("emissao contra o banco", () => {
         competencia: "2026-10",
         valorCentavos: 29_900,
         vencimento: new Date("2026-10-17T12:00:00Z"),
+        ...(opcoes.detalhe ? { detalhe: opcoes.detalhe } : {}),
       },
     });
     return { escritorio, fatura };
@@ -195,6 +217,22 @@ seTemBanco("emissao contra o banco", () => {
     });
     expect(guardada.idExterno).toBe(emitida?.idExterno);
     expect(guardada.emitidaEm).not.toBeNull();
+  });
+
+  it("fatura anual vai ao Asaas descrita como anual", async () => {
+    responder = asaasNormal();
+    const { fatura } = await escritorioComFatura({
+      cnpj: "11.222.333/0001-81",
+      detalhe: [
+        { descricao: "Assinatura anual: 12 x 279,00", valorCentavos: 334_800 },
+        { descricao: "Desconto do plano anual (10%)", valorCentavos: -33_480 },
+      ],
+    });
+    await emitirCobrancaDaFatura(fatura.id);
+    const dePagamento = chamadas.filter((c) => c.caminho === "/payments");
+    expect(dePagamento[dePagamento.length - 1]?.corpo?.description).toBe(
+      "BirdJud — assinatura anual (12 meses) a partir de 10/2026",
+    );
   });
 
   // A regua roda pelo cron E pode ser passada a mao por um operador no mesmo

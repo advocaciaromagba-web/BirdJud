@@ -12,6 +12,7 @@
 // defensavel; com dez, o escritorio seria suspenso por nao pagar uma fatura
 // que nunca lhe foi apresentada.
 import { prismaPlataforma } from "./prisma";
+import { DESCONTO_ANUAL } from "./precos";
 import { referencia } from "./referencia-cobranca";
 import {
   FalhaNoAsaas,
@@ -49,9 +50,22 @@ function digitos(valor: string): string {
  * Leva a competencia porque o extrato bancario de quem paga mostra so isso —
  * "BirdJud" sozinho, doze vezes por ano, nao diz qual mes foi pago.
  */
-export function descricaoDaFatura(competencia: string): string {
+export function descricaoDaFatura(competencia: string, anual = false): string {
   const [ano, mes] = competencia.split("-");
-  return `BirdJud — assinatura ${mes}/${ano}`;
+  return anual
+    ? `BirdJud — assinatura anual (12 meses) a partir de ${mes}/${ano}`
+    : `BirdJud — assinatura ${mes}/${ano}`;
+}
+
+/**
+ * A fatura e a do plano anual? Le pelos itens (a linha "Assinatura anual"
+ * que `anuidade` escreve), para o boleto e o e-mail nao dizerem "assinatura
+ * 10/2026" sobre uma cobranca de doze meses.
+ */
+export function ehFaturaAnual(detalhe: unknown): boolean {
+  return Array.isArray(detalhe) && detalhe.some(
+    (i) => typeof i?.descricao === "string" && i.descricao.startsWith("Assinatura anual"),
+  );
 }
 
 export type DadosDoAssinante = {
@@ -181,7 +195,7 @@ export async function emitirCobrancaDaFatura(
       billingType: "UNDEFINED",
       value: emReaisDecimal(fatura.valorCentavos),
       dueDate: comoDia(fatura.vencimento),
-      description: descricaoDaFatura(fatura.competencia),
+      description: descricaoDaFatura(fatura.competencia, ehFaturaAnual(fatura.detalhe)),
       // O webhook le este campo para saber qual fatura dar baixa, e a marca
       // do sistema e o que permite separar o nosso pagamento dos outros
       // sistemas que dividem esta conta Asaas. Sem ela, o pagamento chega e
@@ -212,6 +226,7 @@ export function mensagemDaFatura(dados: {
   valorCentavos: number;
   vencimento: Date;
   link: string | null;
+  anual?: boolean;
 }): { assunto: string; texto: string } {
   const valor = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -222,11 +237,15 @@ export function mensagemDaFatura(dados: {
   });
 
   return {
-    assunto: `BirdJud — fatura de ${dados.competencia} (vence em ${vence})`,
+    assunto: dados.anual
+      ? `BirdJud — fatura do plano anual (vence em ${vence})`
+      : `BirdJud — fatura de ${dados.competencia} (vence em ${vence})`,
     texto: [
       `${dados.nomeDoEscritorio},`,
       "",
-      `A fatura da assinatura do BirdJud referente a ${dados.competencia} esta disponivel.`,
+      dados.anual
+        ? `A fatura do plano anual do BirdJud (12 meses a partir de ${dados.competencia}, com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto) esta disponivel.`
+        : `A fatura da assinatura do BirdJud referente a ${dados.competencia} esta disponivel.`,
       "",
       `Valor: ${valor}`,
       `Vencimento: ${vence}`,

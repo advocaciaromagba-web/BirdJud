@@ -7,7 +7,7 @@
 // onde o anterior acabou.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
-import { aplicarRegua, anuidade, criarAssinatura, mensalidadeDaConta, mensalidadeDoEscritorio } from "../src/lib/cobranca";
+import { aplicarRegua, anuidade, criarAssinatura, inicioDoAno, mensalidadeDaConta, mensalidadeDoEscritorio } from "../src/lib/cobranca";
 import { contaMontada, contaDoPlano, modulosDoPlano } from "../src/lib/planos";
 import { PRECO_DA_FAIXA, precoDoModulo, somar } from "../src/lib/precos";
 
@@ -89,5 +89,75 @@ d("assinatura anual na regua", () => {
     expect(r.faturaGerada).not.toBeNull();
     const a = await prismaPlataforma().assinatura.findUniqueOrThrow({ where: { escritorioId: esc } });
     expect(a.anualAte?.toISOString()).toBe("2028-01-05T12:00:00.000Z");
+  });
+});
+
+describe("de onde conta o ano", () => {
+  it("emenda no anterior quando a regua roda logo depois", () => {
+    const marco = new Date("2027-01-05T12:00:00Z");
+    expect(inicioDoAno(marco, new Date("2027-01-06T12:00:00Z"))).toBe(marco);
+  });
+
+  // Mensal desde janeiro, passou ao anual em julho: contar do fim do teste
+  // daria um "ano" que acaba em janeiro, metade ja gasta.
+  it("marco antigo: conta de hoje", () => {
+    const agora = new Date("2026-07-01T12:00:00Z");
+    expect(inicioDoAno(new Date("2026-01-05T12:00:00Z"), agora)).toBe(agora);
+  });
+});
+
+d("trocar de ciclo", () => {
+  const ids: string[] = [];
+  const DIA = 86_400_000;
+
+  async function escritorio(fimDoTeste: Date) {
+    const id = (await prismaPlataforma().escritorio.create({
+      data: { slug: `ciclo-${Date.now()}-${ids.length}`, nome: "Banca Ciclo", status: "ATIVO", faixa: "ATE_1" },
+    })).id;
+    ids.push(id);
+    await comEscritorio(id, async (db) => {
+      for (const modulo of modulosDoPlano("COMPLETO")) {
+        await db.moduloContratado.create({ data: semEscritorio({ modulo, ativo: true }) });
+      }
+    });
+    await criarAssinatura(id, 27_900, 0, fimDoTeste);
+    return id;
+  }
+
+  afterAll(async () => {
+    for (const id of ids) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+  });
+
+  it("mensal por meses e depois anual: o ano conta da troca, nao do fim do teste", async () => {
+    const esc = await escritorio(new Date("2026-01-05T12:00:00Z"));
+    const julho = await aplicarRegua(esc, new Date("2026-07-01T12:00:00Z"));
+    const mensal = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: julho.faturaGerada! } });
+    expect(mensal.valorCentavos).toBe(27_900);
+    await prismaPlataforma().fatura.update({ where: { id: mensal.id }, data: { status: "PAGA", pagoEm: new Date() } });
+
+    await prismaPlataforma().assinatura.update({ where: { escritorioId: esc }, data: { ciclo: "ANUAL" } });
+    const agosto = new Date("2026-08-01T12:00:00Z");
+    const r = await aplicarRegua(esc, agosto);
+    const anual = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: r.faturaGerada! } });
+    expect(anual.valorCentavos).toBe(301_320);
+    const a = await prismaPlataforma().assinatura.findUniqueOrThrow({ where: { escritorioId: esc } });
+    expect(a.anualAte?.toISOString()).toBe("2027-08-01T12:00:00.000Z");
+  });
+
+  it("pagou o anual e voltou ao mensal: nada de mensalidade ate o ano acabar", async () => {
+    const fim = new Date("2026-01-05T12:00:00Z");
+    const esc = await escritorio(fim);
+    await prismaPlataforma().assinatura.update({ where: { escritorioId: esc }, data: { ciclo: "ANUAL" } });
+    const r = await aplicarRegua(esc, new Date(fim.getTime() + DIA));
+    await prismaPlataforma().fatura.update({ where: { id: r.faturaGerada! }, data: { status: "PAGA", pagoEm: new Date() } });
+
+    await prismaPlataforma().assinatura.update({ where: { escritorioId: esc }, data: { ciclo: "MENSAL" } });
+    const meio = await aplicarRegua(esc, new Date("2026-09-01T12:00:00Z"));
+    expect(meio.faturaGerada).toBeNull();
+
+    // Acabado o ano pago, volta a mensalidade normal.
+    const depois = await aplicarRegua(esc, new Date("2027-02-01T12:00:00Z"));
+    const f = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: depois.faturaGerada! } });
+    expect(f.valorCentavos).toBe(27_900);
   });
 });

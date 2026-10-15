@@ -132,12 +132,24 @@ quem paga o ano. `Assinatura.ciclo` = MENSAL | ANUAL, trocado no console da
 plataforma ("Passar para anual").
 
 - a fatura anual e **12 x a mensalidade fechada**, com o desconto em linha
-  propria, e marca `anualAte` (um ano depois do fim do teste, ou do fim do ano
-  anterior — pagar com atraso nao encurta o ano de quem pagou);
+  propria, e marca `anualAte`: um ano depois do fim do teste ou do fim do ano
+  anterior (a regua atrasar uns dias nao encurta o ano). Se esse marco tem
+  mais de 35 dias — quem foi mensal por meses e so agora passou ao anual —, o
+  ano conta **do dia da fatura** (`inicioDoAno`);
+- no Asaas e no e-mail a cobranca sai como "assinatura anual (12 meses) a
+  partir de MM/AAAA", nao como a mensalidade do mes (`ehFaturaAnual`);
 - nos meses do meio, so sai fatura se houver **excedente de consumo** (sem
   desconto);
-- acabado o ano, a regua emite a proxima fatura anual. Voltar ao mensal deixa
-  o ano pago valer ate o fim.
+- acabado o ano, a regua emite a proxima fatura anual;
+- voltar ao mensal deixa o ano pago valer ate o fim: enquanto `anualAte` esta
+  no futuro, a regua nao cobra mensalidade, **em qualquer ciclo**. Por isso o
+  console recusa voltar ao mensal com a fatura anual ainda em aberto (seria
+  nao pagar nenhuma das duas).
+
+Prova de ponta a ponta (15/10/2026, app local + Asaas simulado): passar para
+anual no console → regua emite R$ 3.013,20 (Completo solo) descrita como
+anual → voltar ao mensal recusado (409) → webhook PAYMENT_RECEIVED da baixa,
+escritorio ATIVO → voltar ao mensal aceito → regua nao gera mensalidade.
 
 ## O que a fatura cobra (corrigido em 14/10/2026)
 

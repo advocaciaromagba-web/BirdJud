@@ -10,6 +10,7 @@ import {
   SemOperador,
 } from "@/lib/plataforma";
 import { aplicarRegua } from "@/lib/cobranca";
+import { ehFaturaAnual } from "@/lib/cobranca-plataforma";
 import { FAIXAS } from "@/lib/faixas";
 import { MODULOS } from "@/lib/modulos";
 import { contaMontada, modulosDoPlano, PLANO, PLANOS } from "@/lib/planos";
@@ -213,6 +214,21 @@ export async function POST(
       // valendo ate acabar (anualAte fica), e so depois volta a fatura mensal.
       const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
       if (!assinatura) return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      if (corpo.data.ciclo === "MENSAL") {
+        // O ano faturado conta como pago (a regua nao cobra mensal ate ele
+        // acabar). Com a fatura anual ainda em aberto, voltar ao mensal
+        // deixaria o escritorio sem pagar nenhuma das duas.
+        const abertas = await prismaPlataforma().fatura.findMany({
+          where: { escritorioId: escritorio.id, status: "ABERTA" },
+          select: { detalhe: true },
+        });
+        if (abertas.some((f) => ehFaturaAnual(f.detalhe))) {
+          return NextResponse.json(
+            { erro: "Ha fatura anual em aberto. Ela precisa ser paga ou cancelada (no Asaas e aqui) antes de voltar ao mensal." },
+            { status: 409 },
+          );
+        }
+      }
       await prismaPlataforma().assinatura.update({
         where: { escritorioId: escritorio.id },
         data: { ciclo: corpo.data.ciclo },

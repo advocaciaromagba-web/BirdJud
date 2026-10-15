@@ -74,10 +74,16 @@ export default async function EscritorioNoPainel({
         <h2 className="font-semibold">Assinatura</h2>
         {escritorio.assinatura ? (
           <p className="mt-2 text-slate-700">
-            {escritorio.assinatura.ciclo === "ANUAL"
-              ? `Anual (10% de desconto)${escritorio.assinatura.anualAte ? `, pago ate ${escritorio.assinatura.anualAte.toLocaleDateString("pt-BR")}` : ""} · `
-              : "Mensal · "}
-            {emReais(escritorio.assinatura.valorCentavos)} por mes · vencimento
+            {escritorio.assinatura.ciclo === "ANUAL" ? "Anual (10% de desconto) · " : "Mensal · "}
+            {/* O ano faturado vale em qualquer ciclo: quem voltou ao mensal
+                so paga mensalidade quando ele acabar. */}
+            {escritorio.assinatura.anualAte && escritorio.assinatura.anualAte > new Date()
+              ? `ano pago ate ${escritorio.assinatura.anualAte.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} · `
+              : ""}
+            {escritorio.assinatura.valorCentavos > 0
+              ? `${emReais(escritorio.assinatura.valorCentavos)} por mes (valor fechado)`
+              : "valor da tabela"}{" "}
+            · vencimento
             dia {escritorio.assinatura.diaVencimento} · teste ate{" "}
             {escritorio.assinatura.fimDoTeste.toLocaleDateString("pt-BR")}
           </p>
