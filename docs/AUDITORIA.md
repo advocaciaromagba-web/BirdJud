@@ -25,6 +25,25 @@ Medido no console da plataforma em 06/10: ADVOCACIA ROMA tem **1 usuario e 0
 registros**. Nenhum cliente, nenhum processo, nenhuma publicacao capturada,
 nenhuma fatura emitida, nenhum pagamento recebido.
 
+## Provas antes dos escritorios de fora (16/10/2026)
+
+**Isolamento, em producao, com dois escritorios criados pelo cadastro
+publico** (`ensaio-iso-a` e `ensaio-iso-b`, encerrados depois): 16 de 16.
+Com a sessao de B, o cliente e o arquivo de A nao aparecem na lista nem na
+busca, e ler, alterar ou apagar pelo id da 404; subir arquivo na pasta do
+cliente de A e recusado; a sessao de um nao vale no endereco do outro (401);
+a rota interna de arquivos nao responde pela internet (404). A continuou
+vendo e baixando o que era seu.
+
+**Desempenho**, nas paginas principais (inicio, clientes, processos, agenda,
+publicacoes, tarefas, financeiro) dos dois escritorios ao mesmo tempo:
+480 pedidos com 30 simultaneos em 8,3 s (58 por segundo), todos 200,
+mediana 0,43 s, p95 0,73 s, maximo 1,04 s. A saude da plataforma seguiu em
+0,3 s e nenhuma rotina falhou.
+
+**Aviso de pagamento no Asaas**: "BIRDJUD CORRETO" ->
+`https://app.birdjud.com.br/api/webhooks/asaas`, ativo, fila andando.
+
 ## Advocacia Roma em cortesia (11/10/2026)
 
 Decisao: a ADVOCACIA ROMA fica em **cortesia ilimitada**, para os testes
@@ -103,7 +122,9 @@ mesma para os sete, e revogar por causa de um derruba os outros seis.
 - **Acessibilidade**: auditoria automática (axe) feita e corrigida em
   11/10/2026, ver `docs/ACESSIBILIDADE.md`. Falta teste com leitor de tela
   de verdade.
-- **Desempenho sob carga**: nunca medido com mais de um escritorio ativo.
+- **Desempenho sob carga**: medido em 16/10/2026 com dois escritorios (ver
+  "Provas antes dos escritorios de fora"). Falta medir com volume real de
+  dados (milhares de processos e publicacoes por escritorio).
 - **Expurgo dos registros de acesso de suporte**: resolvido em 11/10/2026 —
   guarda de 12 meses, rotina semanal `LIMPAR_VENCIDOS`. Falta declarar o
   prazo nos Termos na proxima revisao juridica (ver `docs/juridico/LEIA-ME.md`).
