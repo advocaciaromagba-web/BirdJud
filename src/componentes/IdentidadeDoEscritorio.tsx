@@ -114,7 +114,18 @@ export function IdentidadeDoEscritorio({
         return;
       }
       if (logoRef.current) logoRef.current.value = "";
-      setAviso("Logotipo enviado.");
+      const cores = corpo.cores as { corPrimaria: string; corSecundaria: string | null } | null;
+      if (cores) {
+        setPrimaria(cores.corPrimaria);
+        if (cores.corSecundaria) setSecundaria(cores.corSecundaria);
+        setAviso(
+          "Logotipo enviado. As cores do sistema foram ajustadas pela paleta do logotipo" +
+            (cores.corSecundaria ? "" : " (ele tem uma cor so: o destaque ficou como estava)") +
+            ". Se quiser, ajuste abaixo e salve.",
+        );
+      } else {
+        setAviso("Logotipo enviado. Nao achamos cor de marca na imagem: as cores ficaram como estavam.");
+      }
       router.refresh();
     } finally {
       setOcupado(false);
@@ -320,7 +331,8 @@ export function IdentidadeDoEscritorio({
             />
             <p className="ajuda">
               PNG, JPG, WEBP ou SVG, ate 1 MB. Fundo transparente fica melhor
-              sobre a cor principal.
+              sobre a cor principal. Ao enviar, a cor principal e a de destaque
+              passam a seguir as cores do logotipo.
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
               <button

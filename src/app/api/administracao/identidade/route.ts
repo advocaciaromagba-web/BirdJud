@@ -11,6 +11,7 @@ import {
   TIPOS_DE_LOGO,
 } from "@/lib/identidade";
 import { DadoInvalido, salvarDadosDoEscritorio } from "@/lib/dados-do-escritorio";
+import { coresDoLogo } from "@/lib/cores-do-logo";
 import { tratarErro } from "@/lib/respostas";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +103,21 @@ export async function PUT(req: Request) {
       }),
     );
 
-    return NextResponse.json({ ok: true, logoUrl: url });
+    // Logo novo, cores novas: a principal e a de destaque passam a seguir a
+    // paleta do logotipo, sozinhas (ver cores-do-logo.ts). Logo de uma cor
+    // so mantem o destaque que ja havia; imagem sem cor de marca nao mexe em
+    // nada. O escritorio pode ajustar depois, nesta mesma tela.
+    const sugeridas = await coresDoLogo(conteudo);
+    let cores: { corPrimaria: string; corSecundaria: string | null } | null = null;
+    if (sugeridas) {
+      const gravado = await salvarDadosDoEscritorio(escritorioId, {
+        corPrimaria: sugeridas.primaria,
+        ...(sugeridas.secundaria ? { corSecundaria: sugeridas.secundaria } : {}),
+      });
+      cores = { corPrimaria: gravado.corPrimaria!, corSecundaria: gravado.corSecundaria ?? null };
+    }
+
+    return NextResponse.json({ ok: true, logoUrl: url, cores });
   } catch (erro) {
     return tratarErro(erro);
   }
