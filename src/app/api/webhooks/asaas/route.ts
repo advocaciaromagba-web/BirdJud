@@ -29,6 +29,8 @@ const evento = z.object({
       billingType: z.string().nullish(),
       paymentDate: z.string().nullish(),
       invoiceNumber: z.string().nullish(),
+      // Parcela de um parcelamento (anual no cartao): o id do parcelamento.
+      installment: z.string().nullish(),
     })
     .nullish(),
 });
@@ -113,7 +115,17 @@ export async function POST(req: Request) {
 
   // Sem marca: pode ser nossa, de antes da marca existir, ou de um sistema que
   // tambem nao marca. Quem decide e o banco, logo abaixo.
-  const faturaId = leitura.dono === "nosso" ? leitura.id : leitura.bruto;
+  let faturaId = leitura.dono === "nosso" ? leitura.id : leitura.bruto;
+  // Parcela sem a nossa referencia: o parcelamento foi criado com ela, mas
+  // nao ha garantia de que o Asaas a copie para cada parcela. O id do
+  // parcelamento, guardado na fatura, resolve.
+  if (!faturaId && pagamento.installment) {
+    const parcelada = await prismaPlataforma().fatura.findUnique({
+      where: { parcelamentoId: pagamento.installment },
+      select: { id: true },
+    });
+    faturaId = parcelada?.id ?? null;
+  }
   if (!faturaId) {
     anotar("evento sem referencia", { evento: corpo.data.event });
     // Tambem 200: referencia ausente nao aparece por reenvio.
@@ -174,6 +186,9 @@ export async function POST(req: Request) {
     valor: pagamento.value ?? null,
     valorLiquido: pagamento.netValue ?? null,
     forma: pagamento.billingType ?? null,
+    // Parcelado: "valor" e o da parcela que chegou primeiro, nao o da fatura.
+    parcelamento: pagamento.installment ?? null,
+    parcelas: fatura.parcelas ?? null,
     pagoEm: pagamento.paymentDate ?? null,
     recebidoEm: new Date().toISOString(),
   };

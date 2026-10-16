@@ -124,6 +124,10 @@ export function resumoDaBaixa(baixa: unknown): string | null {
     );
   }
 
+  if (typeof d.parcelas === "number" && d.parcelas > 1) {
+    partes.push(`parcelado em ${d.parcelas}x (valor da parcela)`);
+  }
+
   if (typeof d.pagamentoId === "string" && d.pagamentoId) {
     partes.push(d.pagamentoId);
   }

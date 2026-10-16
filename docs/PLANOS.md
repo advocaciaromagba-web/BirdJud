@@ -146,6 +146,38 @@ plataforma ("Passar para anual").
   console recusa voltar ao mensal com a fatura anual ainda em aberto (seria
   nao pagar nenhuma das duas).
 
+### Anual parcelado no cartao (16/10/2026)
+
+A fatura anual sai como cobranca unica (boleto, Pix ou cartao a vista). Na
+tela **Plano**, o administrador do escritorio ve as faturas em aberto e, na
+anual, o botao **"Parcelar em ate 12x no cartao"** (`PARCELAS_DO_ANUAL`, sem
+juros para o escritorio — a taxa do parcelamento do Asaas fica com a BirdJud).
+O e-mail da fatura anual avisa dessa opcao com o endereco da tela.
+
+`parcelarFaturaNoCartao` (cobranca-plataforma.ts), nesta ordem:
+
+1. confere no Asaas que a cobranca a vista nao foi paga (se foi, recusa);
+2. cancela a a vista no Asaas e **limpa o id na fatura**;
+3. cria o parcelamento (`billingType: CREDIT_CARD`, `installmentCount`,
+   `totalValue`, mesma `externalReference`) e guarda `idExterno`,
+   `parcelamentoId`, `parcelas` e o novo link.
+
+Nunca ha duas cobrancas vivas para a mesma fatura. Se o Asaas cair entre 2 e
+3, a fatura fica ABERTA sem cobranca e a proxima regua emite a a vista de
+novo. Pedir duas vezes devolve o mesmo link.
+
+Webhook: a primeira parcela confirmada da baixa na fatura inteira (no cartao
+o valor todo fica comprometido na hora); as outras 11 chegam como "ja
+processada". Parcela que chegue sem a nossa referencia e achada pelo
+`parcelamentoId`. A baixa guarda `parcelamento` e `parcelas`, e o console
+mostra "parcelado em 12x (valor da parcela)".
+
+Junto (16/10/2026): o vencimento minimo (emissao + 5 dias) passou a ser o dia
+de Brasilia ao meio-dia UTC (`meioDiaDoDia`) — fatura emitida depois das 21h
+ia ao Asaas com vencimento um dia depois do que a tela e o e-mail diziam. E
+modulo com nome fora do catalogo na tabela e ignorado (`modulosAtivos`,
+`itensDaFatura`): antes tirava o escritorio do preco do pacote.
+
 Prova de ponta a ponta (15/10/2026, app local + Asaas simulado): passar para
 anual no console → regua emite R$ 3.013,20 (Completo solo) descrita como
 anual → voltar ao mensal recusado (409) → webhook PAYMENT_RECEIVED da baixa,

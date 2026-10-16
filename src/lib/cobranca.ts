@@ -17,6 +17,7 @@ import {
   temRemetenteDaPlataforma,
 } from "./email-plataforma";
 import type { Modulo } from "./modulos";
+import { MODULOS } from "./catalogo";
 import {
   DESCONTO_ANUAL,
   excedentes,
@@ -84,6 +85,17 @@ function somarMeses(d: Date, n: number): Date {
 
 const DIA = 24 * 60 * 60 * 1000;
 
+/**
+ * O dia (no horario de Brasilia) ao meio-dia UTC — o mesmo dia de calendario
+ * aqui e no UTC. Sem isto, fatura emitida depois das 21h levava a hora junto
+ * e o Asaas recebia o vencimento um dia depois do que a tela e o e-mail
+ * mostravam.
+ */
+export function meioDiaDoDia(d: Date): Date {
+  const dia = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
+  return new Date(`${dia}T12:00:00Z`);
+}
+
 /** Tolerancia para emendar o ano novo no anterior (a regua roda todo dia). */
 const EMENDA_DO_ANO_EM_DIAS = 35;
 
@@ -141,7 +153,7 @@ export function vencimentoComPrazo(
   emissao: Date,
 ): Date {
   const doMes = vencimentoDe(competencia, dia);
-  const minimo = new Date(emissao.getTime() + PRAZO_MINIMO_DIAS * DIA);
+  const minimo = meioDiaDoDia(new Date(emissao.getTime() + PRAZO_MINIMO_DIAS * DIA));
   return doMes >= minimo ? doMes : minimo;
 }
 
@@ -269,7 +281,11 @@ export async function itensDaFatura(
   const modulos = await comEscritorio(escritorioId, (db) =>
     db.moduloContratado.findMany({ where: { ativo: true } }),
   );
-  const contratados = modulos.map((m) => m.modulo as Modulo);
+  // So o que esta no catalogo: um nome estranho na tabela (area, modulo
+  // antigo) faria o pacote "nao cobrir" e a fatura cair no preco avulso.
+  const contratados = modulos
+    .map((m) => m.modulo)
+    .filter((m): m is Modulo => (MODULOS as readonly string[]).includes(m));
 
   const consumo = await consumoDoMes(escritorioId, competencia);
   const doConsumo = excedentes(consumo as { metrica: Metrica; excedente: number }[]);
@@ -371,7 +387,7 @@ async function cobrarEAvisar(faturaId: string): Promise<void> {
 
   const fatura = await prismaPlataforma().fatura.findUnique({
     where: { id: faturaId },
-    include: { escritorio: { select: { nome: true } } },
+    include: { escritorio: { select: { nome: true, slug: true } } },
   });
   if (!fatura) return;
 
@@ -389,6 +405,7 @@ async function cobrarEAvisar(faturaId: string): Promise<void> {
     vencimento: fatura.vencimento,
     link: emitida.linkPagamento,
     anual: ehFaturaAnual(fatura.detalhe),
+    enderecoDoPlano: `https://${fatura.escritorio.slug}.${process.env.DOMINIO_PLATAFORMA?.trim() || "birdjud.com.br"}/plano`,
   });
 
   try {

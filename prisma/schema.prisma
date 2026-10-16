@@ -414,6 +414,9 @@ model Fatura {
   idExterno     String?   @unique // id da cobranca no meio de pagamento
   linkPagamento String? // para onde mandar o escritorio pagar
   emitidaEm     DateTime? // quando a cobranca foi emitida no provedor
+  // Anual parcelado no cartao: o parcelamento no Asaas e em quantas vezes.
+  parcelamentoId String?  @unique
+  parcelas       Int?
   // Retrato da baixa: sistema, referencia, quem pagou, quanto, como e quando.
   // A conta Asaas e compartilhada entre varios sistemas da Blackbird, e sem
   // isto nao havia como responder de quem foi um recebimento depois que o log

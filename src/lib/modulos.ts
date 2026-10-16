@@ -5,7 +5,7 @@
 import { comEscritorio } from "./prisma";
 
 export { MODULOS, type Modulo } from "./catalogo";
-import type { Modulo } from "./catalogo";
+import { MODULOS, type Modulo } from "./catalogo";
 
 export async function moduloAtivo(
   escritorioId: string,
@@ -22,7 +22,14 @@ export async function modulosAtivos(escritorioId: string): Promise<Modulo[]> {
   const contratos = await comEscritorio(escritorioId, (db) =>
     db.moduloContratado.findMany({ where: { ativo: true } }),
   );
-  return ["NUCLEO", ...contratos.map((c) => c.modulo as Modulo)];
+  // So nomes do catalogo: um nome estranho na tabela nao vira modulo (e nao
+  // tira o escritorio do preco do pacote na tela Plano).
+  return [
+    "NUCLEO",
+    ...contratos
+      .map((c) => c.modulo)
+      .filter((m): m is Modulo => m !== "NUCLEO" && (MODULOS as readonly string[]).includes(m)),
+  ];
 }
 
 export class ModuloNaoContratado extends Error {

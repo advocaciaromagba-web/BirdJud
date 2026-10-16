@@ -89,6 +89,14 @@ describe("vencimento e atraso", () => {
     );
   });
 
+  // Emitida 21h16 em Brasilia (00h16 UTC do dia seguinte): o vencimento e o
+  // dia de Brasilia, ao meio-dia UTC, para o Asaas e a tela dizerem o mesmo.
+  it("emissao a noite nao empurra o vencimento um dia", () => {
+    const emissao = new Date("2026-10-16T00:16:00Z"); // 15/10, 21h16 em Brasilia
+    const v = vencimentoComPrazo("2026-10", 10, emissao);
+    expect(v.toISOString()).toBe(`2026-10-${String(15 + PRAZO_MINIMO_DIAS).padStart(2, "0")}T12:00:00.000Z`);
+  });
+
   it("quando ha folga, mantem o dia combinado", () => {
     const emissao = new Date("2026-10-01T12:00:00Z");
     expect(

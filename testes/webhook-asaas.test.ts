@@ -193,6 +193,32 @@ seTemBanco("webhook: a baixa, contra o banco", () => {
     expect((paga.baixa as Record<string, unknown>).marcada).toBe(false);
   });
 
+  // Anual parcelado no cartao: cada parcela e uma cobranca. Se a parcela
+  // chegar sem a nossa referencia, o id do parcelamento acha a fatura; a
+  // primeira que chegar da a baixa e as outras 11 nao reabrem nada.
+  it("parcela sem referencia acha a fatura pelo parcelamento", async () => {
+    const { f } = await fatura();
+    const ins = `ins_hook_${Date.now()}`;
+    await prismaPlataforma().fatura.update({ where: { id: f.id }, data: { parcelamentoId: ins, parcelas: 12 } });
+    const r = await chamar({
+      event: "PAYMENT_CONFIRMED",
+      payment: { id: `pay_parcela1_${ins}`, installment: ins, value: 251.1, billingType: "CREDIT_CARD" },
+    });
+    expect(r.status).toBe(200);
+    const paga = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: f.id } });
+    expect(paga.status).toBe("PAGA");
+    expect((paga.baixa as Record<string, unknown>).parcelas).toBe(12);
+    expect((paga.baixa as Record<string, unknown>).parcelamento).toBe(ins);
+
+    const segunda = await chamar({
+      event: "PAYMENT_CONFIRMED",
+      payment: { id: `pay_parcela2_${ins}`, installment: ins, externalReference: referencia("fatura", f.id), value: 251.1 },
+    });
+    expect(segunda.status).toBe(200);
+    const igual = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: f.id } });
+    expect(igual.idExterno).toBe(`pay_parcela1_${ins}`);
+  });
+
   it("fatura inexistente sai com 200, nao com 404", async () => {
     const r = await chamar({
       event: "PAYMENT_RECEIVED",

@@ -14,8 +14,10 @@ import {
   ehFaturaAnual,
   emitirCobrancaDaFatura,
   mensagemDaFatura,
+  parcelarFaturaNoCartao,
   temCobrancaDaPlataforma,
 } from "@/lib/cobranca-plataforma";
+import { PedidoInvalido } from "@/lib/cobrancas";
 import { lerReferencia, referencia } from "@/lib/referencia-cobranca";
 
 type Chamada = {
@@ -141,6 +143,17 @@ describe("mensagem da fatura", () => {
     expect(m.texto).toContain("12 meses a partir de 2026-10");
     expect(m.texto).toContain("10% de desconto");
     expect(m.texto.replace(/\u00a0/g, " ")).toContain("R$ 3.013,20");
+  });
+
+  it("anual: o e-mail oferece o parcelamento, com o endereco da tela Plano", () => {
+    const m = mensagemDaFatura({
+      ...base, link: "https://asaas.test/i/pay_1", anual: true,
+      enderecoDoPlano: "https://roma.birdjud.com.br/plano",
+    });
+    expect(m.texto).toContain("12x sem juros no cartao");
+    expect(m.texto).toContain("https://roma.birdjud.com.br/plano");
+    // Mensal nao fala de parcelar.
+    expect(mensagemDaFatura({ ...base, link: null, enderecoDoPlano: "https://x/plano" }).texto).not.toContain("parcelar");
   });
 
   // Sem link o e-mail ainda sai, mas nao promete o que nao tem.
@@ -305,5 +318,139 @@ seTemBanco("emissao contra o banco", () => {
       PlataformaSemCobranca,
     );
     process.env.ASAAS_PLATAFORMA_CHAVE = antes;
+  });
+});
+
+// Anual parcelado no cartao. O risco aqui e dinheiro duas vezes: a cobranca a
+// vista e a parcelada vivas ao mesmo tempo, e o escritorio pagando as duas.
+seTemBanco("parcelar a fatura anual no cartao", () => {
+  const ids: string[] = [];
+  let statusNoAsaas = "PENDING";
+  let n = 0;
+
+  function asaasComParcelas() {
+    return (c: Chamada) => {
+      if (c.metodo === "POST" && c.caminho === "/customers") return { status: 200, json: { id: `cus_parc_${++n}` } };
+      if (c.metodo === "POST" && c.caminho === "/payments") {
+        const id = `pay_parc_${++n}`;
+        return {
+          status: 200,
+          json: c.corpo?.installmentCount
+            ? { id, installment: `ins_parc_${n}`, invoiceUrl: `https://asaas.test/i/${id}` }
+            : { id, invoiceUrl: `https://asaas.test/i/${id}` },
+        };
+      }
+      if (c.metodo === "GET" && c.caminho.startsWith("/payments/")) return { status: 200, json: { status: statusNoAsaas } };
+      if (c.metodo === "DELETE" && c.caminho.startsWith("/payments/")) return { status: 200, json: { deleted: true } };
+      return { status: 404, json: {} };
+    };
+  }
+
+  const ANUAL = [
+    { descricao: "Assinatura anual: 12 x 279,00", valorCentavos: 334_800 },
+    { descricao: "Desconto do plano anual (10%)", valorCentavos: -33_480 },
+  ];
+
+  async function faturaEmitida(detalhe: object[] = ANUAL) {
+    const sufixo = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const escritorio = await prismaPlataforma().escritorio.create({
+      data: { slug: `parc-${sufixo}`, nome: `Parc ${sufixo}`, cnpj: "11.222.333/0001-81", faixa: "ATE_1" },
+    });
+    ids.push(escritorio.id);
+    const fatura = await prismaPlataforma().fatura.create({
+      data: {
+        escritorioId: escritorio.id, competencia: "2026-10", valorCentavos: 301_320, detalhe,
+        vencimento: new Date("2026-10-20T12:00:00Z"),
+      },
+    });
+    await emitirCobrancaDaFatura(fatura.id);
+    return { escritorio, fatura: await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: fatura.id } }) };
+  }
+
+  afterEach(async () => {
+    statusNoAsaas = "PENDING";
+    for (const id of ids.splice(0)) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
+  });
+
+  it("cancela a a vista e cria o parcelamento em 12x no cartao", async () => {
+    responder = asaasComParcelas();
+    const { escritorio, fatura } = await faturaEmitida();
+    const avista = fatura.idExterno!;
+    const antes = chamadas.length;
+
+    const r = await parcelarFaturaNoCartao(escritorio.id, fatura.id, new Date("2026-10-16T12:00:00Z"));
+    expect(r.parcelas).toBe(12);
+    expect(r.linkPagamento).toMatch(/^https:\/\/asaas.test\/i\/pay_parc_/);
+
+    const novas = chamadas.slice(antes);
+    expect(novas.map((c) => `${c.metodo} ${c.caminho}`)).toEqual([
+      `GET /payments/${avista}`,
+      `DELETE /payments/${avista}`,
+      "POST /payments",
+    ]);
+    const corpo = novas[2].corpo!;
+    expect(corpo.billingType).toBe("CREDIT_CARD");
+    expect(corpo.installmentCount).toBe(12);
+    expect(corpo.totalValue).toBe(3013.2);
+    // Nunca value junto com totalValue: o Asaas recusa.
+    expect(corpo.value).toBeUndefined();
+    expect(corpo.dueDate).toBe("2026-10-20");
+    expect(corpo.externalReference).toBe(referencia("fatura", fatura.id));
+
+    const guardada = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: fatura.id } });
+    expect(guardada.parcelamentoId).toMatch(/^ins_parc_/);
+    expect(guardada.parcelas).toBe(12);
+    expect(guardada.idExterno).not.toBe(avista);
+    expect(guardada.status).toBe("ABERTA");
+  });
+
+  it("pedir de novo nao cria segundo parcelamento", async () => {
+    responder = asaasComParcelas();
+    const { escritorio, fatura } = await faturaEmitida();
+    const primeiro = await parcelarFaturaNoCartao(escritorio.id, fatura.id);
+    const antes = chamadas.length;
+    const segundo = await parcelarFaturaNoCartao(escritorio.id, fatura.id);
+    expect(segundo.linkPagamento).toBe(primeiro.linkPagamento);
+    expect(chamadas.length).toBe(antes);
+  });
+
+  it("a vista ja paga no Asaas: recusa e nao cancela nada", async () => {
+    responder = asaasComParcelas();
+    const { escritorio, fatura } = await faturaEmitida();
+    statusNoAsaas = "RECEIVED";
+    const antes = chamadas.length;
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id)).rejects.toThrow(/ja foi paga/);
+    expect(chamadas.slice(antes).some((c) => c.metodo === "DELETE")).toBe(false);
+  });
+
+  it("mensalidade nao parcela", async () => {
+    responder = asaasComParcelas();
+    const { escritorio, fatura } = await faturaEmitida([{ descricao: "Plano Completo", valorCentavos: 27_900 }]);
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id)).rejects.toThrow(PedidoInvalido);
+  });
+
+  it("fatura de outro escritorio: nao encontrada", async () => {
+    responder = asaasComParcelas();
+    const { fatura } = await faturaEmitida();
+    const { escritorio: outro } = await faturaEmitida();
+    await expect(parcelarFaturaNoCartao(outro.id, fatura.id)).rejects.toThrow(/nao encontrada/);
+  });
+
+  // Cancelou a a vista e o Asaas caiu antes do parcelamento: a fatura fica
+  // sem cobranca (a regua emite a a vista de novo), nunca apontando para uma
+  // cobranca que ja nao existe.
+  it("Asaas cai depois de cancelar: a fatura fica sem cobranca, pronta para reemitir", async () => {
+    const normal = asaasComParcelas();
+    responder = normal;
+    const { escritorio, fatura } = await faturaEmitida();
+    responder = (c) => (c.metodo === "POST" && c.caminho === "/payments" ? { status: 500, json: {} } : normal(c));
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id)).rejects.toThrow();
+    const guardada = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: fatura.id } });
+    expect(guardada.idExterno).toBeNull();
+    expect(guardada.parcelamentoId).toBeNull();
+
+    responder = normal;
+    const de_novo = await emitirCobrancaDaFatura(fatura.id);
+    expect(de_novo?.idExterno).toMatch(/^pay_parc_/);
   });
 });

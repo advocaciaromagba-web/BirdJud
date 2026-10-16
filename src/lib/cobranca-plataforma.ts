@@ -12,10 +12,11 @@
 // defensavel; com dez, o escritorio seria suspenso por nao pagar uma fatura
 // que nunca lhe foi apresentada.
 import { prismaPlataforma } from "./prisma";
-import { DESCONTO_ANUAL } from "./precos";
+import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL } from "./precos";
 import { referencia } from "./referencia-cobranca";
 import {
   FalhaNoAsaas,
+  PedidoInvalido,
   chamarAsaas,
   comoDia,
   emReaisDecimal,
@@ -227,6 +228,8 @@ export function mensagemDaFatura(dados: {
   vencimento: Date;
   link: string | null;
   anual?: boolean;
+  /** Tela Plano do escritorio, onde o anual pode ser parcelado. */
+  enderecoDoPlano?: string | null;
 }): { assunto: string; texto: string } {
   const valor = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -252,10 +255,116 @@ export function mensagemDaFatura(dados: {
       ...(dados.link
         ? ["", `Pagar (boleto, Pix ou cartao): ${dados.link}`]
         : ["", "O link de pagamento sera enviado em seguida."]),
+      ...(dados.anual && dados.enderecoDoPlano
+        ? ["", `Prefere parcelar? Em ate ${PARCELAS_DO_ANUAL}x sem juros no cartao, na tela Plano: ${dados.enderecoDoPlano}`]
+        : []),
       "",
       "A baixa e automatica: nao e preciso mandar comprovante.",
       "",
       "BirdJud, by Blackbird",
     ].join("\n"),
   };
+}
+
+
+/** Status do Asaas que querem dizer "ja pagou". */
+const PAGO_NO_ASAAS = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"]);
+
+export type FaturaParcelada = {
+  linkPagamento: string | null;
+  parcelas: number;
+};
+
+/**
+ * Troca a cobranca a vista da fatura anual por um parcelamento no cartao, em
+ * ate PARCELAS_DO_ANUAL vezes. Quem pede e o administrador do escritorio, na
+ * tela Plano.
+ *
+ * Nunca deixa duas cobrancas vivas para a mesma fatura (o escritorio poderia
+ * pagar as duas): primeiro confere que a a vista nao foi paga, cancela no
+ * Asaas e LIMPA o id na fatura; so depois cria o parcelamento. Se o Asaas
+ * cair entre uma coisa e outra, a fatura fica ABERTA sem cobranca — e a
+ * proxima regua emite de novo a a vista. Nada se perde, nada se cobra duas
+ * vezes.
+ *
+ * Idempotente: fatura ja parcelada devolve o link que ja existe.
+ */
+export async function parcelarFaturaNoCartao(
+  escritorioId: string,
+  faturaId: string,
+  agora = new Date(),
+): Promise<FaturaParcelada> {
+  const chave = chaveDaPlataforma();
+  if (!chave) throw new PlataformaSemCobranca();
+
+  const fatura = await prismaPlataforma().fatura.findFirst({
+    where: { id: faturaId, escritorioId },
+    include: { escritorio: { select: { nome: true, cnpj: true } } },
+  });
+  if (!fatura) throw new PedidoInvalido("Fatura nao encontrada.");
+  if (fatura.status !== "ABERTA") throw new PedidoInvalido("Esta fatura nao esta em aberto.");
+  if (!ehFaturaAnual(fatura.detalhe)) {
+    throw new PedidoInvalido("So a fatura do plano anual pode ser parcelada.");
+  }
+  if (fatura.parcelamentoId) {
+    return { linkPagamento: fatura.linkPagamento, parcelas: fatura.parcelas ?? PARCELAS_DO_ANUAL };
+  }
+
+  if (fatura.idExterno) {
+    const atual = await chamarAsaas(chave, `/payments/${fatura.idExterno}`);
+    if (typeof atual.status === "string" && PAGO_NO_ASAAS.has(atual.status)) {
+      throw new PedidoInvalido("Esta fatura ja foi paga. A baixa chega em instantes.");
+    }
+    await chamarAsaas(chave, `/payments/${fatura.idExterno}`, { method: "DELETE" });
+    await prismaPlataforma().fatura.update({
+      where: { id: fatura.id },
+      data: { idExterno: null, linkPagamento: null },
+    });
+  }
+
+  const admin = await prismaPlataforma().usuario.findFirst({
+    where: { escritorioId, papel: "ADMIN", ativo: true },
+    select: { email: true },
+    orderBy: { criadoEm: "asc" },
+  });
+  const idDoAssinante = await assinanteNoAsaas(escritorioId, {
+    nome: fatura.escritorio.nome,
+    cnpj: fatura.escritorio.cnpj,
+    email: admin?.email ?? null,
+  });
+
+  // O Asaas recusa vencimento no passado: fatura vencida parcela a partir de hoje.
+  const hoje = new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(agora)}T12:00:00Z`);
+  const vencimento = fatura.vencimento > hoje ? fatura.vencimento : hoje;
+  const criada = await chamarAsaas(chave, "/payments", {
+    method: "POST",
+    body: JSON.stringify({
+      customer: idDoAssinante,
+      billingType: "CREDIT_CARD",
+      installmentCount: PARCELAS_DO_ANUAL,
+      totalValue: emReaisDecimal(fatura.valorCentavos),
+      dueDate: comoDia(vencimento),
+      description: `${descricaoDaFatura(fatura.competencia, true)}, em ate ${PARCELAS_DO_ANUAL}x no cartao`,
+      externalReference: referencia("fatura", fatura.id),
+    }),
+  });
+
+  const idExterno = typeof criada.id === "string" ? criada.id : null;
+  const parcelamentoId = typeof criada.installment === "string" ? criada.installment : null;
+  if (!idExterno || !parcelamentoId) {
+    throw new FalhaNoAsaas("O Asaas criou o parcelamento sem devolver os ids.");
+  }
+  const linkPagamento = typeof criada.invoiceUrl === "string" ? criada.invoiceUrl : null;
+
+  await prismaPlataforma().fatura.update({
+    where: { id: fatura.id },
+    data: {
+      idExterno,
+      parcelamentoId,
+      parcelas: PARCELAS_DO_ANUAL,
+      linkPagamento,
+      emitidaEm: new Date(),
+    },
+  });
+  return { linkPagamento, parcelas: PARCELAS_DO_ANUAL };
 }

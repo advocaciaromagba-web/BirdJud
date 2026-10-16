@@ -4,7 +4,9 @@ import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
 import { emReais } from "@/lib/dinheiro";
 import { dataBR } from "@/lib/datas";
-import { precoDoModulo } from "@/lib/precos";
+import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL, precoDoModulo } from "@/lib/precos";
+import { ehFaturaAnual } from "@/lib/cobranca-plataforma";
+import { ParcelarFatura } from "@/componentes/ParcelarFatura";
 import {
   contaMontada,
   MODULOS_COBRAVEIS,
@@ -38,9 +40,12 @@ export default async function PaginaDoPlano() {
     );
   }
 
-  const [uso, assinatura] = await Promise.all([
+  const [uso, assinatura, abertas] = await Promise.all([
     usoDaFaixa(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, (db) => db.assinatura.findFirst()),
+    comEscritorio(contexto.escritorioId, (db) =>
+      db.fatura.findMany({ where: { status: "ABERTA" }, orderBy: { vencimento: "asc" } }),
+    ),
   ]);
 
   const contratados = modulos.filter(
@@ -54,7 +59,11 @@ export default async function PaginaDoPlano() {
 
   // O que vale e o valor fechado na assinatura; a tabela pode ter mudado
   // depois, e contrato assinado nao muda por isso.
-  const mensalidade = assinatura?.valorCentavos ?? conta.totalCentavos;
+  // Zero quer dizer "sem valor fechado": vale a tabela, como na fatura.
+  const mensalidade = assinatura?.valorCentavos && assinatura.valorCentavos > 0
+    ? assinatura.valorCentavos
+    : conta.totalCentavos;
+  const anual = assinatura?.ciclo === "ANUAL";
   const emCortesia = Boolean(assinatura?.cortesiaDesde);
   const emTeste = assinatura && !emCortesia
     ? assinatura.fimDoTeste.getTime() > Date.now()
@@ -76,8 +85,16 @@ export default async function PaginaDoPlano() {
     >
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="indicador">
-          <p className="indicador-numero">{emCortesia ? "Cortesia" : emReais(mensalidade)}</p>
-          <p className="indicador-rotulo">{emCortesia ? "Sem mensalidade" : "Mensalidade contratada"}</p>
+          <p className="indicador-numero">
+            {emCortesia ? "Cortesia" : anual ? emReais(mensalidade * 12 - Math.round(mensalidade * 12 * DESCONTO_ANUAL)) : emReais(mensalidade)}
+          </p>
+          <p className="indicador-rotulo">
+            {emCortesia
+              ? "Sem mensalidade"
+              : anual
+                ? `Plano anual (${emReais(mensalidade)}/mes com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto)`
+                : "Mensalidade contratada"}
+          </p>
         </section>
         <section className="indicador">
           <p className="indicador-numero">
@@ -106,6 +123,45 @@ export default async function PaginaDoPlano() {
           Periodo de teste ate {dataBR.format(assinatura.fimDoTeste)}. A
           primeira fatura so e gerada depois disso.
         </p>
+      ) : null}
+
+      {abertas.length > 0 ? (
+        <section className="mt-8">
+          <h2>Faturas em aberto</h2>
+          <ul className="mt-3 grid gap-3">
+            {abertas.map((f) => {
+              const anual = ehFaturaAnual(f.detalhe);
+              return (
+                <li key={f.id} className="cartao-aperto flex flex-wrap items-center justify-between gap-3">
+                  <span>
+                    <span className="font-medium">
+                      {anual ? `Plano anual a partir de ${f.competencia.split("-").reverse().join("/")}` : `Mensalidade ${f.competencia.split("-").reverse().join("/")}`}
+                    </span>
+                    <span className="block text-sm text-slate-500">
+                      {emReais(f.valorCentavos)} · vence em {dataBR.format(f.vencimento)}
+                      {f.parcelas ? ` · em ate ${f.parcelas}x no cartao` : ""}
+                    </span>
+                  </span>
+                  <span className="flex flex-wrap items-center gap-3">
+                    {f.linkPagamento ? (
+                      <a className="botao-principal" href={f.linkPagamento} target="_blank" rel="noopener noreferrer">
+                        Pagar
+                      </a>
+                    ) : (
+                      <span className="text-sm text-slate-500">Link de pagamento a caminho</span>
+                    )}
+                    {anual && !f.parcelamentoId && f.linkPagamento ? (
+                      <ParcelarFatura faturaId={f.id} parcelas={PARCELAS_DO_ANUAL} />
+                    ) : null}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="ajuda">
+            A baixa e automatica: depois de pagar, nao e preciso mandar comprovante.
+          </p>
+        </section>
       ) : null}
 
       <section className="mt-8">

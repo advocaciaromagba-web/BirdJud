@@ -217,6 +217,12 @@ export const DIAS_DE_TESTE = 14;
 export const DESCONTO_ANUAL = 0.1;
 
 /**
+ * Em quantas vezes, no maximo, a fatura anual pode ser parcelada no cartao
+ * (sem juros para o escritorio; a taxa do parcelamento fica com a BirdJud).
+ */
+export const PARCELAS_DO_ANUAL = 12;
+
+/**
  * Prazo minimo entre emitir a fatura e o vencimento.
  *
  * Sem isso, um escritorio cujo teste acaba depois do dia de vencimento receberia

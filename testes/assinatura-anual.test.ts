@@ -144,6 +144,18 @@ d("trocar de ciclo", () => {
     expect(a.anualAte?.toISOString()).toBe("2027-08-01T12:00:00.000Z");
   });
 
+  // Um nome fora do catalogo na tabela (area antiga, teste) fazia o pacote
+  // "nao cobrir" e a fatura do Completo sair pelo preco avulso.
+  it("nome estranho entre os modulos nao derruba o preco do pacote", async () => {
+    const fim = new Date("2026-01-05T12:00:00Z");
+    const esc = await escritorio(fim);
+    await comEscritorio(esc, (db) => db.moduloContratado.create({ data: semEscritorio({ modulo: "ENTREVISTAS", ativo: true }) }));
+    await prismaPlataforma().assinatura.update({ where: { escritorioId: esc }, data: { ciclo: "ANUAL", valorCentavos: 0 } });
+    const r = await aplicarRegua(esc, new Date(fim.getTime() + DIA));
+    const f = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: r.faturaGerada! } });
+    expect(f.valorCentavos).toBe(301_320);
+  });
+
   it("pagou o anual e voltou ao mensal: nada de mensalidade ate o ano acabar", async () => {
     const fim = new Date("2026-01-05T12:00:00Z");
     const esc = await escritorio(fim);
