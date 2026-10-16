@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { aplicarRegua, anuidade, criarAssinatura, inicioDoAno, mensalidadeDaConta, mensalidadeDoEscritorio } from "../src/lib/cobranca";
 import { contaMontada, contaDoPlano, modulosDoPlano } from "../src/lib/planos";
-import { PRECO_DA_FAIXA, opcoesDeParcelamento, parcelamento, precoDoModulo, somar } from "../src/lib/precos";
+import { PRECO_DA_FAIXA, custoDaAntecipacao, opcoesNoCartao, pagamentoNoCartao, precoDoModulo, somar } from "../src/lib/precos";
 
 describe("a fatura e a vitrine", () => {
   it("plano Completo: a fatura cobra o pacote, nao a soma avulsa", () => {
@@ -92,26 +92,36 @@ d("assinatura anual na regua", () => {
   });
 });
 
-describe("tarifa do cartao parcelado, repassada", () => {
-  it("a BirdJud recebe o valor da fatura depois da tarifa", () => {
-    for (const p of opcoesDeParcelamento(301_320)) {
+describe("cartao: tarifa e antecipacao repassadas", () => {
+  it("a BirdJud recebe o valor da fatura depois de tarifa e antecipacao", () => {
+    for (const p of opcoesNoCartao(301_320, true)) {
       const liquido = p.totalCentavos - p.totalCentavos * p.percentual - 49;
       expect(liquido).toBeGreaterThanOrEqual(301_320);
       expect(liquido - 301_320).toBeLessThan(1);
     }
   });
 
-  it("faixas: 3,49% ate 6x, 3,99% de 7 a 12x", () => {
-    expect(parcelamento(301_320, 6).percentual).toBe(0.0349);
-    expect(parcelamento(301_320, 7).percentual).toBe(0.0399);
-    expect(parcelamento(301_320, 12).totalCentavos).toBe(313_894);
-    expect(parcelamento(301_320, 12).parcelaCentavos).toBe(26_157);
-    expect(opcoesDeParcelamento(301_320).map((p) => p.parcelas)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  it("a vista: 2,99% + 0,49, sem antecipacao", () => {
+    const p = pagamentoNoCartao(27_900, 1);
+    expect(p.percentual).toBe(0.0299);
+    expect(p.totalCentavos).toBe(28_811);
   });
 
-  it("fora de 2 a 12, erro", () => {
-    expect(() => parcelamento(100, 1)).toThrow(RangeError);
-    expect(() => parcelamento(100, 13)).toThrow(RangeError);
+  it("parcelado: faixa do cartao mais a antecipacao media das parcelas", () => {
+    expect(custoDaAntecipacao(1)).toBe(0);
+    // 12x: 1,70% x 32/30 x 6,5 meses em media.
+    expect(custoDaAntecipacao(12)).toBeCloseTo(0.017 * (32 / 30) * 6.5, 10);
+    expect(pagamentoNoCartao(301_320, 6).percentual).toBeCloseTo(0.0349 + custoDaAntecipacao(6), 10);
+    expect(pagamentoNoCartao(301_320, 7).percentual).toBeCloseTo(0.0399 + custoDaAntecipacao(7), 10);
+    expect(pagamentoNoCartao(301_320, 12).totalCentavos).toBe(357_822);
+    expect(pagamentoNoCartao(301_320, 12).parcelaCentavos).toBe(29_818);
+  });
+
+  it("mensalidade so a vista; anual de 1x a 12x", () => {
+    expect(opcoesNoCartao(27_900, false).map((p) => p.parcelas)).toEqual([1]);
+    expect(opcoesNoCartao(301_320, true).map((p) => p.parcelas)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(() => pagamentoNoCartao(100, 0)).toThrow(RangeError);
+    expect(() => pagamentoNoCartao(100, 13)).toThrow(RangeError);
   });
 });
 

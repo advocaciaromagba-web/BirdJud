@@ -220,50 +220,75 @@ export const DESCONTO_ANUAL = 0.1;
 export const PARCELAS_DO_ANUAL = 12;
 
 /**
- * Tarifa do Asaas no cartao parcelado, REPASSADA ao escritorio (decidido em
- * 16/10/2026). Tabela padrao do Asaas (asaas.com/precos-e-taxas): percentual
- * sobre o total, por faixa de parcelas, mais um fixo por cobranca. Se a conta
- * tiver taxa negociada, e aqui que se ajusta.
+ * Tarifas do Asaas no cartao, REPASSADAS ao escritorio (decidido em
+ * 16/10/2026): quem paga no cartao paga a tarifa; boleto e Pix, nao. Tabela
+ * padrao do Asaas (asaas.com/precos-e-taxas): percentual sobre o total, por
+ * faixa de parcelas, mais um fixo por cobranca. Conta com taxa negociada:
+ * ajustar aqui.
  */
-export const TARIFA_DO_PARCELADO: ReadonlyArray<{ ate: number; percentual: number }> = [
+export const TARIFA_DO_CARTAO: ReadonlyArray<{ ate: number; percentual: number }> = [
+  { ate: 1, percentual: 0.0299 },
   { ate: 6, percentual: 0.0349 },
   { ate: 12, percentual: 0.0399 },
 ];
 export const TARIFA_FIXA_DO_CARTAO_CENTAVOS = 49;
 
-export type Parcelamento = {
+/**
+ * Antecipacao do parcelado, tambem repassada: o Asaas paga uma parcela a cada
+ * 32 dias, e receber antes custa 1,70% ao mes. A parcela k chega k x 32 dias
+ * depois; antecipada, custa 1,70% x (32k / 30). Na media das n parcelas:
+ * 1,70% x 32/30 x (n + 1) / 2 sobre o total. So vale se a antecipacao
+ * automatica estiver ligada na conta do Asaas.
+ */
+export const ANTECIPACAO_AO_MES = 0.017;
+export const DIAS_ENTRE_PARCELAS = 32;
+
+export type PagamentoNoCartao = {
   parcelas: number;
-  /** O que o escritorio paga no total, ja com a tarifa. */
+  /** O que o escritorio paga no total, ja com tarifa e antecipacao. */
   totalCentavos: number;
-  /** A tarifa repassada (total - valor da fatura). */
+  /** O acrescimo repassado (total - valor da fatura). */
   tarifaCentavos: number;
   /** Valor de cada parcela (o Asaas joga a sobra de centavos na ultima). */
   parcelaCentavos: number;
+  /** Tarifa do cartao + antecipacao, como fracao do total. */
   percentual: number;
 };
 
+/** Fracao do total que a antecipacao das n parcelas consome. */
+export function custoDaAntecipacao(parcelas: number): number {
+  if (parcelas < 2) return 0;
+  return ANTECIPACAO_AO_MES * (DIAS_ENTRE_PARCELAS / 30) * ((parcelas + 1) / 2);
+}
+
 /**
- * O total que faz a BirdJud receber o valor da fatura depois da tarifa:
- * total - total x percentual - fixo >= valor, arredondado para cima.
+ * O total que faz a BirdJud receber o valor da fatura depois de tarifa e
+ * antecipacao: total - total x percentual - fixo >= valor, para cima.
+ * 1 parcela = cartao a vista (sem antecipacao).
  */
-export function parcelamento(valorCentavos: number, parcelas: number): Parcelamento {
-  if (!Number.isInteger(parcelas) || parcelas < 2 || parcelas > PARCELAS_DO_ANUAL) {
+export function pagamentoNoCartao(valorCentavos: number, parcelas: number): PagamentoNoCartao {
+  if (!Number.isInteger(parcelas) || parcelas < 1 || parcelas > PARCELAS_DO_ANUAL) {
     throw new RangeError(`Parcelas fora do permitido: ${parcelas}.`);
   }
-  const faixa = TARIFA_DO_PARCELADO.find((f) => parcelas <= f.ate)!;
-  const totalCentavos = Math.ceil((valorCentavos + TARIFA_FIXA_DO_CARTAO_CENTAVOS) / (1 - faixa.percentual));
+  const faixa = TARIFA_DO_CARTAO.find((f) => parcelas <= f.ate)!;
+  const percentual = faixa.percentual + custoDaAntecipacao(parcelas);
+  const totalCentavos = Math.ceil((valorCentavos + TARIFA_FIXA_DO_CARTAO_CENTAVOS) / (1 - percentual));
   return {
     parcelas,
     totalCentavos,
     tarifaCentavos: totalCentavos - valorCentavos,
     parcelaCentavos: Math.floor(totalCentavos / parcelas),
-    percentual: faixa.percentual,
+    percentual,
   };
 }
 
-/** As opcoes de 2x ate PARCELAS_DO_ANUAL, para a tela mostrar o total de cada. */
-export function opcoesDeParcelamento(valorCentavos: number): Parcelamento[] {
-  return Array.from({ length: PARCELAS_DO_ANUAL - 1 }, (_, i) => parcelamento(valorCentavos, i + 2));
+/**
+ * As opcoes no cartao: a vista sempre; parcelado (2x a 12x) so na fatura
+ * anual — mensalidade parcelada nao faz sentido.
+ */
+export function opcoesNoCartao(valorCentavos: number, anual: boolean): PagamentoNoCartao[] {
+  const ate = anual ? PARCELAS_DO_ANUAL : 1;
+  return Array.from({ length: ate }, (_, i) => pagamentoNoCartao(valorCentavos, i + 1));
 }
 
 /**

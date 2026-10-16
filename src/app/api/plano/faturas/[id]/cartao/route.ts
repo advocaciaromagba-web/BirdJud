@@ -5,22 +5,23 @@ import { FalhaNoAsaas, PedidoInvalido } from "@/lib/cobrancas";
 import {
   AssinanteSemDocumento,
   PlataformaSemCobranca,
-  parcelarFaturaNoCartao,
+  pagarFaturaNoCartao,
 } from "@/lib/cobranca-plataforma";
 
 export const dynamic = "force-dynamic";
 
 /**
- * "Parcelar no cartao": troca a cobranca a vista da fatura anual por um
- * parcelamento no cartao. So o administrador, e so a fatura do proprio
- * escritorio (o id vem da sessao, nunca do corpo).
+ * "Pagar no cartao": troca o boleto/Pix da fatura por uma cobranca no cartao,
+ * a vista ou (na anual) parcelada, com a tarifa repassada. So o
+ * administrador, e so a fatura do proprio escritorio (o escritorio vem da
+ * sessao, nunca do corpo).
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { escritorioId } = await exigirAdmin();
     const { id } = await params;
     const corpo = (await req.json().catch(() => ({}))) as { parcelas?: unknown };
-    const r = await parcelarFaturaNoCartao(escritorioId, id, Number(corpo.parcelas));
+    const r = await pagarFaturaNoCartao(escritorioId, id, Number(corpo.parcelas));
     return NextResponse.json(r);
   } catch (erro) {
     if (erro instanceof PedidoInvalido || erro instanceof AssinanteSemDocumento || erro instanceof PlataformaSemCobranca) {

@@ -13,7 +13,7 @@
 // que nunca lhe foi apresentada.
 import type { Prisma } from "@prisma/client";
 import { prismaPlataforma } from "./prisma";
-import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL, parcelamento } from "./precos";
+import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL, pagamentoNoCartao } from "./precos";
 import { referencia } from "./referencia-cobranca";
 import {
   FalhaNoAsaas,
@@ -152,9 +152,11 @@ export type CobrancaEmitida = {
  *   2. fatura que nao esta ABERTA nao emite (paga ou cancelada);
  *   3. o indice unico em idExterno e a rede embaixo das duas primeiras.
  *
- * `billingType: "UNDEFINED"` e o que entrega boleto, Pix E cartao na mesma
- * tela, com o pagador escolhendo. Fixar um deles obrigaria a decidir pelo
- * cliente qual lhe serve.
+ * `billingType: "BOLETO"`: boleto com o QR Code Pix na mesma tela do Asaas.
+ * Ate 16/10/2026 era "UNDEFINED" (boleto, Pix E cartao pelo mesmo preco);
+ * desde que a tarifa do cartao passou a ser repassada, o cartao e uma
+ * cobranca a parte, escolhida na tela Plano (`pagarFaturaNoCartao`) — senao
+ * o cartao sairia pelo preco do boleto e a tarifa ficaria com a BirdJud.
  */
 export async function emitirCobrancaDaFatura(
   faturaId: string,
@@ -194,7 +196,7 @@ export async function emitirCobrancaDaFatura(
     method: "POST",
     body: JSON.stringify({
       customer: idDoAssinante,
-      billingType: "UNDEFINED",
+      billingType: "BOLETO",
       value: emReaisDecimal(fatura.valorCentavos),
       dueDate: comoDia(fatura.vencimento),
       description: descricaoDaFatura(fatura.competencia, ehFaturaAnual(fatura.detalhe)),
@@ -254,10 +256,15 @@ export function mensagemDaFatura(dados: {
       `Valor: ${valor}`,
       `Vencimento: ${vence}`,
       ...(dados.link
-        ? ["", `Pagar (boleto, Pix ou cartao): ${dados.link}`]
+        ? ["", `Pagar (boleto ou Pix): ${dados.link}`]
         : ["", "O link de pagamento sera enviado em seguida."]),
-      ...(dados.anual && dados.enderecoDoPlano
-        ? ["", `Prefere parcelar? Em ate ${PARCELAS_DO_ANUAL}x no cartao (com a tarifa do cartao), na tela Plano: ${dados.enderecoDoPlano}`]
+      ...(dados.enderecoDoPlano
+        ? [
+            "",
+            dados.anual
+              ? `No cartao, a vista ou em ate ${PARCELAS_DO_ANUAL}x (com a tarifa do cartao), na tela Plano: ${dados.enderecoDoPlano}`
+              : `No cartao (com a tarifa do cartao), na tela Plano: ${dados.enderecoDoPlano}`,
+          ]
         : []),
       "",
       "A baixa e automatica: nao e preciso mandar comprovante.",
@@ -271,32 +278,33 @@ export function mensagemDaFatura(dados: {
 /** Status do Asaas que querem dizer "ja pagou". */
 const PAGO_NO_ASAAS = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"]);
 
-export type FaturaParcelada = {
+export type FaturaNoCartao = {
   linkPagamento: string | null;
   parcelas: number;
   valorCentavos: number;
 };
 
 /**
- * Troca a cobranca a vista da fatura anual por um parcelamento no cartao, em
- * ate PARCELAS_DO_ANUAL vezes. Quem pede e o administrador do escritorio, na
- * tela Plano.
+ * Troca a cobranca da fatura (boleto ou Pix) por uma no cartao: a vista em
+ * qualquer fatura, parcelada (2x a PARCELAS_DO_ANUAL) so na anual. A tarifa
+ * do cartao — e, no parcelado, a antecipacao — e repassada (`pagamentoNoCartao`).
+ * Quem pede e o administrador do escritorio, na tela Plano.
  *
  * Nunca deixa duas cobrancas vivas para a mesma fatura (o escritorio poderia
- * pagar as duas): primeiro confere que a a vista nao foi paga, cancela no
- * Asaas e LIMPA o id na fatura; so depois cria o parcelamento. Se o Asaas
- * cair entre uma coisa e outra, a fatura fica ABERTA sem cobranca — e a
- * proxima regua emite de novo a a vista. Nada se perde, nada se cobra duas
+ * pagar as duas): primeiro confere que a atual nao foi paga, cancela no
+ * Asaas e LIMPA o id na fatura; so depois cria a do cartao. Se o Asaas cair
+ * entre uma coisa e outra, a fatura fica ABERTA sem cobranca — e a proxima
+ * regua emite de novo a de boleto/Pix. Nada se perde, nada se cobra duas
  * vezes.
  *
- * Idempotente: fatura ja parcelada devolve o link que ja existe.
+ * Idempotente: fatura ja passada para o cartao devolve o link que ja existe.
  */
-export async function parcelarFaturaNoCartao(
+export async function pagarFaturaNoCartao(
   escritorioId: string,
   faturaId: string,
   parcelas: number,
   agora = new Date(),
-): Promise<FaturaParcelada> {
+): Promise<FaturaNoCartao> {
   const chave = chaveDaPlataforma();
   if (!chave) throw new PlataformaSemCobranca();
 
@@ -306,22 +314,17 @@ export async function parcelarFaturaNoCartao(
   });
   if (!fatura) throw new PedidoInvalido("Fatura nao encontrada.");
   if (fatura.status !== "ABERTA") throw new PedidoInvalido("Esta fatura nao esta em aberto.");
-  if (!ehFaturaAnual(fatura.detalhe)) {
-    throw new PedidoInvalido("So a fatura do plano anual pode ser parcelada.");
+  if (fatura.parcelas) {
+    return { linkPagamento: fatura.linkPagamento, parcelas: fatura.parcelas, valorCentavos: fatura.valorCentavos };
   }
-  if (fatura.parcelamentoId) {
-    return {
-      linkPagamento: fatura.linkPagamento,
-      parcelas: fatura.parcelas ?? PARCELAS_DO_ANUAL,
-      valorCentavos: fatura.valorCentavos,
-    };
+  const anual = ehFaturaAnual(fatura.detalhe);
+  const maximo = anual ? PARCELAS_DO_ANUAL : 1;
+  if (!Number.isInteger(parcelas) || parcelas < 1 || parcelas > maximo) {
+    throw new PedidoInvalido(
+      anual ? `Escolha de 1 a ${PARCELAS_DO_ANUAL} parcelas.` : "A mensalidade so vai ao cartao a vista.",
+    );
   }
-  if (!Number.isInteger(parcelas) || parcelas < 2 || parcelas > PARCELAS_DO_ANUAL) {
-    throw new PedidoInvalido(`Escolha de 2 a ${PARCELAS_DO_ANUAL} parcelas.`);
-  }
-  // A tarifa do cartao parcelado e repassada: o escritorio paga o valor da
-  // fatura mais o que o Asaas cobra, e a BirdJud recebe o valor da fatura.
-  const conta = parcelamento(fatura.valorCentavos, parcelas);
+  const conta = pagamentoNoCartao(fatura.valorCentavos, parcelas);
 
   if (fatura.idExterno) {
     const atual = await chamarAsaas(chave, `/payments/${fatura.idExterno}`);
@@ -346,26 +349,30 @@ export async function parcelarFaturaNoCartao(
     email: admin?.email ?? null,
   });
 
-  // O Asaas recusa vencimento no passado: fatura vencida parcela a partir de hoje.
+  // O Asaas recusa vencimento no passado: fatura vencida vai para hoje.
   const hoje = new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(agora)}T12:00:00Z`);
   const vencimento = fatura.vencimento > hoje ? fatura.vencimento : hoje;
+  const forma = parcelas > 1 ? `em ${parcelas}x no cartao` : "no cartao a vista";
   const criada = await chamarAsaas(chave, "/payments", {
     method: "POST",
     body: JSON.stringify({
       customer: idDoAssinante,
       billingType: "CREDIT_CARD",
-      installmentCount: parcelas,
-      totalValue: emReaisDecimal(conta.totalCentavos),
+      // Parcelado: installmentCount + totalValue. A vista: value. Nunca os
+      // dois juntos — o Asaas recusa.
+      ...(parcelas > 1
+        ? { installmentCount: parcelas, totalValue: emReaisDecimal(conta.totalCentavos) }
+        : { value: emReaisDecimal(conta.totalCentavos) }),
       dueDate: comoDia(vencimento),
-      description: `${descricaoDaFatura(fatura.competencia, true)}, em ${parcelas}x no cartao (com a tarifa do cartao)`,
+      description: `${descricaoDaFatura(fatura.competencia, anual)}, ${forma} (com a tarifa do cartao)`,
       externalReference: referencia("fatura", fatura.id),
     }),
   });
 
   const idExterno = typeof criada.id === "string" ? criada.id : null;
   const parcelamentoId = typeof criada.installment === "string" ? criada.installment : null;
-  if (!idExterno || !parcelamentoId) {
-    throw new FalhaNoAsaas("O Asaas criou o parcelamento sem devolver os ids.");
+  if (!idExterno || (parcelas > 1 && !parcelamentoId)) {
+    throw new FalhaNoAsaas("O Asaas criou a cobranca no cartao sem devolver os ids.");
   }
   const linkPagamento = typeof criada.invoiceUrl === "string" ? criada.invoiceUrl : null;
 
@@ -383,7 +390,9 @@ export async function parcelarFaturaNoCartao(
       detalhe: [
         ...(Array.isArray(fatura.detalhe) ? (fatura.detalhe as Prisma.InputJsonValue[]) : []),
         {
-          descricao: `Tarifa do cartao parcelado em ${parcelas}x (repassada)`,
+          descricao: parcelas > 1
+            ? `Tarifa do cartao parcelado em ${parcelas}x e antecipacao (repassadas)`
+            : "Tarifa do cartao a vista (repassada)",
           valorCentavos: conta.tarifaCentavos,
         },
       ],

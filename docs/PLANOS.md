@@ -146,38 +146,44 @@ plataforma ("Passar para anual").
   console recusa voltar ao mensal com a fatura anual ainda em aberto (seria
   nao pagar nenhuma das duas).
 
-### Anual parcelado no cartao (16/10/2026)
+### Cartao com tarifa repassada (16/10/2026)
 
-A fatura anual sai como cobranca unica (boleto, Pix ou cartao a vista). Na
-tela **Plano**, o administrador do escritorio ve as faturas em aberto e, na
-anual, o botao **"Parcelar no cartao"**: o escritorio escolhe de 2x a 12x
-(`PARCELAS_DO_ANUAL`) e ve, em cada opcao, a parcela e o total. O e-mail da
-fatura anual avisa dessa opcao com o endereco da tela.
+A cobranca normal da fatura e **boleto com Pix** (`billingType: BOLETO`),
+sem acrescimo. O cartao e uma cobranca a parte, escolhida na tela **Plano**
+pelo administrador ("Pagar no cartao"): **a vista** em qualquer fatura, e
+**de 2x a 12x** (`PARCELAS_DO_ANUAL`) so na anual. Cada opcao mostra a
+parcela e o total. O e-mail da fatura traz o link do boleto/Pix e o endereco
+da tela Plano para o cartao.
 
-**A tarifa do cartao parcelado e repassada** (decidido em 16/10/2026). Tabela
-padrao do Asaas, em `precos.ts` (`TARIFA_DO_PARCELADO`,
-`TARIFA_FIXA_DO_CARTAO_CENTAVOS`): 3,49% de 2 a 6x, 3,99% de 7 a 12x, mais
-R$ 0,49 por cobranca. O total e calculado para a BirdJud receber o valor da
-fatura depois da tarifa: `total = (valor + 0,49) / (1 - percentual)`, para
-cima (`parcelamento`). Ex.: anual de R$ 3.013,20 → 6x de R$ 520,44 (total
-R$ 3.122,68) ou 12x de R$ 261,57 (total R$ 3.138,94). Ao parcelar, a fatura
-ganha a linha "Tarifa do cartao parcelado em Nx (repassada)" e o valor passa
-a ser o total cobrado. A vista (boleto, Pix ou cartao) nao tem acrescimo.
-Antecipacao do recebivel (o Asaas paga uma parcela a cada 32 dias) NAO esta
-no repasse. Conta com taxa negociada: ajustar as constantes.
+**Tarifa e antecipacao repassadas** (decidido em 16/10/2026), em `precos.ts`:
 
-`parcelarFaturaNoCartao` (cobranca-plataforma.ts), nesta ordem:
+- tarifa do Asaas (`TARIFA_DO_CARTAO`): 2,99% a vista, 3,49% de 2 a 6x,
+  3,99% de 7 a 12x, mais R$ 0,49 por cobranca;
+- antecipacao do parcelado (`custoDaAntecipacao`): o Asaas paga uma parcela a
+  cada 32 dias, e receber antes custa 1,70% ao mes. Na media das n parcelas:
+  1,70% x 32/30 x (n + 1)/2 sobre o total. **So faz sentido com a
+  antecipacao automatica ligada na conta do Asaas.**
 
-1. confere no Asaas que a cobranca a vista nao foi paga (se foi, recusa);
-2. cancela a a vista no Asaas e **limpa o id na fatura**;
-3. cria o parcelamento (`billingType: CREDIT_CARD`, `installmentCount`,
-   `totalValue` com a tarifa, mesma `externalReference`) e guarda
-   `idExterno`, `parcelamentoId`, `parcelas`, o novo link e o valor com a
-   tarifa.
+`total = (valor + 0,49) / (1 - tarifa - antecipacao)`, para cima
+(`pagamentoNoCartao`): a BirdJud recebe o valor da fatura. Anual do Completo
+solo (R$ 3.013,20): a vista no cartao R$ 3.106,58; 6x de R$ 557,08 (R$
+3.342,48); 12x de R$ 298,18 (R$ 3.578,22). Mensalidade de R$ 279 no cartao:
+R$ 288,11. Ao passar para o cartao, a fatura ganha a linha da tarifa e o
+valor passa a ser o total cobrado. Conta com taxa negociada: ajustar as
+constantes.
+
+`pagarFaturaNoCartao` (cobranca-plataforma.ts), nesta ordem:
+
+1. confere no Asaas que o boleto/Pix nao foi pago (se foi, recusa);
+2. cancela o boleto/Pix no Asaas e **limpa o id na fatura**;
+3. cria a cobranca no cartao (`CREDIT_CARD`; a vista com `value`, parcelado
+   com `installmentCount` + `totalValue`; mesma `externalReference`) e
+   guarda `idExterno`, `parcelamentoId` (so no parcelado), `parcelas`, o
+   novo link e o valor com a tarifa.
 
 Nunca ha duas cobrancas vivas para a mesma fatura. Se o Asaas cair entre 2 e
-3, a fatura fica ABERTA sem cobranca e a proxima regua emite a a vista de
-novo. Pedir duas vezes devolve o mesmo link.
+3, a fatura fica ABERTA sem cobranca e a proxima regua emite o boleto/Pix
+de novo. Pedir duas vezes devolve o mesmo link.
 
 Webhook: a primeira parcela confirmada da baixa na fatura inteira (no cartao
 o valor todo fica comprometido na hora); as outras 11 chegam como "ja
