@@ -48,6 +48,12 @@ const acao = z.discriminatedUnion("acao", [
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
   // acao existe para o suporte destravar quem ja esbarrou.
   z.object({ acao: z.literal("cnpj"), cnpj: z.string().max(20) }),
+  // Valor fechado da mensalidade (preco negociado). Zero volta a valer a
+  // tabela. Vale para as faturas seguintes; fatura ja gerada nao muda.
+  z.object({ acao: z.literal("valor"), valorCentavos: z.number().int().min(0).max(10_000_000) }),
+  // Encerrar o teste agora: o escritorio que quer comecar a pagar antes dos
+  // 14 dias. A fatura sai na proxima regua (ou na hora, com "regua").
+  z.object({ acao: z.literal("encerrarTeste") }),
 ]);
 
 function tratar(erro: unknown) {
@@ -239,6 +245,43 @@ export async function POST(
           corpo.data.ciclo === "ANUAL"
             ? "Assinatura anual: a fatura de 12 meses, com 10% de desconto, sai na proxima regua."
             : "Assinatura mensal.",
+      });
+    }
+
+    if (corpo.data.acao === "valor") {
+      const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
+      if (!assinatura) return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      await prismaPlataforma().assinatura.update({
+        where: { escritorioId: escritorio.id },
+        data: { valorCentavos: corpo.data.valorCentavos },
+      });
+      const reais = (corpo.data.valorCentavos / 100).toFixed(2).replace(".", ",");
+      await registrarAcessoSuporte(
+        operador.operadorId,
+        escritorio.id,
+        `Valor da mensalidade: ${corpo.data.valorCentavos ? `R$ ${reais}` : "tabela"}`,
+      );
+      return NextResponse.json({
+        detalhe: corpo.data.valorCentavos
+          ? `Mensalidade fechada em R$ ${reais}. Vale a partir da proxima fatura.`
+          : "Mensalidade pela tabela. Vale a partir da proxima fatura.",
+      });
+    }
+
+    if (corpo.data.acao === "encerrarTeste") {
+      const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
+      if (!assinatura) return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      const agora = new Date();
+      if (assinatura.fimDoTeste <= agora) {
+        return NextResponse.json({ erro: "O periodo de teste ja acabou." }, { status: 409 });
+      }
+      await prismaPlataforma().assinatura.update({
+        where: { escritorioId: escritorio.id },
+        data: { fimDoTeste: agora },
+      });
+      await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Teste encerrado antes do prazo");
+      return NextResponse.json({
+        detalhe: "Teste encerrado. A primeira fatura sai na proxima regua — ou agora, em \"Passar a regua\".",
       });
     }
 

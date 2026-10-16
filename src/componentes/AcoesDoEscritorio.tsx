@@ -26,6 +26,8 @@ export function AcoesDoEscritorio({
   emCortesia = false,
   encerrado = false,
   ciclo = null,
+  valorCentavos = 0,
+  emTeste = false,
 }: {
   escritorioId: string;
   faixaAtual: string;
@@ -36,6 +38,10 @@ export function AcoesDoEscritorio({
   encerrado?: boolean;
   /** MENSAL | ANUAL; null sem assinatura. */
   ciclo?: string | null;
+  /** Valor fechado da mensalidade; 0 = tabela. */
+  valorCentavos?: number;
+  /** Ainda no periodo de teste. */
+  emTeste?: boolean;
 }) {
   const router = useRouter();
   const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
@@ -44,6 +50,7 @@ export function AcoesDoEscritorio({
   const [ocupado, setOcupado] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [motivoDoEncerramento, setMotivoDoEncerramento] = useState("");
+  const [valor, setValor] = useState(valorCentavos ? (valorCentavos / 100).toFixed(2).replace(".", ",") : "");
   const contratados = new Map(modulos.map((m) => [m.modulo, m.ativo]));
   const ativos = modulos
     .filter((m) => m.ativo)
@@ -191,6 +198,55 @@ export function AcoesDoEscritorio({
           </div>
         )}
       </div>
+
+      {ciclo ? (
+        <div className="mt-4 border-t border-slate-200 pt-4">
+          <p className="font-semibold">Valor da mensalidade</p>
+          <p className="mt-1 text-slate-600">
+            Preco negociado, fechado na assinatura. Em branco ou zero, vale a tabela. Muda as faturas seguintes, nao a ja gerada.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-1">
+              <span>R$</span>
+              <input
+                className="w-32 rounded border border-slate-400 px-2 py-1"
+                inputMode="decimal"
+                aria-label="Valor da mensalidade em reais"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                placeholder="tabela"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={ocupado || (valor.trim() !== "" && !/^\d+(,\d{1,2})?$/.test(valor.trim()))}
+              onClick={() =>
+                agir({
+                  acao: "valor",
+                  valorCentavos: valor.trim() ? Math.round(Number(valor.trim().replace(",", ".")) * 100) : 0,
+                })
+              }
+              className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+            >
+              Gravar valor
+            </button>
+          </div>
+          {emTeste ? (
+            <button
+              type="button"
+              disabled={ocupado}
+              onClick={() => {
+                if (window.confirm("Encerrar o periodo de teste agora? A primeira fatura sai na proxima regua.")) {
+                  void agir({ acao: "encerrarTeste" });
+                }
+              }}
+              className="mt-3 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+            >
+              Encerrar o teste agora
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {ciclo ? (
         <div className="mt-4 border-t border-slate-200 pt-4">

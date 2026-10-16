@@ -126,6 +126,8 @@ export default async function EscritorioNoPainel({
         }))}
         emCortesia={Boolean(escritorio.assinatura?.cortesiaDesde)}
         ciclo={escritorio.assinatura?.ciclo ?? null}
+        valorCentavos={escritorio.assinatura?.valorCentavos ?? 0}
+        emTeste={Boolean(escritorio.assinatura && escritorio.assinatura.fimDoTeste > new Date())}
         encerrado={escritorio.status === "ENCERRADO"}
       />
 
