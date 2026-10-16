@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { aplicarRegua, anuidade, criarAssinatura, inicioDoAno, mensalidadeDaConta, mensalidadeDoEscritorio } from "../src/lib/cobranca";
 import { contaMontada, contaDoPlano, modulosDoPlano } from "../src/lib/planos";
-import { PRECO_DA_FAIXA, precoDoModulo, somar } from "../src/lib/precos";
+import { PRECO_DA_FAIXA, opcoesDeParcelamento, parcelamento, precoDoModulo, somar } from "../src/lib/precos";
 
 describe("a fatura e a vitrine", () => {
   it("plano Completo: a fatura cobra o pacote, nao a soma avulsa", () => {
@@ -89,6 +89,29 @@ d("assinatura anual na regua", () => {
     expect(r.faturaGerada).not.toBeNull();
     const a = await prismaPlataforma().assinatura.findUniqueOrThrow({ where: { escritorioId: esc } });
     expect(a.anualAte?.toISOString()).toBe("2028-01-05T12:00:00.000Z");
+  });
+});
+
+describe("tarifa do cartao parcelado, repassada", () => {
+  it("a BirdJud recebe o valor da fatura depois da tarifa", () => {
+    for (const p of opcoesDeParcelamento(301_320)) {
+      const liquido = p.totalCentavos - p.totalCentavos * p.percentual - 49;
+      expect(liquido).toBeGreaterThanOrEqual(301_320);
+      expect(liquido - 301_320).toBeLessThan(1);
+    }
+  });
+
+  it("faixas: 3,49% ate 6x, 3,99% de 7 a 12x", () => {
+    expect(parcelamento(301_320, 6).percentual).toBe(0.0349);
+    expect(parcelamento(301_320, 7).percentual).toBe(0.0399);
+    expect(parcelamento(301_320, 12).totalCentavos).toBe(313_894);
+    expect(parcelamento(301_320, 12).parcelaCentavos).toBe(26_157);
+    expect(opcoesDeParcelamento(301_320).map((p) => p.parcelas)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  });
+
+  it("fora de 2 a 12, erro", () => {
+    expect(() => parcelamento(100, 1)).toThrow(RangeError);
+    expect(() => parcelamento(100, 13)).toThrow(RangeError);
   });
 });
 

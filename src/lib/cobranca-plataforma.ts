@@ -11,8 +11,9 @@
 // marcava como paga era um operador, na mao. Com um assinante isso e
 // defensavel; com dez, o escritorio seria suspenso por nao pagar uma fatura
 // que nunca lhe foi apresentada.
+import type { Prisma } from "@prisma/client";
 import { prismaPlataforma } from "./prisma";
-import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL } from "./precos";
+import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL, parcelamento } from "./precos";
 import { referencia } from "./referencia-cobranca";
 import {
   FalhaNoAsaas,
@@ -256,7 +257,7 @@ export function mensagemDaFatura(dados: {
         ? ["", `Pagar (boleto, Pix ou cartao): ${dados.link}`]
         : ["", "O link de pagamento sera enviado em seguida."]),
       ...(dados.anual && dados.enderecoDoPlano
-        ? ["", `Prefere parcelar? Em ate ${PARCELAS_DO_ANUAL}x sem juros no cartao, na tela Plano: ${dados.enderecoDoPlano}`]
+        ? ["", `Prefere parcelar? Em ate ${PARCELAS_DO_ANUAL}x no cartao (com a tarifa do cartao), na tela Plano: ${dados.enderecoDoPlano}`]
         : []),
       "",
       "A baixa e automatica: nao e preciso mandar comprovante.",
@@ -273,6 +274,7 @@ const PAGO_NO_ASAAS = new Set(["RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH"]);
 export type FaturaParcelada = {
   linkPagamento: string | null;
   parcelas: number;
+  valorCentavos: number;
 };
 
 /**
@@ -292,6 +294,7 @@ export type FaturaParcelada = {
 export async function parcelarFaturaNoCartao(
   escritorioId: string,
   faturaId: string,
+  parcelas: number,
   agora = new Date(),
 ): Promise<FaturaParcelada> {
   const chave = chaveDaPlataforma();
@@ -307,8 +310,18 @@ export async function parcelarFaturaNoCartao(
     throw new PedidoInvalido("So a fatura do plano anual pode ser parcelada.");
   }
   if (fatura.parcelamentoId) {
-    return { linkPagamento: fatura.linkPagamento, parcelas: fatura.parcelas ?? PARCELAS_DO_ANUAL };
+    return {
+      linkPagamento: fatura.linkPagamento,
+      parcelas: fatura.parcelas ?? PARCELAS_DO_ANUAL,
+      valorCentavos: fatura.valorCentavos,
+    };
   }
+  if (!Number.isInteger(parcelas) || parcelas < 2 || parcelas > PARCELAS_DO_ANUAL) {
+    throw new PedidoInvalido(`Escolha de 2 a ${PARCELAS_DO_ANUAL} parcelas.`);
+  }
+  // A tarifa do cartao parcelado e repassada: o escritorio paga o valor da
+  // fatura mais o que o Asaas cobra, e a BirdJud recebe o valor da fatura.
+  const conta = parcelamento(fatura.valorCentavos, parcelas);
 
   if (fatura.idExterno) {
     const atual = await chamarAsaas(chave, `/payments/${fatura.idExterno}`);
@@ -341,10 +354,10 @@ export async function parcelarFaturaNoCartao(
     body: JSON.stringify({
       customer: idDoAssinante,
       billingType: "CREDIT_CARD",
-      installmentCount: PARCELAS_DO_ANUAL,
-      totalValue: emReaisDecimal(fatura.valorCentavos),
+      installmentCount: parcelas,
+      totalValue: emReaisDecimal(conta.totalCentavos),
       dueDate: comoDia(vencimento),
-      description: `${descricaoDaFatura(fatura.competencia, true)}, em ate ${PARCELAS_DO_ANUAL}x no cartao`,
+      description: `${descricaoDaFatura(fatura.competencia, true)}, em ${parcelas}x no cartao (com a tarifa do cartao)`,
       externalReference: referencia("fatura", fatura.id),
     }),
   });
@@ -361,10 +374,20 @@ export async function parcelarFaturaNoCartao(
     data: {
       idExterno,
       parcelamentoId,
-      parcelas: PARCELAS_DO_ANUAL,
+      parcelas,
       linkPagamento,
       emitidaEm: new Date(),
+      // A tarifa entra na memoria de calculo e no valor: a fatura passa a
+      // dizer o que de fato foi cobrado.
+      valorCentavos: conta.totalCentavos,
+      detalhe: [
+        ...(Array.isArray(fatura.detalhe) ? (fatura.detalhe as Prisma.InputJsonValue[]) : []),
+        {
+          descricao: `Tarifa do cartao parcelado em ${parcelas}x (repassada)`,
+          valorCentavos: conta.tarifaCentavos,
+        },
+      ],
     },
   });
-  return { linkPagamento, parcelas: PARCELAS_DO_ANUAL };
+  return { linkPagamento, parcelas, valorCentavos: conta.totalCentavos };
 }

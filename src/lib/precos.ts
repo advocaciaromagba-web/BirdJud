@@ -216,11 +216,55 @@ export const DIAS_DE_TESTE = 14;
  */
 export const DESCONTO_ANUAL = 0.1;
 
-/**
- * Em quantas vezes, no maximo, a fatura anual pode ser parcelada no cartao
- * (sem juros para o escritorio; a taxa do parcelamento fica com a BirdJud).
- */
+/** Em quantas vezes, no maximo, a fatura anual pode ser parcelada no cartao. */
 export const PARCELAS_DO_ANUAL = 12;
+
+/**
+ * Tarifa do Asaas no cartao parcelado, REPASSADA ao escritorio (decidido em
+ * 16/10/2026). Tabela padrao do Asaas (asaas.com/precos-e-taxas): percentual
+ * sobre o total, por faixa de parcelas, mais um fixo por cobranca. Se a conta
+ * tiver taxa negociada, e aqui que se ajusta.
+ */
+export const TARIFA_DO_PARCELADO: ReadonlyArray<{ ate: number; percentual: number }> = [
+  { ate: 6, percentual: 0.0349 },
+  { ate: 12, percentual: 0.0399 },
+];
+export const TARIFA_FIXA_DO_CARTAO_CENTAVOS = 49;
+
+export type Parcelamento = {
+  parcelas: number;
+  /** O que o escritorio paga no total, ja com a tarifa. */
+  totalCentavos: number;
+  /** A tarifa repassada (total - valor da fatura). */
+  tarifaCentavos: number;
+  /** Valor de cada parcela (o Asaas joga a sobra de centavos na ultima). */
+  parcelaCentavos: number;
+  percentual: number;
+};
+
+/**
+ * O total que faz a BirdJud receber o valor da fatura depois da tarifa:
+ * total - total x percentual - fixo >= valor, arredondado para cima.
+ */
+export function parcelamento(valorCentavos: number, parcelas: number): Parcelamento {
+  if (!Number.isInteger(parcelas) || parcelas < 2 || parcelas > PARCELAS_DO_ANUAL) {
+    throw new RangeError(`Parcelas fora do permitido: ${parcelas}.`);
+  }
+  const faixa = TARIFA_DO_PARCELADO.find((f) => parcelas <= f.ate)!;
+  const totalCentavos = Math.ceil((valorCentavos + TARIFA_FIXA_DO_CARTAO_CENTAVOS) / (1 - faixa.percentual));
+  return {
+    parcelas,
+    totalCentavos,
+    tarifaCentavos: totalCentavos - valorCentavos,
+    parcelaCentavos: Math.floor(totalCentavos / parcelas),
+    percentual: faixa.percentual,
+  };
+}
+
+/** As opcoes de 2x ate PARCELAS_DO_ANUAL, para a tela mostrar o total de cada. */
+export function opcoesDeParcelamento(valorCentavos: number): Parcelamento[] {
+  return Array.from({ length: PARCELAS_DO_ANUAL - 1 }, (_, i) => parcelamento(valorCentavos, i + 2));
+}
 
 /**
  * Prazo minimo entre emitir a fatura e o vencimento.

@@ -15,11 +15,12 @@ export const dynamic = "force-dynamic";
  * parcelamento no cartao. So o administrador, e so a fatura do proprio
  * escritorio (o id vem da sessao, nunca do corpo).
  */
-export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { escritorioId } = await exigirAdmin();
     const { id } = await params;
-    const r = await parcelarFaturaNoCartao(escritorioId, id);
+    const corpo = (await req.json().catch(() => ({}))) as { parcelas?: unknown };
+    const r = await parcelarFaturaNoCartao(escritorioId, id, Number(corpo.parcelas));
     return NextResponse.json(r);
   } catch (erro) {
     if (erro instanceof PedidoInvalido || erro instanceof AssinanteSemDocumento || erro instanceof PlataformaSemCobranca) {

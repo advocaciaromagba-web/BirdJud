@@ -150,7 +150,7 @@ describe("mensagem da fatura", () => {
       ...base, link: "https://asaas.test/i/pay_1", anual: true,
       enderecoDoPlano: "https://roma.birdjud.com.br/plano",
     });
-    expect(m.texto).toContain("12x sem juros no cartao");
+    expect(m.texto).toContain("12x no cartao (com a tarifa do cartao)");
     expect(m.texto).toContain("https://roma.birdjud.com.br/plano");
     // Mensal nao fala de parcelar.
     expect(mensagemDaFatura({ ...base, link: null, enderecoDoPlano: "https://x/plano" }).texto).not.toContain("parcelar");
@@ -378,8 +378,10 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     const avista = fatura.idExterno!;
     const antes = chamadas.length;
 
-    const r = await parcelarFaturaNoCartao(escritorio.id, fatura.id, new Date("2026-10-16T12:00:00Z"));
+    const r = await parcelarFaturaNoCartao(escritorio.id, fatura.id, 12, new Date("2026-10-16T12:00:00Z"));
     expect(r.parcelas).toBe(12);
+    // Tarifa repassada: (3013,20 + 0,49) / (1 - 3,99%), para cima.
+    expect(r.valorCentavos).toBe(313_894);
     expect(r.linkPagamento).toMatch(/^https:\/\/asaas.test\/i\/pay_parc_/);
 
     const novas = chamadas.slice(antes);
@@ -391,7 +393,7 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     const corpo = novas[2].corpo!;
     expect(corpo.billingType).toBe("CREDIT_CARD");
     expect(corpo.installmentCount).toBe(12);
-    expect(corpo.totalValue).toBe(3013.2);
+    expect(corpo.totalValue).toBe(3138.94);
     // Nunca value junto com totalValue: o Asaas recusa.
     expect(corpo.value).toBeUndefined();
     expect(corpo.dueDate).toBe("2026-10-20");
@@ -402,14 +404,28 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     expect(guardada.parcelas).toBe(12);
     expect(guardada.idExterno).not.toBe(avista);
     expect(guardada.status).toBe("ABERTA");
+    // A fatura passa a dizer o que foi cobrado, com a tarifa em linha propria.
+    expect(guardada.valorCentavos).toBe(313_894);
+    const itens = guardada.detalhe as { descricao: string; valorCentavos: number }[];
+    expect(itens[itens.length - 1]).toEqual({ descricao: "Tarifa do cartao parcelado em 12x (repassada)", valorCentavos: 12_574 });
+  });
+
+  it("parcelas fora de 2 a 12: recusa sem tocar no Asaas", async () => {
+    responder = asaasComParcelas();
+    const { escritorio, fatura } = await faturaEmitida();
+    const antes = chamadas.length;
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id, 13)).rejects.toThrow(PedidoInvalido);
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id, 1)).rejects.toThrow(PedidoInvalido);
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id, Number.NaN)).rejects.toThrow(PedidoInvalido);
+    expect(chamadas.length).toBe(antes);
   });
 
   it("pedir de novo nao cria segundo parcelamento", async () => {
     responder = asaasComParcelas();
     const { escritorio, fatura } = await faturaEmitida();
-    const primeiro = await parcelarFaturaNoCartao(escritorio.id, fatura.id);
+    const primeiro = await parcelarFaturaNoCartao(escritorio.id, fatura.id, 12);
     const antes = chamadas.length;
-    const segundo = await parcelarFaturaNoCartao(escritorio.id, fatura.id);
+    const segundo = await parcelarFaturaNoCartao(escritorio.id, fatura.id, 12);
     expect(segundo.linkPagamento).toBe(primeiro.linkPagamento);
     expect(chamadas.length).toBe(antes);
   });
@@ -419,21 +435,21 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     const { escritorio, fatura } = await faturaEmitida();
     statusNoAsaas = "RECEIVED";
     const antes = chamadas.length;
-    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id)).rejects.toThrow(/ja foi paga/);
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id, 12)).rejects.toThrow(/ja foi paga/);
     expect(chamadas.slice(antes).some((c) => c.metodo === "DELETE")).toBe(false);
   });
 
   it("mensalidade nao parcela", async () => {
     responder = asaasComParcelas();
     const { escritorio, fatura } = await faturaEmitida([{ descricao: "Plano Completo", valorCentavos: 27_900 }]);
-    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id)).rejects.toThrow(PedidoInvalido);
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id, 12)).rejects.toThrow(PedidoInvalido);
   });
 
   it("fatura de outro escritorio: nao encontrada", async () => {
     responder = asaasComParcelas();
     const { fatura } = await faturaEmitida();
     const { escritorio: outro } = await faturaEmitida();
-    await expect(parcelarFaturaNoCartao(outro.id, fatura.id)).rejects.toThrow(/nao encontrada/);
+    await expect(parcelarFaturaNoCartao(outro.id, fatura.id, 12)).rejects.toThrow(/nao encontrada/);
   });
 
   // Cancelou a a vista e o Asaas caiu antes do parcelamento: a fatura fica
@@ -444,7 +460,7 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     responder = normal;
     const { escritorio, fatura } = await faturaEmitida();
     responder = (c) => (c.metodo === "POST" && c.caminho === "/payments" ? { status: 500, json: {} } : normal(c));
-    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id)).rejects.toThrow();
+    await expect(parcelarFaturaNoCartao(escritorio.id, fatura.id, 12)).rejects.toThrow();
     const guardada = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: fatura.id } });
     expect(guardada.idExterno).toBeNull();
     expect(guardada.parcelamentoId).toBeNull();

@@ -150,17 +150,30 @@ plataforma ("Passar para anual").
 
 A fatura anual sai como cobranca unica (boleto, Pix ou cartao a vista). Na
 tela **Plano**, o administrador do escritorio ve as faturas em aberto e, na
-anual, o botao **"Parcelar em ate 12x no cartao"** (`PARCELAS_DO_ANUAL`, sem
-juros para o escritorio — a taxa do parcelamento do Asaas fica com a BirdJud).
-O e-mail da fatura anual avisa dessa opcao com o endereco da tela.
+anual, o botao **"Parcelar no cartao"**: o escritorio escolhe de 2x a 12x
+(`PARCELAS_DO_ANUAL`) e ve, em cada opcao, a parcela e o total. O e-mail da
+fatura anual avisa dessa opcao com o endereco da tela.
+
+**A tarifa do cartao parcelado e repassada** (decidido em 16/10/2026). Tabela
+padrao do Asaas, em `precos.ts` (`TARIFA_DO_PARCELADO`,
+`TARIFA_FIXA_DO_CARTAO_CENTAVOS`): 3,49% de 2 a 6x, 3,99% de 7 a 12x, mais
+R$ 0,49 por cobranca. O total e calculado para a BirdJud receber o valor da
+fatura depois da tarifa: `total = (valor + 0,49) / (1 - percentual)`, para
+cima (`parcelamento`). Ex.: anual de R$ 3.013,20 → 6x de R$ 520,44 (total
+R$ 3.122,68) ou 12x de R$ 261,57 (total R$ 3.138,94). Ao parcelar, a fatura
+ganha a linha "Tarifa do cartao parcelado em Nx (repassada)" e o valor passa
+a ser o total cobrado. A vista (boleto, Pix ou cartao) nao tem acrescimo.
+Antecipacao do recebivel (o Asaas paga uma parcela a cada 32 dias) NAO esta
+no repasse. Conta com taxa negociada: ajustar as constantes.
 
 `parcelarFaturaNoCartao` (cobranca-plataforma.ts), nesta ordem:
 
 1. confere no Asaas que a cobranca a vista nao foi paga (se foi, recusa);
 2. cancela a a vista no Asaas e **limpa o id na fatura**;
 3. cria o parcelamento (`billingType: CREDIT_CARD`, `installmentCount`,
-   `totalValue`, mesma `externalReference`) e guarda `idExterno`,
-   `parcelamentoId`, `parcelas` e o novo link.
+   `totalValue` com a tarifa, mesma `externalReference`) e guarda
+   `idExterno`, `parcelamentoId`, `parcelas`, o novo link e o valor com a
+   tarifa.
 
 Nunca ha duas cobrancas vivas para a mesma fatura. Se o Asaas cair entre 2 e
 3, a fatura fica ABERTA sem cobranca e a proxima regua emite a a vista de

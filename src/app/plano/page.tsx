@@ -4,7 +4,7 @@ import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
 import { emReais } from "@/lib/dinheiro";
 import { dataBR } from "@/lib/datas";
-import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL, precoDoModulo } from "@/lib/precos";
+import { DESCONTO_ANUAL, opcoesDeParcelamento, precoDoModulo } from "@/lib/precos";
 import { ehFaturaAnual } from "@/lib/cobranca-plataforma";
 import { ParcelarFatura } from "@/componentes/ParcelarFatura";
 import {
@@ -139,7 +139,7 @@ export default async function PaginaDoPlano() {
                     </span>
                     <span className="block text-sm text-slate-500">
                       {emReais(f.valorCentavos)} · vence em {dataBR.format(f.vencimento)}
-                      {f.parcelas ? ` · em ate ${f.parcelas}x no cartao` : ""}
+                      {f.parcelas ? ` · em ${f.parcelas}x no cartao, com a tarifa` : ""}
                     </span>
                   </span>
                   <span className="flex flex-wrap items-center gap-3">
@@ -151,7 +151,7 @@ export default async function PaginaDoPlano() {
                       <span className="text-sm text-slate-500">Link de pagamento a caminho</span>
                     )}
                     {anual && !f.parcelamentoId && f.linkPagamento ? (
-                      <ParcelarFatura faturaId={f.id} parcelas={PARCELAS_DO_ANUAL} />
+                      <ParcelarFatura faturaId={f.id} opcoes={opcoesDeParcelamento(f.valorCentavos)} />
                     ) : null}
                   </span>
                 </li>
