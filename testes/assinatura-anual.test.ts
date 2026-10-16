@@ -109,19 +109,24 @@ describe("cartao: tarifa e antecipacao repassadas", () => {
 
   it("parcelado: faixa do cartao mais a antecipacao media das parcelas", () => {
     expect(custoDaAntecipacao(1)).toBe(0);
-    // 12x: 1,70% x 32/30 x 6,5 meses em media.
-    expect(custoDaAntecipacao(12)).toBeCloseTo(0.017 * (32 / 30) * 6.5, 10);
+    // 6x: 1,70% x 32/30 x 3,5 meses em media.
+    expect(custoDaAntecipacao(6)).toBeCloseTo(0.017 * (32 / 30) * 3.5, 10);
     expect(pagamentoNoCartao(301_320, 6).percentual).toBeCloseTo(0.0349 + custoDaAntecipacao(6), 10);
-    expect(pagamentoNoCartao(301_320, 7).percentual).toBeCloseTo(0.0399 + custoDaAntecipacao(7), 10);
-    expect(pagamentoNoCartao(301_320, 12).totalCentavos).toBe(357_822);
-    expect(pagamentoNoCartao(301_320, 12).parcelaCentavos).toBe(29_818);
+    expect(pagamentoNoCartao(301_320, 6).totalCentavos).toBe(334_248);
+    expect(pagamentoNoCartao(301_320, 6).parcelaCentavos).toBe(55_708);
   });
 
-  it("mensalidade so a vista; anual de 1x a 12x", () => {
+  // Limite de 6x: o anual no cartao nunca pode sair mais caro que pagar 12
+  // mensalidades no boleto — senao o "desconto" do anual e de mentira.
+  it("qualquer opcao do anual no cartao sai mais barata que 12 mensalidades", () => {
+    for (const p of opcoesNoCartao(301_320, true)) expect(p.totalCentavos).toBeLessThan(12 * 27_900);
+  });
+
+  it("mensalidade so a vista; anual de 1x a 6x", () => {
     expect(opcoesNoCartao(27_900, false).map((p) => p.parcelas)).toEqual([1]);
-    expect(opcoesNoCartao(301_320, true).map((p) => p.parcelas)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(opcoesNoCartao(301_320, true).map((p) => p.parcelas)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(() => pagamentoNoCartao(100, 0)).toThrow(RangeError);
-    expect(() => pagamentoNoCartao(100, 13)).toThrow(RangeError);
+    expect(() => pagamentoNoCartao(100, 7)).toThrow(RangeError);
   });
 });
 

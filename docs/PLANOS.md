@@ -151,14 +151,14 @@ plataforma ("Passar para anual").
 A cobranca normal da fatura e **boleto com Pix** (`billingType: BOLETO`),
 sem acrescimo. O cartao e uma cobranca a parte, escolhida na tela **Plano**
 pelo administrador ("Pagar no cartao"): **a vista** em qualquer fatura, e
-**de 2x a 12x** (`PARCELAS_DO_ANUAL`) so na anual. Cada opcao mostra a
+**de 2x a 6x** (`PARCELAS_DO_ANUAL`) so na anual. Cada opcao mostra a
 parcela e o total. O e-mail da fatura traz o link do boleto/Pix e o endereco
 da tela Plano para o cartao.
 
 **Tarifa e antecipacao repassadas** (decidido em 16/10/2026), em `precos.ts`:
 
 - tarifa do Asaas (`TARIFA_DO_CARTAO`): 2,99% a vista, 3,49% de 2 a 6x,
-  3,99% de 7 a 12x, mais R$ 0,49 por cobranca;
+  mais R$ 0,49 por cobranca;
 - antecipacao do parcelado (`custoDaAntecipacao`): o Asaas paga uma parcela a
   cada 32 dias, e receber antes custa 1,70% ao mes. Na media das n parcelas:
   1,70% x 32/30 x (n + 1)/2 sobre o total. **So faz sentido com a
@@ -167,7 +167,12 @@ da tela Plano para o cartao.
 `total = (valor + 0,49) / (1 - tarifa - antecipacao)`, para cima
 (`pagamentoNoCartao`): a BirdJud recebe o valor da fatura. Anual do Completo
 solo (R$ 3.013,20): a vista no cartao R$ 3.106,58; 6x de R$ 557,08 (R$
-3.342,48); 12x de R$ 298,18 (R$ 3.578,22). Mensalidade de R$ 279 no cartao:
+3.342,48).
+
+**Limite de 6x** (decidido em 16/10/2026): com a antecipacao repassada, de 7x
+em diante o anual no cartao saia mais caro que 12 mensalidades no boleto (12x:
+R$ 3.578,22 contra R$ 3.348,00) e o desconto do anual perdia o sentido. Um
+teste garante que nenhuma opcao do anual no cartao passa de 12 mensalidades. Mensalidade de R$ 279 no cartao:
 R$ 288,11. Ao passar para o cartao, a fatura ganha a linha da tarifa e o
 valor passa a ser o total cobrado. Conta com taxa negociada: ajustar as
 constantes.
@@ -186,10 +191,10 @@ Nunca ha duas cobrancas vivas para a mesma fatura. Se o Asaas cair entre 2 e
 de novo. Pedir duas vezes devolve o mesmo link.
 
 Webhook: a primeira parcela confirmada da baixa na fatura inteira (no cartao
-o valor todo fica comprometido na hora); as outras 11 chegam como "ja
+o valor todo fica comprometido na hora); as demais chegam como "ja
 processada". Parcela que chegue sem a nossa referencia e achada pelo
 `parcelamentoId`. A baixa guarda `parcelamento` e `parcelas`, e o console
-mostra "parcelado em 12x (valor da parcela)".
+mostra "parcelado em 6x (valor da parcela)".
 
 Junto (16/10/2026): o vencimento minimo (emissao + 5 dias) passou a ser o dia
 de Brasilia ao meio-dia UTC (`meioDiaDoDia`) — fatura emitida depois das 21h

@@ -216,8 +216,14 @@ export const DIAS_DE_TESTE = 14;
  */
 export const DESCONTO_ANUAL = 0.1;
 
-/** Em quantas vezes, no maximo, a fatura anual pode ser parcelada no cartao. */
-export const PARCELAS_DO_ANUAL = 12;
+/**
+ * Em quantas vezes, no maximo, a fatura anual pode ser parcelada no cartao.
+ * 6x (decidido em 16/10/2026): com tarifa e antecipacao repassadas, de 7x em
+ * diante o anual no cartao saia mais caro que 12 mensalidades (12x do
+ * Completo solo: R$ 3.578,22 contra R$ 3.348,00) e o desconto do anual
+ * perdia o sentido. Em 6x: R$ 3.342,48.
+ */
+export const PARCELAS_DO_ANUAL = 6;
 
 /**
  * Tarifas do Asaas no cartao, REPASSADAS ao escritorio (decidido em
@@ -229,7 +235,7 @@ export const PARCELAS_DO_ANUAL = 12;
 export const TARIFA_DO_CARTAO: ReadonlyArray<{ ate: number; percentual: number }> = [
   { ate: 1, percentual: 0.0299 },
   { ate: 6, percentual: 0.0349 },
-  { ate: 12, percentual: 0.0399 },
+  // 7 a 12x (3,99%) fica fora enquanto PARCELAS_DO_ANUAL for 6.
 ];
 export const TARIFA_FIXA_DO_CARTAO_CENTAVOS = 49;
 
