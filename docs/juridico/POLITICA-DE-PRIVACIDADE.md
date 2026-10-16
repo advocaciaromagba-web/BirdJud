@@ -1,7 +1,7 @@
 # Politica de Privacidade — BirdJud
 
-> Minuta para revisao juridica. Voltada ao titular final: o cliente do
-> escritorio, a parte, a testemunha.
+> Versao 2026-10-16. Voltada ao titular final: o cliente do escritorio, a
+> parte, a testemunha.
 
 ## Quem trata seus dados
 
@@ -30,6 +30,11 @@ Com prestadores de infraestrutura e com os servicos que o proprio escritorio
 conecta (mensagem, cobranca, assinatura eletronica, nuvem de arquivos), sempre
 com contrato e apenas no necessario.
 
+Os dados ficam em servidores na Uniao Europeia (Amsterda, Paises Baixos). Os
+recursos de inteligencia artificial e de WhatsApp, quando o escritorio os usa,
+passam por provedores nos Estados Unidos. Essas transferencias seguem o art.
+33 da LGPD, com as clausulas-padrao da ANPD.
+
 ## Por quanto tempo
 
 Pelo tempo que o escritorio precisar, conforme a legislacao e a guarda de
@@ -50,4 +55,7 @@ disponivel, registro de acesso de suporte e backup diario. Detalhes tecnicos em
 
 ## Contato
 
-[E-MAIL DO ENCARREGADO] — encarregado de dados da plataforma.
+Encarregado de dados da plataforma: **Jose Luciano da Costa Roma** —
+contato@blackbirdsolucoes.com.br.
+
+BLACKBIRD SOLUCOES ESTRATEGICAS LTDA, CNPJ 30.044.017/0001-01, Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042.

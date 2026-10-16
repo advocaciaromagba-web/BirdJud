@@ -1,6 +1,6 @@
 # SLA — Nivel de servico do BirdJud
 
-> Minuta para revisao juridica.
+> Versao 2026-10-16.
 
 ## 1. Disponibilidade
 
@@ -34,7 +34,7 @@ registro, e gera comunicacao imediata aos escritorios envolvidos.
 
 ## 4. Canal
 
-[E-MAIL DE SUPORTE] — e o canal oficial; o que chega por ele vira chamado com
+contato@blackbirdsolucoes.com.br — e o canal oficial; o que chega por ele vira chamado com
 numero. Pedido feito por outro meio pode nao ser registrado.
 
 ## 5. Consequencia do descumprimento

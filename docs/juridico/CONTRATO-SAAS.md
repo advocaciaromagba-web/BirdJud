@@ -1,8 +1,8 @@
 # Contrato de Licenca de Uso e Prestacao de Servico — BirdJud
 
-> Minuta para revisao juridica.
+> Versao 2026-10-16. Revisada por Jose Luciano da Costa Roma.
 
-**CONTRATADA:** [RAZAO SOCIAL], CNPJ [CNPJ], [ENDERECO].
+**CONTRATADA:** BLACKBIRD SOLUCOES ESTRATEGICAS LTDA, CNPJ 30.044.017/0001-01, com sede na Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042.
 
 **CONTRATANTE:** o escritorio identificado no cadastro, cujos dados constam do
 sistema e integram este instrumento.
@@ -20,7 +20,7 @@ pela CONTRATANTE, cujo registro de aceite fica guardado no sistema.
 
 ## Clausula 3 — Prazo
 
-Prazo indeterminado, iniciado no fim do periodo de teste gratuito de [DIAS]
+Prazo indeterminado, iniciado no fim do periodo de teste gratuito de 14
 dias. Qualquer parte pode denunciar a qualquer tempo, por escrito, respeitado o
 mes em curso.
 
@@ -30,14 +30,14 @@ Mensalidade conforme a faixa e os modulos contratados, mais o consumo que
 exceder as franquias do mes, na forma da tabela vigente no cadastro.
 
 O valor contratado fica registrado no sistema e **nao muda** por alteracao da
-tabela publica. Reajuste anual pelo [INDICE], ou por acordo em caso de troca de
+tabela publica. Reajuste anual pelo IPCA (IBGE), ou por acordo em caso de troca de
 faixa ou de modulos.
 
 ## Clausula 5 — Pagamento e inadimplencia
 
 Vencimento no dia indicado no cadastro, nunca antes de 5 dias da emissao.
 
-Em atraso: correcao pelo [INDICE], juros de 1% ao mes e multa de 2%. A partir de
+Em atraso: correcao pelo IPCA (IBGE), juros de 1% ao mes e multa de 2%. A partir de
 5 dias, marcacao de inadimplencia; a partir de 15 dias, suspensao do acesso.
 A suspensao nao apaga dados.
 
@@ -66,10 +66,10 @@ produzido no sistema.
 
 ## Clausula 9 — Encerramento e devolucao de dados
 
-Encerrado o contrato, a CONTRATANTE tem [PRAZO] dias para exportar seus dados em
+Encerrado o contrato, a CONTRATANTE tem 90 dias para exportar seus dados em
 formato aberto. Apos esse prazo, os dados sao apagados em definitivo, com
 registro.
 
 ## Clausula 10 — Foro
 
-[FORO].
+Fica eleito o foro da Comarca de Guariba/SP para dirimir qualquer questao oriunda deste instrumento, com renuncia de qualquer outro, por mais privilegiado que seja.

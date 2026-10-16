@@ -1,11 +1,11 @@
 # Termos de Uso do BirdJud
 
-> Minuta para revisao juridica. Versao referida em `VERSAO_DOS_DOCUMENTOS`.
+> Versao 2026-10-16. Revisada por Jose Luciano da Costa Roma.
 
 ## 1. Quem e quem
 
-**BirdJud** e a plataforma de gestao juridica operada por [RAZAO SOCIAL],
-CNPJ [CNPJ], com sede em [ENDERECO] ("Plataforma").
+**BirdJud** e a plataforma de gestao juridica operada por BLACKBIRD SOLUCOES ESTRATEGICAS LTDA,
+CNPJ 30.044.017/0001-01, com sede na Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042 ("Plataforma").
 
 **Escritorio** e a sociedade de advogados ou o advogado autonomo que contrata a
 Plataforma e cadastra seus proprios usuarios.
@@ -45,6 +45,7 @@ dados de um Escritorio em beneficio de outro, nem para treinar modelos.
 Para atender chamados, a equipe da Plataforma pode acessar dados do Escritorio.
 Todo acesso fica registrado com identificacao do operador, do Escritorio, do
 motivo e do momento, e o registro fica disponivel ao Escritorio quando pedido.
+O registro de cada acesso e guardado por 12 meses e depois apagado.
 
 ## 6. Disponibilidade
 
@@ -55,9 +56,16 @@ internet do Escritorio.
 
 ## 7. Periodo de teste, pagamento e suspensao
 
-O cadastro inicia com periodo de teste gratuito. Encerrado o teste, passa a
-haver fatura mensal conforme a faixa e os modulos contratados, mais o consumo
-que exceder as franquias.
+O cadastro inicia com periodo de teste gratuito de 14 dias. Encerrado o teste,
+passa a haver fatura mensal conforme a faixa e os modulos contratados, mais o
+consumo que exceder as franquias. O Escritorio pode optar pelo plano anual,
+pago de uma vez com 10% de desconto.
+
+A fatura e paga por boleto ou Pix sem acrescimo. O pagamento por cartao de
+credito, a vista ou parcelado (plano anual, ate 6 vezes), inclui a tarifa da
+operadora do cartao e, no parcelado, o custo da antecipacao, informados antes
+da confirmacao. A Plataforma emite a nota fiscal de servico da mensalidade, com o
+Escritorio como tomador, e a envia ao e-mail cadastrado.
 
 Havendo atraso:
 
@@ -70,7 +78,7 @@ exportacao do que e seu.
 ## 8. Encerramento
 
 Qualquer das partes pode encerrar, a qualquer tempo, sem multa, respeitado o
-mes ja faturado. Encerrado o contrato, o Escritorio tem [PRAZO] dias para
+mes ja faturado. Encerrado o contrato, o Escritorio tem 90 dias para
 exportar seus dados; depois disso eles sao apagados em definitivo.
 
 ## 9. Propriedade
@@ -85,4 +93,4 @@ aceite. Mudanca que reduza direito do Escritorio so vale apos aceite expresso.
 
 ## 11. Foro
 
-[FORO].
+Fica eleito o foro da Comarca de Guariba/SP para dirimir qualquer questao oriunda deste instrumento, com renuncia de qualquer outro, por mais privilegiado que seja.

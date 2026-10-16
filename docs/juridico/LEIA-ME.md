@@ -1,8 +1,9 @@
 # Documentos juridicos do BirdJud
 
-> **MINUTAS.** Os arquivos desta pasta sao rascunhos tecnicos, escritos a partir
-> do que o sistema realmente faz. Eles **precisam de revisao por advogado** antes
-> de ir para qualquer cliente. Nao sao parecer juridico.
+> **Versao 2026-10-16, revisada** por Jose Luciano da Costa Roma, que e tambem
+> o encarregado de dados (LGPD) da plataforma. Contratada: BLACKBIRD SOLUCOES
+> ESTRATEGICAS LTDA, CNPJ 30.044.017/0001-01, Guariba/SP. Foro de Guariba/SP,
+> reajuste pelo IPCA, contato e suporte em contato@blackbirdsolucoes.com.br.
 
 | Arquivo | Para que serve |
 | --- | --- |
@@ -19,20 +20,14 @@ Cada aceite grava a versao aceita, entao mudar o texto **exige** subir a versao 
 senao o registro de aceite passa a apontar para um texto que o escritorio nunca
 leu.
 
-## O que ainda depende de decisao sua
+## Decisoes registradas (16/10/2026)
 
-- razao social, CNPJ e endereco da empresa que vende o BirdJud;
-- foro eleito;
-- valores e reajuste (a tabela de precos em `src/lib/precos.ts` e provisoria);
-- prazo de retencao apos encerramento (hoje: 90 dias, em `src/lib/juridico.ts`);
-- se o suporte tera telefone, e em que horario.
+- hospedagem mantida em Amsterda (UE), com a transferencia internacional
+  declarada no Acordo LGPD (art. 33, clausulas-padrao da ANPD);
+- teste de 14 dias, retencao de 90 dias apos o encerramento, registro de
+  acesso de suporte guardado por 12 meses;
+- plano anual com 10% de desconto; tarifa do cartao repassada; anual no cartao
+  ate 6x.
 
-
-## Para a proxima revisao
-
-- **Termos de Uso, item 5 (Acesso de suporte):** incluir que o registro de
-  cada acesso fica guardado por **12 meses** e depois e apagado (decisao de
-  11/10/2026; a rotina ja aplica o prazo). Nao foi incluido agora porque
-  mudar o texto exige subir `VERSAO_DOS_DOCUMENTOS` em `src/lib/juridico.ts`,
-  e isso pede novo aceite a todos os escritorios: melhor juntar com a revisao
-  do advogado.
+Mudou o texto? Suba `VERSAO_DOS_DOCUMENTOS` em `src/lib/juridico.ts`: cada
+escritorio aceita a versao nova no proximo acesso.

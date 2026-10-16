@@ -91,10 +91,14 @@ administracao do balde: tem de ser clicado no painel.
 
 ## Fazem falta antes do segundo escritorio
 
-### 6. As minutas juridicas nao foram revisadas por advogado `[voce]`
+### 6. Documentos juridicos — resolvido em 16/10/2026
 
-O mecanismo de aceite esta certo — data, hora, IP e versao. O **texto** e
-rascunho meu.
+Revisados por Jose Luciano da Costa Roma, encarregado de dados (LGPD) da
+plataforma. Contratada BLACKBIRD SOLUCOES ESTRATEGICAS LTDA (CNPJ
+30.044.017/0001-01), foro de Guariba/SP, IPCA, contato e suporte em
+contato@blackbirdsolucoes.com.br. Hospedagem mantida em Amsterda, com a
+transferencia internacional e os suboperadores declarados no Acordo LGPD.
+Versao `2026-10-16`: cada escritorio aceita de novo no proximo acesso.
 
 ### 7. Onboarding — resolvido em 09/10/2026
 
