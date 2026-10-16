@@ -117,3 +117,45 @@ alteracao, ficha de inscricao municipal e termo de opcao pelo Simples, juntos.
 
 Nada e gravado pela leitura: o formulario chega preenchido, marcado como
 sugestao da IA, e so vale depois de "Guardar cadastro".
+
+## Nota da mensalidade: a Blackbird emitindo para os escritorios (16/10/2026)
+
+Mesmo motor (`src/lib/nfse`), emissor diferente: `src/lib/nota-da-plataforma.ts`.
+
+| | Escritorio -> cliente | Blackbird -> escritorio |
+| --- | --- | --- |
+| Cadastro | `Fiscal` (Notas fiscais > Configurar emissor) | `FiscalDaPlataforma` (console > Notas fiscais) |
+| Certificado | enviado pelo escritorio, senha nunca guardada | variaveis `NFSE_PLATAFORMA_PFX` (base64 do .pfx) e `NFSE_PLATAFORMA_SENHA` no Railway |
+| Quem assina | o titular, digitando a senha | o sistema, sozinho |
+| Quando sai | quando o escritorio pede | ao pagamento da fatura (com "automatica" ligada) ou pelo console |
+
+**Quando sai:** `registrarPagamento` (webhook do Asaas ou baixa manual) poe
+`EMITIR_NOTA_DA_PLATAFORMA` na fila, se a emissao automatica estiver ligada.
+O trabalhador emite; recusa da Sefin faz o trabalho falhar (aparece no
+console). O operador emite, confere ("Verificar na Sefin"), reenvia o e-mail e
+cancela pela ficha do escritorio (cada fatura mostra a nota) ou em
+**console > Notas fiscais**.
+
+**Tomador:** o escritorio — razao social (ou nome), CNPJ e a sede cadastrada
+(CNPJ exige endereco, E0235). **Competencia:** o dia do pagamento.
+**Descricao:** a padrao do emissor + "assinatura MM/AAAA" (ou "anual"), e os
+itens da fatura nas informacoes complementares. **Codigo de tributacao**
+sugerido 010501 (LC 116 item 1.05, licenciamento de programa) — confirmar com
+o contador.
+
+**E-mail:** emitida, vai ao administrador do escritorio com numero, valor,
+chave de acesso e os links do PDF (DANFSe) e do XML. O link e assinado
+(HMAC com `SEGREDO_CHAVE`): abre sem login, so para aquela nota; sem a
+assinatura, 404. Cancelada, o escritorio recebe aviso com o PDF marcado. As
+notas tambem aparecem na tela **Plano** do escritorio.
+
+**Idempotencia:** fatura com nota emitida ou em processamento nao gera outra;
+nota recusada e reaproveitada com numero novo; cancelada, solta a fatura
+(`faturaId` nulo, origem em `faturaOriginalId`) e outra pode ser emitida.
+Sem chave estrangeira: a nota e documento fiscal da Blackbird e sobrevive ao
+expurgo do escritorio.
+
+**Para ligar:** cadastrar o emissor no console (comecar em Testes), por o
+certificado nas variaveis do Railway, emitir uma nota manual de teste,
+conferir o DANFSe, passar para Producao e ligar a emissao automatica — a tela
+so deixa ligar sem pendencias.

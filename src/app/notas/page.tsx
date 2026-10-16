@@ -7,8 +7,8 @@ import { certificadoGuardado, pendenciasDoEmissor } from "@/lib/nfse";
 import { Estrutura } from "@/componentes/Estrutura";
 import { PainelNotas, type NotaNaTela } from "@/componentes/PainelNotas";
 import { ConfigFiscal, type FiscalNaTela } from "@/componentes/ConfigFiscal";
+import { fiscalParaTela } from "@/lib/nfse/cadastro";
 
-const dec = (v: unknown) => (v === null || v === undefined ? "" : String(Number(v)).replace(".", ","));
 
 export default async function PaginaNotas({
   searchParams,
@@ -74,42 +74,7 @@ export default async function PaginaNotas({
   }));
 
   const f = dados.fiscal;
-  const futuro = (f?.regimeFuturo ?? null) as Record<string, unknown> | null;
-  const fiscal: FiscalNaTela | null = f
-    ? {
-        razaoSocial: f.razaoSocial,
-        cnpj: f.cnpj,
-        inscricaoMunicipal: f.inscricaoMunicipal ?? "",
-        codigoMunicipio: f.codigoMunicipio,
-        telefone: f.telefone ?? "",
-        email: f.email ?? "",
-        opSimpNac: f.opSimpNac,
-        regEspTrib: f.regEspTrib,
-        pTotTribSN: dec(f.pTotTribSN),
-        pTotTribFed: dec(f.pTotTribFed),
-        pTotTribEst: dec(f.pTotTribEst),
-        pTotTribMun: dec(f.pTotTribMun),
-        regimeFuturoDesde: f.regimeFuturoDesde?.toISOString().slice(0, 10) ?? "",
-        futuroOpSimpNac: Number(futuro?.opSimpNac ?? 3),
-        futuroRegEspTrib: Number(futuro?.regEspTrib ?? 0),
-        futuroPTotTribSN: String(futuro?.pTotTribSN ?? ""),
-        futuroPTotTribFed: String(futuro?.pTotTribFed ?? ""),
-        futuroPTotTribEst: String(futuro?.pTotTribEst ?? ""),
-        futuroPTotTribMun: String(futuro?.pTotTribMun ?? ""),
-        ibsCbsDesde: f.ibsCbsDesde?.toISOString().slice(0, 10) ?? "",
-        cIndOp: f.cIndOp ?? "100301",
-        cstIbsCbs: f.cstIbsCbs ?? "000",
-        cClassTribIbsCbs: f.cClassTribIbsCbs ?? "000001",
-        regApIBSCBSSN: f.regApIBSCBSSN !== null ? String(f.regApIBSCBSSN) : "",
-        cAtvSN: f.cAtvSN !== null ? String(f.cAtvSN) : "",
-        codigoTributacao: f.codigoTributacao,
-        codigoNbs: f.codigoNbs ?? "",
-        descricaoPadrao: f.descricaoPadrao ?? "",
-        serie: f.serie,
-        proximoNumero: f.proximoNumero,
-        ambiente: f.ambiente,
-      }
-    : null;
+  const fiscal: FiscalNaTela | null = f ? fiscalParaTela(f) : null;
 
   return (
     <Estrutura

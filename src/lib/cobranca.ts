@@ -27,6 +27,7 @@ import {
   type ItemDaFatura,
 } from "./precos";
 import { contaMontada } from "./planos";
+import { enfileirar } from "./fila";
 import type { Faixa } from "./faixas";
 
 /**
@@ -326,6 +327,22 @@ export async function registrarPagamento(
   });
 
   const resultado = await aplicarRegua(fatura.escritorioId, agora);
+
+  // Nota fiscal da mensalidade, emitida pela Blackbird: pela fila, para nao
+  // segurar o webhook do Asaas (a Sefin pode demorar). So com o emissor
+  // ligado em "automatica" — ver nota-da-plataforma.ts.
+  if (fatura.valorCentavos > 0) {
+    const emissor = await prismaPlataforma().fiscalDaPlataforma.findUnique({
+      where: { id: "PLATAFORMA" },
+      select: { automatica: true },
+    });
+    if (emissor?.automatica) {
+      await enfileirar("EMITIR_NOTA_DA_PLATAFORMA", fatura.escritorioId, { faturaId: fatura.id }).catch((e) =>
+        console.error(`regua: fatura ${fatura.id} paga, mas a nota nao entrou na fila — ${(e as Error).message}`),
+      );
+    }
+  }
+
   return {
     escritorioId: fatura.escritorioId,
     statusNovo: resultado.statusNovo,

@@ -8,6 +8,7 @@ import { tratarErro } from "@/lib/respostas";
 import { avisarNotaParaAssinar } from "@/lib/avisos";
 import { enfileirar } from "@/lib/fila";
 import { NotaInvalida, prepararNota } from "@/lib/nfse";
+import { cadastroFiscal, dadosDoCadastroFiscal } from "@/lib/nfse/cadastro";
 
 export const dynamic = "force-dynamic";
 
@@ -19,66 +20,6 @@ const novaNota = z.object({
   dataCompetencia: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   informacoesComplementares: z.string().max(2000).nullish(),
   envioCliente: z.array(z.enum(["EMAIL", "WHATSAPP"])).max(2).optional(),
-});
-
-/** "6,00" -> 6. Vazio -> null. */
-const percentual = z
-  .string()
-  .max(8)
-  .nullish()
-  .transform((v, ctx) => {
-    if (!v?.trim()) return null;
-    const n = Number(v.trim().replace(",", "."));
-    if (!Number.isFinite(n) || n < 0 || n > 100) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Percentual invalido." });
-      return z.NEVER;
-    }
-    return new Prisma.Decimal(n.toFixed(2));
-  });
-
-const data = z
-  .string()
-  .nullish()
-  .transform((v) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00-03:00`) : null));
-
-const cadastroFiscal = z.object({
-  razaoSocial: z.string().min(2).max(200),
-  cnpj: z.string().min(14).max(20),
-  inscricaoMunicipal: z.string().max(30).nullish(),
-  codigoMunicipio: z.string().regex(/^\d{7}$/, "Codigo IBGE com 7 digitos."),
-  telefone: z.string().max(30).nullish(),
-  email: z.string().max(200).nullish(),
-  opSimpNac: z.union([z.literal(1), z.literal(2), z.literal(3)]),
-  regApTribSN: z.number().int().min(1).max(3).nullish(),
-  regEspTrib: z.number().int().min(0).max(9),
-  pTotTribSN: percentual,
-  pTotTribFed: percentual,
-  pTotTribEst: percentual,
-  pTotTribMun: percentual,
-  regimeFuturoDesde: data,
-  regimeFuturo: z
-    .object({
-      opSimpNac: z.number().int(),
-      regApTribSN: z.number().int().nullish(),
-      regEspTrib: z.number().int(),
-      pTotTribSN: z.string().nullish(),
-      pTotTribFed: z.string().nullish(),
-      pTotTribEst: z.string().nullish(),
-      pTotTribMun: z.string().nullish(),
-    })
-    .nullish(),
-  ibsCbsDesde: data,
-  cIndOp: z.string().max(10).nullish(),
-  cstIbsCbs: z.string().max(5).nullish(),
-  cClassTribIbsCbs: z.string().max(10).nullish(),
-  regApIBSCBSSN: z.number().int().min(1).max(3).nullish(),
-  cAtvSN: z.number().int().nullish(),
-  codigoTributacao: z.string().regex(/^\d{6}$/, "Codigo de tributacao nacional com 6 digitos."),
-  codigoNbs: z.string().max(12).nullish(),
-  descricaoPadrao: z.string().max(2000).nullish(),
-  serie: z.string().regex(/^\d{1,5}$/).optional(),
-  proximoNumero: z.number().int().min(1).optional(),
-  ambiente: z.enum(["HOMOLOGACAO", "PRODUCAO"]),
 });
 
 const acao = z.object({ acao: z.literal("CADASTRO"), dados: cadastroFiscal });
@@ -140,19 +81,9 @@ export async function PATCH(req: Request) {
     if (!corpo.success) {
       return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Cadastro invalido." }, { status: 400 });
     }
-    const { regimeFuturo, serie, proximoNumero, ...resto } = corpo.data.dados;
     const dados = {
-      ...resto,
-      cnpj: resto.cnpj.replace(/\D/g, ""),
-      inscricaoMunicipal: resto.inscricaoMunicipal?.trim() || null,
-      telefone: resto.telefone?.trim() || null,
-      email: resto.email?.trim() || null,
-      // Nao optante nao informa regApTribSN (E0162).
-      regApTribSN: resto.opSimpNac === 3 ? (resto.regApTribSN ?? 1) : null,
-      regime: resto.opSimpNac === 3 ? "SIMPLES" : resto.opSimpNac === 2 ? "MEI" : "NORMAL",
-      regimeFuturo: resto.regimeFuturoDesde && regimeFuturo ? (regimeFuturo as Prisma.InputJsonValue) : Prisma.DbNull,
-      ...(serie ? { serie } : {}),
-      ...(proximoNumero ? { proximoNumero } : {}),
+      ...dadosDoCadastroFiscal(corpo.data.dados),
+      regime: corpo.data.dados.opSimpNac === 3 ? "SIMPLES" : corpo.data.dados.opSimpNac === 2 ? "MEI" : "NORMAL",
     };
     await comEscritorio(escritorioId, async (db) => {
       const existente = await db.fiscal.findFirst();

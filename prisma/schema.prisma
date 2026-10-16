@@ -1545,3 +1545,82 @@ model ImportacaoDeClientes {
 
   @@index([escritorioId, criadaEm])
 }
+
+/// Cadastro fiscal da Blackbird, emissora da nota da mensalidade. Uma linha
+/// so (id "PLATAFORMA"). Mesmos campos de Fiscal, para o motor de regime
+/// servir aos dois. O certificado vem das variaveis NFSE_PLATAFORMA_PFX e
+/// NFSE_PLATAFORMA_SENHA — segredo da plataforma mora no Railway.
+model FiscalDaPlataforma {
+  id                 String    @id @default("PLATAFORMA")
+  razaoSocial        String
+  cnpj               String
+  inscricaoMunicipal String?
+  codigoMunicipio    String
+  telefone           String?
+  email              String?
+  /// cTribNac. 010501 = licenciamento de programa de computador (LC 116,
+  /// item 1.05). Confirmar com o contador.
+  codigoTributacao   String    @default("010501")
+  opSimpNac          Int       @default(3)
+  regApTribSN        Int?      @default(1)
+  regEspTrib         Int       @default(0)
+  pTotTribSN         Decimal?  @db.Decimal(5, 2)
+  pTotTribFed        Decimal?  @db.Decimal(5, 2)
+  pTotTribEst        Decimal?  @db.Decimal(5, 2)
+  pTotTribMun        Decimal?  @db.Decimal(5, 2)
+  ibsCbsDesde        DateTime?
+  cIndOp             String?   @default("100301")
+  cstIbsCbs          String?   @default("000")
+  cClassTribIbsCbs   String?   @default("000001")
+  regApIBSCBSSN      Int?
+  cAtvSN             Int?
+  regimeFuturoDesde  DateTime?
+  regimeFuturo       Json?
+  codigoNbs          String?
+  descricaoPadrao    String    @default("Licenca de uso do sistema BirdJud (software como servico)")
+  serie              String    @default("1")
+  proximoNumero      Int       @default(1)
+  ambiente           String    @default("HOMOLOGACAO")
+  /// Emitir sozinho quando a fatura e paga.
+  automatica         Boolean   @default(false)
+  atualizadoEm       DateTime  @updatedAt
+}
+
+/// Nota da mensalidade, emitida pela Blackbird para o escritorio (tomador).
+/// Sem chave estrangeira: documento fiscal sobrevive ao expurgo.
+model NotaDaPlataforma {
+  id                 String    @id @default(cuid())
+  escritorioId       String
+  /// A nota VIGENTE da fatura. Cancelada, solta a fatura (null) para outra
+  /// poder ser emitida; a origem fica em faturaOriginalId.
+  faturaId           String?   @unique
+  faturaOriginalId   String?
+  origem             String // AUTOMATICA | MANUAL
+  status             String    @default("PROCESSANDO") // PROCESSANDO | EMITIDA | REJEITADA | CANCELADA
+  ambiente           String
+  serie              String
+  numero             Int?
+  idDps              String?
+  chaveAcesso        String?   @unique
+  numeroNaPrefeitura String?
+  tomadorNome        String
+  tomadorDocumento   String?
+  tomadorEmail       String?
+  valorCentavos      Int
+  descricao          String
+  competencia        DateTime
+  xmlEnviado         String?
+  xmlRetorno         String?
+  erros              Json?
+  erro               String?
+  emitidaEm          DateTime?
+  enviadaPara        String?
+  enviadaEm          DateTime?
+  canceladaEm        DateTime?
+  motivoCancelamento String?
+  eventoXml          String?
+  criadoEm           DateTime  @default(now())
+  atualizadoEm       DateTime  @updatedAt
+
+  @@index([escritorioId])
+}

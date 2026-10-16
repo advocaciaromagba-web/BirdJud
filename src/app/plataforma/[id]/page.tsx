@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
 import { notFound, redirect } from "next/navigation";
 import { prismaPlataforma } from "@/lib/prisma";
 import {
@@ -46,10 +47,17 @@ export default async function EscritorioNoPainel({
     "Abertura no painel",
   );
 
-  const [uso, consumo] = await Promise.all([
+  const [uso, consumo, notas] = await Promise.all([
     usoDaFaixa(escritorio.id),
     consumoDoMes(escritorio.id),
+    // A nota da mensalidade de cada fatura (Blackbird -> escritorio).
+    prismaPlataforma().notaDaPlataforma.findMany({
+      where: { escritorioId: escritorio.id },
+      orderBy: { criadoEm: "desc" },
+    }),
   ]);
+  const notaDaFatura = (faturaId: string) =>
+    notas.find((n) => n.faturaId === faturaId) ?? notas.find((n) => n.faturaOriginalId === faturaId) ?? null;
 
   const agora = new Date();
 
@@ -188,6 +196,28 @@ export default async function EscritorioNoPainel({
                         {resumoDaBaixa(fatura.baixa)}
                       </span>
                     ) : null}
+                    {(() => {
+                      const n = notaDaFatura(fatura.id);
+                      return (
+                        <AcoesDaNotaDaPlataforma
+                          faturaId={fatura.id}
+                          nota={
+                            n
+                              ? {
+                                  id: n.id,
+                                  status: n.status,
+                                  numero: n.numeroNaPrefeitura ?? (n.numero ? String(n.numero) : null),
+                                  erro: n.erro,
+                                  ambiente: n.ambiente,
+                                  enviadaEm: n.enviadaEm
+                                    ? n.enviadaEm.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })
+                                    : null,
+                                }
+                              : null
+                          }
+                        />
+                      );
+                    })()}
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="tabular-nums">

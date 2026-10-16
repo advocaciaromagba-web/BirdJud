@@ -6,6 +6,7 @@ import { emReais } from "@/lib/dinheiro";
 import { dataBR } from "@/lib/datas";
 import { DESCONTO_ANUAL, opcoesNoCartao, precoDoModulo } from "@/lib/precos";
 import { ehFaturaAnual } from "@/lib/cobranca-plataforma";
+import { linksDaNota } from "@/lib/nota-da-plataforma";
 import { PagarNoCartao } from "@/componentes/PagarNoCartao";
 import {
   contaMontada,
@@ -40,11 +41,19 @@ export default async function PaginaDoPlano() {
     );
   }
 
-  const [uso, assinatura, abertas] = await Promise.all([
+  const [uso, assinatura, abertas, notasDaAssinatura] = await Promise.all([
     usoDaFaixa(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, (db) => db.assinatura.findFirst()),
     comEscritorio(contexto.escritorioId, (db) =>
       db.fatura.findMany({ where: { status: "ABERTA" }, orderBy: { vencimento: "asc" } }),
+    ),
+    // Notas fiscais que a Blackbird emitiu para este escritorio (RLS: so as dele).
+    comEscritorio(contexto.escritorioId, (db) =>
+      db.notaDaPlataforma.findMany({
+        where: { status: { in: ["EMITIDA", "CANCELADA"] } },
+        orderBy: { emitidaEm: "desc" },
+        take: 24,
+      }),
     ),
   ]);
 
@@ -161,6 +170,36 @@ export default async function PaginaDoPlano() {
           <p className="ajuda">
             A baixa e automatica: depois de pagar, nao e preciso mandar comprovante.
           </p>
+        </section>
+      ) : null}
+
+      {notasDaAssinatura.length > 0 ? (
+        <section className="mt-8">
+          <h2>Notas fiscais da assinatura</h2>
+          <ul className="mt-3 grid gap-2">
+            {notasDaAssinatura.map((n) => {
+              const links = linksDaNota(n.id);
+              return (
+                <li key={n.id} className="cartao-aperto flex flex-wrap items-center justify-between gap-3">
+                  <span>
+                    <span className="font-medium">
+                      Nota {n.numeroNaPrefeitura ?? n.numero}
+                      {n.status === "CANCELADA" ? " (cancelada)" : ""}
+                      {n.ambiente !== "PRODUCAO" ? " (teste, sem valor fiscal)" : ""}
+                    </span>
+                    <span className="block text-sm text-slate-500">
+                      {emReais(n.valorCentavos)}
+                      {n.emitidaEm ? ` · emitida em ${dataBR.format(n.emitidaEm)}` : ""}
+                    </span>
+                  </span>
+                  <span className="flex gap-3 text-sm">
+                    <a className="underline" href={links.pdf} target="_blank" rel="noopener noreferrer">PDF</a>
+                    <a className="underline" href={links.xml}>XML</a>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       ) : null}
 

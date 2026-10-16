@@ -44,7 +44,16 @@ export type FiscalNaTela = {
  * e convertido nos codigos do leiaute nacional, que tem uma combinacao
  * obrigatoria (regra E0175) facil de errar se preenchidos soltos.
  */
-export function ConfigFiscal({ fiscal, temIA }: { fiscal: FiscalNaTela | null; temIA: boolean }) {
+export function ConfigFiscal({
+  fiscal,
+  temIA,
+  rota = "/api/nfse",
+}: {
+  fiscal: FiscalNaTela | null;
+  temIA: boolean;
+  /** Para onde salvar. O console usa o mesmo formulario para o emissor da Blackbird. */
+  rota?: string;
+}) {
   const router = useRouter();
   const e = fiscal;
   const inicial = {
@@ -115,7 +124,7 @@ export function ConfigFiscal({ fiscal, temIA }: { fiscal: FiscalNaTela | null; t
     setMsg(null);
     const opSimpNac = form.simples === "NAO" ? 1 : 3;
     const futuroOp = form.futuroSimples === "NAO" ? 1 : 3;
-    const res = await fetch("/api/nfse", {
+    const res = await fetch(rota, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

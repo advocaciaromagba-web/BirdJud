@@ -54,7 +54,8 @@ DECLARE
     'Tarefa',
     'CompromissoExcluido',
     'PastaNaNuvem',
-    'ImportacaoDeClientes'
+    'ImportacaoDeClientes',
+    'NotaDaPlataforma'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP
@@ -92,6 +93,12 @@ DROP POLICY IF EXISTS "isolamento_RespostaDeWhatsapp" ON "RespostaDeWhatsapp";
 CREATE POLICY "isolamento_RespostaDeWhatsapp" ON "RespostaDeWhatsapp"
   USING ("escritorioId" = current_setting('app.escritorio_id', true))
   WITH CHECK ("escritorioId" = current_setting('app.escritorio_id', true));
+
+-- FiscalDaPlataforma: dado da Blackbird, nao de escritorio. RLS ligado e
+-- nenhuma politica: a aplicacao (birdjud_app) nao ve; so o plano de
+-- controle (birdjud_plataforma, BYPASSRLS).
+ALTER TABLE "FiscalDaPlataforma" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "FiscalDaPlataforma" FORCE ROW LEVEL SECURITY;
 
 -- Escritorio: a propria linha do escritorio tambem so e visivel para ele.
 ALTER TABLE "Escritorio" ENABLE ROW LEVEL SECURITY;

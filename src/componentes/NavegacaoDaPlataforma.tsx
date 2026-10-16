@@ -5,6 +5,7 @@ const ITENS = [
   { href: "/plataforma", rotulo: "Painel" },
   { href: "/plataforma/escritorios", rotulo: "Escritorios" },
   { href: "/plataforma/novo", rotulo: "Implantar escritorio" },
+  { href: "/plataforma/notas", rotulo: "Notas fiscais" },
 ] as const;
 
 /** Cabecalho do console da plataforma: a marca, as tres areas e quem esta logado. */

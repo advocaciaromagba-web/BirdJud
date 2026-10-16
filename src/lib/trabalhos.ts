@@ -33,6 +33,7 @@ import {
   gerarResumoDoDia,
 } from "./avisos";
 import { triarPendentes } from "./triagem-do-escritorio";
+import { emitirNotaDaFatura } from "./nota-da-plataforma";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -426,6 +427,20 @@ async function organizarNuvem({ escritorioId }: Contexto): Promise<void> {
   }
 }
 
+/**
+ * Nota fiscal da mensalidade (Blackbird -> escritorio), quando a fatura e
+ * paga. Recusada pela Sefin, o trabalho falha: aparece no console, e o
+ * operador corrige o cadastro e emite de novo pela ficha do escritorio.
+ */
+async function emitirNotaDaPlataforma({ escritorioId, dados }: Contexto): Promise<void> {
+  const bruto = (dados ?? {}) as { faturaId?: unknown };
+  const faturaId = typeof bruto.faturaId === "string" ? bruto.faturaId : null;
+  if (!escritorioId || !faturaId) throw new Error("EMITIR_NOTA_DA_PLATAFORMA exige escritorio e fatura.");
+  const nota = await emitirNotaDaFatura(faturaId, "AUTOMATICA");
+  if (nota.status === "REJEITADA") throw new Error(`nota da fatura ${faturaId} recusada: ${nota.erro ?? "sem detalhe"}`);
+  console.log(`ok   EMITIR_NOTA_DA_PLATAFORMA ${escritorioId}: ${nota.status} ${nota.numeroNaPrefeitura ?? ""}`.trim());
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   LEMBRAR: lembrar,
@@ -441,6 +456,7 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   LIMPAR_VENCIDOS: limparVencidos,
   ARQUIVAR_AGENDA: arquivarAgenda,
   ORGANIZAR_NUVEM: organizarNuvem,
+  EMITIR_NOTA_DA_PLATAFORMA: emitirNotaDaPlataforma,
 };
 
 /** Trabalhos que rodam uma vez para a plataforma toda, nao por escritorio. */
@@ -465,6 +481,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   LIMPAR_VENCIDOS: undefined,
   ARQUIVAR_AGENDA: undefined,
   ORGANIZAR_NUVEM: "NUVEM",
+  EMITIR_NOTA_DA_PLATAFORMA: undefined,
 };
 
 /**
