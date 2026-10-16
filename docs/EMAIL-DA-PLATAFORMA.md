@@ -60,7 +60,7 @@ EMAIL_TOKEN=<segredo compartilhado com o Railway>
 GMAIL_USUARIO=blackbirdnotifica@gmail.com
 GMAIL_SENHA=<senha de aplicativo de 16 letras, sem espacos>
 GMAIL_REMETENTE=BirdJud <blackbirdnotifica@gmail.com>
-GMAIL_RESPONDER_PARA=contato@blackbirdsolucoes.com.br
+GMAIL_RESPONDER_PARA=blackbirdnotifica@gmail.com
 ```
 
 Para conferir se a Vercel alcanca o Gmail, sem enviar nada:
@@ -125,7 +125,7 @@ e a diferenca entre o escritorio entrar e o escritorio ligar reclamando.
 
 Quando for a hora, o remetente vira algo como
 `BirdJud <nao-responda@birdjud.com.br>`, com
-`PLATAFORMA_RESPONDER_PARA=contato@blackbirdsolucoes.com.br` para que a resposta
+`PLATAFORMA_RESPONDER_PARA=blackbirdnotifica@gmail.com` para que a resposta
 continue chegando na caixa de sempre.
 
 Nao da para verificar `gmail.com` em um servico de envio: o dominio nao e
@@ -155,8 +155,7 @@ Nao usa a internet nem credencial de verdade: prova o fluxo, nao a conta.
 
 ## Remetente e contato (16/10/2026)
 
-`blackbirdnotifica@gmail.com` **so envia**: e a conta do Gmail que sai como
-remetente. Resposta, contato comercial e suporte vao para
-**contato@blackbirdsolucoes.com.br** (`CONTATO_COMERCIAL` e
-`PLATAFORMA_RESPONDER_PARA` no Railway; `GMAIL_RESPONDER_PARA` no rele, na
-Vercel).
+`blackbirdnotifica@gmail.com` e a conta que envia os e-mails do sistema (e
+recebe as respostas). **contato@blackbirdsolucoes.com.br** e so o contato
+mostrado no site e o canal de suporte dos documentos (`CONTATO_COMERCIAL` no
+Railway); nao tem outra funcao no envio.
