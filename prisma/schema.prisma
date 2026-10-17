@@ -769,8 +769,26 @@ model OperadorPlataforma {
   senhaHash String
   ativo     Boolean  @default(true)
   criadoEm  DateTime @default(now())
+  /// Sessao emitida antes disto nao vale (troca de senha).
+  sessoesValidasApos DateTime?
 
-  acessos AcessoSuporte[]
+  acessos       AcessoSuporte[]
+  redefinicoes  RedefinicaoDoOperador[]
+}
+
+/// "Esqueci a senha" do console: so o hash do token, uso unico, 30 minutos.
+model RedefinicaoDoOperador {
+  id         String    @id @default(cuid())
+  operadorId String
+  tokenHash  String    @unique
+  expiraEm   DateTime
+  usadoEm    DateTime?
+  pedidoDe   String?
+  criadoEm   DateTime  @default(now())
+
+  operador OperadorPlataforma @relation(fields: [operadorId], references: [id], onDelete: Cascade)
+
+  @@index([operadorId])
 }
 
 model AcessoSuporte {

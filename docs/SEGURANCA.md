@@ -191,3 +191,20 @@ homologacao antes de uso real.
 | 2026-09-18 | Dividas fechadas: revogacao de sessao, CSP com nonce, limite de taxa no banco e webhook de pagamento. Verificacao em navegador de verdade sob a CSP nova | 1 achado: `upgrade-insecure-requests` quebrava a aplicacao servida por HTTP; passou a depender do protocolo da requisicao |
 | — | teste de restauracao de backup | roda na bateria automatica (`testes/fase5.test.ts`), restaurando ao lado do original e conferindo registro a registro |
 | 2026-09-19 | Revisao adversarial do sistema inteiro, depois dos sete modulos: forca bruta no login, segundo fator, conta do operador, isolamento por cabecalho forjado, papeis, vazamento em mensagem de erro, limites de custo, acesso de suporte | 4 achados, todos corrigidos e com teste que falha sem a correcao (`testes/seguranca.test.ts`): falha de segundo fator nao contava tentativa; login do operador sem teto nenhum; login sem limite por origem; rota de IA sem teto de chamadas |
+
+## "Esqueci a senha" do console (17/10/2026)
+
+O login do console (`/plataforma/login`) tem **Esqueci a senha**. Mesmas regras
+do escritorio (`redefinicao.ts`), mais apertadas, em
+`src/lib/redefinicao-do-operador.ts`:
+
+- link de **uso unico, valido por 30 minutos**, mandado ao e-mail do operador
+  (`/plataforma/redefinir-senha?t=...`); o banco guarda so o hash
+  (`RedefinicaoDoOperador`, sob RLS sem politica: a aplicacao nao ve);
+- pedir de novo derruba o link anterior;
+- a resposta e a mesma exista ou nao o operador (nao entrega quem tem acesso);
+- teto de 5 pedidos por hora por origem e 3 por conta; 10 trocas por origem;
+- senha nova de **12 caracteres** no minimo;
+- trocar grava `sessoesValidasApos`: toda sessao de operador aberta antes cai
+  (`exigirOperador`), e o limite de tentativas de entrada da conta e zerado;
+- so no endereco da plataforma: de dentro de um escritorio a rota recusa.

@@ -100,6 +100,11 @@ CREATE POLICY "isolamento_RespostaDeWhatsapp" ON "RespostaDeWhatsapp"
 ALTER TABLE "FiscalDaPlataforma" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "FiscalDaPlataforma" FORCE ROW LEVEL SECURITY;
 
+-- RedefinicaoDoOperador: link de troca da senha da conta que enxerga todos os
+-- escritorios. Mesma regra: a aplicacao nao ve, so o plano de controle.
+ALTER TABLE "RedefinicaoDoOperador" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "RedefinicaoDoOperador" FORCE ROW LEVEL SECURITY;
+
 -- Escritorio: a propria linha do escritorio tambem so e visivel para ele.
 ALTER TABLE "Escritorio" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Escritorio" FORCE ROW LEVEL SECURITY;

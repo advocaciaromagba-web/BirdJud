@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export function FormularioEsqueciSenha() {
+export function FormularioEsqueciSenha({
+  rota = "/api/senha/esqueci",
+  entrada = "/login",
+  ajuda = "O mesmo e-mail com que voce entra neste endereco.",
+}: {
+  rota?: string;
+  entrada?: string;
+  ajuda?: string;
+} = {}) {
   const [enviando, setEnviando] = useState(false);
   const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
     null,
@@ -15,7 +23,7 @@ export function FormularioEsqueciSenha() {
     setRecado(null);
 
     const dados = new FormData(evento.currentTarget);
-    const resposta = await fetch("/api/senha/esqueci", {
+    const resposta = await fetch(rota, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: String(dados.get("email") ?? "") }),
@@ -45,7 +53,7 @@ export function FormularioEsqueciSenha() {
           className="campo"
         />
         <p className="ajuda esquerda">
-          O mesmo e-mail com que voce entra neste endereco.
+          {ajuda}
         </p>
       </div>
 
@@ -57,7 +65,7 @@ export function FormularioEsqueciSenha() {
         {enviando ? "Enviando..." : "Enviar o link"}
       </button>
 
-      <Link href="/login" className="botao-discreto justify-self-start">
+      <Link href={entrada} className="botao-discreto justify-self-start">
         Voltar para a entrada
       </Link>
     </form>

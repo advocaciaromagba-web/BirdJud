@@ -75,7 +75,11 @@ export async function limparLimitesVencidos(): Promise<number> {
   return count;
 }
 
-/** So para os testes. */
-export async function zerarLimites(): Promise<void> {
-  await prismaPlataforma().limiteDeTaxa.deleteMany({});
+/**
+ * So para os testes. Apaga so as chaves do prefixo: os arquivos de teste
+ * rodam em paralelo no mesmo banco, e apagar tudo zerava o contador de outro
+ * teste no meio dele (o de forca bruta no login do operador).
+ */
+export async function zerarLimites(prefixo: string): Promise<void> {
+  await prismaPlataforma().limiteDeTaxa.deleteMany({ where: { chave: { startsWith: prefixo } } });
 }

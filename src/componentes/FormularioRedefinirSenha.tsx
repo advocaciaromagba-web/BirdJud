@@ -4,7 +4,18 @@ import Link from "next/link";
 import { useState } from "react";
 import { CampoDeSenha } from "./CampoDeSenha";
 
-export function FormularioRedefinirSenha({ token }: { token: string }) {
+export function FormularioRedefinirSenha({
+  token,
+  rota = "/api/senha/redefinir",
+  entrada = "/login",
+  minimo = 10,
+}: {
+  token: string;
+  rota?: string;
+  entrada?: string;
+  /** Tamanho minimo da senha (o console pede 12). */
+  minimo?: number;
+}) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
@@ -23,7 +34,7 @@ export function FormularioRedefinirSenha({ token }: { token: string }) {
     setEnviando(true);
     setErro(null);
 
-    const resposta = await fetch("/api/senha/redefinir", {
+    const resposta = await fetch(rota, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, novaSenha: nova }),
@@ -45,7 +56,7 @@ export function FormularioRedefinirSenha({ token }: { token: string }) {
           Senha trocada. As sessoes que estavam abertas foram encerradas, aqui e
           em qualquer outro aparelho.
         </p>
-        <Link href="/login" className="botao-principal mt-4">
+        <Link href={entrada} className="botao-principal mt-4">
           Entrar com a senha nova
         </Link>
       </div>
@@ -62,11 +73,11 @@ export function FormularioRedefinirSenha({ token }: { token: string }) {
           id="nova-senha"
           name="senha"
           required
-          minLength={10}
+          minLength={minimo}
           autoComplete="new-password"
           className="campo"
         />
-        <p className="ajuda esquerda">Minimo de 10 caracteres.</p>
+        <p className="ajuda esquerda">Minimo de {minimo} caracteres.</p>
       </div>
 
       <div>
@@ -77,7 +88,7 @@ export function FormularioRedefinirSenha({ token }: { token: string }) {
           id="confirmacao-senha"
           name="confirmacao"
           required
-          minLength={10}
+          minLength={minimo}
           autoComplete="new-password"
           className="campo"
         />

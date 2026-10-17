@@ -58,6 +58,9 @@ export function FormularioOperador() {
       >
         {enviando ? "Entrando..." : "Entrar"}
       </button>
+      <a href="/plataforma/esqueci-senha" className="botao-discreto justify-self-start text-sm">
+        Esqueci a senha
+      </a>
     </form>
   );
 }

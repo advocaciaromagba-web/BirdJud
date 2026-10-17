@@ -70,7 +70,7 @@ describe("ip da requisicao", () => {
 
 d("limite de tentativas", () => {
   it("libera ate o maximo e bloqueia depois, dentro da janela", async () => {
-    await zerarLimites();
+    await zerarLimites("ip:");
     for (let i = 0; i < 3; i += 1) {
       expect((await registrarTentativa("ip:1", 3, 60)).permitido).toBe(true);
     }
@@ -80,14 +80,14 @@ d("limite de tentativas", () => {
   });
 
   it("chaves diferentes nao se atrapalham", async () => {
-    await zerarLimites();
+    await zerarLimites("ip:");
     expect((await registrarTentativa("ip:a", 1, 60)).permitido).toBe(true);
     expect((await registrarTentativa("ip:a", 1, 60)).permitido).toBe(false);
     expect((await registrarTentativa("ip:b", 1, 60)).permitido).toBe(true);
   });
 
   it("janela vencida recomeca a contagem", async () => {
-    await zerarLimites();
+    await zerarLimites("ip:");
     // Janela de 1 segundo: espera de verdade, sem relogio falso.
     expect((await registrarTentativa("ip:c", 1, 1)).permitido).toBe(true);
     expect((await registrarTentativa("ip:c", 1, 1)).permitido).toBe(false);
@@ -96,7 +96,7 @@ d("limite de tentativas", () => {
   });
 
   it("a contagem e compartilhada entre chamadas simultaneas", async () => {
-    await zerarLimites();
+    await zerarLimites("ip:");
     // Dez requisicoes ao mesmo tempo, limite 4: exatamente 4 passam.
     const resultados = await Promise.all(
       Array.from({ length: 10 }, () => registrarTentativa("ip:d", 4, 60)),
@@ -105,12 +105,19 @@ d("limite de tentativas", () => {
   });
 
   it("limpar remove so as janelas vencidas", async () => {
-    await zerarLimites();
+    await zerarLimites("ip:");
     await registrarTentativa("ip:vencida", 5, 1);
     await registrarTentativa("ip:viva", 5, 600);
     await new Promise((r) => setTimeout(r, 1_200));
 
-    expect(await limparLimitesVencidos()).toBe(1);
+    // Outros testes podem ter janelas vencidas no mesmo banco: confere as
+    // duas chaves deste, nao o total.
+    expect(await limparLimitesVencidos()).toBeGreaterThanOrEqual(1);
+    const restantes = await prismaPlataforma().limiteDeTaxa.findMany({
+      where: { chave: { in: ["ip:vencida", "ip:viva"] } },
+      select: { chave: true },
+    });
+    expect(restantes.map((r) => r.chave)).toEqual(["ip:viva"]);
   });
 });
 

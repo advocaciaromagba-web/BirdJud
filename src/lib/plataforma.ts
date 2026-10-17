@@ -40,9 +40,13 @@ export async function exigirOperador(): Promise<ContextoOperador> {
   // Acesso ao plano de controle exige que a conta ainda exista e esteja ativa.
   const operador = await prismaPlataforma().operadorPlataforma.findUnique({
     where: { id: sessao.usuarioId },
-    select: { ativo: true },
+    select: { ativo: true, sessoesValidasApos: true },
   });
   if (!operador?.ativo) throw new SemOperador();
+  // Senha trocada depois que esta sessao foi aberta: ela nao vale mais.
+  if (operador.sessoesValidasApos && (sessao.emitidaEm ?? 0) < operador.sessoesValidasApos.getTime()) {
+    throw new SemOperador();
+  }
 
   return {
     operadorId: sessao.usuarioId,
