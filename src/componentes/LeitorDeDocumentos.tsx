@@ -33,9 +33,12 @@ const TEXTO_DA_CONFIANCA: Record<Confianca, string> = {
 export function LeitorDeDocumentos({
   perfil,
   aoAplicar,
+  rota = "/api/ia/leitura",
 }: {
   perfil: Perfil;
   aoAplicar: (campos: Record<string, string>) => void;
+  /** Para onde mandar os documentos. O console usa a rota da plataforma. */
+  rota?: string;
 }) {
   const [lendo, setLendo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -63,7 +66,7 @@ export function LeitorDeDocumentos({
     setErro(null);
     setAplicado(false);
 
-    const resposta = await fetch("/api/ia/leitura", {
+    const resposta = await fetch(rota, {
       method: "POST",
       body: dados,
     });

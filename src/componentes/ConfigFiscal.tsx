@@ -48,11 +48,14 @@ export function ConfigFiscal({
   fiscal,
   temIA,
   rota = "/api/nfse",
+  rotaDaLeitura,
 }: {
   fiscal: FiscalNaTela | null;
   temIA: boolean;
   /** Para onde salvar. O console usa o mesmo formulario para o emissor da Blackbird. */
   rota?: string;
+  /** Para onde a leitura por IA manda os documentos (o console tem rota propria). */
+  rotaDaLeitura?: string;
 }) {
   const router = useRouter();
   const e = fiscal;
@@ -105,6 +108,8 @@ export function ConfigFiscal({
       cnpj: c.cnpj ?? f.cnpj,
       inscricaoMunicipal: c.inscricaoMunicipal ?? f.inscricaoMunicipal,
       codigoMunicipio: c.codigoMunicipio ?? f.codigoMunicipio,
+      telefone: c.telefone ?? f.telefone,
+      email: c.email ?? f.email,
       codigoTributacao: c.codigoTributacao ?? f.codigoTributacao,
       simples: c.regime ? (c.regime === "NORMAL" ? "NAO" : "SIM") : f.simples,
     }));
@@ -201,7 +206,7 @@ export function ConfigFiscal({
 
       {temIA ? (
         <div className="mt-3">
-          <LeitorDeDocumentos perfil="FISCAL" aoAplicar={aplicarLeitura} />
+          <LeitorDeDocumentos perfil="FISCAL" aoAplicar={aplicarLeitura} rota={rotaDaLeitura} />
         </div>
       ) : null}
       {lidoPelaIA ? (

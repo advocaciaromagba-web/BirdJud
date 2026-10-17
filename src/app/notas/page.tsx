@@ -129,7 +129,7 @@ export default async function PaginaNotas({
             fica guardada).
           </p>
         ) : null}
-        {contexto.papel === "ADMIN" ? <ConfigFiscal fiscal={fiscal} temIA={modulos.includes("IA")} /> : null}
+        {contexto.papel === "ADMIN" ? <ConfigFiscal fiscal={fiscal} temIA /> : null}
       </section>
 
       <PainelNotas

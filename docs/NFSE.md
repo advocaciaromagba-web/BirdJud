@@ -159,3 +159,19 @@ expurgo do escritorio.
 certificado nas variaveis do Railway, emitir uma nota manual de teste,
 conferir o DANFSe, passar para Producao e ligar a emissao automatica — a tela
 so deixa ligar sem pendencias.
+
+## Leitura do cadastro fiscal por IA, em todo lugar (17/10/2026)
+
+O cartao CNPJ (ou contrato social, ficha municipal, termo do Simples) preenche
+o cadastro sozinho — razao social, CNPJ, inscricao municipal, sede completa
+(CEP, rua, numero, complemento, bairro, cidade, UF), telefone, e-mail, CNAE —
+e o **codigo IBGE sai do CEP**. A pessoa confere campo a campo antes de salvar.
+
+- **Escritorio**, em Notas fiscais > Configurar emissor: vale para todo
+  escritorio com o modulo de nota fiscal, contratado ou nao o modulo de IA
+  (`/api/ia/leitura` libera o perfil FISCAL por NFSE).
+- **Console**, cadastro fiscal da Blackbird (Notas fiscais) e **implantacao de
+  escritorio** (Implantar escritorio): rota propria do operador,
+  `/api/plataforma/leitura`, so o perfil FISCAL, 30 leituras por hora por
+  operador. Na implantacao a sede vai junto (e o endereco que a nota da
+  mensalidade exige do tomador com CNPJ).

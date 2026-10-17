@@ -24,6 +24,7 @@ const pedido = z.object({
     cidade: z.string().max(120).optional(),
     corPrimaria: z.string().max(20).optional(),
     corSecundaria: z.string().max(20).optional(),
+    sede: z.record(z.string().max(200).nullable()).nullable().optional(),
   }),
   administrador: z.object({
     nome: z.string().min(2).max(120),

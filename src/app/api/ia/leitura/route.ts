@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
+import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { tratarErro } from "@/lib/respostas";
 import { arquivosDoCampo } from "@/lib/formulario";
 import { CorpoGrandeDemais, formularioLimitado } from "@/lib/multipart-limitado";
@@ -47,7 +48,9 @@ const SISTEMA =
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId, usuarioId } = await exigirSessao("IA");
+    // Sem modulo aqui: a leitura do cadastro fiscal vale tambem para quem
+    // emite nota sem ter contratado IA (conferido abaixo, pelo perfil).
+    const { escritorioId, usuarioId } = await exigirSessao();
 
     for (const [chave, teto] of [
       [`ia-leitura:${escritorioId}`, POR_ESCRITORIO],
@@ -73,6 +76,11 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+    // Cadastro fiscal: basta o modulo de nota fiscal (e o que precisa do
+    // cadastro). O resto da leitura e do modulo de IA.
+    const modulos = await modulosAtivos(escritorioId);
+    const liberado = modulos.includes("IA") || (perfil === "FISCAL" && modulos.includes("NFSE"));
+    if (!liberado) throw new ModuloNaoContratado("IA");
 
     // Nao usar `instanceof File`: o File global so existe do Node 20 em
     // diante, e a imagem do provedor pode estar em versao anterior.

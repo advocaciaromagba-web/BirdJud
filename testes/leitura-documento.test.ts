@@ -365,6 +365,43 @@ describe("cliente por documento de identidade e comprovante de endereco", () => 
   });
 });
 
+describe("cadastro fiscal da empresa da plataforma, com o endereco da sede", () => {
+  // Cartao CNPJ da Blackbird: o console e a implantacao preenchem tambem a
+  // sede (a nota da mensalidade exige o endereco do tomador com CNPJ).
+  const resposta = JSON.stringify({
+    campos: {
+      razaoSocial: { valor: "BLACKBIRD SOLUCOES ESTRATEGICAS LTDA", confianca: "ALTA" },
+      cnpj: { valor: "30.044.017/0001-01", confianca: "ALTA" },
+      cep: { valor: "14.842-042", confianca: "ALTA" },
+      logradouro: { valor: "R Rui Barbosa", confianca: "ALTA" },
+      numero: { valor: "1249", confianca: "ALTA" },
+      bairro: { valor: "Jardim Progresso", confianca: "ALTA" },
+      cidade: { valor: "Guariba", confianca: "ALTA" },
+      uf: { valor: "sp", confianca: "ALTA" },
+      telefone: { valor: "(16) 3251-6611", confianca: "ALTA" },
+      email: { valor: "contato@exemplo.com.br", confianca: "ALTA" },
+    },
+    observacoes: [],
+  });
+
+  it("a instrucao pede a sede e diz de quem e o cadastro", () => {
+    const instrucao = montarInstrucao("FISCAL");
+    expect(instrucao).toContain('"logradouro"');
+    expect(instrucao).toContain("empresa da plataforma");
+  });
+
+  it("le endereco, telefone e e-mail, e o IBGE sai do CEP", () => {
+    const lida = completarCadastroFiscal(interpretar("FISCAL", resposta), "3518206");
+    expect(lida.campos.cep.valor).toBe("14842-042");
+    expect(lida.campos.logradouro.valor).toBe("R Rui Barbosa");
+    expect(lida.campos.numero.valor).toBe("1249");
+    expect(lida.campos.bairro.valor).toBe("Jardim Progresso");
+    expect(lida.campos.uf.valor).toBe("SP");
+    expect(lida.campos.telefone.valor).toBe("(16) 3251-6611");
+    expect(lida.campos.codigoMunicipio.valor).toBe("3518206");
+  });
+});
+
 describe("cadastro fiscal por cartao CNPJ e contrato social", () => {
   const resposta = JSON.stringify({
     campos: {

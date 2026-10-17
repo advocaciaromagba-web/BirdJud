@@ -112,7 +112,12 @@ export default async function NotasDaPlataforma() {
           Codigo de tributacao sugerido 010501 (licenciamento de programa de computador, LC 116 item 1.05) — confirme
           com o contador, assim como o regime e o percentual de tributos. Comece em Testes.
         </p>
-        <ConfigFiscal fiscal={fiscal ? fiscalParaTela(fiscal) : null} temIA={false} rota="/api/plataforma/emissor" />
+        <ConfigFiscal
+          fiscal={fiscal ? fiscalParaTela(fiscal) : null}
+          temIA
+          rota="/api/plataforma/emissor"
+          rotaDaLeitura="/api/plataforma/leitura"
+        />
       </section>
     </main>
   );

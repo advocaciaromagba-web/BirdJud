@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PLANO, PLANOS, contaDoPlano, modulosDoPlano, type Plano } from "@/lib/planos";
 import { FAIXAS, LIMITES, type Faixa } from "@/lib/catalogo";
 import { emReais } from "@/lib/dinheiro";
+import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
 
 /** "Advocacia Silva & Souza" -> "advocacia-silva-souza" */
 export function sugerirEndereco(nome: string): string {
@@ -33,6 +34,31 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
   const [valor, setValor] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const formulario = useRef<HTMLFormElement>(null);
+  const [lidoPelaIA, setLidoPelaIA] = useState(false);
+
+  // A leitura do cartao CNPJ preenche os campos do escritorio. Os campos sao
+  // nao controlados (FormData no envio): escreve direto no elemento.
+  function aplicarLeitura(c: Record<string, string>) {
+    const f = formulario.current;
+    if (!f) return;
+    const por = (nomeDoCampo: string, valor: string | undefined) => {
+      const el = f.elements.namedItem(nomeDoCampo);
+      if (valor && el instanceof HTMLInputElement) el.value = valor;
+    };
+    por("razaoSocial", c.razaoSocial);
+    por("cnpj", c.cnpj);
+    por("telefoneAtendimento", c.telefone);
+    por("cidade", c.cidade);
+    por("cep", c.cep);
+    por("logradouro", c.logradouro);
+    por("numero", c.numero);
+    por("complemento", c.complemento);
+    por("bairro", c.bairro);
+    por("uf", c.uf);
+    if (c.razaoSocial && !nome.trim()) setNome(c.razaoSocial);
+    setLidoPelaIA(true);
+  }
 
   const tabela = useMemo(() => contaDoPlano(plano, faixa).totalCentavos, [plano, faixa]);
   const endereco = slugMexido ? slug : sugerirEndereco(nome);
@@ -65,6 +91,19 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
           cnpj: texto("cnpj"),
           telefoneAtendimento: texto("telefoneAtendimento"),
           cidade: texto("cidade"),
+          // A sede: vai na qualificacao das pecas e e obrigatoria na nota
+          // fiscal da mensalidade (tomador com CNPJ precisa de endereco).
+          sede: texto("cep") || texto("logradouro")
+            ? {
+                cep: texto("cep") ?? null,
+                logradouro: texto("logradouro") ?? null,
+                numero: texto("numero") ?? null,
+                complemento: texto("complemento") ?? null,
+                bairro: texto("bairro") ?? null,
+                cidade: texto("cidade") ?? null,
+                uf: texto("uf") ?? null,
+              }
+            : undefined,
         },
         administrador: {
           nome: texto("adminNome"),
@@ -93,7 +132,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
   );
 
   return (
-    <form onSubmit={enviar} className="mt-6 grid gap-6">
+    <form ref={formulario} onSubmit={enviar} className="mt-6 grid gap-6">
       <section className="cartao grid gap-4 sm:grid-cols-2">
         <h2 className="sm:col-span-2 text-lg font-bold">1. O escritorio</h2>
         <label className="grid gap-1 text-sm sm:col-span-2">
@@ -126,10 +165,24 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
           </div>
           <span className="ajuda mt-0">Sai do nome sozinho. Letras minusculas, numeros e hifen.</span>
         </label>
+        <div className="sm:col-span-2">
+          <LeitorDeDocumentos perfil="FISCAL" aoAplicar={aplicarLeitura} rota="/api/plataforma/leitura" />
+          {lidoPelaIA ? (
+            <p className="mt-3 rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
+              Dados do cartao CNPJ lidos pela IA nos campos abaixo: confira antes de implantar.
+            </p>
+          ) : null}
+        </div>
         {campo("razaoSocial", "Razao social")}
         {campo("cnpj", "CNPJ", { inputMode: "numeric" }, "Conferido no digito. Sem ele a fatura da assinatura nao sai.")}
         {campo("telefoneAtendimento", "Telefone de atendimento", {}, "Vai em toda mensagem que o cliente recebe.")}
+        {campo("cep", "CEP da sede", { inputMode: "numeric" })}
+        {campo("logradouro", "Rua da sede")}
+        {campo("numero", "Numero")}
+        {campo("complemento", "Complemento")}
+        {campo("bairro", "Bairro")}
         {campo("cidade", "Cidade")}
+        {campo("uf", "UF", { maxLength: 2 })}
       </section>
 
       <section className="cartao grid gap-4 sm:grid-cols-2">
