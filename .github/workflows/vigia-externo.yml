@@ -23,7 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: scripts/vigia-externo.sh
+          sparse-checkout: |
+            scripts/vigia-externo.sh
+            scripts/vigia-espaco.sh
           sparse-checkout-cone-mode: false
 
       - name: Conferir producao
@@ -33,6 +35,43 @@ jobs:
           bash scripts/vigia-externo.sh > relatorio.txt
           echo "saida=$?" >> "$GITHUB_OUTPUT"
           cat relatorio.txt
+
+      # Disco ou banco acima de 70%: alarme proprio, porque nao e queda e
+      # a providencia e outra (aumentar o volume). Vem antes do alarme de
+      # queda, que encerra o job com falha.
+      - name: Conferir espaco
+        id: espaco
+        run: |
+          set +e
+          bash scripts/vigia-espaco.sh > espaco.txt
+          echo "saida=$?" >> "$GITHUB_OUTPUT"
+          cat espaco.txt
+
+      - name: Abrir ou fechar o alarme de espaco
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SAIDA: ${{ steps.espaco.outputs.saida }}
+          DONO: ${{ github.repository_owner }}
+        run: |
+          TITULO="Vigia externo: espaco acima de 70%"
+          ABERTA=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITULO\" in:title" --json number --jq '.[0].number // empty')
+          if [ "$SAIDA" != "0" ]; then
+            if [ -z "$ABERTA" ]; then
+              {
+                echo "@$DONO o disco dos arquivos ou o banco do BirdJud passou de 70%. O sistema continua no ar; e hora de aumentar o volume no Railway."
+                echo
+                echo '```'
+                cat espaco.txt
+                echo '```'
+                echo
+                echo "Esta issue fecha sozinha quando voltar a ficar abaixo de 70%."
+              } > corpo-espaco.md
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITULO" --body-file corpo-espaco.md
+            fi
+          elif [ -n "$ABERTA" ]; then
+            gh issue comment "$ABERTA" --repo "$GITHUB_REPOSITORY" --body "Voltou: $(cat espaco.txt)"
+            gh issue close "$ABERTA" --repo "$GITHUB_REPOSITORY"
+          fi
 
       - name: Abrir ou fechar o alarme
         env:

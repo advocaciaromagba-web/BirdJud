@@ -30,6 +30,25 @@ falha"**, com o relatório e uma menção ao dono do repositório. O GitHub mand
 e-mail ao dono. Enquanto a falha continua, não abre outra. Quando o sistema
 volta, comenta "Voltou" e fecha a issue.
 
+## O alarme de espaço (18/10/2026)
+
+Na mesma rodada, `scripts/vigia-espaco.sh` consulta
+`https://birdjud.com.br/api/saude/espaco`. Ela responde 503 quando o disco
+dos arquivos (volume do APP, `/dados`) ou o banco passa de **70%**, e diz só
+qual dos dois e o percentual; abaixo disso, só `{"ok":true}`.
+
+- O alarme é outra issue: **"Vigia externo: espaço acima de 70%"**. Disco
+  enchendo não é sistema fora do ar, e a providência é outra: **aumentar o
+  volume no Railway** (serviço → Volume → tamanho) antes de 90%.
+- Fecha sozinha quando voltar a ficar abaixo de 70%.
+- Se a medida não responder, não há alarme de espaço: queda é com a
+  conferência principal.
+- Como mede: `statfs` da pasta dos arquivos quando ele enxerga o próprio
+  volume; senão, a soma dos arquivos registrados. Banco:
+  `pg_database_size`. Os dois contra 5000 MB, ou contra
+  `LIMITE_DO_VOLUME_DE_ARQUIVOS_MB` e `LIMITE_DO_VOLUME_DO_BANCO_MB` no
+  serviço APP, se o volume for aumentado.
+
 Para receber o e-mail, deixe ligadas as notificações de issues do
 repositório em github.com → Settings → Notifications. Para dono do
 repositório, elas vêm ligadas por padrão.

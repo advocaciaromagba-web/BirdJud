@@ -136,6 +136,22 @@ mesma para os sete, e revogar por causa de um derruba os outros seis.
   achado um ponto (a origem das tentativas). Nao ha base para dizer que era o
   unico.
 
+## Auditoria de 18/10/2026: queda e espaco
+
+Medido ao vivo no Railway: arquivos 2%, banco 5%, copias 2% dos volumes de
+5 GB; memoria 2%; CPU perto de zero; paginas em 0,5 a 0,9 s de fora.
+
+- **Gravacao longa de entrevista** — resolvido em 18/10/2026: acima de 25 MB
+  a gravacao inteira nao era guardada. Agora vai em partes de 8 MB, ate
+  300 MB; download em fluxo (ver `docs/ENTREVISTAS.md`).
+- **Ninguem avisava quando o disco enche** — resolvido em 18/10/2026: alarme
+  proprio do vigia externo acima de 70% (ver `docs/VIGIA-EXTERNO.md`).
+- Em aberto `[voce]`: limite diario do Gmail (Resend, o codigo ja aceita
+  `RESEND_API_KEY`); Cloudflare e regra de 90 dias no R2; conta Asaas
+  compartilhada.
+- Para depois de ~10 escritorios: uma so instancia do APP, com o volume
+  preso a ela (R2 para os arquivos, duas copias, plano Pro).
+
 ## O que esta pronto, e foi conferido
 
 - **isolamento entre escritorios** em duas camadas independentes (extensao do
