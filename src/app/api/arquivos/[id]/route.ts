@@ -3,8 +3,8 @@ import { exigirSessao } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import {
   apagarArquivo,
+  abrirArquivo,
   ArquivoNaoEncontrado,
-  lerArquivo,
 } from "@/lib/arquivos";
 
 type Parametros = { params: Promise<{ id: string }> };
@@ -19,11 +19,13 @@ type Parametros = { params: Promise<{ id: string }> };
 export async function GET(_req: Request, { params }: Parametros) {
   try {
     const { escritorioId } = await exigirSessao("NUVEM");
-    const arquivo = await lerArquivo(escritorioId, (await params).id);
+    // Lido aos poucos do disco: audio grande nao passa inteiro pela memoria.
+    const arquivo = await abrirArquivo(escritorioId, (await params).id);
 
-    return new NextResponse(new Uint8Array(arquivo.conteudo), {
+    return new NextResponse(arquivo.corpo, {
       headers: {
         "Content-Type": arquivo.tipo,
+        "Content-Length": String(arquivo.tamanho),
         "Content-Disposition": `attachment; filename="${arquivo.nome}"`,
         "X-Content-Type-Options": "nosniff",
         "Cache-Control": "private, no-store",

@@ -78,6 +78,9 @@ export function emailDoIdToken(idToken: unknown): string | null {
   }
 }
 
+/** Pedaco do envio retomavel: multiplo de 256 KB, como o Drive exige. */
+const PEDACO_DO_DRIVE = 8 * 1024 * 1024;
+
 async function chamar(acesso: string, url: string, init: RequestInit = {}): Promise<Response> {
   return buscarComLimite(url, {
     ...init,
@@ -188,8 +191,7 @@ export const googleDrive: Nuvem = {
   },
 
   async enviar(acesso, pastaId, nome, tipo, conteudo) {
-    // Envio retomavel em um pedido so: serve de 1 byte a 25 MB, e o
-    // "multipart" do Drive para em 5 MB.
+    // Envio retomavel: o "multipart" do Drive para em 5 MB.
     const inicio = await chamar(acesso, `${envio()}/files?uploadType=resumable&fields=id`, {
       method: "POST",
       headers: {
@@ -203,13 +205,26 @@ export const googleDrive: Nuvem = {
     const destino = inicio.headers.get("location");
     if (!destino) throw new FalhaNaNuvem("Google Drive nao devolveu o endereco de envio.", 502);
 
-    const r = await chamar(acesso, destino, {
-      method: "PUT",
-      headers: { "content-type": tipo || "application/octet-stream" },
-      body: new Uint8Array(conteudo),
-    });
-    if (!r.ok) throw falha(r, `enviar "${nome}"`);
-    return { id: String(((await r.json()) as { id: string }).id) };
+    // Em partes de 8 MB (multiplo de 256 KB, como o Drive exige): a gravacao
+    // de uma entrevista longa nao cabe no tempo limite de um pedido so. As
+    // partes do meio respondem 308; a ultima devolve o arquivo criado.
+    const total = conteudo.byteLength;
+    for (let inicio = 0; inicio < total; inicio += PEDACO_DO_DRIVE) {
+      const fim = Math.min(inicio + PEDACO_DO_DRIVE, total);
+      const r = await chamar(acesso, destino, {
+        method: "PUT",
+        headers: {
+          "content-type": tipo || "application/octet-stream",
+          "content-range": `bytes ${inicio}-${fim - 1}/${total}`,
+        },
+        body: new Uint8Array(conteudo.subarray(inicio, fim)),
+        redirect: "manual",
+      });
+      if (r.status === 308 && fim < total) continue;
+      if (!r.ok) throw falha(r, `enviar "${nome}"`);
+      return { id: String(((await r.json()) as { id: string }).id) };
+    }
+    throw new FalhaNaNuvem(`Google Drive nao confirmou o envio de "${nome}".`, 502);
   },
 
   listar(acesso, pastaId) {

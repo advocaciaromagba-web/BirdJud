@@ -31,9 +31,12 @@ import {
   lerRespostaDaProcuracao,
   pdfDasPerguntas,
   roteiroDaProcuracao,
+  guardarGravacaoDoEnvio,
   guardarGravacaoNaPasta,
   guardarPdfNaPasta,
 } from "../src/lib/entrevista-do-escritorio";
+import { anexarAoEnvio, tamanhoDoEnvio } from "../src/lib/armazenamento";
+import { lerArquivo } from "../src/lib/arquivos";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -444,6 +447,41 @@ d("entrevista de triagem", () => {
     );
     expect(naPasta.map((a) => a.tipo).sort()).toEqual(["application/pdf", "audio/webm"]);
     expect(naPasta.find((a) => a.tipo === "audio/webm")?.nome).toMatch(/^Entrevista .* - Cliente da Pasta - gravacao .*\.webm$/);
+  });
+
+  it("gravacao longa chega em partes e vai inteira para a pasta; sem cliente, o envio e apagado", async () => {
+    const usuario = await comEscritorio(escritorio, (db) =>
+      db.usuario.create({ data: semEscritorio({ nome: "Dra. Longa", email: `longa-${Date.now()}@e.test`, senhaHash: "x", papel: "ADMIN" }) }),
+    );
+    const cliente = await comEscritorio(escritorio, (db) =>
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente da Gravacao Longa" }) }),
+    );
+    const parte = (n: number) => Buffer.alloc(64 * 1024, n);
+
+    const sem = await criarEntrevista(escritorio, { nome: "Sem Cliente", assunto: "Ainda nao e cliente do escritorio", usuarioId: usuario.id });
+    await anexarAoEnvio(escritorio, "envio_sem_cliente_01", 0, parte(1), 10 * 1024 * 1024);
+    const r0 = await guardarGravacaoDoEnvio(escritorio, sem.id, usuario.id, "audio/webm", "envio_sem_cliente_01");
+    expect(r0.guardado).toBe(false);
+    expect(await tamanhoDoEnvio(escritorio, "envio_sem_cliente_01")).toBe(0);
+
+    const e = await criarEntrevista(escritorio, {
+      nome: "Cliente da Gravacao Longa",
+      assunto: "Acidente de trabalho e estabilidade",
+      usuarioId: usuario.id,
+      clienteId: cliente.id,
+    });
+    await anexarAoEnvio(escritorio, "envio_com_cliente_01", 0, parte(1), 10 * 1024 * 1024);
+    await anexarAoEnvio(escritorio, "envio_com_cliente_01", 64 * 1024, parte(2), 10 * 1024 * 1024);
+    const r1 = await guardarGravacaoDoEnvio(escritorio, e.id, usuario.id, "audio/webm;codecs=opus", "envio_com_cliente_01");
+    expect(r1.guardado).toBe(true);
+
+    const guardado = await comEscritorio(escritorio, (db) =>
+      db.arquivo.findFirstOrThrow({ where: { clienteId: cliente.id }, select: { id: true, tipo: true, tamanhoBytes: true } }),
+    );
+    expect(guardado.tipo).toBe("audio/webm");
+    expect(Number(guardado.tamanhoBytes)).toBe(128 * 1024);
+    const lido = await lerArquivo(escritorio, guardado.id);
+    expect(Buffer.from(lido.conteudo).equals(Buffer.concat([parte(1), parte(2)]))).toBe(true);
   });
 
   it("liga ao cliente quando o caso e aceito", async () => {

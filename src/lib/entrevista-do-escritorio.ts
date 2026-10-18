@@ -35,7 +35,8 @@ import {
 import { montarPromptMinuta, camposFaltando, type ClienteParaMinuta } from "./minuta-prompt";
 import { gerarPdfEntrevista, gerarPdfPerguntas } from "./entrevista-pdf";
 import { mandarArquivoNoWhatsapp } from "./documento-no-whatsapp";
-import { guardarArquivo } from "./arquivos";
+import { guardarArquivo, registrarArquivoDoEnvio } from "./arquivos";
+import { descartarEnvio } from "./armazenamento";
 import { cutucarNuvem } from "./avisar-nuvem";
 import { prismaPlataforma } from "./prisma";
 import {
@@ -735,6 +736,49 @@ export async function guardarGravacaoNaPasta(
       processoId: e.processoId,
       descricao: `Gravacao da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
     });
+    await cutucarNuvem(escritorioId);
+    return { guardado: true, nome };
+  } catch (falha) {
+    return { guardado: false, motivo: `A gravacao nao foi guardada na pasta: ${(falha as Error).message}` };
+  }
+}
+
+/**
+ * A gravacao inteira que chegou em partes (envio): mesma pasta, mesmo nome e
+ * mesma descricao de guardarGravacaoNaPasta, sem passar pela memoria inteira.
+ */
+export async function guardarGravacaoDoEnvio(
+  escritorioId: string,
+  id: string,
+  usuarioId: string,
+  tipoBruto: string,
+  envio: string,
+): Promise<Guardado> {
+  const e = await entrevistaPorId(escritorioId, id);
+  if (!e.clienteId) {
+    await descartarEnvio(escritorioId, envio).catch(() => {});
+    return { guardado: false, motivo: "Ligue a entrevista a um cliente para a gravacao ficar na pasta dele." };
+  }
+  const tipo = tipoBruto.split(";")[0].trim().toLowerCase();
+  const extensao = EXTENSAO_DO_AUDIO[tipo];
+  if (!extensao) {
+    await descartarEnvio(escritorioId, envio).catch(() => {});
+    return { guardado: false, motivo: `Formato de audio ${tipo || "desconhecido"} nao e guardado na pasta.` };
+  }
+  try {
+    const nome = nomeNaPasta(e, `gravacao ${new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(new Date()).replace(":", "h")}`, extensao);
+    await registrarArquivoDoEnvio(
+      escritorioId,
+      {
+        nome,
+        tipo,
+        usuarioId,
+        clienteId: e.clienteId,
+        processoId: e.processoId,
+        descricao: `Gravacao da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
+      },
+      envio,
+    );
     await cutucarNuvem(escritorioId);
     return { guardado: true, nome };
   } catch (falha) {

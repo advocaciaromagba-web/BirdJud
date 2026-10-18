@@ -4,6 +4,7 @@ import {
   apagarDoDisco,
   apagarTudoDoDisco,
   existeNoDisco,
+  fluxoDoDisco,
   gravarNoDisco,
   lerDoDisco,
 } from "@/lib/armazenamento";
@@ -52,6 +53,13 @@ export async function GET(req: Request) {
   const p = ids(req);
   if (!p?.a) return NextResponse.json({ erro: "Falta o arquivo." }, { status: 400 });
   try {
+    // Aos poucos: a gravacao de entrevista pode ter centenas de MB.
+    const aberto = await fluxoDoDisco(p.e, p.a);
+    if (aberto) {
+      return new NextResponse(aberto.fluxo, {
+        headers: { "content-type": "application/octet-stream", "content-length": String(aberto.tamanho) },
+      });
+    }
     const conteudo = await lerDoDisco(p.e, p.a);
     return new NextResponse(new Uint8Array(conteudo), { headers: { "content-type": "application/octet-stream" } });
   } catch (erro) {

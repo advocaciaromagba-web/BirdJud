@@ -158,11 +158,30 @@ export function GravadorOpenAI({
       if (blob.size < MINIMO_BYTES) return;
       fila.current = fila.current.then(async () => {
         try {
-          const extensao = tipo.includes("mp4") ? "m4a" : tipo.includes("ogg") ? "ogg" : "webm";
-          const corpo = new FormData();
-          corpo.append("audio", new File([blob], `gravacao.${extensao}`, { type: tipo.split(";")[0] }));
-          const r = await fetch(`/api/entrevistas/${entrevistaId}/gravacao`, { method: "POST", body: corpo });
-          const dados = await r.json().catch(() => ({}));
+          // Em partes de 8 MB, uma depois da outra: gravacao de horas nao vira
+          // um pedido de centenas de MB, e a parte que falhar e reenviada.
+          const PEDACO = 8 * 1024 * 1024;
+          const envio = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`.slice(0, 40);
+          const tipoDoAudio = tipo.split(";")[0];
+          let dados: { guardado?: boolean; nome?: string; motivo?: string; erro?: string } = {};
+          for (let inicio = 0; inicio < blob.size; inicio += PEDACO) {
+            const fim = Math.min(inicio + PEDACO, blob.size);
+            const ultimo = fim >= blob.size;
+            const url = `/api/entrevistas/${entrevistaId}/gravacao?envio=${envio}&inicio=${inicio}${ultimo ? "&fim=1" : ""}`;
+            let r: Response | null = null;
+            for (let tentativa = 0; tentativa < 3 && !r?.ok; tentativa += 1) {
+              r = await fetch(url, {
+                method: "POST",
+                headers: { "content-type": tipoDoAudio },
+                body: blob.slice(inicio, fim),
+              }).catch(() => null);
+            }
+            dados = (await r?.json().catch(() => ({}))) ?? {};
+            if (!r?.ok) {
+              dados = { guardado: false, motivo: dados.motivo ?? dados.erro ?? "A gravacao nao foi guardada na pasta (falha de conexao). A transcricao esta salva." };
+              break;
+            }
+          }
           onPasta?.(
             dados.guardado
               ? `Gravacao guardada na pasta do cliente: ${dados.nome}.`

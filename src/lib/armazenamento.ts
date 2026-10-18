@@ -19,7 +19,9 @@
 // usuario (nome do arquivo, principalmente) entra no caminho. E o que impede
 // "../../etc/passwd" de virar caminho valido.
 import { createHash } from "node:crypto";
-import { mkdir, rm, readFile, writeFile, stat } from "node:fs/promises";
+import { appendFile, mkdir, readdir, rename, rm, readFile, writeFile, stat } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { Readable } from "node:stream";
 import { join, resolve } from "node:path";
 
 export function raiz(): string {
@@ -89,6 +91,119 @@ export async function existeNoDisco(
   } catch {
     return false;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Envio em partes (17/10/2026): arquivo grande — a gravacao inteira de uma
+// entrevista — chega em pedacos de alguns MB e vai sendo juntado no disco,
+// numa pasta "_envios" do escritorio. Nada disso passa pela memoria inteira
+// de uma vez, e nenhum pedido carrega centenas de MB (limite de proxy,
+// conexao que cai no meio). So na aplicacao, que e quem tem o disco.
+// ---------------------------------------------------------------------------
+
+function pastaDosEnvios(escritorioId: string): string {
+  return join(raiz(), seguro(escritorioId), "_envios");
+}
+
+function caminhoDoEnvio(escritorioId: string, envio: string): string {
+  return join(pastaDosEnvios(escritorioId), seguro(envio));
+}
+
+export class EnvioInvalido extends Error {
+  constructor(motivo: string, readonly status = 400) {
+    super(motivo);
+    this.name = "EnvioInvalido";
+  }
+}
+
+async function tamanhoDe(caminho: string): Promise<number> {
+  try {
+    return (await stat(caminho)).size;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Junta mais um pedaco ao envio. `inicio` e onde o pedaco comeca: se ja foi
+ * juntado (o navegador reenviou depois de perder a resposta), nao junta de
+ * novo; se esta fora de ordem, recusa. Passar do limite apaga o envio.
+ */
+export async function anexarAoEnvio(
+  escritorioId: string,
+  envio: string,
+  inicio: number,
+  pedaco: Buffer,
+  limiteBytes: number,
+): Promise<number> {
+  const caminho = caminhoDoEnvio(escritorioId, envio);
+  await mkdir(pastaDosEnvios(escritorioId), { recursive: true });
+  const atual = await tamanhoDe(caminho);
+  if (inicio === atual - pedaco.byteLength && pedaco.byteLength > 0) return atual;
+  if (inicio !== atual) throw new EnvioInvalido(`Pedaco fora de ordem: esperado ${atual}, chegou ${inicio}.`, 409);
+  if (atual + pedaco.byteLength > limiteBytes) {
+    await rm(caminho, { force: true });
+    throw new EnvioInvalido(`O arquivo passou de ${Math.round(limiteBytes / (1024 * 1024))} MB.`, 413);
+  }
+  await appendFile(caminho, pedaco);
+  return atual + pedaco.byteLength;
+}
+
+export async function tamanhoDoEnvio(escritorioId: string, envio: string): Promise<number> {
+  return tamanhoDe(caminhoDoEnvio(escritorioId, envio));
+}
+
+/** O envio completo vira o arquivo `arquivoId`. Hash calculado lendo aos poucos. */
+export async function concluirEnvio(
+  escritorioId: string,
+  envio: string,
+  arquivoId: string,
+): Promise<{ tamanhoBytes: number; hash: string }> {
+  const origem = caminhoDoEnvio(escritorioId, envio);
+  const tamanhoBytes = await tamanhoDe(origem);
+  if (!tamanhoBytes) throw new EnvioInvalido("Envio vazio ou inexistente.", 404);
+  const hash = createHash("sha256");
+  for await (const parte of createReadStream(origem)) hash.update(parte as Buffer);
+  await rename(origem, caminhoDo(escritorioId, arquivoId));
+  return { tamanhoBytes, hash: hash.digest("hex") };
+}
+
+export async function descartarEnvio(escritorioId: string, envio: string): Promise<void> {
+  await rm(caminhoDoEnvio(escritorioId, envio), { force: true });
+}
+
+/** Envio abandonado (a pessoa fechou a tela no meio) ha mais de um dia: apaga. */
+export async function limparEnviosVelhos(escritorioId: string, agora = Date.now()): Promise<number> {
+  let nomes: string[];
+  try {
+    nomes = await readdir(pastaDosEnvios(escritorioId));
+  } catch {
+    return 0;
+  }
+  let apagados = 0;
+  for (const nome of nomes) {
+    const caminho = join(pastaDosEnvios(escritorioId), nome);
+    const info = await stat(caminho).catch(() => null);
+    if (info && agora - info.mtimeMs > 24 * 60 * 60 * 1000) {
+      await rm(caminho, { force: true });
+      apagados += 1;
+    }
+  }
+  return apagados;
+}
+
+/**
+ * O arquivo para download, lido aos poucos do disco. null quando o disco nao
+ * e local (trabalhador): quem chama cai no `ler` de sempre.
+ */
+export async function fluxoDoDisco(
+  escritorioId: string,
+  arquivoId: string,
+): Promise<{ fluxo: ReadableStream<Uint8Array>; tamanho: number } | null> {
+  if (viaAplicacao()) return null;
+  const caminho = caminhoDo(escritorioId, arquivoId);
+  const tamanho = (await stat(caminho)).size;
+  return { fluxo: Readable.toWeb(createReadStream(caminho)) as ReadableStream<Uint8Array>, tamanho };
 }
 
 // ---------------------------------------------------------------------------

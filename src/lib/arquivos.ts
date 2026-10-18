@@ -11,6 +11,13 @@ import * as disco from "./armazenamento";
 /** Teto por arquivo. Peca judicial passa longe disso; video nao entra. */
 export const TAMANHO_MAXIMO_MB = 25;
 
+/**
+ * Teto da gravacao inteira de uma entrevista (17/10/2026). Audio de conversa
+ * passa de 25 MB em menos de uma hora; 300 MB cobre varias horas. Chega em
+ * partes (anexarAoEnvio) e nunca inteiro na memoria.
+ */
+export const TAMANHO_MAXIMO_DA_GRAVACAO_MB = 300;
+
 /** Espaco do escritorio quando o modulo nao traz franquia declarada. */
 export const FRANQUIA_PADRAO_MB = 1024;
 
@@ -232,6 +239,93 @@ export async function guardarArquivo(
     ).catch(() => {});
     await disco.apagar(escritorioId, arquivo.id).catch(() => {});
     throw erro;
+  }
+}
+
+/**
+ * Registra como arquivo do escritorio um envio que chegou em partes. Mesmas
+ * conferencias de guardarArquivo (tipo, espaco, cliente e processo do proprio
+ * escritorio), com o teto da gravacao. Falhou no meio: nao fica linha
+ * apontando para arquivo que nao existe, e o envio e descartado.
+ */
+export async function registrarArquivoDoEnvio(
+  escritorioId: string,
+  pedido: Omit<PedidoDeArquivo, "conteudo">,
+  envio: string,
+): Promise<{ id: string; nome: string; tamanhoBytes: number }> {
+  const nome = nomeLimpo(pedido.nome);
+  const tamanho = await disco.tamanhoDoEnvio(escritorioId, envio);
+  if (tamanho === 0) throw new ArquivoRecusado("Arquivo vazio.");
+  if (tamanho > TAMANHO_MAXIMO_DA_GRAVACAO_MB * MB) {
+    await disco.descartarEnvio(escritorioId, envio);
+    throw new ArquivoRecusado(`Arquivo maior que ${TAMANHO_MAXIMO_DA_GRAVACAO_MB} MB.`, 413);
+  }
+  if (!tipoConfere(pedido.tipo, nome)) {
+    await disco.descartarEnvio(escritorioId, envio);
+    throw new ArquivoRecusado(`Tipo de arquivo nao aceito (${pedido.tipo || "sem tipo"} / .${extensaoDe(nome)}).`);
+  }
+  const espaco = await espacoDoEscritorio(escritorioId);
+  if (espaco.usadoMb + emMb(tamanho) > espaco.tetoMb) {
+    await disco.descartarEnvio(escritorioId, envio);
+    throw new EspacoEsgotado(espaco.usadoMb, espaco.tetoMb);
+  }
+  await comEscritorio(escritorioId, async (db) => {
+    if (pedido.clienteId && !(await db.cliente.findFirst({ where: { id: pedido.clienteId } }))) {
+      throw new ArquivoRecusado("Cliente nao encontrado neste escritorio.", 400);
+    }
+    if (pedido.processoId && !(await db.processo.findFirst({ where: { id: pedido.processoId } }))) {
+      throw new ArquivoRecusado("Processo nao encontrado neste escritorio.", 400);
+    }
+  });
+
+  const arquivo = await comEscritorio(escritorioId, (db) =>
+    db.arquivo.create({
+      data: semEscritorio({
+        nome,
+        tipo: pedido.tipo,
+        descricao: pedido.descricao ?? null,
+        tamanhoBytes: 0,
+        usuarioId: pedido.usuarioId,
+        clienteId: pedido.clienteId ?? null,
+        processoId: pedido.processoId ?? null,
+      }),
+    }),
+  );
+  try {
+    const gravado = await disco.concluirEnvio(escritorioId, envio, arquivo.id);
+    await comEscritorio(escritorioId, (db) =>
+      db.arquivo.update({ where: { id: arquivo.id }, data: { tamanhoBytes: gravado.tamanhoBytes, hash: gravado.hash } }),
+    );
+    await medirEspaco(escritorioId);
+    return { id: arquivo.id, nome, tamanhoBytes: gravado.tamanhoBytes };
+  } catch (erro) {
+    await comEscritorio(escritorioId, (db) => db.arquivo.delete({ where: { id: arquivo.id } })).catch(() => {});
+    await disco.apagar(escritorioId, arquivo.id).catch(() => {});
+    await disco.descartarEnvio(escritorioId, envio).catch(() => {});
+    throw erro;
+  }
+}
+
+/**
+ * O arquivo para download, lido aos poucos do disco quando ele e local: um
+ * audio de centenas de MB nao passa inteiro pela memoria. Fora da aplicacao,
+ * cai na leitura de sempre.
+ */
+export async function abrirArquivo(
+  escritorioId: string,
+  id: string,
+): Promise<{ nome: string; tipo: string; corpo: ReadableStream<Uint8Array> | Uint8Array<ArrayBuffer>; tamanho: number }> {
+  const arquivo = await comEscritorio(escritorioId, (db) => db.arquivo.findUnique({ where: { id } }));
+  if (!arquivo) throw new ArquivoNaoEncontrado();
+  try {
+    const fluxo = await disco.fluxoDoDisco(escritorioId, arquivo.id);
+    if (fluxo) return { nome: arquivo.nome, tipo: arquivo.tipo, corpo: fluxo.fluxo, tamanho: fluxo.tamanho };
+    const conteudo = await disco.ler(escritorioId, arquivo.id);
+    const copia = new Uint8Array(new ArrayBuffer(conteudo.byteLength));
+    copia.set(conteudo);
+    return { nome: arquivo.nome, tipo: arquivo.tipo, corpo: copia, tamanho: conteudo.byteLength };
+  } catch {
+    throw new ArquivoNaoEncontrado();
   }
 }
 

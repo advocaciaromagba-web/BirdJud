@@ -27,6 +27,9 @@ BirdJud/                              criada na hora da conexao
 - "Abrir pasta no OneDrive" na ficha do cliente cria a pasta na hora se ela
   ainda nao existir.
 
+Arquivo grande vai em partes: 5 MB por vez no OneDrive, 8 MB no Google
+Drive (envio retomavel). Uma gravacao de entrevista de 300 MB chega inteira.
+
 A copia e de mao unica e nunca derruba nada: o documento fica no sistema de
 qualquer jeito. Desconectar apaga o token e o mapa de pastas; **o que ja esta
 na nuvem fica na conta do escritorio**.

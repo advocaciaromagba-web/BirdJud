@@ -178,6 +178,7 @@ const gg = new Arvore();
 /** Token de renovacao que o provedor considera revogado. */
 const revogados = new Set<string>();
 const sessoesDeEnvio = new Map<string, { pasta: string; nome: string; recebidos: number; total: number }>();
+const partesDoDrive: number[] = [];
 
 async function responder(req: IncomingMessage, res: import("node:http").ServerResponse) {
   const url = new URL(req.url!, base);
@@ -324,7 +325,20 @@ async function responder(req: IncomingMessage, res: import("node:http").ServerRe
   if (url.pathname.startsWith("/gg/sessao/")) {
     const s = sessoesDeEnvio.get(url.pathname.split("/").pop()!)!;
     if (!gg.nos.get(s.pasta)) return json(404, {});
-    const no = gg.novo(s.nome, s.pasta, false, bruto.byteLength);
+    // Envio em partes: Content-Range "bytes a-b/total"; as do meio voltam 308.
+    const faixa = /bytes (\d+)-(\d+)\/(\d+)/.exec(String(req.headers["content-range"] ?? ""));
+    if (faixa) {
+      const [, a, b, total] = faixa.map(Number);
+      if (a !== s.recebidos) return json(400, { erro: "fora de ordem" });
+      s.recebidos = b + 1;
+      s.total = total;
+      partesDoDrive.push(bruto.byteLength);
+      if (s.recebidos < total) {
+        res.writeHead(308, { range: `bytes=0-${b}` });
+        return res.end();
+      }
+    }
+    const no = gg.novo(s.nome, s.pasta, false, faixa ? s.total : bruto.byteLength);
     return json(200, { id: no.id });
   }
   return json(404, { caminho: url.pathname });
@@ -564,5 +578,12 @@ d("nuvem do escritorio", () => {
     expect(resumo.pastas).toBeGreaterThan(5);
     expect(resumo.copiados).toBeGreaterThan(3);
     expect((await testarNuvem(escritorio)).ok).toBe(true);
+
+    // Arquivo grande (20 MB, como a gravacao de uma entrevista longa): vai
+    // em partes de 8 MB — num pedido so, estourava o tempo limite.
+    partesDoDrive.length = 0;
+    const grande = await anexar(c.id, "gravacao.pdf", 20 * 1024 * 1024);
+    expect(await espelharArquivo(escritorio, grande.id)).toBe("copiado");
+    expect(partesDoDrive).toEqual([8 * 1024 * 1024, 8 * 1024 * 1024, 4 * 1024 * 1024]);
   });
 });

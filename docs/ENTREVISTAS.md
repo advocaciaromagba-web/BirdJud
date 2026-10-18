@@ -264,8 +264,28 @@ vao para a pasta dele — e para a nuvem, se conectada:
 - o **PDF da transcricao**, ao encerrar.
 
 Sem cliente ligado, nada vai para pasta nenhuma e o cartao avisa. Falha ao
-guardar (acima de 25 MB, espaco esgotado) nao apaga a transcricao: a tela diz
+guardar (acima de 300 MB, espaco esgotado) nao apaga a transcricao: a tela diz
 o motivo.
+
+### Gravacao longa (18/10/2026)
+
+Uma entrevista de uma hora passa de 25 MB, e ate entao a gravacao inteira
+nao era guardada. Agora a tela manda o audio em **partes de 8 MB**, uma de
+cada vez, com ate tres tentativas por parte; o servidor junta as partes em
+`_envios/` dentro da pasta do escritorio e, na ultima, registra o arquivo
+com as mesmas regras do anexo comum (tipo, espaco do plano, cliente do
+escritorio). Limite: **300 MB** (umas dez horas de audio).
+
+- parte reenviada (a resposta se perdeu) nao duplica audio;
+- parte fora de ordem e recusada (409) sem estragar o que ja chegou;
+- passar de 300 MB apaga o envio (413): nada fica ocupando o disco;
+- envio abandonado (tela fechada no meio) e apagado depois de um dia;
+- o download de qualquer arquivo sai do disco aos poucos, sem carregar o
+  arquivo inteiro na memoria.
+
+O envio antigo, num pedido so, continua aceito ate 25 MB (tela aberta antes
+da atualizacao). Testes: `testes/envio-em-partes.test.ts` e
+`testes/entrevista-do-escritorio.test.ts`.
 
 ## Excluir
 
