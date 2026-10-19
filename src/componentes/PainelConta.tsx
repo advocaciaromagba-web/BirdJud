@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { CampoDeSenha } from "./CampoDeSenha";
+import { EVENTO_DO_SOM, tocarAlerta } from "./AlertaDaAgenda";
 
 async function enviar(rota: string, corpo: Record<string, string>) {
   const resposta = await fetch(rota, {
@@ -29,6 +30,7 @@ export function PainelConta({
   recebeResumo,
   recebeLembretes,
   recebeWhatsapp,
+  alertaSonoro,
   telefone,
   temModuloEmail,
   temModuloWhatsapp,
@@ -37,12 +39,14 @@ export function PainelConta({
   recebeResumo: boolean;
   recebeLembretes: boolean;
   recebeWhatsapp: boolean;
+  alertaSonoro: boolean;
   telefone: string;
   temModuloEmail: boolean;
   temModuloWhatsapp: boolean;
 }) {
   return (
     <div className="mt-8 grid gap-8">
+      <AlertaSonoro ligado={alertaSonoro} />
       {temModuloEmail || temModuloWhatsapp ? (
         <Avisos
           recebeResumo={recebeResumo}
@@ -168,6 +172,63 @@ function Avisos({
             </label>
           </>
         ) : null}
+      </div>
+      <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
+    </section>
+  );
+}
+
+function AlertaSonoro({ ligado }: { ligado: boolean }) {
+  const [som, setSom] = useState(ligado);
+  const [recado, setRecado] = useState<{ texto: string; erro: boolean } | null>(null);
+
+  async function trocar(novo: boolean) {
+    setSom(novo);
+    const resposta = await fetch("/api/agenda/alertas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ alertaSonoro: novo }),
+    }).catch(() => null);
+    if (resposta?.ok) {
+      window.dispatchEvent(new CustomEvent(EVENTO_DO_SOM, { detail: novo }));
+      setRecado({ texto: novo ? "Som ligado." : "Som desligado. O aviso na tela continua.", erro: false });
+    } else {
+      setSom(!novo);
+      setRecado({ texto: "Nao foi possivel guardar.", erro: true });
+    }
+  }
+
+  async function testar() {
+    const tocou = await tocarAlerta();
+    setRecado(
+      tocou
+        ? { texto: "Se nao ouviu, confira o volume do computador.", erro: false }
+        : { texto: "O navegador nao deixou tocar. Clique em qualquer lugar da pagina e tente de novo.", erro: true },
+    );
+  }
+
+  return (
+    <section className="cartao-aperto">
+      <h2 className="font-semibold">Alerta sonoro da agenda</h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Quando falta 1 hora e quando faltam 15 minutos para audiencia, pericia
+        ou atendimento de que voce e o responsavel (ou que e de todos), esta
+        tela toca e mostra um aviso. Funciona com o sistema aberto no
+        navegador, mesmo em outra aba.
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={som}
+            onChange={(e) => trocar(e.target.checked)}
+            className="accent-[var(--marca-primaria)]"
+          />
+          Tocar o alerta
+        </label>
+        <button type="button" className="botao-secundario" onClick={testar}>
+          Testar o som
+        </button>
       </div>
       <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
     </section>

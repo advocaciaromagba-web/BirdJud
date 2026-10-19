@@ -191,6 +191,8 @@ model Usuario {
   recebeResumo    Boolean @default(true)
   recebeLembretes Boolean @default(true)
   recebeWhatsapp  Boolean @default(false)
+  /// A tela toca 1 h e 15 min antes do compromisso desta pessoa (alerta-da-agenda.ts).
+  alertaSonoro    Boolean @default(true)
 
   avisos   Aviso[]
   tarefasDesignadas Tarefa[] @relation("TarefasDoResponsavel")

@@ -78,6 +78,32 @@ a linha mostra o assunto no lugar do titulo.
 `Compromisso.link` guarda o link que o tribunal mandou (Teams, Zoom, Webex)
 ou o Meet da reuniao. Aparece na coluna **Sala** como "Entrar" e no "Ver".
 
+## Alerta sonoro na tela (19/10/2026)
+
+Quando falta **1 hora** e quando faltam **15 minutos** para uma audiencia,
+pericia ou atendimento, a tela de quem esta marcado toca (tres toques curtos)
+e mostra um aviso no canto: tipo, horario, quanto falta, titulo, local e o
+link da sala virtual, com **Ok**, **Ver agenda** e **Desligar som**.
+
+- **Quem ouve**: o responsavel. Compromisso sem responsavel e de todos, e
+  toca para todos. Quem nao tem acesso a Agenda nao recebe.
+- **O que conta**: o que esta na agenda, ainda nao comecou e nao foi
+  concluido. Tarefa e prazo ficam em Tarefas, com o lembrete deles.
+- **Uma vez cada**: o mesmo alerta nao repete ao recarregar nem em outra aba.
+  Marcou em cima da hora (faltam 10 min)? Toca so o de 15. Remarcou? Toca de
+  novo no horario novo.
+- **Ligar e desligar**: em **Minha conta → Alerta sonoro da agenda** (com
+  "Testar o som") ou no proprio aviso. Comeca ligado. Desligado, o aviso na
+  tela continua; so o som para. Cada pessoa decide o seu
+  (`Usuario.alertaSonoro`, migracao 65).
+- **Limites do navegador**: so toca com o sistema aberto (pode ser outra aba
+  ou a janela minimizada), e o navegador so libera som depois do primeiro
+  clique ou tecla na pagina. O aviso na tela aparece de qualquer jeito.
+
+O servidor so informa o que vem nas proximas horas (`/api/agenda/alertas`,
+buscado a cada 5 min); o momento e decidido pelo relogio do navegador, a cada
+20 s. O som e gerado na hora (Web Audio), sem arquivo para baixar.
+
 ## Onde esta no codigo
 
 - `src/lib/agenda-do-escritorio.ts` — editar, excluir, arquivar, auditorias
@@ -85,4 +111,6 @@ ou o Meet da reuniao. Aparece na coluna **Sala** como "Entrar" e no "Ver".
 - `src/lib/agenda-tela.ts` — busca e status, sem React (tem teste)
 - `src/componentes/PainelAgenda.tsx` — a tela
 - `src/app/api/compromissos/[id]`, `.../avisar`, `.../excluidos`, `.../notificacoes`
-- testes: `testes/agenda-do-escritorio.test.ts`, `testes/agenda-tela.test.ts`, isolamento de `CompromissoExcluido`
+- `src/lib/alerta-da-agenda.ts` (quando toca, puro), `src/lib/proximos-da-agenda.ts`,
+  `src/componentes/AlertaDaAgenda.tsx`, `src/app/api/agenda/alertas` — o alerta sonoro
+- testes: `testes/agenda-do-escritorio.test.ts`, `testes/agenda-tela.test.ts`, `testes/alerta-da-agenda.test.ts`, isolamento de `CompromissoExcluido`

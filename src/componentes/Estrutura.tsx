@@ -4,6 +4,7 @@ import { AREA_DO_ENDERECO } from "@/lib/areas";
 import { Icone, type NomeDeIcone } from "./Icone";
 import { MenuLateral } from "./MenuLateral";
 import { CampoDeBusca } from "./CampoDeBusca";
+import { AlertaDaAgenda } from "./AlertaDaAgenda";
 
 export type Area = {
   href: string;
@@ -201,6 +202,8 @@ export function Estrutura({
           {children}
         </main>
       </div>
+      {/* Toca 1 h e 15 min antes do compromisso de quem esta logado. */}
+      <AlertaDaAgenda />
     </div>
   );
 }
