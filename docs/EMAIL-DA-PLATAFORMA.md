@@ -86,9 +86,33 @@ recuperacao diz que a recuperacao automatica nao esta disponivel — em vez de
 fingir que o e-mail saiu e deixar a pessoa esperando por um link que nunca
 chega.
 
-Com `EMAIL_RELE_*` configurado, nada abaixo e usado. `RESEND_API_KEY` vem
-depois dele, e o SMTP direto por ultimo — este so funciona em servidor proprio,
-por causa do bloqueio descrito acima.
+Ordem de tentativa (desde 19/10/2026): **Resend** (`RESEND_API_KEY` com
+`PLATAFORMA_REMETENTE` de dominio verificado) → **rele** (`EMAIL_RELE_*`,
+Gmail pela Vercel) → SMTP direto. Se um falhar, o proximo tenta na hora; se
+todos falharem, o erro traz o motivo de cada um. Assim o Resend no limite do
+plano gratis (100 por dia) ou fora do ar cai no Gmail, e o Gmail no limite
+dele cai no Resend — ninguem fica sem o link de senha. O SMTP direto so
+funciona em servidor proprio, por causa do bloqueio descrito acima.
+
+### Resend com o dominio da Blackbird
+
+O Resend so envia de dominio verificado — nunca de `@gmail.com`. O dominio
+`birdjud.com.br` esta numa conta da Cloudflare ainda sem acesso; por isso o
+envio usa um SUBdominio de `blackbirdsolucoes.com.br` (DNS no Registro.br, caixa
+de entrada na Zoho — o subdominio nao mexe no e-mail da Zoho):
+
+1. resend.com → **Domains → Add domain** → `envio.blackbirdsolucoes.com.br`,
+   regiao **Sao Paulo (sa-east-1)**;
+2. registro.br → dominio → **DNS → Editar zona**: criar os registros que o
+   Resend mostrar (MX e TXT de `send.envio`, TXT de `resend._domainkey.envio`),
+   copiando nome e valor exatamente; **Verify DNS records** no Resend;
+3. **API Keys → Create** — permissao *Sending access*, so este dominio;
+4. no Railway, servicos APP e TRABALHADOR → Variables:
+   `RESEND_API_KEY=<a chave>` e
+   `PLATAFORMA_REMETENTE=Blackbird Solucoes Notifica <notifica@envio.blackbirdsolucoes.com.br>`.
+
+Enquanto o dominio nao estiver verificado, o Resend recusa e o rele entrega:
+pode ligar a chave antes, sem risco.
 
 ## Caminho 1: conta do Google com senha de aplicativo
 

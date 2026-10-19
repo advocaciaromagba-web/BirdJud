@@ -76,34 +76,38 @@ type PorSmtp = {
 export type Transporte = PorRele | PorHttps | PorSmtp;
 
 /**
- * Qual transporte usar, na ordem de preferencia.
+ * Os transportes configurados, na ordem em que sao tentados.
  *
- * Rele primeiro; depois servico de envio; SMTP direto por ultimo. Os dois
- * primeiros saem por HTTPS, que e o que funciona em nuvem.
+ * Servico de envio (Resend) primeiro, desde 19/10/2026: assina com o dominio
+ * da Blackbird (SPF e DKIM), entao chega na caixa de entrada, e nao tem o
+ * limite diario da conta do Gmail. O rele (Gmail, pela Vercel) vem logo
+ * atras, como reserva: Resend fora do ar ou no limite do plano nao deixa
+ * ninguem sem o link de senha. SMTP direto por ultimo — no Railway a saida
+ * SMTP e bloqueada.
  *
  * O rele NAO exige PLATAFORMA_REMETENTE: quem fixa o remetente e o proprio
  * rele, pelo ambiente dele, justamente para que ninguem consiga escolher de
- * quem o e-mail parece vir. Por isso ele e conferido antes.
+ * quem o e-mail parece vir. O Resend exige (endereco do dominio verificado).
  */
-export function transporteDaPlataforma(): Transporte | null {
+export function transportesDaPlataforma(): Transporte[] {
+  const lista: Transporte[] = [];
+  const remetente = process.env.PLATAFORMA_REMETENTE?.trim();
+  const responderPara = process.env.PLATAFORMA_RESPONDER_PARA || undefined;
+
+  const chave = process.env.RESEND_API_KEY?.trim();
+  if (chave && remetente) lista.push({ tipo: "https", chave, remetente, responderPara });
+
   const endereco = process.env.EMAIL_RELE_URL?.trim();
   const tokenDoRele = process.env.EMAIL_RELE_TOKEN?.trim();
   if (endereco && tokenDoRele) {
-    return { tipo: "rele", endereco: endereco.replace(/\/+$/, ""), token: tokenDoRele };
+    lista.push({ tipo: "rele", endereco: endereco.replace(/\/+$/, ""), token: tokenDoRele });
   }
-
-  const remetente = process.env.PLATAFORMA_REMETENTE;
-  if (!remetente) return null;
-  const responderPara = process.env.PLATAFORMA_RESPONDER_PARA || undefined;
-
-  const chave = process.env.RESEND_API_KEY;
-  if (chave) return { tipo: "https", chave, remetente, responderPara };
 
   const host = process.env.PLATAFORMA_SMTP_HOST;
   const usuario = process.env.PLATAFORMA_SMTP_USUARIO;
   const senha = process.env.PLATAFORMA_SMTP_SENHA;
-  if (host && usuario && senha) {
-    return {
+  if (remetente && host && usuario && senha) {
+    lista.push({
       tipo: "smtp",
       host,
       usuario,
@@ -111,10 +115,14 @@ export function transporteDaPlataforma(): Transporte | null {
       porta: Number(process.env.PLATAFORMA_SMTP_PORTA ?? 587),
       remetente,
       responderPara,
-    };
+    });
   }
+  return lista;
+}
 
-  return null;
+/** O primeiro transporte que sera tentado, ou null sem nenhum. */
+export function transporteDaPlataforma(): Transporte | null {
+  return transportesDaPlataforma()[0] ?? null;
 }
 
 export function temRemetenteDaPlataforma(): boolean {
@@ -154,29 +162,35 @@ async function enviarPorHttps(
   transporte: PorHttps,
   mensagem: MensagemDaPlataforma,
 ): Promise<void> {
-  const resposta = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${transporte.chave}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      from: transporte.remetente,
-      to: [mensagem.para],
-      subject: mensagem.assunto,
-      text: mensagem.texto,
-      ...(transporte.responderPara
-        ? { reply_to: transporte.responderPara }
-        : {}),
-    }),
-  });
+  let resposta: Response;
+  try {
+    resposta = await fetch(process.env.RESEND_API_URL?.trim() || "https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${transporte.chave}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        from: transporte.remetente,
+        to: [mensagem.para],
+        subject: mensagem.assunto,
+        text: mensagem.texto,
+        ...(transporte.responderPara
+          ? { reply_to: transporte.responderPara }
+          : {}),
+      }),
+      signal: AbortSignal.timeout(25_000),
+    });
+  } catch (erro) {
+    throw new FalhaNoEnvio(`o Resend nao respondeu (${(erro as Error).message})`);
+  }
 
   if (!resposta.ok) {
     // O corpo do erro diz o que houve (dominio nao verificado, chave invalida,
     // destinatario recusado). Guardar isso e a diferenca entre corrigir em um
     // minuto e adivinhar por uma hora.
     const detalhe = await resposta.text().catch(() => "");
-    throw new FalhaNoEnvio(`HTTP ${resposta.status} ${detalhe.slice(0, 300)}`);
+    throw new FalhaNoEnvio(`o Resend recusou: HTTP ${resposta.status} ${detalhe.slice(0, 300)}`);
   }
 }
 
@@ -224,10 +238,21 @@ async function enviarPorSmtp(
 export async function enviarPelaPlataforma(
   mensagem: MensagemDaPlataforma,
 ): Promise<void> {
-  const transporte = transporteDaPlataforma();
-  if (!transporte) throw new PlataformaSemRemetente();
+  const transportes = transportesDaPlataforma();
+  if (!transportes.length) throw new PlataformaSemRemetente();
 
-  if (transporte.tipo === "rele") return enviarPeloRele(transporte, mensagem);
-  if (transporte.tipo === "https") return enviarPorHttps(transporte, mensagem);
-  return enviarPorSmtp(transporte, mensagem);
+  // Um falhou, tenta o proximo. Todos falharam: o erro diz o motivo de cada
+  // um, na ordem — e o que se precisa para saber onde olhar.
+  const motivos: string[] = [];
+  for (const transporte of transportes) {
+    try {
+      if (transporte.tipo === "rele") return await enviarPeloRele(transporte, mensagem);
+      if (transporte.tipo === "https") return await enviarPorHttps(transporte, mensagem);
+      return await enviarPorSmtp(transporte, mensagem);
+    } catch (erro) {
+      if (!(erro instanceof FalhaNoEnvio)) throw erro;
+      motivos.push(erro.message.replace(/^O e-mail nao pode ser enviado: /, ""));
+    }
+  }
+  throw new FalhaNoEnvio(motivos.join(" | "));
 }

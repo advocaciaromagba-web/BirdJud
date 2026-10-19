@@ -10,6 +10,7 @@ import {
   enviarPelaPlataforma,
   temRemetenteDaPlataforma,
   transporteDaPlataforma,
+  transportesDaPlataforma,
 } from "@/lib/email-plataforma";
 import { createServer, type Server } from "node:http";
 
@@ -23,6 +24,7 @@ const CHAVES = [
   "PLATAFORMA_SMTP_USUARIO",
   "PLATAFORMA_SMTP_SENHA",
   "PLATAFORMA_SMTP_PORTA",
+  "RESEND_API_URL",
 ];
 
 const guardado: Record<string, string | undefined> = {};
@@ -50,7 +52,7 @@ describe("escolha do transporte", () => {
     expect(temRemetenteDaPlataforma()).toBe(false);
   });
 
-  it("o rele vem na frente de tudo", () => {
+  it("Resend na frente, rele de reserva, SMTP por ultimo", () => {
     limpar();
     process.env.EMAIL_RELE_URL = "https://rele.exemplo/api/email";
     process.env.EMAIL_RELE_TOKEN = "t";
@@ -59,7 +61,15 @@ describe("escolha do transporte", () => {
     process.env.PLATAFORMA_SMTP_HOST = "smtp.gmail.com";
     process.env.PLATAFORMA_SMTP_USUARIO = "u";
     process.env.PLATAFORMA_SMTP_SENHA = "s";
-    expect(transporteDaPlataforma()?.tipo).toBe("rele");
+    expect(transportesDaPlataforma().map((t) => t.tipo)).toEqual(["https", "rele", "smtp"]);
+  });
+
+  it("Resend sem remetente nao conta: fica o rele", () => {
+    limpar();
+    process.env.EMAIL_RELE_URL = "https://rele.exemplo/api/email";
+    process.env.EMAIL_RELE_TOKEN = "t";
+    process.env.RESEND_API_KEY = "chave";
+    expect(transportesDaPlataforma().map((t) => t.tipo)).toEqual(["rele"]);
   });
 
   // O rele fixa o remetente do lado dele, de proposito: quem chama nao escolhe
@@ -185,6 +195,56 @@ describe("envio pelo rele", () => {
     await expect(
       enviarPelaPlataforma({ para: "a@b.com", assunto: "x", texto: "y" }),
     ).rejects.toThrow(/o rele de e-mail nao respondeu/);
+  });
+
+  it("Resend recusou: o rele entrega, e ninguem fica sem o e-mail", async () => {
+    limpar();
+    const { base, recebido } = await subirRele((corpo) =>
+      corpo.includes('"from"')
+        ? { status: 429, corpo: '{"message":"daily quota exceeded"}' }
+        : { status: 200, corpo: '{"ok":true}' },
+    );
+    process.env.RESEND_API_URL = `${base}/emails`;
+    process.env.RESEND_API_KEY = "chave";
+    process.env.PLATAFORMA_REMETENTE = "BirdJud <notifica@envio.exemplo.com.br>";
+    process.env.EMAIL_RELE_URL = `${base}/api/email`;
+    process.env.EMAIL_RELE_TOKEN = "t";
+
+    await enviarPelaPlataforma({ para: "a@b.com", assunto: "x", texto: "y" });
+    expect(recebido().url).toBe("/api/email");
+  });
+
+  it("todos falharam: o erro conta o motivo de cada um", async () => {
+    limpar();
+    const { base } = await subirRele(() => ({ status: 502, corpo: "fora" }));
+    process.env.RESEND_API_URL = `${base}/emails`;
+    process.env.RESEND_API_KEY = "chave";
+    process.env.PLATAFORMA_REMETENTE = "BirdJud <notifica@envio.exemplo.com.br>";
+    process.env.EMAIL_RELE_URL = `${base}/api/email`;
+    process.env.EMAIL_RELE_TOKEN = "t";
+    await expect(
+      enviarPelaPlataforma({ para: "a@b.com", assunto: "x", texto: "y" }),
+    ).rejects.toThrow(/o Resend recusou: HTTP 502.*\| o rele recusou: HTTP 502/);
+  });
+
+  it("Resend aceitou: manda com remetente, chave e responder-para", async () => {
+    limpar();
+    const { base, recebido } = await subirRele(() => ({ status: 200, corpo: '{"id":"1"}' }));
+    process.env.RESEND_API_URL = `${base}/emails`;
+    process.env.RESEND_API_KEY = "chave-resend";
+    process.env.PLATAFORMA_REMETENTE = "BirdJud <notifica@envio.exemplo.com.br>";
+    process.env.PLATAFORMA_RESPONDER_PARA = "contato@exemplo.com.br";
+    await enviarPelaPlataforma({ para: "a@b.com", assunto: "Assunto", texto: "Texto" });
+    const v = recebido();
+    expect(v.url).toBe("/emails");
+    expect(v.auth).toBe("Bearer chave-resend");
+    expect(JSON.parse(v.corpo)).toEqual({
+      from: "BirdJud <notifica@envio.exemplo.com.br>",
+      to: ["a@b.com"],
+      subject: "Assunto",
+      text: "Texto",
+      reply_to: "contato@exemplo.com.br",
+    });
   });
 
   it("sem transporte nenhum, levanta PlataformaSemRemetente", async () => {
