@@ -18,8 +18,8 @@ export default async function PaginaCadastro({
       <main className="pagina-estreita">
         <h1>Cadastro</h1>
         <p className="chamada">
-          Este endereco pertence a {marca.nome}. O cadastro de escritorios novos
-          e feito no endereco da plataforma.
+          Este endereço pertence a {marca.nome}. O cadastro de escritórios novos
+          é feito no endereço da plataforma.
         </p>
       </main>
     );
@@ -47,11 +47,11 @@ export default async function PaginaCadastro({
       <CabecalhoPublico />
       <main className="pagina-estreita">
         <h1 className="regua-destaque text-3xl">
-          Criar o sistema do seu escritorio
+          Criar o sistema do seu escritório
         </h1>
         <p className="chamada mt-4">
-          Seu escritorio, sua marca, seus dados isolados. {DIAS_DE_TESTE} dias
-          de teste, sem cartao.
+          Seu escritório, sua marca, seus dados isolados. {DIAS_DE_TESTE} dias
+          de teste, sem cartão.
         </p>
         <FormularioCadastro
           dominio={dominio}

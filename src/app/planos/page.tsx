@@ -7,7 +7,7 @@ import { SimuladorDePlanos } from "@/componentes/SimuladorDePlanos";
 export const metadata = {
   title: "Planos — BirdJud",
   description:
-    "Planos do Essencial ao Completo, ou monte o seu: o escritorio leva so os modulos que usa.",
+    "Planos do Essencial ao Completo, ou monte o seu: o escritório leva só os módulos que usa.",
 };
 
 export default async function PaginaPlanos() {
@@ -19,7 +19,7 @@ export default async function PaginaPlanos() {
       <main className="pagina-estreita">
         <h1>Planos</h1>
         <p className="chamada">
-          Este endereco pertence a {marca.nome}. O plano contratado aparece em
+          Este endereço pertence a {marca.nome}. O plano contratado aparece em
           Minha conta.
         </p>
         <Link href="/conta" className="botao-secundario mt-4">
@@ -36,11 +36,11 @@ export default async function PaginaPlanos() {
         <div className="max-w-2xl">
           <p className="sobretitulo">Planos</p>
           <h1 className="regua-destaque mt-2 text-3xl">
-            Do escritorio organizado ao escritorio inteiro
+            Do escritório organizado ao escritório inteiro
           </h1>
           <p className="chamada mt-4">
             Quatro planos prontos, do mais simples ao mais completo — ou monte o
-            seu, modulo a modulo. {DIAS_DE_TESTE} dias de teste, sem cartao.
+            seu, módulo a módulo. {DIAS_DE_TESTE} dias de teste, sem cartão.
           </p>
         </div>
 
@@ -52,38 +52,38 @@ export default async function PaginaPlanos() {
           <h2>O que vale para todos os planos</h2>
           <ul className="mt-3 grid gap-2 text-sm leading-relaxed text-slate-600">
             <li className="filete-destaque pl-4">
-              O endereco e a marca sao do escritorio:{" "}
+              O endereço e a marca são do escritório:{" "}
               <code>seu-escritorio.birdjud.com.br</code>, com a logo e as cores
               dele.
             </li>
             <li className="filete-destaque pl-4">
-              Os dados de um escritorio nao alcancam os de outro. Isso nao
+              Os dados de um escritório não alcançam os de outro. Isso não
               depende de plano.
             </li>
             <li className="filete-destaque pl-4">
-              O preco muda com o tamanho do escritorio, contado em advogados e
-              em equipe de apoio ativos. Desativar alguem libera a vaga.
+              O preço muda com o tamanho do escritório, contado em advogados e
+              em equipe de apoio ativos. Desativar alguém libera a vaga.
             </li>
             <li className="filete-destaque pl-4">
-              Acima de 25 advogados o preco sai de uma proposta. Escritorio
-              desse tamanho tem migracao de sistema, volume proprio de uso e
-              franquia ajustada — coisas que tabela de vitrine nao resolve bem.
+              Acima de 25 advogados o preço sai de uma proposta. Escritório
+              desse tamanho tem migração de sistema, volume próprio de uso e
+              franquia ajustada — coisas que tabela de vitrine não resolve bem.
             </li>
             <li className="filete-destaque pl-4">
               Consumo que passa da franquia — mensagem de WhatsApp, nota
-              emitida, token de IA, armazenamento — e cobrado pelo que foi
-              usado, no mes seguinte.
+              emitida, token de IA, armazenamento — é cobrado pelo que foi
+              usado, no mês seguinte.
             </li>
             <li className="filete-destaque pl-4">
-              Trocar de plano nao refaz contrato assinado: o valor combinado
-              fica gravado na assinatura do escritorio.
+              Trocar de plano não refaz contrato assinado: o valor combinado
+              fica gravado na assinatura do escritório.
             </li>
           </ul>
         </section>
 
         <footer className="mt-14 border-t border-slate-200 pt-8 text-sm text-slate-500">
           <p>
-            Os valores desta pagina sao a tabela vigente da plataforma. BirdJud{" "}
+            Os valores desta página são a tabela vigente da plataforma. BirdJud{" "}
             <span className="destaque">·</span> by Blackbird
           </p>
         </footer>

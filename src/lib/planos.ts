@@ -41,19 +41,19 @@ export const PLANO: Record<Plano, DescricaoDoPlano> = {
   ESSENCIAL: {
     rotulo: "Essencial",
     chamada:
-      "O escritorio organizado: clientes, processos, agenda e prazos. Cadastro preenchido a mao.",
+      "O escritório organizado: clientes, processos, agenda e prazos. Cadastro preenchido a mão.",
     modulos: [],
   },
   PROFISSIONAL: {
     rotulo: "Profissional",
     chamada:
-      "O dia a dia do contencioso: publicacoes do DJEN chegando sozinhas, arquivos do escritorio e aviso por e-mail.",
+      "O dia a dia do contencioso: publicações do DJEN chegando sozinhas, arquivos do escritório e aviso por e-mail.",
     modulos: ["PUBLICACOES_DJEN", "NUVEM", "EMAIL"],
   },
   AVANCADO: {
-    rotulo: "Avancado",
+    rotulo: "Avançado",
     chamada:
-      "O escritorio inteiro, inclusive o caixa: cobranca com boleto e Pix, nota fiscal de servico e financeiro.",
+      "O escritório inteiro, inclusive o caixa: cobrança com boleto e Pix, nota fiscal de serviço e financeiro.",
     modulos: [
       "PUBLICACOES_DJEN",
       "NUVEM",
@@ -66,7 +66,7 @@ export const PLANO: Record<Plano, DescricaoDoPlano> = {
   COMPLETO: {
     rotulo: "Completo",
     chamada:
-      "Tudo que o sistema faz, com inteligencia artificial lendo documento, resumindo publicacao e rascunhando peca, e aviso por WhatsApp.",
+      "Tudo que o sistema faz, com inteligência artificial lendo documento, resumindo publicação e rascunhando peça, e aviso por WhatsApp.",
     modulos: [
       "PUBLICACOES_DJEN",
       "NUVEM",

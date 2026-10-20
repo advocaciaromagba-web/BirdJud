@@ -6,7 +6,7 @@ import { useState } from "react";
 export function FormularioEsqueciSenha({
   rota = "/api/senha/esqueci",
   entrada = "/login",
-  ajuda = "O mesmo e-mail com que voce entra neste endereco.",
+  ajuda = "O mesmo e-mail com que você entra neste endereço.",
 }: {
   rota?: string;
   entrada?: string;
@@ -33,7 +33,7 @@ export function FormularioEsqueciSenha({
     setRecado({
       texto: resposta.ok
         ? (json.detalhe ?? "Pedido recebido.")
-        : (json.erro ?? "Nao foi possivel enviar o link."),
+        : (json.erro ?? "Não foi possível enviar o link."),
       ok: resposta.ok,
     });
   }

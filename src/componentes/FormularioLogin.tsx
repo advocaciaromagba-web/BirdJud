@@ -30,7 +30,7 @@ export function FormularioLogin() {
     }
     // Mensagem unica de proposito: nao dizer se o e-mail existe, se a senha
     // esta errada ou se o usuario esta bloqueado.
-    setErro("Nao foi possivel entrar. Confira os dados e tente novamente.");
+    setErro("Não foi possível entrar. Confira os dados e tente novamente.");
   }
 
   return (
@@ -62,7 +62,7 @@ export function FormularioLogin() {
       </div>
       <div>
         <label htmlFor="login-codigo" className="rotulo">
-          Codigo de 6 digitos
+          Código de 6 dígitos
         </label>
         <input
           id="login-codigo"
@@ -72,7 +72,7 @@ export function FormularioLogin() {
           className="campo"
         />
         <p className="ajuda">
-          So se o segundo fator estiver ativado na sua conta.
+          Só se o segundo fator estiver ativado na sua conta.
         </p>
       </div>
       {erro ? <p className="aviso-erro">{erro}</p> : null}

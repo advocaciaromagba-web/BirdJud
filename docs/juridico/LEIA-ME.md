@@ -1,7 +1,9 @@
 # Documentos juridicos do BirdJud
 
-> **Versao 2026-10-16, revisada** por Jose Luciano da Costa Roma, que e tambem
-> o encarregado de dados (LGPD) da plataforma. Contratada: BLACKBIRD SOLUCOES
+> **Versao 2026-10-20**: acentuacao corrigida em todos os documentos e o
+> Resend incluido entre os suboperadores. O texto de 16/10 foi revisado por
+> Jose Luciano da Costa Roma, que e tambem o encarregado de dados (LGPD) da
+> plataforma. Contratada: BLACKBIRD SOLUCOES
 > ESTRATEGICAS LTDA, CNPJ 30.044.017/0001-01, Guariba/SP. Foro de Guariba/SP,
 > reajuste pelo IPCA, contato e suporte em contato@blackbirdsolucoes.com.br.
 

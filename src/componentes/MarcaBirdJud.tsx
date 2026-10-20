@@ -32,7 +32,7 @@ export function MarcaBirdJud({
   comLink?: boolean;
 }) {
   const alt =
-    "BirdJud — gestao para escritorios de advocacia com inteligencia artificial";
+    "BirdJud — gestão para escritórios de advocacia com inteligência artificial";
 
   if (fundo === "escuro") {
     const peca = (

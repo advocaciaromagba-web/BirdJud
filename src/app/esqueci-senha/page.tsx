@@ -11,10 +11,10 @@ export default async function PaginaEsqueciSenha() {
   if (!marca?.id) {
     return (
       <main className="pagina-estreita">
-        <h1>Endereco sem escritorio</h1>
+        <h1>Endereço sem escritório</h1>
         <p className="chamada">
-          A recuperacao de senha e feita no endereco do escritorio. Confira o
-          link que voce recebeu.
+          A recuperação de senha é feita no endereço do escritório. Confira o
+          link que você recebeu.
         </p>
       </main>
     );
@@ -31,14 +31,14 @@ export default async function PaginaEsqueciSenha() {
         <>
           <p className="chamada esquerda mt-3">
             Informe o e-mail da sua conta. Se ele estiver cadastrado aqui,
-            enviamos um link para voce escolher uma senha nova.
+            enviamos um link para você escolher uma senha nova.
           </p>
           <FormularioEsqueciSenha />
         </>
       ) : (
         <p className="aviso-atencao mt-4">
-          A recuperacao automatica de senha ainda nao esta disponivel nesta
-          instalacao. Fale com quem administra o sistema do escritorio.
+          A recuperação automática de senha ainda não está disponível nesta
+          instalação. Fale com quem administra o sistema do escritório.
         </p>
       )}
     </CartaoDoEscritorio>

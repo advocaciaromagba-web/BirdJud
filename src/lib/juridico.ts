@@ -10,13 +10,13 @@
  * versao aceita; sem subir, o registro passaria a apontar para um texto que o
  * escritorio nunca leu.
  */
-export const VERSAO_DOS_DOCUMENTOS = "2026-10-16";
+export const VERSAO_DOS_DOCUMENTOS = "2026-10-20";
 
 export const DOCUMENTOS = [
   { chave: "TERMOS", rotulo: "Termos de Uso", caminho: "TERMOS-DE-USO" },
   {
     chave: "CONTRATO",
-    rotulo: "Contrato de licenca e servico",
+    rotulo: "Contrato de licença e serviço",
     caminho: "CONTRATO-SAAS",
   },
   {

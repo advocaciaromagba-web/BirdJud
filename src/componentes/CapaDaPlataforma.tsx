@@ -21,65 +21,65 @@ const DEMONSTRACOES: Demonstracao[] = [
     arquivo: "leitura-ia",
     endereco: "seu-escritorio.birdjud.com.br/clientes",
     sobretitulo: "Cadastro por leitura",
-    titulo: "A IA le o documento e preenche o cadastro",
+    titulo: "A IA lê o documento e preenche o cadastro",
     texto:
-      "Envie o documento de identificacao, a CNH, o cartao CNPJ, o contrato social ou a procuracao. A inteligencia artificial devolve cada campo com a confianca que teve na leitura e diz onde achou aquilo no papel. Nada entra no sistema antes de alguem conferir e aprovar, campo a campo.",
+      "Envie o documento de identificação, a CNH, o cartão CNPJ, o contrato social ou a procuração. A inteligência artificial devolve cada campo com a confiança que teve na leitura e diz onde achou aquilo no papel. Nada entra no sistema antes de alguém conferir e aprovar, campo a campo.",
     pontos: [
-      "CPF e CNPJ conferidos pelo digito verificador, do nosso lado",
-      "Numero de processo validado no padrao do CNJ",
-      "O que a IA leu mal chega marcado, nao chega escondido",
+      "CPF e CNPJ conferidos pelo dígito verificador, do nosso lado",
+      "Número de processo validado no padrão do CNJ",
+      "O que a IA leu mal chega marcado, não chega escondido",
     ],
   },
   {
     arquivo: "publicacoes",
     endereco: "seu-escritorio.birdjud.com.br/publicacoes",
-    sobretitulo: "Publicacoes",
-    titulo: "O DJEN chega lido, e ja preso ao processo",
+    sobretitulo: "Publicações",
+    titulo: "O DJEN chega lido, e já preso ao processo",
     texto:
-      "As OABs do escritorio sao consultadas todo dia. A publicacao chega com o prazo que o texto indica em destaque, presa ao processo que ja existe no sistema, e a IA resume o que aconteceu, o que fazer e o que merece atencao — em quatro linhas, nao em quatro paginas.",
+      "As OABs do escritório são consultadas todo dia. A publicação chega com o prazo que o texto indica em destaque, presa ao processo que já existe no sistema, e a IA resume o que aconteceu, o que fazer e o que merece atenção — em quatro linhas, não em quatro páginas.",
     pontos: [
       "Prazo detectado no texto e marcado como alerta, para conferir nos autos",
-      "O que e urgente sobe para o topo da lista",
-      "Da publicacao para a minuta da manifestacao, no mesmo lugar",
+      "O que é urgente sobe para o topo da lista",
+      "Da publicação para a minuta da manifestação, no mesmo lugar",
     ],
   },
   {
     arquivo: "agenda",
     endereco: "seu-escritorio.birdjud.com.br/agenda",
     sobretitulo: "Agenda e tarefas",
-    titulo: "Audiencia na agenda, peca em tarefas, nada misturado",
+    titulo: "Audiência na agenda, peça em tarefas, nada misturado",
     texto:
-      "A agenda guarda onde alguem precisa estar: audiencia, pericia, atendimento. Tarefas guardam o que precisa ser escrito, com data de entrega e prazo fatal. Uma nao aceita o que e da outra, e o que vence nas proximas 48 horas aparece no painel antes de qualquer outra coisa.",
+      "A agenda guarda onde alguém precisa estar: audiência, perícia, atendimento. Tarefas guardam o que precisa ser escrito, com data de entrega e prazo fatal. Uma não aceita o que é da outra, e o que vence nas próximas 48 horas aparece no painel antes de qualquer outra coisa.",
     pontos: [
-      "Aviso por e-mail e por WhatsApp de audiencia e de prazo fatal",
-      "Tarefa atribuida a quem vai fazer, com o processo junto",
-      "Horario sempre em Brasilia, venha de onde vier",
+      "Aviso por e-mail e por WhatsApp de audiência e de prazo fatal",
+      "Tarefa atribuída a quem vai fazer, com o processo junto",
+      "Horário sempre em Brasília, venha de onde vier",
     ],
   },
   {
     arquivo: "notas",
     endereco: "seu-escritorio.birdjud.com.br/notas",
     sobretitulo: "Nota fiscal",
-    titulo: "NFS-e pelo padrao nacional, com o certificado do escritorio",
+    titulo: "NFS-e pelo padrão nacional, com o certificado do escritório",
     texto:
-      "A nota e assinada com o certificado A1 do proprio escritorio e enviada ao padrao nacional da NFS-e. O numero e reservado antes do envio, o retorno da prefeitura fica guardado, e o cancelamento so acontece depois que a prefeitura aceita.",
+      "A nota é assinada com o certificado A1 do próprio escritório e enviada ao padrão nacional da NFS-e. O número é reservado antes do envio, o retorno da prefeitura fica guardado, e o cancelamento só acontece depois que a prefeitura aceita.",
     pontos: [
-      "Nota nasce da cobranca, sem redigitar valor nem cliente",
+      "Nota nasce da cobrança, sem redigitar valor nem cliente",
       "Chave de acesso e PDF guardados junto do cliente",
-      "O que falhou diz por que falhou, em portugues",
+      "O que falhou diz por que falhou, em português",
     ],
   },
   {
     arquivo: "cobrancas",
     endereco: "seu-escritorio.birdjud.com.br/cobrancas",
-    sobretitulo: "Cobrancas e financeiro",
-    titulo: "Boleto e Pix na conta do proprio escritorio",
+    sobretitulo: "Cobranças e financeiro",
+    titulo: "Boleto e Pix na conta do próprio escritório",
     texto:
-      "A cobranca sai na conta do escritorio, nao na nossa: o dinheiro nao passa pela plataforma em momento algum. Quando o cliente paga, a baixa entra sozinha e vira receita no financeiro, uma vez so.",
+      "A cobrança sai na conta do escritório, não na nossa: o dinheiro não passa pela plataforma em momento algum. Quando o cliente paga, a baixa entra sozinha e vira receita no financeiro, uma vez só.",
     pontos: [
-      "Boleto, Pix e cartao, com o link indo para o cliente",
-      "Vencida aparece no painel enquanto nao for resolvida",
-      "Cada escritorio com as proprias credenciais, guardadas cifradas",
+      "Boleto, Pix e cartão, com o link indo para o cliente",
+      "Vencida aparece no painel enquanto não for resolvida",
+      "Cada escritório com as próprias credenciais, guardadas cifradas",
     ],
   },
 ];
@@ -87,39 +87,39 @@ const DEMONSTRACOES: Demonstracao[] = [
 const RECURSOS: { icone: NomeDeIcone; titulo: string; texto: string }[] = [
   {
     icone: "ia",
-    titulo: "Inteligencia artificial onde da trabalho",
+    titulo: "Inteligência artificial onde dá trabalho",
     texto:
-      "Leitura de documento para cadastro, resumo de publicacao e rascunho de manifestacao. O que a IA escreve e sempre rascunho: quem assina e quem responde pela peca.",
+      "Leitura de documento para cadastro, resumo de publicação e rascunho de manifestação. O que a IA escreve é sempre rascunho: quem assina e quem responde pela peça.",
   },
   {
     icone: "publicacoes",
-    titulo: "Publicacoes do DJEN",
+    titulo: "Publicações do DJEN",
     texto:
-      "Captura diaria por OAB, com o prazo em destaque e o vinculo automatico ao processo. Sem OAB cadastrada o sistema avisa, em vez de ficar em silencio.",
+      "Captura diária por OAB, com o prazo em destaque e o vínculo automático ao processo. Sem OAB cadastrada o sistema avisa, em vez de ficar em silêncio.",
   },
   {
     icone: "processos",
     titulo: "Clientes, processos e prazos",
     texto:
-      "A ficha do processo junta publicacoes, agenda, arquivos e cobrancas em uma tela so. A busca acha pelo numero com ou sem mascara.",
+      "A ficha do processo junta publicações, agenda, arquivos e cobranças em uma tela só. A busca acha pelo número com ou sem máscara.",
   },
   {
     icone: "cobrancas",
-    titulo: "Cobranca, nota fiscal e caixa",
+    titulo: "Cobrança, nota fiscal e caixa",
     texto:
-      "Boleto e Pix na conta do escritorio, NFS-e pelo padrao nacional e o financeiro fechando junto, sem lancar duas vezes.",
+      "Boleto e Pix na conta do escritório, NFS-e pelo padrão nacional e o financeiro fechando junto, sem lançar duas vezes.",
   },
   {
     icone: "arquivos",
-    titulo: "Arquivos do escritorio",
+    titulo: "Arquivos do escritório",
     texto:
       "Documento guardado junto do cliente e do processo, com franquia por plano, tipo conferido e nome limpo antes de gravar.",
   },
   {
     icone: "conta",
-    titulo: "Seu endereco, sua marca",
+    titulo: "Seu endereço, sua marca",
     texto:
-      "Cada escritorio atende em seu proprio subdominio, com a logo e as cores dele. Os dados de um escritorio nao alcancam os de outro — isso nao depende de plano.",
+      "Cada escritório atende em seu próprio subdomínio, com a logo e as cores dele. Os dados de um escritório não alcançam os de outro — isso não depende de plano.",
   },
 ];
 
@@ -141,7 +141,7 @@ export function CapaDaPlataforma({
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1fr_minmax(0,30rem)] lg:items-center">
             <div>
               <p className="sobretitulo">
-                Gestao juridica com inteligencia artificial
+                Gestão jurídica com inteligência artificial
               </p>
               <h1
                 className="mt-4 max-w-3xl text-3xl leading-tight text-[color:var(--marca-contraste)] sm:text-5xl"
@@ -150,9 +150,9 @@ export function CapaDaPlataforma({
                 Mais tempo para o que realmente importa.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-300">
-                O BirdJud cuida do que consome o dia do escritorio — publicacao,
-                prazo, cadastro, cobranca e nota — para que a advocacia volte a
-                ser o trabalho principal. Seu escritorio, sua marca, seus dados
+                O BirdJud cuida do que consome o dia do escritório — publicação,
+                prazo, cadastro, cobrança e nota — para que a advocacia volte a
+                ser o trabalho principal. Seu escritório, sua marca, seus dados
                 isolados.
               </p>
 
@@ -165,7 +165,7 @@ export function CapaDaPlataforma({
                     color: "var(--marca-primaria)",
                   }}
                 >
-                  Criar o sistema do meu escritorio
+                  Criar o sistema do meu escritório
                 </Link>
                 <Link
                   href="/planos"
@@ -174,11 +174,11 @@ export function CapaDaPlataforma({
                   Ver os planos
                 </Link>
                 <span className="text-sm text-slate-400">
-                  {dias} dias de teste, sem cartao. A partir de{" "}
+                  {dias} dias de teste, sem cartão. A partir de{" "}
                   {emReais(
                     contaDoPlano("ESSENCIAL", faixaVitrine).totalCentavos,
                   )}{" "}
-                  por mes.
+                  por mês.
                 </span>
               </div>
             </div>
@@ -188,7 +188,7 @@ export function CapaDaPlataforma({
             <div className="hidden lg:block">
               <Tela
                 arquivo="painel"
-                alt="O painel do dia no BirdJud, com agenda, publicacoes e cobrancas"
+                alt="O painel do dia no BirdJud, com agenda, publicações e cobranças"
                 endereco="seu-escritorio.birdjud.com.br"
                 prioridade
               />
@@ -202,11 +202,11 @@ export function CapaDaPlataforma({
         >
           <p className="sobretitulo">O sistema por dentro</p>
           <h2 className="mt-2 text-2xl sm:text-3xl">
-            Estas sao telas do BirdJud, nao desenhos
+            Estas são telas do BirdJud, não desenhos
           </h2>
           <p className="chamada max-w-3xl">
-            As imagens abaixo sao capturas do sistema rodando, em um escritorio
-            de demonstracao com dados inventados. Quando a tela muda, a imagem
+            As imagens abaixo são capturas do sistema rodando, em um escritório
+            de demonstração com dados inventados. Quando a tela muda, a imagem
             muda junto.
           </p>
 
@@ -245,9 +245,9 @@ export function CapaDaPlataforma({
 
         <section id="recursos" className="border-t border-slate-200 bg-white">
           <div className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16 sm:px-6">
-            <p className="sobretitulo">Servicos</p>
+            <p className="sobretitulo">Serviços</p>
             <h2 className="mt-2 text-2xl sm:text-3xl">
-              Tudo que o escritorio usa no dia, em um lugar so
+              Tudo que o escritório usa no dia, em um lugar só
             </h2>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -269,11 +269,11 @@ export function CapaDaPlataforma({
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <p className="sobretitulo">Planos</p>
           <h2 className="mt-2 text-2xl sm:text-3xl">
-            Comeca em {rotuloDoTamanho(faixaVitrine)} e cresce com o escritorio
+            Começa em {rotuloDoTamanho(faixaVitrine)} e cresce com o escritório
           </h2>
           <p className="chamada max-w-3xl">
             Quatro planos prontos, do mais simples ao mais completo, ou monte o
-            seu, modulo a modulo. Acima de 25 advogados o preco sai de uma
+            seu, módulo a módulo. Acima de 25 advogados o preço sai de uma
             proposta.
           </p>
 
@@ -291,7 +291,7 @@ export function CapaDaPlataforma({
                     {emReais(conta.totalCentavos)}
                     <span className="text-sm font-normal text-slate-500">
                       {" "}
-                      /mes
+                      /mês
                     </span>
                   </p>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -315,25 +315,25 @@ export function CapaDaPlataforma({
                 BirdJud, by Blackbird
               </h2>
               <p className="mt-4 leading-relaxed text-slate-600">
-                O BirdJud nasceu dentro de um escritorio de advocacia, da rotina
-                de quem perde a manha conferindo publicacao, redigitando
-                documento e correndo atras de prazo. Cada funcao do sistema
-                existe porque alguem, em algum dia de trabalho, precisou dela —
-                e nao porque ficava bem na lista de recursos.
+                O BirdJud nasceu dentro de um escritório de advocacia, da rotina
+                de quem perde a manhã conferindo publicação, redigitando
+                documento e correndo atrás de prazo. Cada função do sistema
+                existe porque alguém, em algum dia de trabalho, precisou dela —
+                e não porque ficava bem na lista de recursos.
               </p>
               <p className="mt-4 leading-relaxed text-slate-600">
-                A Blackbird e a casa de tecnologia que constroi e mantem o
-                sistema. Nosso compromisso e simples de enunciar e dificil de
-                cumprir, e por isso esta escrito: os dados de um escritorio nao
-                alcancam os de outro, o dinheiro do cliente nao passa pela
-                plataforma, e o que a inteligencia artificial escreve e rascunho
-                para conferencia humana — nunca peca pronta para protocolo.
+                A Blackbird é a casa de tecnologia que constrói e mantém o
+                sistema. Nosso compromisso é simples de enunciar e difícil de
+                cumprir, e por isso está escrito: os dados de um escritório não
+                alcançam os de outro, o dinheiro do cliente não passa pela
+                plataforma, e o que a inteligência artificial escreve é rascunho
+                para conferência humana — nunca peça pronta para protocolo.
               </p>
               <p className="mt-4 leading-relaxed text-slate-600">
-                O isolamento entre escritorios nao depende de plano contratado
-                nem de configuracao: e a base do sistema, verificada a cada
-                mudanca por uma bateria de testes que precisa passar antes de
-                qualquer publicacao.
+                O isolamento entre escritórios não depende de plano contratado
+                nem de configuração: é a base do sistema, verificada a cada
+                mudança por uma bateria de testes que precisa passar antes de
+                qualquer publicação.
               </p>
             </div>
 
@@ -343,22 +343,22 @@ export function CapaDaPlataforma({
                 <div>
                   <dt className="font-semibold">Onde os dados ficam</dt>
                   <dd className="text-slate-600">
-                    Servidores no Brasil, com backup diario e retencao declarada
+                    Servidores na União Europeia, com backup diário e retenção declarada
                     no acordo de LGPD.
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold">Quem le o que</dt>
+                  <dt className="font-semibold">Quem lê o quê</dt>
                   <dd className="text-slate-600">
-                    Cada escritorio ve apenas os proprios dados. Acesso de
+                    Cada escritório vê apenas os próprios dados. Acesso de
                     suporte fica registrado.
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold">Se voce sair</dt>
+                  <dt className="font-semibold">Se você sair</dt>
                   <dd className="text-slate-600">
-                    Exportacao completa dos seus dados, e purga depois do prazo
-                    de retencao.
+                    Exportação completa dos seus dados, e purga depois do prazo
+                    de retenção.
                   </dd>
                 </div>
               </dl>
@@ -376,7 +376,7 @@ export function CapaDaPlataforma({
               Fale com quem construiu
             </h2>
             <p className="chamada max-w-3xl">
-              Duvida sobre plano, migracao do sistema atual ou escritorio acima
+              Dúvida sobre plano, migração do sistema atual ou escritório acima
               de 25 advogados: escreva. Quem responde conhece o produto por
               dentro.
             </p>
@@ -388,7 +388,7 @@ export function CapaDaPlataforma({
                 </a>
               ) : null}
               <Link href="/cadastro" className="botao-secundario">
-                Comecar o teste de {dias} dias
+                Começar o teste de {dias} dias
               </Link>
             </div>
           </div>
@@ -404,7 +404,7 @@ export function CapaDaPlataforma({
             </p>
           </div>
 
-          <nav aria-label="Rodape" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
+          <nav aria-label="Rodapé" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
             <Link href="/planos" className="hover:text-white">
               Planos
             </Link>

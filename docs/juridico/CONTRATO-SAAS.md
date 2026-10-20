@@ -1,75 +1,75 @@
-# Contrato de Licenca de Uso e Prestacao de Servico — BirdJud
+# Contrato de Licença de Uso e Prestação de Serviço — BirdJud
 
-> Versao 2026-10-16. Revisada por Jose Luciano da Costa Roma.
+> Versão 2026-10-20. Revisada por José Luciano da Costa Roma.
 
-**CONTRATADA:** BLACKBIRD SOLUCOES ESTRATEGICAS LTDA, CNPJ 30.044.017/0001-01, com sede na Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042.
+**CONTRATADA:** BLACKBIRD SOLUÇÕES ESTRATÉGICAS LTDA, CNPJ 30.044.017/0001-01, com sede na Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042.
 
-**CONTRATANTE:** o escritorio identificado no cadastro, cujos dados constam do
+**CONTRATANTE:** o escritório identificado no cadastro, cujos dados constam do
 sistema e integram este instrumento.
 
-## Clausula 1 — Objeto
+## Cláusula 1 — Objeto
 
-Licenca de uso, nao exclusiva e intransferivel, do sistema BirdJud, em modelo de
-software como servico, com os modulos e a faixa de profissionais indicados no
-cadastro, mais os servicos acessorios de suporte e manutencao.
+Licença de uso, não exclusiva e intransferível, do sistema BirdJud, em modelo de
+software como serviço, com os módulos e a faixa de profissionais indicados no
+cadastro, mais os serviços acessórios de suporte e manutenção.
 
-## Clausula 2 — Documentos que integram este contrato
+## Cláusula 2 — Documentos que integram este contrato
 
-Termos de Uso, Acordo de Tratamento de Dados Pessoais e SLA, nas versoes aceitas
+Termos de Uso, Acordo de Tratamento de Dados Pessoais e SLA, nas versões aceitas
 pela CONTRATANTE, cujo registro de aceite fica guardado no sistema.
 
-## Clausula 3 — Prazo
+## Cláusula 3 — Prazo
 
-Prazo indeterminado, iniciado no fim do periodo de teste gratuito de 14
+Prazo indeterminado, iniciado no fim do período de teste gratuito de 14
 dias. Qualquer parte pode denunciar a qualquer tempo, por escrito, respeitado o
-mes em curso.
+mês em curso.
 
-## Clausula 4 — Preco e reajuste
+## Cláusula 4 — Preço e reajuste
 
-Mensalidade conforme a faixa e os modulos contratados, mais o consumo que
-exceder as franquias do mes, na forma da tabela vigente no cadastro.
+Mensalidade conforme a faixa e os módulos contratados, mais o consumo que
+exceder as franquias do mês, na forma da tabela vigente no cadastro.
 
-O valor contratado fica registrado no sistema e **nao muda** por alteracao da
-tabela publica. Reajuste anual pelo IPCA (IBGE), ou por acordo em caso de troca de
-faixa ou de modulos.
+O valor contratado fica registrado no sistema e **não muda** por alteração da
+tabela pública. Reajuste anual pelo IPCA (IBGE), ou por acordo em caso de troca de
+faixa ou de módulos.
 
-## Clausula 5 — Pagamento e inadimplencia
+## Cláusula 5 — Pagamento e inadimplência
 
-Vencimento no dia indicado no cadastro, nunca antes de 5 dias da emissao.
+Vencimento no dia indicado no cadastro, nunca antes de 5 dias da emissão.
 
-Em atraso: correcao pelo IPCA (IBGE), juros de 1% ao mes e multa de 2%. A partir de
-5 dias, marcacao de inadimplencia; a partir de 15 dias, suspensao do acesso.
-A suspensao nao apaga dados.
+Em atraso: correção pelo IPCA (IBGE), juros de 1% ao mês e multa de 2%. A partir de
+5 dias, marcação de inadimplência; a partir de 15 dias, suspensão do acesso.
+A suspensão não apaga dados.
 
-## Clausula 6 — Obrigacoes da CONTRATADA
+## Cláusula 6 — Obrigações da CONTRATADA
 
-Manter o sistema disponivel na forma do SLA, guardar sigilo, manter o isolamento
-entre escritorios, registrar acessos de suporte, manter backup e permitir a
-exportacao integral dos dados a qualquer tempo.
+Manter o sistema disponível na forma do SLA, guardar sigilo, manter o isolamento
+entre escritórios, registrar acessos de suporte, manter backup e permitir a
+exportação integral dos dados a qualquer tempo.
 
-## Clausula 7 — Obrigacoes da CONTRATANTE
+## Cláusula 7 — Obrigações da CONTRATANTE
 
 Usar o sistema conforme os Termos, manter suas credenciais em sigilo, responder
 pelos dados que insere e pelas contas de terceiros que conectar, e pagar em dia.
 
-## Clausula 8 — Limitacao de responsabilidade
+## Cláusula 8 — Limitação de responsabilidade
 
-A CONTRATADA nao responde por perda decorrente de informacao inserida errada
-pela CONTRATANTE, por prazo processual nao conferido por ela, nem por falha de
-servico de terceiro contratado diretamente pela CONTRATANTE.
+A CONTRATADA não responde por perda decorrente de informação inserida errada
+pela CONTRATANTE, por prazo processual não conferido por ela, nem por falha de
+serviço de terceiro contratado diretamente pela CONTRATANTE.
 
-Salvo dolo, a responsabilidade da CONTRATADA limita-se ao valor das ultimas 12
+Salvo dolo, a responsabilidade da CONTRATADA limita-se ao valor das últimas 12
 mensalidades.
 
-A CONTRATADA **nao presta servico juridico** e nao responde pelo conteudo
+A CONTRATADA **não presta serviço jurídico** e não responde pelo conteúdo
 produzido no sistema.
 
-## Clausula 9 — Encerramento e devolucao de dados
+## Cláusula 9 — Encerramento e devolução de dados
 
 Encerrado o contrato, a CONTRATANTE tem 90 dias para exportar seus dados em
-formato aberto. Apos esse prazo, os dados sao apagados em definitivo, com
+formato aberto. Após esse prazo, os dados são apagados em definitivo, com
 registro.
 
-## Clausula 10 — Foro
+## Cláusula 10 — Foro
 
-Fica eleito o foro da Comarca de Guariba/SP para dirimir qualquer questao oriunda deste instrumento, com renuncia de qualquer outro, por mais privilegiado que seja.
+Fica eleito o foro da Comarca de Guariba/SP para dirimir qualquer questão oriunda deste instrumento, com renúncia de qualquer outro, por mais privilegiado que seja.

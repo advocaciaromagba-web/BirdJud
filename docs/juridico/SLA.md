@@ -1,58 +1,58 @@
-# SLA — Nivel de servico do BirdJud
+# SLA — Nível de serviço do BirdJud
 
-> Versao 2026-10-16.
+> Versão 2026-10-20.
 
 ## 1. Disponibilidade
 
-Meta de **99,5% ao mes**, medida sobre a resposta da aplicacao no endereco do
-Escritorio, fora das janelas programadas.
+Meta de **99,5% ao mês**, medida sobre a resposta da aplicação no endereço do
+Escritório, fora das janelas programadas.
 
-Nao contam como indisponibilidade:
+Não contam como indisponibilidade:
 - janela programada avisada com 48h;
-- falha de servico de terceiro conectado pelo Escritorio;
-- falha da conexao do Escritorio;
-- suspensao por inadimplencia.
+- falha de serviço de terceiro conectado pelo Escritório;
+- falha da conexão do Escritório;
+- suspensão por inadimplência.
 
 ## 2. Janela programada
 
-Manutencao preferencialmente entre 23h e 5h, dias uteis, com aviso no sistema.
-Migracao de banco que exija parada: aviso com 5 dias.
+Manutenção preferencialmente entre 23h e 5h, dias úteis, com aviso no sistema.
+Migração de banco que exija parada: aviso com 5 dias.
 
 ## 3. Suporte
 
-| Gravidade | O que e | Primeira resposta | Objetivo de solucao |
+| Gravidade | O que é | Primeira resposta | Objetivo de solução |
 | --- | --- | --- | --- |
-| Critica | sistema fora, ou dado de um escritorio visivel a outro | 1 hora util | 4 horas uteis |
-| Alta | modulo contratado parado (publicacoes, WhatsApp, NFS-e) | 4 horas uteis | 1 dia util |
-| Media | funcao com defeito e contorno possivel | 1 dia util | 5 dias uteis |
-| Baixa | duvida, melhoria, ajuste visual | 2 dias uteis | sem prazo |
+| Crítica | sistema fora, ou dado de um escritório visível a outro | 1 hora útil | 4 horas úteis |
+| Alta | módulo contratado parado (publicações, WhatsApp, NFS-e) | 4 horas úteis | 1 dia útil |
+| Média | função com defeito e contorno possível | 1 dia útil | 5 dias úteis |
+| Baixa | dúvida, melhoria, ajuste visual | 2 dias úteis | sem prazo |
 
-Horario util: dias uteis, 9h as 18h (horario de Brasilia).
+Horário útil: dias úteis, 9h às 18h (horário de Brasília).
 
-**Vazamento entre escritorios e sempre critico**, mesmo que atinja um unico
-registro, e gera comunicacao imediata aos escritorios envolvidos.
+**Vazamento entre escritórios é sempre crítico**, mesmo que atinja um único
+registro, e gera comunicação imediata aos escritórios envolvidos.
 
 ## 4. Canal
 
-contato@blackbirdsolucoes.com.br — e o canal oficial; o que chega por ele vira chamado com
-numero. Pedido feito por outro meio pode nao ser registrado.
+contato@blackbirdsolucoes.com.br — é o canal oficial; o que chega por ele vira chamado com
+número. Pedido feito por outro meio pode não ser registrado.
 
-## 5. Consequencia do descumprimento
+## 5. Consequência do descumprimento
 
-Descumprida a meta de disponibilidade no mes, o Escritorio tem direito a
+Descumprida a meta de disponibilidade no mês, o Escritório tem direito a
 abatimento na fatura seguinte:
 
-| Disponibilidade no mes | Abatimento |
+| Disponibilidade no mês | Abatimento |
 | --- | --- |
 | de 99,0% a 99,5% | 5% |
 | de 95,0% a 99,0% | 10% |
 | abaixo de 95,0% | 20% |
 
-O abatimento e pedido por e-mail em ate 30 dias do fim do mes.
+O abatimento é pedido por e-mail em até 30 dias do fim do mês.
 
-## 6. Backup e restauracao
+## 6. Backup e restauração
 
-- backup diario, retido por 30 dias;
-- restauracao de um escritorio a partir do backup: objetivo de 8 horas uteis;
-- o procedimento e testado periodicamente, e o teste fica registrado em
+- backup diário, retido por 30 dias;
+- restauração de um escritório a partir do backup: objetivo de 8 horas úteis;
+- o procedimento é testado periodicamente, e o teste fica registrado em
   `docs/SEGURANCA.md`.

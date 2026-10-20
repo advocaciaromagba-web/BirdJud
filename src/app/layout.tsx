@@ -34,11 +34,11 @@ const serifada = Source_Serif_4({
 export const metadata: Metadata = {
   title: "BirdJud",
   description:
-    "Gestao completa para escritorios de advocacia, com inteligencia artificial.",
+    "Gestão completa para escritórios de advocacia, com inteligência artificial.",
   openGraph: {
     title: "BirdJud",
     description:
-      "Gestao completa para escritorios de advocacia, com inteligencia artificial.",
+      "Gestão completa para escritórios de advocacia, com inteligência artificial.",
     images: ["/marca/quadrado-escuro.jpg"],
   },
 };

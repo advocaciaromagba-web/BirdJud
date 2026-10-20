@@ -52,28 +52,28 @@ export function FormularioCadastro({
       setPronto({ endereco: json.endereco });
       return;
     }
-    setErro(json.erro ?? "Nao foi possivel cadastrar.");
+    setErro(json.erro ?? "Não foi possível cadastrar.");
   }
 
   if (pronto) {
     return (
       <div className="cartao mt-8">
-        <h2>Escritorio criado</h2>
+        <h2>Escritório criado</h2>
         <p className="mt-2 text-slate-700">
-          O endereco do seu escritorio e{" "}
+          O endereço do seu escritório é{" "}
           <strong style={{ color: "var(--marca-primaria)" }}>
             {pronto.endereco}
           </strong>
-          . Entre por ele com o e-mail e a senha que voce acabou de definir.
+          . Entre por ele com o e-mail e a senha que você acabou de definir.
         </p>
         <p className="mt-3 text-slate-700">
           Na primeira entrada, o sistema mostra os <strong>primeiros passos</strong>:
-          tres coisas essenciais, em menos de dez minutos, e depois as conexoes
-          que fazem os avisos, as publicacoes e as cobrancas acontecerem
-          sozinhos. O roteiro guarda onde voce parou.
+          três coisas essenciais, em menos de dez minutos, e depois as conexões
+          que fazem os avisos, as publicações e as cobranças acontecerem
+          sozinhos. O roteiro guarda onde você parou.
         </p>
         <p className="ajuda">
-          Periodo de teste de {dias} dias. A primeira fatura so e gerada depois
+          Período de teste de {dias} dias. A primeira fatura só é gerada depois
           disso.
         </p>
       </div>
@@ -87,27 +87,27 @@ export function FormularioCadastro({
           <span>
             <span className="sobretitulo">Plano escolhido</span>
             <span className="mt-0.5 block font-semibold">
-              {plano ? PLANO[plano].rotulo : "Montado por voce"}
+              {plano ? PLANO[plano].rotulo : "Montado por você"}
             </span>
           </span>
           <span className="text-right">
             <span className="text-lg font-bold tracking-tight">
               {emReais(mensalidadeCentavos)}
             </span>
-            <span className="text-slate-500"> /mes depois do teste</span>
+            <span className="text-slate-500"> /mês depois do teste</span>
           </span>
         </div>
         <p className="ajuda">
-          Ate {dias} dias sem pagar nada.{" "}
+          Até {dias} dias sem pagar nada.{" "}
           <a href="/planos" className="underline">
             Ver os planos
           </a>{" "}
-          ou trocar depois — o que voce marcar agora vale so para comecar.
+          ou trocar depois — o que você marcar agora vale só para começar.
         </p>
       </div>
       <div>
         <label htmlFor="cad-escritorio" className="rotulo">
-          Nome do escritorio
+          Nome do escritório
         </label>
         <input
           id="cad-escritorio"
@@ -118,7 +118,7 @@ export function FormularioCadastro({
       </div>
       <div>
         <label htmlFor="cad-slug" className="rotulo">
-          Endereco do sistema
+          Endereço do sistema
         </label>
         <input
           id="cad-slug"
@@ -161,7 +161,7 @@ export function FormularioCadastro({
           autoComplete="new-password"
           className="campo"
         />
-        <p className="ajuda">Minimo de 10 caracteres.</p>
+        <p className="ajuda">Mínimo de 10 caracteres.</p>
       </div>
       <label className="grid grid-cols-[auto_1fr] items-start gap-2 text-sm">
         <input
@@ -192,7 +192,7 @@ export function FormularioCadastro({
           ))}
           .
           <span className="ajuda block">
-            Versao {VERSAO_DOS_DOCUMENTOS}. O aceite fica registrado com data e
+            Versão {VERSAO_DOS_DOCUMENTOS}. O aceite fica registrado com data e
             hora.
           </span>
         </span>

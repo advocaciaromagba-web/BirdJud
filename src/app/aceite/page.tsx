@@ -27,14 +27,14 @@ export default async function PaginaAceite() {
   return (
     <main className="pagina-estreita">
       <p className="sobretitulo">{contexto.marca.nome}</p>
-      <h1 className="mt-1">Antes de comecar</h1>
+      <h1 className="mt-1">Antes de começar</h1>
       {contexto.papel === "ADMIN" ? (
         <>
           <p className="mt-3 leitura text-slate-700">
-            O sistema do escritorio esta pronto. Falta o aceite dos documentos
+            O sistema do escritório está pronto. Falta o aceite dos documentos
             que regem o uso: os termos, o contrato e o acordo de tratamento de
             dados pessoais (LGPD). O aceite fica registrado com o seu nome, a
-            data, a hora e o endereco de onde foi feito.
+            data, a hora e o endereço de onde foi feito.
           </p>
           <FormularioAceite
             documentos={DOCUMENTOS.filter((d) => pendentes.includes(d.chave)).map((d) => ({
@@ -46,7 +46,7 @@ export default async function PaginaAceite() {
         </>
       ) : (
         <p className="mt-3 leitura text-slate-700">
-          O administrador do escritorio ainda precisa aceitar os documentos de
+          O administrador do escritório ainda precisa aceitar os documentos de
           uso do sistema. Assim que ele aceitar, o acesso fica liberado.
         </p>
       )}

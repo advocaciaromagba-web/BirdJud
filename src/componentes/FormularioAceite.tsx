@@ -23,7 +23,7 @@ export function FormularioAceite({
     });
     if (!r.ok) {
       setOcupado(false);
-      setErro((await r.json().catch(() => ({}))).erro ?? "Nao foi possivel registrar o aceite.");
+      setErro((await r.json().catch(() => ({}))).erro ?? "Não foi possível registrar o aceite.");
       return;
     }
     // Navegacao completa: o aceite muda o que todas as telas deixam abrir.
@@ -54,7 +54,7 @@ export function FormularioAceite({
           className="mt-1"
         />
         <span>
-          Li e aceito os documentos acima, em nome do escritorio, na versao de{" "}
+          Li e aceito os documentos acima, em nome do escritório, na versão de{" "}
           {versao.split("-").reverse().join("/")}.
         </span>
       </label>

@@ -6,8 +6,8 @@ import { DOCUMENTOS, VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 /** Documentos publicos, servidos do repositorio — a fonte e uma so. */
 const PUBLICOS = new Map<string, string>([
   ...DOCUMENTOS.map((d) => [d.caminho, d.rotulo] as [string, string]),
-  ["SLA", "Nivel de servico (SLA)"],
-  ["POLITICA-DE-PRIVACIDADE", "Politica de privacidade"],
+  ["SLA", "Nível de serviço (SLA)"],
+  ["POLITICA-DE-PRIVACIDADE", "Política de privacidade"],
 ]);
 
 export function generateStaticParams() {

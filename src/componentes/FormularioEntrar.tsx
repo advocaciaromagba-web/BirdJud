@@ -43,7 +43,7 @@ export function FormularioEntrar({ dominio }: { dominio: string }) {
     const endereco = enderecoDeEntrada(valor, dominio);
     if (!endereco) {
       setErro(
-        "Nao reconheci esse endereco. Digite so o nome do seu escritorio, " +
+        "Não reconheci esse endereço. Digite só o nome do seu escritório, " +
           "como aparece antes de ." + dominio,
       );
       return;
@@ -66,7 +66,7 @@ export function FormularioEntrar({ dominio }: { dominio: string }) {
     <div className="grid gap-6">
       {lembrado ? (
         <div className="cartao-aperto">
-          <p className="text-sm text-slate-600">Da ultima vez voce entrou em</p>
+          <p className="text-sm text-slate-600">Da última vez você entrou em</p>
           <button
             type="button"
             onClick={() => ir(lembrado)}
@@ -79,7 +79,7 @@ export function FormularioEntrar({ dominio }: { dominio: string }) {
 
       <form onSubmit={enviar} className="grid gap-3">
         <label htmlFor="entrar-escritorio" className="rotulo">
-          Endereco do seu escritorio
+          Endereço do seu escritório
         </label>
         <div className="flex items-stretch rounded-[var(--raio)] border border-slate-300 bg-white focus-within:border-[color:var(--marca-primaria)]">
           <input
@@ -107,8 +107,8 @@ export function FormularioEntrar({ dominio }: { dominio: string }) {
       </form>
 
       <p className="text-sm text-slate-600">
-        Nao lembra o endereco? Ele esta no convite que voce recebeu por e-mail,
-        ou com o administrador do seu escritorio.
+        Não lembra o endereço? Ele está no convite que você recebeu por e-mail,
+        ou com o administrador do seu escritório.
       </p>
     </div>
   );

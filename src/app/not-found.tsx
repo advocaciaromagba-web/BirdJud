@@ -9,13 +9,13 @@ export default async function NaoEncontrado() {
     <main className="grid min-h-dvh place-items-center px-4">
       <div className="max-w-md text-center">
         <p className="sobretitulo">Erro 404</p>
-        <h1 className="mt-2 text-3xl">Esta pagina nao existe</h1>
+        <h1 className="mt-2 text-3xl">Esta página não existe</h1>
         <p className="chamada esquerda mt-3">
-          O endereco pode ter mudado, ou o link que voce seguiu pode estar
+          O endereço pode ter mudado, ou o link que você seguiu pode estar
           incompleto.
         </p>
         <Link href="/" className="botao-principal mt-6">
-          {marca?.id ? `Voltar para ${marca.nome}` : "Voltar para o inicio"}
+          {marca?.id ? `Voltar para ${marca.nome}` : "Voltar para o início"}
         </Link>
       </div>
     </main>

@@ -39,7 +39,7 @@ export const LIMITES: Record<
   // mesma tela.
   ATE_1: { advogados: 1, apoio: 2, rotulo: "Solo" },
   ATE_3: { advogados: 3, apoio: 3, rotulo: "Pequeno" },
-  ATE_10: { advogados: 10, apoio: 10, rotulo: "Escritorio" },
+  ATE_10: { advogados: 10, apoio: 10, rotulo: "Escritório" },
   ATE_25: { advogados: 25, apoio: 25, rotulo: "Grande" },
   ATE_50: { advogados: 50, apoio: 50, rotulo: "Corporativo" },
 };
@@ -65,7 +65,7 @@ export const FAIXA_SOB_CONSULTA: Faixa = "ATE_50";
 /** Como o tamanho aparece na tela. "ate 1 advogados" nao se escreve. */
 export function rotuloDoTamanho(faixa: Faixa): string {
   const advogados = LIMITES[faixa].advogados;
-  return advogados === 1 ? "1 advogado" : `ate ${advogados} advogados`;
+  return advogados === 1 ? "1 advogado" : `até ${advogados} advogados`;
 }
 
 export function faixaPublicada(faixa: Faixa): boolean {

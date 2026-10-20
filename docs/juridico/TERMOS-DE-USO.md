@@ -1,96 +1,96 @@
 # Termos de Uso do BirdJud
 
-> Versao 2026-10-16. Revisada por Jose Luciano da Costa Roma.
+> Versão 2026-10-20. Revisada por José Luciano da Costa Roma.
 
-## 1. Quem e quem
+## 1. Quem é quem
 
-**BirdJud** e a plataforma de gestao juridica operada por BLACKBIRD SOLUCOES ESTRATEGICAS LTDA,
+**BirdJud** é a plataforma de gestão jurídica operada por BLACKBIRD SOLUÇÕES ESTRATÉGICAS LTDA,
 CNPJ 30.044.017/0001-01, com sede na Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042 ("Plataforma").
 
-**Escritorio** e a sociedade de advogados ou o advogado autonomo que contrata a
-Plataforma e cadastra seus proprios usuarios.
+**Escritório** é a sociedade de advogados ou o advogado autônomo que contrata a
+Plataforma e cadastra seus próprios usuários.
 
-**Usuario** e a pessoa que acessa o sistema com credencial criada pelo
-Escritorio.
+**Usuário** é a pessoa que acessa o sistema com credencial criada pelo
+Escritório.
 
 ## 2. O que a Plataforma oferece
 
-Acesso, pela internet, a um sistema de gestao juridica com marca, endereco e
-dados proprios do Escritorio, nos modulos por ele contratados e dentro da faixa
+Acesso, pela internet, a um sistema de gestão jurídica com marca, endereço e
+dados próprios do Escritório, nos módulos por ele contratados e dentro da faixa
 de profissionais contratada.
 
-A Plataforma **nao presta servico juridico**, nao revisa peticoes, nao confere
-prazos e nao responde pelo conteudo produzido pelo Escritorio.
+A Plataforma **não presta serviço jurídico**, não revisa petições, não confere
+prazos e não responde pelo conteúdo produzido pelo Escritório.
 
-## 3. Conta e responsabilidade do Escritorio
+## 3. Conta e responsabilidade do Escritório
 
-O Escritorio e responsavel por:
+O Escritório é responsável por:
 
-- manter corretos os dados cadastrais e a lista de usuarios ativos;
-- guardar as credenciais e ativar o segundo fator de autenticacao;
-- conferir os prazos e as informacoes que lanca no sistema;
+- manter corretos os dados cadastrais e a lista de usuários ativos;
+- guardar as credenciais e ativar o segundo fator de autenticação;
+- conferir os prazos e as informações que lança no sistema;
 - ter direito de uso das contas de terceiros que conectar (WhatsApp, Asaas,
-  Autentique, provedor de e-mail, certificado digital e demais integracoes).
+  Autentique, provedor de e-mail, certificado digital e demais integrações).
 
-Cada usuario responde pelos atos praticados com sua credencial.
+Cada usuário responde pelos atos praticados com sua credencial.
 
 ## 4. Isolamento dos dados
 
-Os dados de cada Escritorio sao isolados dos demais por controle de acesso na
-aplicacao e por politica de seguranca no banco de dados. A Plataforma nao usa
-dados de um Escritorio em beneficio de outro, nem para treinar modelos.
+Os dados de cada Escritório são isolados dos demais por controle de acesso na
+aplicação e por política de segurança no banco de dados. A Plataforma não usa
+dados de um Escritório em benefício de outro, nem para treinar modelos.
 
 ## 5. Acesso de suporte
 
-Para atender chamados, a equipe da Plataforma pode acessar dados do Escritorio.
-Todo acesso fica registrado com identificacao do operador, do Escritorio, do
-motivo e do momento, e o registro fica disponivel ao Escritorio quando pedido.
-O registro de cada acesso e guardado por 12 meses e depois apagado.
+Para atender chamados, a equipe da Plataforma pode acessar dados do Escritório.
+Todo acesso fica registrado com identificação do operador, do Escritório, do
+motivo e do momento, e o registro fica disponível ao Escritório quando pedido.
+O registro de cada acesso é guardado por 12 meses e depois apagado.
 
 ## 6. Disponibilidade
 
-A Plataforma busca a disponibilidade descrita no SLA. Interrupcoes programadas
-sao avisadas com antecedencia. A Plataforma nao responde por indisponibilidade
-de servicos de terceiros conectados pelo Escritorio, nem por falha de acesso a
-internet do Escritorio.
+A Plataforma busca a disponibilidade descrita no SLA. Interrupções programadas
+são avisadas com antecedência. A Plataforma não responde por indisponibilidade
+de serviços de terceiros conectados pelo Escritório, nem por falha de acesso à
+internet do Escritório.
 
-## 7. Periodo de teste, pagamento e suspensao
+## 7. Período de teste, pagamento e suspensão
 
-O cadastro inicia com periodo de teste gratuito de 14 dias. Encerrado o teste,
-passa a haver fatura mensal conforme a faixa e os modulos contratados, mais o
-consumo que exceder as franquias. O Escritorio pode optar pelo plano anual,
+O cadastro inicia com período de teste gratuito de 14 dias. Encerrado o teste,
+passa a haver fatura mensal conforme a faixa e os módulos contratados, mais o
+consumo que exceder as franquias. O Escritório pode optar pelo plano anual,
 pago de uma vez com 10% de desconto.
 
-A fatura e paga por boleto ou Pix sem acrescimo. O pagamento por cartao de
-credito, a vista ou parcelado (plano anual, ate 6 vezes), inclui a tarifa da
-operadora do cartao e, no parcelado, o custo da antecipacao, informados antes
-da confirmacao. A Plataforma emite a nota fiscal de servico da mensalidade, com o
-Escritorio como tomador, e a envia ao e-mail cadastrado.
+A fatura é paga por boleto ou Pix sem acréscimo. O pagamento por cartão de
+crédito, à vista ou parcelado (plano anual, até 6 vezes), inclui a tarifa da
+operadora do cartão e, no parcelado, o custo da antecipação, informados antes
+da confirmação. A Plataforma emite a nota fiscal de serviço da mensalidade, com o
+Escritório como tomador, e a envia ao e-mail cadastrado.
 
 Havendo atraso:
 
-- a partir de 5 dias, o Escritorio e marcado como inadimplente e recebe aviso;
-- a partir de 15 dias, o acesso e suspenso ate a quitacao.
+- a partir de 5 dias, o Escritório é marcado como inadimplente e recebe aviso;
+- a partir de 15 dias, o acesso é suspenso até a quitação.
 
-A suspensao **nao apaga dados**. Durante ela, o Escritorio pode pedir a
-exportacao do que e seu.
+A suspensão **não apaga dados**. Durante ela, o Escritório pode pedir a
+exportação do que é seu.
 
 ## 8. Encerramento
 
 Qualquer das partes pode encerrar, a qualquer tempo, sem multa, respeitado o
-mes ja faturado. Encerrado o contrato, o Escritorio tem 90 dias para
-exportar seus dados; depois disso eles sao apagados em definitivo.
+mês já faturado. Encerrado o contrato, o Escritório tem 90 dias para
+exportar seus dados; depois disso eles são apagados em definitivo.
 
 ## 9. Propriedade
 
-O software e da Plataforma. Os dados sao do Escritorio. Nada neste documento
+O software é da Plataforma. Os dados são do Escritório. Nada neste documento
 transfere titularidade de um ao outro.
 
-## 10. Alteracao destes termos
+## 10. Alteração destes termos
 
-Mudancas de versao sao avisadas no sistema, e o uso apos o aviso implica
-aceite. Mudanca que reduza direito do Escritorio so vale apos aceite expresso.
+Mudanças de versão são avisadas no sistema, e o uso após o aviso implica
+aceite. Mudança que reduza direito do Escritório só vale após aceite expresso.
 
 ## 11. Foro
 
-Fica eleito o foro da Comarca de Guariba/SP para dirimir qualquer questao oriunda deste instrumento, com renuncia de qualquer outro, por mais privilegiado que seja.
+Fica eleito o foro da Comarca de Guariba/SP para dirimir qualquer questão oriunda deste instrumento, com renúncia de qualquer outro, por mais privilegiado que seja.

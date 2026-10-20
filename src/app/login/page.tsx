@@ -9,9 +9,9 @@ export default async function PaginaLogin() {
     return (
       <main className="grid min-h-dvh place-items-center px-4">
         <div className="cartao w-full max-w-md text-center">
-          <h1>Endereco sem escritorio</h1>
+          <h1>Endereço sem escritório</h1>
           <p className="chamada">
-            Cada escritorio entra pelo proprio endereco. Confira o link
+            Cada escritório entra pelo próprio endereço. Confira o link
             recebido.
           </p>
         </div>
@@ -64,7 +64,7 @@ export default async function PaginaLogin() {
 
         {marca.telefoneAtendimento ? (
           <p className="mt-4 text-center text-xs text-slate-500">
-            Problemas para entrar? Fale com o escritorio:{" "}
+            Problemas para entrar? Fale com o escritório:{" "}
             {marca.telefoneAtendimento}
           </p>
         ) : null}

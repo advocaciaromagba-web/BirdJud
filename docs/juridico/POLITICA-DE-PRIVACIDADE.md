@@ -1,61 +1,61 @@
-# Politica de Privacidade — BirdJud
+# Política de Privacidade — BirdJud
 
-> Versao 2026-10-16. Voltada ao titular final: o cliente do escritorio, a
+> Versão 2026-10-20. Voltada ao titular final: o cliente do escritório, a
 > parte, a testemunha.
 
 ## Quem trata seus dados
 
-Se voce e cliente de um escritorio de advocacia que usa o BirdJud, **quem decide
-sobre seus dados e o escritorio**, nao nos. Somos a empresa que fornece o sistema
+Se você é cliente de um escritório de advocacia que usa o BirdJud, **quem decide
+sobre seus dados é o escritório**, não nós. Somos a empresa que fornece o sistema
 onde ele guarda esses dados, e tratamos apenas em nome dele.
 
-Para exercer seus direitos, procure o escritorio. Se preferir falar conosco,
-encaminhamos ao escritorio responsavel.
+Para exercer seus direitos, procure o escritório. Se preferir falar conosco,
+encaminhamos ao escritório responsável.
 
 ## O que fica guardado
 
-Dados de identificacao e contato, dados dos processos em que voce figura,
-documentos que voce ou o escritorio enviarem, e registros de comunicacao feita
+Dados de identificação e contato, dados dos processos em que você figura,
+documentos que você ou o escritório enviarem, e registros de comunicação feita
 pelo sistema (avisos de compromisso, recibos, notas).
 
 ## Por que
 
-Para o escritorio prestar servico juridico a voce e cumprir obrigacoes legais e
-regulatorias — inclusive o exercicio regular de direito em processo, que e o que
-autoriza o tratamento de dado sensivel que apareca nos autos.
+Para o escritório prestar serviço jurídico a você e cumprir obrigações legais e
+regulatórias — inclusive o exercício regular de direito em processo, que é o que
+autoriza o tratamento de dado sensível que apareça nos autos.
 
 ## Com quem compartilhamos
 
-Com prestadores de infraestrutura e com os servicos que o proprio escritorio
-conecta (mensagem, cobranca, assinatura eletronica, nuvem de arquivos), sempre
-com contrato e apenas no necessario.
+Com prestadores de infraestrutura e com os serviços que o próprio escritório
+conecta (mensagem, cobrança, assinatura eletrônica, nuvem de arquivos), sempre
+com contrato e apenas no necessário.
 
-Os dados ficam em servidores na Uniao Europeia (Amsterda, Paises Baixos). Os
-recursos de inteligencia artificial e de WhatsApp, quando o escritorio os usa,
-passam por provedores nos Estados Unidos. Essas transferencias seguem o art.
-33 da LGPD, com as clausulas-padrao da ANPD.
+Os dados ficam em servidores na União Europeia (Amsterdã, Países Baixos). Os
+recursos de inteligência artificial e de WhatsApp, quando o escritório os usa,
+passam por provedores nos Estados Unidos. Essas transferências seguem o art.
+33 da LGPD, com as cláusulas-padrão da ANPD.
 
 ## Por quanto tempo
 
-Pelo tempo que o escritorio precisar, conforme a legislacao e a guarda de
-documentos da advocacia. Encerrado o contrato do escritorio com a plataforma, os
-dados sao apagados apos o prazo de retencao.
+Pelo tempo que o escritório precisar, conforme a legislação e a guarda de
+documentos da advocacia. Encerrado o contrato do escritório com a plataforma, os
+dados são apagados após o prazo de retenção.
 
 ## Seus direitos
 
-Confirmacao, acesso, correcao, anonimizacao, portabilidade, informacao sobre
-compartilhamento e revogacao de consentimento, quando for o caso — na forma do
+Confirmação, acesso, correção, anonimização, portabilidade, informação sobre
+compartilhamento e revogação de consentimento, quando for o caso — na forma do
 art. 18 da LGPD.
 
-## Seguranca
+## Segurança
 
-Isolamento por escritorio, credenciais cifradas, autenticacao em duas etapas
-disponivel, registro de acesso de suporte e backup diario. Detalhes tecnicos em
+Isolamento por escritório, credenciais cifradas, autenticação em duas etapas
+disponível, registro de acesso de suporte e backup diário. Detalhes técnicos em
 `docs/SEGURANCA.md`.
 
 ## Contato
 
-Encarregado de dados da plataforma: **Jose Luciano da Costa Roma** —
+Encarregado de dados da plataforma: **José Luciano da Costa Roma** —
 contato@blackbirdsolucoes.com.br.
 
-BLACKBIRD SOLUCOES ESTRATEGICAS LTDA, CNPJ 30.044.017/0001-01, Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042.
+BLACKBIRD SOLUÇÕES ESTRATÉGICAS LTDA, CNPJ 30.044.017/0001-01, Rua Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042.

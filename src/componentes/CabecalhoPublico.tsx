@@ -29,7 +29,7 @@ export function CabecalhoPublico() {
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
         <MarcaBirdJud tamanho="pequena" />
 
-        <nav aria-label="Navegacao do site" className="ml-6 hidden flex-1 items-center gap-6 text-sm lg:flex">
+        <nav aria-label="Navegação do site" className="ml-6 hidden flex-1 items-center gap-6 text-sm lg:flex">
           {AREAS.map((area) => (
             <Link
               key={area.href}
@@ -43,18 +43,18 @@ export function CabecalhoPublico() {
 
         <div className="ml-auto hidden items-center gap-3 lg:flex">
           {/*
-            Quem JA e cliente entra por aqui. Ate este botao existir, o site
-            publico so oferecia cadastro: para entrar, a pessoa precisava
-            lembrar o proprio endereco de cabeca ou procurar um e-mail antigo.
+            Quem JA e cliente entra por aqui. Até este botão existir, o site
+            público só oferecia cadastro: para entrar, a pessoa precisava
+            lembrar o próprio endereço de cabeça ou procurar um e-mail antigo.
           */}
           <Link
             href="/entrar"
             className="rounded-[var(--raio)] px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
           >
-            Entrar no meu escritorio
+            Entrar no meu escritório
           </Link>
           <Link href="/cadastro" className="botao-principal">
-            Criar o sistema do meu escritorio
+            Criar o sistema do meu escritório
           </Link>
         </div>
 
@@ -83,7 +83,7 @@ export function CabecalhoPublico() {
 
       {aberto ? (
         <div className="border-t border-slate-200 bg-white lg:hidden">
-          <nav aria-label="Navegacao do site no celular" className="mx-auto grid max-w-6xl gap-1 px-4 py-3 sm:px-6">
+          <nav aria-label="Navegação do site no celular" className="mx-auto grid max-w-6xl gap-1 px-4 py-3 sm:px-6">
             {AREAS.map((area) => (
               <Link
                 key={area.href}
@@ -99,14 +99,14 @@ export function CabecalhoPublico() {
               onClick={() => setAberto(false)}
               className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-slate-900 hover:bg-slate-100"
             >
-              Entrar no meu escritorio
+              Entrar no meu escritório
             </Link>
             <Link
               href="/cadastro"
               onClick={() => setAberto(false)}
               className="botao-principal mt-2"
             >
-              Criar o sistema do meu escritorio
+              Criar o sistema do meu escritório
             </Link>
           </nav>
         </div>

@@ -28,9 +28,9 @@ const DESCRICAO_DO_MODULO: Record<
   { rotulo: string; texto: string; icone: NomeDeIcone }
 > = {
   PUBLICACOES_DJEN: {
-    rotulo: "Publicacoes do DJEN",
+    rotulo: "Publicações do DJEN",
     texto:
-      "As OABs do escritorio consultadas todo dia, com o prazo do texto em destaque.",
+      "As OABs do escritório consultadas todo dia, com o prazo do texto em destaque.",
     icone: "publicacoes",
   },
   NUVEM: {
@@ -45,36 +45,36 @@ const DESCRICAO_DO_MODULO: Record<
     icone: "conta",
   },
   COBRANCAS: {
-    rotulo: "Cobrancas",
-    texto: "Boleto e Pix emitidos na conta do proprio escritorio.",
+    rotulo: "Cobranças",
+    texto: "Boleto e Pix emitidos na conta do próprio escritório.",
     icone: "cobrancas",
   },
   FINANCEIRO: {
     rotulo: "Financeiro",
     texto:
-      "Entradas e saidas do escritorio, com a baixa da cobranca caindo sozinha.",
+      "Entradas e saídas do escritório, com a baixa da cobrança caindo sozinha.",
     icone: "financeiro",
   },
   NFSE: {
-    rotulo: "Nota fiscal de servico",
+    rotulo: "Nota fiscal de serviço",
     texto:
-      "NFS-e pelo padrao nacional, assinada com o certificado do escritorio.",
+      "NFS-e pelo padrão nacional, assinada com o certificado do escritório.",
     icone: "notas",
   },
   IA: {
-    rotulo: "Inteligencia artificial",
+    rotulo: "Inteligência artificial",
     texto:
-      "Le o documento e preenche o cadastro, resume a publicacao e rascunha a manifestacao. Sem ela, o cadastro e digitado a mao.",
+      "Lê o documento e preenche o cadastro, resume a publicação e rascunha a manifestação. Sem ela, o cadastro é digitado à mão.",
     icone: "ia",
   },
   WHATSAPP: {
     rotulo: "Aviso por WhatsApp",
-    texto: "Audiencia e prazo avisados no telefone, por modelo aprovado.",
+    texto: "Audiência e prazo avisados no telefone, por modelo aprovado.",
     icone: "clientes",
   },
   ASSINATURA: {
-    rotulo: "Assinatura eletronica",
-    texto: "Procuracao e contrato assinados sem imprimir.",
+    rotulo: "Assinatura eletrônica",
+    texto: "Procuração e contrato assinados sem imprimir.",
     icone: "processos",
   },
 };
@@ -107,7 +107,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
     <>
       <section>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-slate-600">Tamanho do escritorio:</span>
+          <span className="text-sm text-slate-600">Tamanho do escritório:</span>
           {FAIXAS_PUBLICADAS.map((opcao) => (
             <button
               key={opcao}
@@ -168,7 +168,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                     Sob consulta
                   </p>
                   <p className="ajuda">
-                    Os modulos sao os mesmos; muda o tamanho.
+                    Os módulos são os mesmos; muda o tamanho.
                   </p>
                 </>
               ) : (
@@ -177,7 +177,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                     {emReais(doPlano.totalCentavos)}
                     <span className="text-sm font-normal text-slate-500">
                       {" "}
-                      /mes
+                      /mês
                     </span>
                   </p>
                   <p className="ajuda">
@@ -186,11 +186,11 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                   </p>
                   {doPlano.descontoCentavos > 0 ? (
                     <p className="ajuda">
-                      {emReais(doPlano.descontoCentavos)} por mes a menos do que
-                      levar estes modulos avulsos.
+                      {emReais(doPlano.descontoCentavos)} por mês a menos do que
+                      levar estes módulos avulsos.
                     </p>
                   ) : (
-                    <p className="ajuda">So o nucleo do sistema, sem modulo.</p>
+                    <p className="ajuda">Só o núcleo do sistema, sem módulo.</p>
                   )}
                 </>
               )}
@@ -228,10 +228,10 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
 
       <section className="mt-12">
         <p className="sobretitulo">Ou monte o seu</p>
-        <h2 className="mt-2 text-2xl">Leve so o que o escritorio usa</h2>
+        <h2 className="mt-2 text-2xl">Leve só o que o escritório usa</h2>
         <p className="chamada max-w-2xl">
-          Marque os modulos e veja o preco mudar. Se algum plano pronto contem
-          tudo que voce marcou e sai mais barato, e ele que vale — e o resto vem
+          Marque os módulos e veja o preço mudar. Se algum plano pronto contém
+          tudo que você marcou e sai mais barato, é ele que vale — e o resto vem
           junto.
         </p>
 
@@ -283,16 +283,16 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
           <aside className="cartao h-fit lg:sticky lg:top-6">
             {sobConsulta ? (
               <>
-                <h3>Escritorio grande</h3>
+                <h3>Escritório grande</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                  Acima de {LIMITES[maiorPublicada].advogados} advogados o preco
-                  sai de uma proposta: a franquia de cada modulo e ajustada ao
-                  uso real do escritorio, e a migracao do sistema atual entra na
+                  Acima de {LIMITES[maiorPublicada].advogados} advogados o preço
+                  sai de uma proposta: a franquia de cada módulo é ajustada ao
+                  uso real do escritório, e a migração do sistema atual entra na
                   conversa.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  Os modulos sao os mesmos desta pagina — o que muda e o
-                  tamanho, nao o que o sistema faz.
+                  Os módulos são os mesmos desta página — o que muda é o
+                  tamanho, não o que o sistema faz.
                 </p>
                 {contato ? (
                   <a
@@ -306,11 +306,11 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                     href="/cadastro"
                     className="botao-principal mt-4 w-full"
                   >
-                    Comecar pelo teste
+                    Começar pelo teste
                   </Link>
                 )}
                 <p className="ajuda">
-                  O teste de 14 dias vale igual, e serve para o escritorio ver o
+                  O teste de 14 dias vale igual, e serve para o escritório ver o
                   sistema antes de qualquer proposta.
                 </p>
               </>
@@ -356,14 +356,14 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                   {emReais(conta.totalCentavos)}
                   <span className="text-sm font-normal text-slate-500">
                     {" "}
-                    /mes
+                    /mês
                   </span>
                 </p>
 
                 {conta.plano && conta.plano !== "ESSENCIAL" ? (
                   <p className="aviso-ok mt-3">
-                    O plano {PLANO[conta.plano].rotulo} cobre o que voce marcou
-                    e sai mais barato que a soma avulsa. Voce leva tambem o que
+                    O plano {PLANO[conta.plano].rotulo} cobre o que você marcou
+                    e sai mais barato que a soma avulsa. Você leva também o que
                     sobra dele.
                   </p>
                 ) : null}
@@ -376,11 +376,11 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                   }
                   className="botao-principal mt-4 w-full"
                 >
-                  Comecar o teste
+                  Começar o teste
                 </Link>
                 <p className="ajuda">
                   Consumo que passa da franquia (mensagem, nota, token de IA,
-                  armazenamento) e cobrado a parte, pelo que foi usado.
+                  armazenamento) é cobrado à parte, pelo que foi usado.
                 </p>
               </>
             )}
