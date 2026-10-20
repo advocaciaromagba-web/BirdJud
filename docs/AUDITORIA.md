@@ -83,11 +83,12 @@ normalmente. Corrigido no mesmo dia, e o vigia passou a conferir também
 `/api/saude/rotinas`: trabalhador parado ou rotina essencial com a última
 execução em falha abre o mesmo alarme.
 
-### 5. Regra de 90 dias no balde do R2 `[voce]`
+### 5. Regra de 90 dias no balde do R2 — resolvido em 20/10/2026
 
-O backup cifrado sobe todo dia e a restauracao foi ensaiada, mas sem a regra
-de expurgo o balde cresce para sempre. O token tem permissao de objeto, nao de
-administracao do balde: tem de ser clicado no painel.
+O balde antigo estava numa conta da Cloudflare sem acesso. O backup passou a
+ir para `birdjud-backup` na conta de advocaciaromagba@gmail.com (a mesma do
+dominio), com a regra `expurgo-90-dias` conferida pela API do balde. Os
+backups anteriores ficaram na conta antiga e deixam de importar em 90 dias.
 
 ## Fazem falta antes do segundo escritorio
 
@@ -146,9 +147,9 @@ Medido ao vivo no Railway: arquivos 2%, banco 5%, copias 2% dos volumes de
   300 MB; download em fluxo (ver `docs/ENTREVISTAS.md`).
 - **Ninguem avisava quando o disco enche** — resolvido em 18/10/2026: alarme
   proprio do vigia externo acima de 70% (ver `docs/VIGIA-EXTERNO.md`).
-- Em aberto `[voce]`: limite diario do Gmail (Resend, o codigo ja aceita
-  `RESEND_API_KEY`); Cloudflare e regra de 90 dias no R2; conta Asaas
-  compartilhada.
+- Resolvidos em 20/10/2026: Resend em `envio.birdjud.com.br` (Gmail de
+  reserva), zona da Cloudflare em conta com acesso, balde novo do R2 com a
+  regra de 90 dias. Em aberto `[voce]`: conta Asaas compartilhada.
 - Para depois de ~10 escritorios: uma so instancia do APP, com o volume
   preso a ela (R2 para os arquivos, duas copias, plano Pro).
 

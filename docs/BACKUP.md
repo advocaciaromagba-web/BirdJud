@@ -164,6 +164,15 @@ O ultimo passo nao e opcional: `pg_dump --no-privileges` nao carrega as
 politicas, e um banco restaurado sem `rls:aplicar` fica **sem isolamento entre
 escritorios**.
 
+### Onde o balde esta (20/10/2026)
+
+`birdjud-backup` na conta da Cloudflare de advocaciaromagba@gmail.com
+(Account ID `f7ffc19d4ebfa8d1c4a443e4ffe50eff`, a mesma da zona
+`birdjud.com.br`). Ate 20/10 o backup ia para um balde de mesmo nome numa
+conta sem acesso; a troca foi feita nas variaveis do `cron-backup`. A chave
+e um token de conta com "Workers R2 Storage: Write" (o par S3 que a
+Cloudflare mostra ao criar o token).
+
 ### Retencao no R2: regra do balde, nao codigo
 
 A retencao de 14 dias do `BACKUP_DIAS` vale para o volume do Railway. No R2
