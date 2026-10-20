@@ -66,7 +66,7 @@ export async function GET(
       }),
     );
     if (!compromisso) {
-      return NextResponse.json({ erro: "Compromisso nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Compromisso não encontrado." }, { status: 404 });
     }
     return NextResponse.json({ compromisso });
   } catch (erro) {
@@ -83,7 +83,7 @@ export async function PATCH(
     const { id } = await params;
     const corpo = edicao.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const d = corpo.data;
@@ -102,7 +102,7 @@ export async function PATCH(
     if (d.inicio !== undefined) {
       const inicio = new Date(d.inicio);
       if (Number.isNaN(inicio.getTime())) {
-        return NextResponse.json({ erro: "Data invalida." }, { status: 400 });
+        return NextResponse.json({ erro: "Data inválida." }, { status: 400 });
       }
       campos.inicio = inicio;
     }
@@ -125,7 +125,7 @@ export async function PATCH(
       if (avisos > 0) await enfileirar("LEMBRAR", escritorioId);
     } catch (falha) {
       console.log(
-        `compromisso ${id}: aviso nao gerado ${falha instanceof Error ? falha.message : ""}`.slice(0, 300),
+        `compromisso ${id}: aviso não gerado ${falha instanceof Error ? falha.message : ""}`.slice(0, 300),
       );
     }
 
@@ -155,7 +155,7 @@ export async function DELETE(
     return NextResponse.json({
       ok: true,
       mensagem:
-        "Compromisso excluido e registrado na auditoria. Os avisos ja enviados nao sao desfeitos — se precisar, avise as pessoas.",
+        "Compromisso excluído e registrado na auditoria. Os avisos já enviados não são desfeitos — se precisar, avise as pessoas.",
     });
   } catch (erro) {
     if (erro instanceof CompromissoNaoEncontrado) {

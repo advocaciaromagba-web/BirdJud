@@ -64,7 +64,7 @@ d("resposta recebida no WhatsApp", () => {
     const comp = await comEscritorio(alfa, (db) =>
       db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia de instrucao",
+          titulo: "Audiência de instrução",
           tipo: "AUDIENCIA",
           inicio: new Date("2026-11-10T17:00:00Z"),
         }),
@@ -101,7 +101,7 @@ d("resposta recebida no WhatsApp", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  /** O lembrete que ja saiu, que e o que a resposta responde. */
+  /** O lembrete que já saiu, que e o que a resposta responde. */
   async function lembreteEnviado(escritorioId: string, chave: string) {
     return comEscritorio(escritorioId, (db) =>
       db.aviso.create({
@@ -119,7 +119,7 @@ d("resposta recebida no WhatsApp", () => {
     );
   }
 
-  it("resposta sem lembrete nenhum nao e respondida nem atribuida", async () => {
+  it("resposta sem lembrete nenhum não e respondida nem atribuída", async () => {
     mandadas = [];
     const r = await tratarMensagem({ idNaMeta: id("solto"), de: TELEFONE, texto: "oi" });
     expect(r.desfecho).toBe("SEM_LEMBRETE");
@@ -129,7 +129,7 @@ d("resposta recebida no WhatsApp", () => {
     expect(mandadas).toHaveLength(0);
   });
 
-  it("confirma a presenca e responde", async () => {
+  it("confirma a presença e responde", async () => {
     mandadas = [];
     await lembreteEnviado(alfa, `zap:participante:${compromissoDeAlfa}:${participanteDeAlfa}`);
 
@@ -148,24 +148,24 @@ d("resposta recebida no WhatsApp", () => {
     expect(mandadas).toHaveLength(1);
     expect(mandadas[0].para).toBe(TELEFONE);
     expect(mandadas[0].texto).toContain("Banca Alfa");
-    expect(mandadas[0].texto).toContain("Audiencia de instrucao");
+    expect(mandadas[0].texto).toContain("Audiência de instrução");
   });
 
-  it("A MESMA MENSAGEM DUAS VEZES nao responde duas vezes", async () => {
+  it("A MESMA MENSAGEM DUAS VEZES não responde duas vezes", async () => {
     mandadas = [];
     const r = await tratarMensagem({ idNaMeta: id("sim"), de: TELEFONE, texto: "1" });
     expect(r.desfecho).toBe("REPETIDA");
     expect(mandadas).toHaveLength(0);
   });
 
-  it("quem confirmou e depois recusou perde a confirmacao", async () => {
+  it("quem confirmou e depois recusou perde a confirmação", async () => {
     // Os dois campos sao mexidos juntos: a tela nao pode mostrar as duas
     // coisas ao mesmo tempo.
     mandadas = [];
     const r = await tratarMensagem({
       idNaMeta: id("nao"),
       de: TELEFONE,
-      texto: "nao vou poder ir",
+      texto: "não vou poder ir",
     });
     expect(r.intencao).toBe("DESMARCA");
     const p = await comEscritorio(alfa, (db) =>
@@ -177,12 +177,12 @@ d("resposta recebida no WhatsApp", () => {
     expect(mandadas[0].texto).toContain("NAO foi desmarcado");
   });
 
-  it("DOIS ESCRITORIOS no mesmo telefone: nao age e nao responde", async () => {
+  it("DOIS ESCRITORIOS no mesmo telefone: não age e não responde", async () => {
     mandadas = [];
     const comp = await comEscritorio(beta, (db) =>
       db.compromisso.create({
         data: semEscritorio({
-          titulo: "Pericia",
+          titulo: "Perícia",
           tipo: "PERICIA",
           inicio: new Date("2026-11-11T17:00:00Z"),
         }),
@@ -206,7 +206,7 @@ d("resposta recebida no WhatsApp", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("'parar' bloqueia o telefone, e o bloqueio impede o proximo lembrete", async () => {
+  it("'parar' bloqueia o telefone, e o bloqueio impede o próximo lembrete", async () => {
     mandadas = [];
     // Volta a haver um unico candidato: o de beta sai da janela.
     await comEscritorio(beta, (db) =>
@@ -228,7 +228,7 @@ d("resposta recebida no WhatsApp", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("mexer na lista de participantes NAO joga fora a confirmacao", async () => {
+  it("mexer na lista de participantes NAO joga fora a confirmação", async () => {
     // A lista e salva apagando e regravando. Sem cuidado, bastava o escritorio
     // acrescentar uma testemunha para a presenca ja confirmada pelo cliente
     // voltar a "aguardando" — e ninguem saberia por que.
@@ -256,7 +256,7 @@ d("resposta recebida no WhatsApp", () => {
     expect(nova?.recusadoEm).toBeNull();
   });
 
-  it("o que o sistema nao entende fica na caixa de entrada do escritorio", async () => {
+  it("o que o sistema não entende fica na caixa de entrada do escritório", async () => {
     mandadas = [];
     const r = await tratarMensagem({
       idNaMeta: id("audio"),

@@ -27,7 +27,7 @@ describe("nomeCobre", () => {
     expect(nomeCobre("*.birdjud.com.br", "a.b.birdjud.com.br")).toBe(false);
   });
 
-  it("nao confunde dominio que apenas termina parecido", () => {
+  it("não confunde domínio que apenas termina parecido", () => {
     expect(nomeCobre("*.birdjud.com.br", "app.naobirdjud.com.br")).toBe(false);
     expect(nomeCobre("birdjud.com.br", "malbirdjud.com.br")).toBe(false);
   });
@@ -83,13 +83,13 @@ describe("julgar", () => {
   });
 
   // Alarme falso ensina a ignorar o alarme: sem certificado na mao, calamos.
-  it("fica inconclusivo quando nao ha certificado para julgar", () => {
+  it("fica inconclusivo quando não há certificado para julgar", () => {
     expect(julgar("app.birdjud.com.br", null, AGORA).situacao).toBe("inconclusivo");
     expect(julgar("app.birdjud.com.br", {}, AGORA).situacao).toBe("inconclusivo");
   });
 
-  it("valida ilegivel nao vira alarme quando o nome confere", () => {
-    const v = julgar("app.birdjud.com.br", { ...bom, valid_to: "nao e data" }, AGORA);
+  it("valida ilegível não vira alarme quando o nome confere", () => {
+    const v = julgar("app.birdjud.com.br", { ...bom, valid_to: "não e data" }, AGORA);
     expect(v.situacao).toBe("ok");
   });
 });
@@ -113,7 +113,7 @@ describe("onde bater para ver o certificado", () => {
     ]);
   });
 
-  it("le uma lista com os dois tipos, e nao se perde com espacos", () => {
+  it("le uma lista com os dois tipos, e não se perde com espacos", () => {
     expect(
       alvosDeCertificado(
         " birdjud.com.br@tzp59u2a.up.railway.app , app.birdjud.com.br ",
@@ -135,12 +135,12 @@ describe("onde bater para ver o certificado", () => {
     expect(alvosDeCertificado(null)).toEqual([]);
   });
 
-  it("descarta engano de digitacao em vez de adivinhar", () => {
+  it("descarta engano de digitação em vez de adivinhar", () => {
     expect(alvosDeCertificado("app.birdjud.com.br@")).toEqual([]);
     expect(alvosDeCertificado("@origem.br")).toEqual([]);
   });
 
-  it("a descricao diz onde foi batido, para separar borda de origem", () => {
+  it("a descrição diz onde foi batido, para separar borda de origem", () => {
     expect(descreverAlvo({ nome: "a.br", origem: "a.br" })).toBe("a.br");
     expect(descreverAlvo({ nome: "a.br", origem: "o.railway.app" })).toBe(
       "a.br (na origem o.railway.app)",
@@ -151,7 +151,7 @@ describe("onde bater para ver o certificado", () => {
   // DNS:default.domain. Julgar esse certificado contra o nome publico tem de
   // dar FALHA — se desse "ok", um vigia mal ligado diria que esta tudo bem; e
   // o julgamento do certificado certo tem de dar ok.
-  it("o certificado padrao da origem nao passa por certificado do nome", () => {
+  it("o certificado padrão da origem não passa por certificado do nome", () => {
     const padraoDaOrigem = {
       subject: { CN: "default.domain" },
       subjectaltname: "DNS:default.domain",

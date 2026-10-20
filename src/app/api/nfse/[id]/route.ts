@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Pedido inválido." }, { status: 400 });
     }
     const cert = await abrirCertificadoDoEscritorio(escritorioId, { usuarioId, papel }, corpo.data.senha);
     if (corpo.data.acao === "VERIFICAR") {

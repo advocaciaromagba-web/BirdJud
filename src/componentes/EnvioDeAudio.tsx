@@ -42,11 +42,11 @@ export function EnvioDeAudio({
         body: corpo,
       });
       const dados = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(dados.erro ?? "Nao deu para transcrever o audio.");
+      if (!r.ok) throw new Error(dados.erro ?? "Não deu para transcrever o áudio.");
       onTranscrito(
         dados.pasta
           ? dados.pasta.guardado
-            ? `Audio guardado na pasta do cliente: ${dados.pasta.nome}.`
+            ? `Áudio guardado na pasta do cliente: ${dados.pasta.nome}.`
             : dados.pasta.motivo
           : null,
       );
@@ -61,11 +61,11 @@ export function EnvioDeAudio({
   return (
     <div className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
       <p className="text-xs text-amber-900">
-        <strong>Importar audio gravado (celular, audiencia, reuniao).</strong> O
-        arquivo e enviado ao servico de transcricao da OpenAI, contratado
-        pela plataforma. E a mesma natureza de exposicao de quando o texto
-        vai para a IA ser organizado — mas e o audio, com a voz de quem
-        falou. Serve para a conversa gravada no celular, a audiencia ou a
+        <strong>Importar áudio gravado (celular, audiência, reunião).</strong> O
+        arquivo é enviado ao serviço de transcrição da OpenAI, contratado
+        pela plataforma. É a mesma natureza de exposição de quando o texto
+        vai para a IA ser organizado — mas é o áudio, com a voz de quem
+        falou. Serve para a conversa gravada no celular, a audiência ou a
         reuniao; com a entrevista ligada a um cliente, o audio fica na pasta dele.
       </p>
 
@@ -77,7 +77,7 @@ export function EnvioDeAudio({
             onChange={(ev) => setConfirmado(ev.target.checked)}
             className="mt-0.5"
           />
-          <span>Entendi, e quero enviar o audio para transcricao.</span>
+          <span>Entendi, e quero enviar o áudio para transcrição.</span>
         </label>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
@@ -94,8 +94,8 @@ export function EnvioDeAudio({
           />
           <span className="text-xs text-amber-800">
             {enviando
-              ? "Transcrevendo... audio longo leva alguns minutos."
-              : `Ate ${LIMITE_DE_BYTES / 1024 / 1024} MB. O texto e ACRESCENTADO ao que ja esta anotado.`}
+              ? "Transcrevendo... áudio longo leva alguns minutos."
+              : `Até ${LIMITE_DE_BYTES / 1024 / 1024} MB. O texto é ACRESCENTADO ao que já está anotado.`}
           </span>
         </div>
       )}

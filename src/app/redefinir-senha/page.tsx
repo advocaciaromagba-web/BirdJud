@@ -25,10 +25,10 @@ export default async function PaginaRedefinirSenha({
   if (!marca?.id) {
     return (
       <main className="pagina-estreita">
-        <h1>Endereco sem escritorio</h1>
+        <h1>Endereço sem escritório</h1>
         <p className="chamada">
-          O link de redefinicao abre no endereco do escritorio. Confira o
-          endereco recebido por e-mail.
+          O link de redefinição abre no endereço do escritório. Confira o
+          endereço recebido por e-mail.
         </p>
       </main>
     );
@@ -52,17 +52,17 @@ export default async function PaginaRedefinirSenha({
       {token ? (
         <>
           {/* O token nao e conferido aqui: quem confere e a rota, ao trocar.
-              Dizer "link invalido" antes da hora entregaria a quem tenta
+              Dizer "link inválido" antes da hora entregaria a quem tenta
               adivinhar se o token existe. */}
           <p className="chamada esquerda mt-3">
-            Escolha uma senha nova. Ao trocar, as sessoes abertas em outros
-            aparelhos sao encerradas.
+            Escolha uma senha nova. Ao trocar, as sessões abertas em outros
+            aparelhos são encerradas.
           </p>
           <FormularioRedefinirSenha token={token} />
         </>
       ) : (
         <p className="aviso-erro mt-4">
-          Este endereco precisa do link que chegou por e-mail. Peca outro na
+          Este endereço precisa do link que chegou por e-mail. Peça outro na
           tela de entrada.
         </p>
       )}

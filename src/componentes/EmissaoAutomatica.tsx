@@ -26,7 +26,7 @@ export function EmissaoAutomatica({ ligada, podeLigar }: { ligada: boolean; pode
     <div>
       <p className="text-sm">
         Emissao automatica: <strong>{ligada ? "ligada" : "desligada"}</strong>. Ligada, cada fatura paga (Asaas ou
-        baixa manual) gera a nota e a manda ao e-mail do escritorio.
+        baixa manual) gera a nota e a manda ao e-mail do escritório.
       </p>
       <button
         type="button"
@@ -34,10 +34,10 @@ export function EmissaoAutomatica({ ligada, podeLigar }: { ligada: boolean; pode
         disabled={ocupado || (!ligada && !podeLigar)}
         onClick={trocar}
       >
-        {ligada ? "Desligar emissao automatica" : "Ligar emissao automatica"}
+        {ligada ? "Desligar emissão automática" : "Ligar emissão automática"}
       </button>
       {!ligada && !podeLigar ? (
-        <p className="ajuda">Resolva as pendencias acima antes de ligar.</p>
+        <p className="ajuda">Resolva as pendências acima antes de ligar.</p>
       ) : null}
       {recado ? <p role="status" className="ajuda">{recado}</p> : null}
     </div>

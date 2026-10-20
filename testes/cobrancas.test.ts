@@ -29,7 +29,7 @@ const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 const DIA = 24 * 60 * 60 * 1000;
 
-describe("conversoes do modulo", () => {
+describe("conversoes do módulo", () => {
   it("centavos viram reais com duas casas, e voltam inteiros", () => {
     expect(emReaisDecimal(1234)).toBe(12.34);
     expect(emReaisDecimal(100)).toBe(1);
@@ -38,7 +38,7 @@ describe("conversoes do modulo", () => {
     expect(paraCentavosDoAsaas(0.07)).toBe(7);
   });
 
-  it("valor que nao e numero nao vira centavos", () => {
+  it("valor que não e número não vira centavos", () => {
     expect(paraCentavosDoAsaas("12,34")).toBeNull();
     expect(paraCentavosDoAsaas(undefined)).toBeNull();
     expect(paraCentavosDoAsaas(Number.NaN)).toBeNull();
@@ -56,7 +56,7 @@ describe("conversoes do modulo", () => {
     expect(statusNosso("PENDING")).toBe("ABERTA");
   });
 
-  it("status que nao conhecemos nao vira status nosso", () => {
+  it("status que não conhecemos não vira status nosso", () => {
     // De proposito: estado novo do Asaas cair em ABERTA por descuido seria
     // pior que ficar parado e aparecer na conferencia.
     expect(statusNosso("ALGO_NOVO_DO_ASAAS")).toBeNull();
@@ -138,7 +138,7 @@ function asaasNormal(): (c: Chamada) => { status: number; json: unknown } {
         ? { status: 200, json: pagamento }
         : {
             status: 404,
-            json: { errors: [{ description: "Cobranca nao encontrada." }] },
+            json: { errors: [{ description: "Cobrança não encontrada." }] },
           };
     }
     if (
@@ -163,17 +163,17 @@ let clienteAlfa = "";
 let clienteSemDocumento = "";
 let clienteBeta = "";
 
-d("cobrancas por escritorio", () => {
+d("cobranças por escritório", () => {
   beforeAll(async () => {
     // A chave de integracao e guardada cifrada, entao o teste precisa de uma
     // chave — no CI nao ha .env.
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 5).toString("base64");
 
     const a = await prismaPlataforma().escritorio.create({
-      data: { slug: `cob-a-${marca}`, nome: "Alfa Cobrancas" },
+      data: { slug: `cob-a-${marca}`, nome: "Alfa Cobranças" },
     });
     const b = await prismaPlataforma().escritorio.create({
-      data: { slug: `cob-b-${marca}`, nome: "Beta Cobrancas" },
+      data: { slug: `cob-b-${marca}`, nome: "Beta Cobranças" },
     });
     alfa = a.id;
     beta = b.id;
@@ -238,7 +238,7 @@ d("cobrancas por escritorio", () => {
   it("emite no Asaas e guarda o espelho", async () => {
     const { id } = await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
-      descricao: "Honorarios contratuais",
+      descricao: "Honorários contratuais",
       valorCentavos: 150_000,
       vencimento: amanha(),
       forma: "PIX",
@@ -257,10 +257,10 @@ d("cobrancas por escritorio", () => {
     expect(cobranca?.idNoProvedor).toMatch(/^pay_/);
   });
 
-  it("repetir a mesma operacao nao emite novamente", async () => {
+  it("repetir a mesma operação não emite novamente", async () => {
     const pedido = {
       chaveOperacao: crypto.randomUUID(), clienteId: clienteAlfa,
-      descricao: "Tentativa unica", valorCentavos: 12000,
+      descricao: "Tentativa única", valorCentavos: 12000,
       vencimento: amanha(), forma: "PIX" as const,
     };
     const primeira = await emitirCobranca(alfa, pedido);
@@ -269,7 +269,7 @@ d("cobrancas por escritorio", () => {
     expect(chamadas.filter((c) => c.metodo === "POST" && c.caminho === "/payments")).toHaveLength(1);
   });
 
-  it("resposta incerta preserva a reserva e nao faz outro POST", async () => {
+  it("resposta incerta preserva a reserva e não faz outro POST", async () => {
     const normal = asaasNormal();
     responder = (chamada) => chamada.caminho === "/payments" && chamada.metodo === "POST"
       ? { status: 503, json: {} } : chamada.caminho === "/payments" && chamada.metodo === "GET"
@@ -284,7 +284,7 @@ d("cobrancas por escritorio", () => {
     expect(chamadas.filter((c) => c.metodo === "POST" && c.caminho === "/payments")).toHaveLength(1);
   });
 
-  it("mede uma cobranca emitida no consumo do mes", async () => {
+  it("mede uma cobrança emitida no consumo do mês", async () => {
     const antes = (await consumoDoMes(alfa)).find(
       (l) => l.metrica === "COBRANCA_EMITIDA",
     );
@@ -301,7 +301,7 @@ d("cobrancas por escritorio", () => {
     expect(depois?.quantidade).toBe((antes?.quantidade ?? 0) + 1);
   });
 
-  it("cadastra o cliente no Asaas uma vez so", async () => {
+  it("cadastra o cliente no Asaas uma vez só", async () => {
     await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
       descricao: "Primeira",
@@ -323,7 +323,7 @@ d("cobrancas por escritorio", () => {
     expect(chamadas.filter((c) => c.caminho === "/customers")).toHaveLength(0);
   });
 
-  it("cliente sem CPF/CNPJ e recusado antes de virar cobranca", async () => {
+  it("cliente sem CPF/CNPJ e recusado antes de virar cobrança", async () => {
     await expect(
       emitirCobranca(alfa, {
         clienteId: clienteSemDocumento,
@@ -361,7 +361,7 @@ d("cobrancas por escritorio", () => {
     expect(chamadas).toHaveLength(0);
   });
 
-  it("falha do Asaas nao deixa cobranca gravada", async () => {
+  it("falha do Asaas não deixa cobrança gravada", async () => {
     const normal = asaasNormal();
     responder = (chamada) =>
       chamada.caminho === "/payments"
@@ -386,7 +386,7 @@ d("cobrancas por escritorio", () => {
     expect(depois).toBe(antes);
   });
 
-  it("escritorio sem conta conectada recebe recusa propria", async () => {
+  it("escritório sem conta conectada recebe recusa própria", async () => {
     const semConta = await prismaPlataforma().escritorio.create({
       data: { slug: `cob-c-${marca}`, nome: "Sem conta" },
     });
@@ -413,10 +413,10 @@ d("cobrancas por escritorio", () => {
     }
   });
 
-  it("pagamento vira baixa, e a baixa nao se repete", async () => {
+  it("pagamento vira baixa, e a baixa não se repete", async () => {
     const { id } = await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
-      descricao: "Honorarios de setembro",
+      descricao: "Honorários de setembro",
       valorCentavos: 80_000,
       vencimento: amanha(),
       forma: "PIX",
@@ -459,7 +459,7 @@ d("cobrancas por escritorio", () => {
     expect(lancamento?.valorCentavos).toBe(80_000);
   });
 
-  it("sem o modulo financeiro, a baixa marca a cobranca e nao cria lancamento", async () => {
+  it("sem o módulo financeiro, a baixa marca a cobrança e não cria lançamento", async () => {
     const { id } = await emitirCobranca(beta, {
       clienteId: clienteBeta,
       descricao: "Sem financeiro",
@@ -527,7 +527,7 @@ d("cobrancas por escritorio", () => {
     expect(depois.find((c) => c.id === estranha.id)?.status).toBe("ABERTA");
   });
 
-  it("uma cobranca que falha nao derruba as outras", async () => {
+  it("uma cobrança que falha não derruba as outras", async () => {
     const boa = await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
       descricao: "Boa",
@@ -565,7 +565,7 @@ d("cobrancas por escritorio", () => {
     expect(depois?.status).toBe("PAGA");
   });
 
-  it("cancela no Asaas e marca aqui; paga nao se cancela", async () => {
+  it("cancela no Asaas e marca aqui; paga não se cancela", async () => {
     const { id } = await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
       descricao: "Emitida por engano",
@@ -583,7 +583,7 @@ d("cobrancas por escritorio", () => {
 
     const paga = await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
-      descricao: "Ja paga",
+      descricao: "Já paga",
       valorCentavos: 4_000,
       vencimento: amanha(),
       forma: "BOLETO",
@@ -603,10 +603,10 @@ d("cobrancas por escritorio", () => {
     );
   });
 
-  it("cobranca de um escritorio nao aparece nem sincroniza no outro", async () => {
+  it("cobrança de um escritório não aparece nem sincroniza no outro", async () => {
     const { id } = await emitirCobranca(alfa, {
       clienteId: clienteAlfa,
-      descricao: "So do Alfa",
+      descricao: "Só do Alfa",
       valorCentavos: 7_000,
       vencimento: amanha(),
       forma: "BOLETO",
@@ -622,7 +622,7 @@ d("cobrancas por escritorio", () => {
     );
   });
 
-  it("chave recusada pelo Asaas vira mensagem propria", async () => {
+  it("chave recusada pelo Asaas vira mensagem própria", async () => {
     responder = () => ({ status: 401, json: {} });
     await expect(
       emitirCobranca(alfa, {

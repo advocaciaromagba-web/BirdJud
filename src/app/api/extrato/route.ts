@@ -20,11 +20,11 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirSessao("COBRANCAS");
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success || !dataValida(corpo.data.de) || !dataValida(corpo.data.ate)) {
-      return NextResponse.json({ erro: "Periodo invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Período inválido." }, { status: 400 });
     }
     if (corpo.data.de > corpo.data.ate) {
       return NextResponse.json(
-        { erro: "A data inicial e depois da final." },
+        { erro: "A data inicial é depois da final." },
         { status: 400 },
       );
     }

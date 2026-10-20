@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirSessao();
     const corpo = novoCliente.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
     const d = corpo.data;
 
@@ -130,24 +130,24 @@ export async function POST(req: Request) {
     const querContrato = !!(valorCentavos || percentualBp);
 
     if (d.honValor?.trim() && valorCentavos === null) {
-      return NextResponse.json({ erro: "Valor dos honorarios invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Valor dos honorários inválido." }, { status: 400 });
     }
     if (d.honEntrada?.trim() && entradaCentavos === null) {
-      return NextResponse.json({ erro: "Valor da entrada invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Valor da entrada inválido." }, { status: 400 });
     }
     if (d.honPercentual?.trim() && percentualBp === null) {
-      return NextResponse.json({ erro: "Percentual de exito invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Percentual de êxito inválido." }, { status: 400 });
     }
     if (querContrato && valorCentavos && !DIA.test(d.honPrimeiroVencimento ?? "")) {
       return NextResponse.json(
-        { erro: "Com valor de honorarios, informe a data do primeiro vencimento." },
+        { erro: "Com valor de honorários, informe a data do primeiro vencimento." },
         { status: 400 },
       );
     }
 
     const nascimento = d.nascimento?.trim() ? new Date(`${d.nascimento.trim()}T12:00:00Z`) : null;
     if (nascimento && (!DIA.test(d.nascimento!.trim()) || Number.isNaN(nascimento.getTime()) || nascimento > new Date())) {
-      return NextResponse.json({ erro: "Data de nascimento invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Data de nascimento inválida." }, { status: 400 });
     }
 
     // escritorioId nunca vem do corpo: a extensao injeta o da sessao.

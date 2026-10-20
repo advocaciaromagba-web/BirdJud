@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
     if (corpo.data.versaoAceita !== VERSAO_DOS_DOCUMENTOS) {
       return NextResponse.json(
-        { erro: "Os documentos foram atualizados. Recarregue a pagina e leia a versao nova." },
+        { erro: "Os documentos foram atualizados. Recarregue a página e leia a versão nova." },
         { status: 409 },
       );
     }

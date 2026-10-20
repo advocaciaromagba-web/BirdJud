@@ -68,7 +68,7 @@ export default async function PaginaTarefas({
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Tarefas e metas"
-      chamada="Pecas, manifestacoes, recursos e metas da equipe. Audiencia, pericia e atendimento ficam na Agenda."
+      chamada="Peças, manifestações, recursos e metas da equipe. Audiência, perícia e atendimento ficam na Agenda."
     >
       <PainelTarefas
         tarefas={naTela}

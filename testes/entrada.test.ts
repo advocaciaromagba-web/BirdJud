@@ -15,7 +15,7 @@ describe("o que a pessoa digita", () => {
     expect(slugDigitado("advocaciaroma", DOM)).toBe("advocaciaroma");
   });
 
-  it("o nome do escritorio, com espaco e maiuscula", () => {
+  it("o nome do escritório, com espaço e maiuscula", () => {
     expect(slugDigitado("Advocacia Roma", DOM)).toBe("advocaciaroma");
     expect(slugDigitado("  ADVOCACIA ROMA  ", DOM)).toBe("advocaciaroma");
   });
@@ -24,7 +24,7 @@ describe("o que a pessoa digita", () => {
     expect(slugDigitado("Advocacia Araújo", DOM)).toBe("advocaciaaraujo");
   });
 
-  it("o endereco inteiro, como vem de um e-mail antigo", () => {
+  it("o endereço inteiro, como vem de um e-mail antigo", () => {
     for (const texto of [
       "advocaciaroma.birdjud.com.br",
       "https://advocaciaroma.birdjud.com.br",
@@ -38,7 +38,7 @@ describe("o que a pessoa digita", () => {
     }
   });
 
-  it("monta o endereco de login com o NOSSO dominio", () => {
+  it("monta o endereço de login com o NOSSO domínio", () => {
     expect(enderecoDeEntrada("Advocacia Roma", DOM)).toBe(
       "https://advocaciaroma.birdjud.com.br/login",
     );
@@ -47,7 +47,7 @@ describe("o que a pessoa digita", () => {
 
 describe("para onde NAO vai", () => {
   // O ataque: um link pronto que leva a pessoa para fora, com a nossa cara.
-  it("recusa endereco de outro dominio", () => {
+  it("recusa endereço de outro domínio", () => {
     for (const texto of [
       "site-falso.com",
       "https://site-falso.com",
@@ -63,7 +63,7 @@ describe("para onde NAO vai", () => {
 
   // "usuario@host" no endereco: o navegador vai para o HOST, e quem le ve o
   // comeco. E o truque classico de disfarcar o destino.
-  it("nao se engana com usuario antes do arroba", () => {
+  it("não se engana com usuário antes do arroba", () => {
     expect(slugDigitado("https://advocaciaroma.birdjud.com.br@site-falso.com", DOM)).toBeNull();
   });
 
@@ -71,7 +71,7 @@ describe("para onde NAO vai", () => {
     expect(slugDigitado("https://site-falso.com\\@birdjud.com.br", DOM)).toBeNull();
   });
 
-  it("recusa o proprio dominio da plataforma", () => {
+  it("recusa o próprio domínio da plataforma", () => {
     expect(slugDigitado("birdjud.com.br", DOM)).toBeNull();
     expect(slugDigitado("https://birdjud.com.br/", DOM)).toBeNull();
   });
@@ -83,7 +83,7 @@ describe("para onde NAO vai", () => {
     }
   });
 
-  it("recusa dois niveis de subdominio", () => {
+  it("recusa dois niveis de subdomínio", () => {
     expect(slugDigitado("a.b.birdjud.com.br", DOM)).toBeNull();
   });
 
@@ -93,7 +93,7 @@ describe("para onde NAO vai", () => {
     }
   });
 
-  it("nao explode com entrada estranha", () => {
+  it("não explode com entrada estranha", () => {
     expect(slugDigitado("://", DOM)).toBeNull();
     expect(slugDigitado("@@@", DOM)).toBeNull();
     expect(slugDigitado("...", DOM)).toBeNull();

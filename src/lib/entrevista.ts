@@ -36,14 +36,14 @@ export type TipoDeEntrevista = (typeof TIPOS_DE_ENTREVISTA)[number];
 export const ROTULO_DO_TIPO: Record<TipoDeEntrevista, string> = {
   TRIAGEM: "Triagem (primeiro atendimento)",
   TESTEMUNHA: "Oitiva de testemunha",
-  COLETA: "Coleta de informacoes para documento",
+  COLETA: "Coleta de informações para documento",
 };
 
 /** Titulo do PDF de cada tipo. */
 export const TITULO_DO_TIPO: Record<TipoDeEntrevista, string> = {
   TRIAGEM: "Entrevista de triagem",
   TESTEMUNHA: "Termo de oitiva de testemunha",
-  COLETA: "Entrevista de coleta de informacoes",
+  COLETA: "Entrevista de coleta de informações",
 };
 
 export function tipoDe(valor: unknown): TipoDeEntrevista {
@@ -91,12 +91,12 @@ export type AnaliseDaEntrevista = {
  */
 export const ROTEIRO_BASICO: readonly string[] = [
   "Conte, com suas palavras, o que aconteceu.",
-  "Quando isso comecou e quando aconteceu a ultima vez?",
+  "Quando isso começou e quando aconteceu a última vez?",
   "Quem mais estava envolvido ou presenciou?",
   "Que documentos o senhor tem sobre isso?",
-  "Ja procurou a outra parte, ou algum orgao, para resolver?",
-  "Existe algum prazo, audiencia ou notificacao ja marcada?",
-  "O que o senhor espera conseguir com a acao?",
+  "Já procurou a outra parte, ou algum órgão, para resolver?",
+  "Existe algum prazo, audiência ou notificação já marcada?",
+  "O que o senhor espera conseguir com a ação?",
 ];
 
 /** Limpa o roteiro que veio da IA: sem vazio, sem repetido, sem excesso. */
@@ -166,8 +166,8 @@ export class TranscricaoCurta extends Error {
   readonly status = 422;
   constructor(tamanho: number) {
     super(
-      `A anotacao tem ${tamanho} caracteres. Abaixo de ${MINIMO_DA_TRANSCRICAO} ` +
-        "nao da para organizar o caso sem inventar o que falta.",
+      `A anotação tem ${tamanho} caracteres. Abaixo de ${MINIMO_DA_TRANSCRICAO} ` +
+        "não dá para organizar o caso sem inventar o que falta.",
     );
     this.name = "TranscricaoCurta";
   }

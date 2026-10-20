@@ -140,8 +140,8 @@ export async function montarPainel(
       tipo: "PRAZO_APERTADO",
       texto:
         apertados === 1
-          ? "1 tarefa com prazo hoje, a tres dias uteis ou ja vencida."
-          : `${apertados} tarefas com prazo hoje, a tres dias uteis ou ja vencidas.`,
+          ? "1 tarefa com prazo hoje, a três dias úteis ou já vencida."
+          : `${apertados} tarefas com prazo hoje, a três dias úteis ou já vencidas.`,
       destino: "/tarefas",
       soAdmin: false,
     });
@@ -150,7 +150,7 @@ export async function montarPainel(
   if (tem("PUBLICACOES_DJEN") && dados.oabs === 0) {
     pendencias.push({
       tipo: "SEM_OAB",
-      texto: "Nenhuma OAB monitorada: sem ela nao ha o que capturar no DJEN.",
+      texto: "Nenhuma OAB monitorada: sem ela não há o que capturar no DJEN.",
       destino: "/publicacoes",
       soAdmin: true,
     });
@@ -159,7 +159,7 @@ export async function montarPainel(
   if (tem("EMAIL") && !dados.integracoes.some((i) => i.tipo === "SMTP")) {
     pendencias.push({
       tipo: "SEM_INTEGRACAO_EMAIL",
-      texto: "E-mail nao conectado: os avisos ficam parados esperando.",
+      texto: "E-mail não conectado: os avisos ficam parados esperando.",
       destino: "/integracoes",
       soAdmin: true,
     });
@@ -169,7 +169,7 @@ export async function montarPainel(
   if (comErro.length > 0) {
     pendencias.push({
       tipo: "INTEGRACAO_COM_ERRO",
-      texto: `${comErro.length} integracao(oes) com erro: ${comErro
+      texto: `${comErro.length} integração(oes) com erro: ${comErro
         .map((i) => i.tipo)
         .join(", ")}.`,
       destino: "/integracoes",
@@ -183,7 +183,7 @@ export async function montarPainel(
   if (naoChegaram > 0) {
     pendencias.push({
       tipo: "AVISOS_FALHADOS",
-      texto: `${naoChegaram} mensagem(ns) podem nao ter chegado ao destino. Reenvie ou avise por outro meio.`,
+      texto: `${naoChegaram} mensagem(ns) podem não ter chegado ao destino. Reenvie ou avise por outro meio.`,
       destino: "/mensagens",
       soAdmin: false,
     });
@@ -201,7 +201,7 @@ export async function montarPainel(
     pendencias.push({
       tipo: "SEM_CNPJ",
       texto:
-        "CNPJ do escritorio nao informado: sem ele a fatura da assinatura nao pode ser emitida.",
+        "CNPJ do escritório não informado: sem ele a fatura da assinatura não pode ser emitida.",
       destino: "/administracao",
       soAdmin: true,
     });
@@ -210,7 +210,7 @@ export async function montarPainel(
   if (tem("NFSE") && !dados.fiscal) {
     pendencias.push({
       tipo: "SEM_CADASTRO_FISCAL",
-      texto: "Cadastro fiscal incompleto: sem ele nao sai nota.",
+      texto: "Cadastro fiscal incompleto: sem ele não sai nota.",
       destino: "/notas",
       soAdmin: true,
     });

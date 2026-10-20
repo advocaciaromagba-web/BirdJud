@@ -65,7 +65,7 @@ export function ChecklistDoCliente({
 
     const detalhe = await resposta.json().catch(() => null);
     if (!resposta.ok) {
-      setErro(detalhe?.erro ?? "Nao consegui montar a lista.");
+      setErro(detalhe?.erro ?? "Não consegui montar a lista.");
       return;
     }
     if (detalhe?.avisoDaIA) setAviso(detalhe.avisoDaIA);
@@ -88,7 +88,7 @@ export function ChecklistDoCliente({
         delete copia[id];
         return copia;
       });
-      setErro("Nao consegui marcar este item.");
+      setErro("Não consegui marcar este item.");
       return;
     }
     router.refresh();
@@ -126,7 +126,7 @@ export function ChecklistDoCliente({
             <p className="mt-1 text-sm text-slate-600">
               Monte a lista do que pedir a este cliente.
               {!temIA
-                ? " Sem o modulo de IA ela sai com a base fixa, sem a parte especifica da acao."
+                ? " Sem o módulo de IA ela sai com a base fixa, sem a parte específica da ação."
                 : ""}
             </p>
           )}
@@ -150,32 +150,32 @@ export function ChecklistDoCliente({
         <form onSubmit={montar} className="mt-4 grid gap-4">
           {itens.length > 0 ? (
             <p className="text-sm text-amber-700">
-              Refazer substitui a lista atual, e o que ja foi marcado como
+              Refazer substitui a lista atual, e o que já foi marcado como
               recebido volta a ficar pendente.
             </p>
           ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="ck-tipo" className="rotulo">
-                Tipo de acao
+                Tipo de ação
               </label>
               <input
                 id="ck-tipo"
                 name="tipoAcao"
                 required
                 minLength={3}
-                placeholder="Acao de cobranca"
+                placeholder="Ação de cobrança"
                 className="campo"
               />
             </div>
             <div>
               <label htmlFor="ck-area" className="rotulo">
-                Area <span className="font-normal text-slate-500">opcional</span>
+                Área <span className="font-normal text-slate-500">opcional</span>
               </label>
               <input
                 id="ck-area"
                 name="area"
-                placeholder="Civel"
+                placeholder="Cível"
                 className="campo"
               />
             </div>
@@ -194,7 +194,7 @@ export function ChecklistDoCliente({
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="gratuidade" className="h-4 w-4" />
-            Vai pedir justica gratuita
+            Vai pedir justiça gratuita
           </label>
           {erro ? <p className="aviso-erro">{erro}</p> : null}
           <div>

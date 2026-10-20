@@ -16,10 +16,10 @@ const d = temBanco ? describe : describe.skip;
 let escritorio = "";
 let usuarioId = "";
 
-d("conta do usuario", () => {
+d("conta do usuário", () => {
   beforeAll(async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `conta-${Date.now()}`, nome: "Escritorio da Conta" },
+      data: { slug: `conta-${Date.now()}`, nome: "Escritório da Conta" },
     });
     escritorio = e.id;
     const usuario = await comEscritorio(escritorio, async (db) =>
@@ -65,7 +65,7 @@ d("conta do usuario", () => {
     ).resolves.toBe(false);
   });
 
-  it("o segredo do 2FA so vale depois de confirmado com um codigo", async () => {
+  it("o segredo do 2FA só vale depois de confirmado com um código", async () => {
     const segredo = gerarSegredo();
     // Codigo errado nao deveria gravar nada.
     expect(await conferirCodigo("000000", segredo)).toBe(false);
@@ -102,7 +102,7 @@ d("conta do usuario", () => {
 
   it("o mesmo e-mail pode existir em outro escritorio", async () => {
     const outro = await prismaPlataforma().escritorio.create({
-      data: { slug: `outro-${Date.now()}`, nome: "Outro Escritorio" },
+      data: { slug: `outro-${Date.now()}`, nome: "Outro Escritório" },
     });
     try {
       const usuario = await comEscritorio(outro.id, async (db) =>

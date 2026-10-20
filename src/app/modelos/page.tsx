@@ -35,8 +35,8 @@ export default async function PaginaModelos() {
       titulo="Modelos de documento"
       chamada={
         proprios === 0
-          ? "Usando os modelos que ja vem no sistema."
-          : `${proprios} de ${naTela.length} no papel do escritorio.`
+          ? "Usando os modelos que já vem no sistema."
+          : `${proprios} de ${naTela.length} no papel do escritório.`
       }
     >
       <PainelModelos

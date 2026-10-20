@@ -19,7 +19,7 @@ export const slugValido = z
   .string()
   .min(3)
   .max(40)
-  .regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/, "O endereco aceita letras minusculas, numeros e hifen.");
+  .regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/, "O endereço aceita letras minúsculas, números e hífen.");
 
 export class EnderecoIndisponivel extends Error {
   readonly status = 409;
@@ -42,9 +42,9 @@ export type Nascimento = {
 
 export async function nascerEscritorio(n: Nascimento) {
   const slug = n.slug.toLowerCase();
-  if (RESERVADOS.has(slug)) throw new EnderecoIndisponivel("Este endereco e reservado.");
+  if (RESERVADOS.has(slug)) throw new EnderecoIndisponivel("Este endereço é reservado.");
   const ja = await prismaPlataforma().escritorio.findUnique({ where: { slug }, select: { id: true } });
-  if (ja) throw new EnderecoIndisponivel("Este endereco ja esta em uso.");
+  if (ja) throw new EnderecoIndisponivel("Este endereço já está em uso.");
 
   const escolhidos = n.modulos.filter((m): m is Modulo => m !== "NUCLEO");
   const conta = contaMontada(escolhidos, n.faixa);

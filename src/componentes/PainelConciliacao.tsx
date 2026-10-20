@@ -65,12 +65,12 @@ export function PainelConciliacao({
 
     const detalhe = await resposta.json().catch(() => null);
     if (!resposta.ok) {
-      setErro(detalhe?.erro ?? "Nao consegui ler o extrato.");
+      setErro(detalhe?.erro ?? "Não consegui ler o extrato.");
       return;
     }
     setResumo(
       `${detalhe.lidos} lancamento(s) lidos, ${detalhe.novos} novo(s). ` +
-        "Reimportar o mesmo periodo nao duplica nada.",
+        "Reimportar o mesmo período não duplica nada.",
     );
     router.refresh();
   }
@@ -87,7 +87,7 @@ export function PainelConciliacao({
 
     const d = await resposta.json().catch(() => null);
     if (!resposta.ok) {
-      setErro(d?.erro ?? "Nao consegui ler o arquivo.");
+      setErro(d?.erro ?? "Não consegui ler o arquivo.");
       return;
     }
     const recusadas: Array<{ linha: number; motivo: string }> = d.recusadas ?? [];
@@ -99,8 +99,8 @@ export function PainelConciliacao({
               .slice(0, 3)
               .map((r) => `linha ${r.linha} (${r.motivo})`)
               .join(", ") +
-            ". Linha pela metade nao vira lancamento."
-          : "Reimportar o mesmo periodo nao duplica nada."),
+            ". Linha pela metade não vira lançamento."
+          : "Reimportar o mesmo período não duplica nada."),
     );
     router.refresh();
   }
@@ -116,7 +116,7 @@ export function PainelConciliacao({
     setDecidindo(null);
     if (!resposta.ok) {
       const d = await resposta.json().catch(() => null);
-      setErro(d?.erro ?? "Nao consegui gravar a decisao.");
+      setErro(d?.erro ?? "Não consegui gravar a decisão.");
       return;
     }
     router.refresh();
@@ -127,13 +127,13 @@ export function PainelConciliacao({
       <section className="cartao">
         <h2 className="font-semibold">Ler o extrato</h2>
         <p className="mt-1 text-sm text-slate-600">
-          O aviso automatico so conta das cobrancas que passam por ele. O
-          extrato traz tambem tarifa, Pix avulso, estorno e o saque para o
-          banco — e e o que faz o financeiro bater com a conta de verdade.
+          O aviso automático só conta das cobranças que passam por ele. O
+          extrato traz também tarifa, Pix avulso, estorno e o saque para o
+          banco — e é o que faz o financeiro bater com a conta de verdade.
         </p>
         {!temConta ? (
           <p className="mt-3 text-sm text-amber-700">
-            Conecte a conta de cobranca em Integracoes para poder ler o extrato.
+            Conecte a conta de cobrança em Integrações para poder ler o extrato.
           </p>
         ) : (
           <form onSubmit={importar} className="mt-4 flex flex-wrap items-end gap-3">
@@ -145,7 +145,7 @@ export function PainelConciliacao({
             </div>
             <div>
               <label htmlFor="ex-ate" className="rotulo">
-                Ate
+                Até
               </label>
               <input id="ex-ate" name="ate" type="date" required className="campo" />
             </div>
@@ -162,7 +162,7 @@ export function PainelConciliacao({
           <div className="mt-4 border-t border-slate-100 pt-4">
             <p className="text-sm font-medium">Extrato da InfinitePay</p>
             <p className="mt-1 text-sm text-slate-600">
-              A InfinitePay nao tem API para listar o que passou na conta — so a
+              A InfinitePay não tem API para listar o que passou na conta — só a
               exportacao do aplicativo. Baixe o extrato em CSV no app e mande
               aqui: as linhas entram nesta mesma lista.
             </p>
@@ -193,7 +193,7 @@ export function PainelConciliacao({
         <h2 className="font-semibold">A conferir</h2>
         {entradas.length === 0 ? (
           <p className="vazio mt-3">
-            Nada pendente. Leia um periodo acima para conferir.
+            Nada pendente. Leia um período acima para conferir.
           </p>
         ) : (
           <ul className="mt-3 grid gap-2">
@@ -225,8 +225,8 @@ export function PainelConciliacao({
                     ) : null}
                     {!e.automatico ? (
                       <p className="mt-1 text-xs text-amber-700">
-                        Depende de contexto que o extrato nao tem — confira
-                        antes de lancar.
+                        Depende de contexto que o extrato não tem — confira
+                        antes de lançar.
                       </p>
                     ) : null}
                   </div>
@@ -248,7 +248,7 @@ export function PainelConciliacao({
                         onClick={() => decidir(e.id, "lancar")}
                         className={`${e.parcelaId ? "botao-secundario" : "botao-principal"} disabled:opacity-50`}
                       >
-                        {e.parcelaId ? "Lancar avulso" : "Lancar"}
+                        {e.parcelaId ? "Lançar avulso" : "Lancar"}
                       </button>
                     ) : null}
                     <button

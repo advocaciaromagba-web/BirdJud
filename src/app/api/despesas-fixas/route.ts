@@ -41,12 +41,12 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const corpo = nova.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const valorCentavos = paraCentavos(corpo.data.valor);
     if (valorCentavos === null || valorCentavos === 0) {
-      return NextResponse.json({ erro: "Valor invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Valor inválido." }, { status: 400 });
     }
 
     const dia = Number(corpo.data.diaDoVencimento);
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const fimEm = corpo.data.fimEm || null;
     if (!vigenciaCoerente(inicioEm, fimEm)) {
       return NextResponse.json(
-        { erro: "O fim da vigencia vem antes do comeco." },
+        { erro: "O fim da vigência vem antes do começo." },
         { status: 400 },
       );
     }

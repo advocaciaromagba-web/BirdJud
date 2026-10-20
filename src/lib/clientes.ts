@@ -80,8 +80,8 @@ export function pendenciasDoCliente(
       // CNPJ para emitir, e a recusa so apareceria no dia do vencimento.
       gravidade: cobra ? "IMPEDE" : "AVISO",
       texto: cobra
-        ? "Sem CPF ou CNPJ nao da para emitir cobranca para este cliente."
-        : "Sem CPF ou CNPJ. Nao atrapalha hoje, mas sera exigido para cobrar.",
+        ? "Sem CPF ou CNPJ não dá para emitir cobrança para este cliente."
+        : "Sem CPF ou CNPJ. Não atrapalha hoje, mas será exigido para cobrar.",
     });
   } else if (!documentoValido(cliente.documento!)) {
     pendencias.push({
@@ -90,8 +90,8 @@ export function pendenciasDoCliente(
       // uma mensagem que ninguem liga a este cadastro.
       gravidade: cobra ? "IMPEDE" : "AVISO",
       texto:
-        "O CPF/CNPJ nao fecha o digito verificador. Confira: digitado errado, " +
-        "ele passa no cadastro e e recusado na hora de cobrar.",
+        "O CPF/CNPJ não fecha o dígito verificador. Confira: digitado errado, " +
+        "ele passa no cadastro e é recusado na hora de cobrar.",
     });
   }
 
@@ -101,9 +101,9 @@ export function pendenciasDoCliente(
       tipo: "SEM_EMAIL",
       gravidade: precisa ? "LIMITA" : "AVISO",
       texto: cobra
-        ? "Sem e-mail, o link de pagamento nao chega a este cliente."
+        ? "Sem e-mail, o link de pagamento não chega a este cliente."
         : precisa
-          ? "Sem e-mail, os avisos deste cliente nao tem para onde ir."
+          ? "Sem e-mail, os avisos deste cliente não tem para onde ir."
           : "Sem e-mail cadastrado.",
     });
   }
@@ -114,7 +114,7 @@ export function pendenciasDoCliente(
       tipo: "SEM_TELEFONE",
       gravidade: zap ? "LIMITA" : "AVISO",
       texto: zap
-        ? "Sem telefone, o aviso por WhatsApp nao sai para este cliente."
+        ? "Sem telefone, o aviso por WhatsApp não sai para este cliente."
         : "Sem telefone cadastrado.",
     });
   }
@@ -129,8 +129,8 @@ export function pendenciasDoCliente(
       gravidade: "LIMITA",
       texto:
         pendentes === 1
-          ? "1 documento essencial da lista ainda nao foi recebido."
-          : `${pendentes} documentos essenciais da lista ainda nao foram recebidos.`,
+          ? "1 documento essencial da lista ainda não foi recebido."
+          : `${pendentes} documentos essenciais da lista ainda não foram recebidos.`,
     });
   }
 
@@ -139,7 +139,7 @@ export function pendenciasDoCliente(
       tipo: "SEM_ARQUIVO",
       gravidade: "AVISO",
       texto:
-        "Nenhum documento anexado. Nao ha o que conferir se o cadastro bater " +
+        "Nenhum documento anexado. Não há o que conferir se o cadastro bater " +
         "com o papel.",
     });
   }

@@ -128,7 +128,7 @@ export function prepararRepresentantes(
     }
     if (!cpfValido(cpf)) {
       throw new RepresentanteInvalido(
-        `O CPF do ${ordinal}º representante legal nao fecha o digito verificador.`,
+        `O CPF do ${ordinal}º representante legal não fecha o dígito verificador.`,
       );
     }
     const soDigitos = digitosDe(cpf);
@@ -144,7 +144,7 @@ export function prepararRepresentantes(
     const email = texto(item.email);
     if (email && !UM_EMAIL.test(email)) {
       throw new RepresentanteInvalido(
-        `O e-mail do ${ordinal}º representante legal nao parece valido.`,
+        `O e-mail do ${ordinal}º representante legal não parece válido.`,
       );
     }
 

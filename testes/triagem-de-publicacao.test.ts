@@ -17,11 +17,11 @@ import { calcularPrazo, recuarDiasUteis } from "../src/lib/prazos";
 describe("agendar ou trabalhar", () => {
   it("o que exige ESTAR em algum lugar vira agendamento", () => {
     for (const t of [
-      "Fica designada audiencia de instrucao e julgamento",
-      "Intime-se para a pericia medica",
+      "Fica designada audiência de instrução e julgamento",
+      "Intime-se para a perícia médica",
       "Designo atendimento na secretaria",
-      "Sessao de julgamento virtual",
-      "Audiencia de conciliacao",
+      "Sessão de julgamento virtual",
+      "Audiência de conciliação",
     ]) {
       expect(especiePeloTexto(t), t).toBe("AGENDAMENTO");
     }
@@ -30,7 +30,7 @@ describe("agendar ou trabalhar", () => {
   it("o que exige ESCREVER vira tarefa", () => {
     for (const t of [
       "Manifeste-se a parte autora no prazo de 15 dias",
-      "Apresente contestacao",
+      "Apresente contestação",
       "Impugne os embargos",
       "Cumpra a determinacao, juntando o documento",
       "Apresente contrarrazoes ao recurso",
@@ -43,11 +43,11 @@ describe("agendar ou trabalhar", () => {
     // "Manifeste-se sobre a designacao da audiencia" tem as duas coisas.
     // Perder uma audiencia custa mais que escrever uma peca um dia antes.
     expect(
-      especiePeloTexto("Manifeste-se sobre a data da audiencia designada"),
+      especiePeloTexto("Manifeste-se sobre a data da audiência designada"),
     ).toBe("AGENDAMENTO");
   });
 
-  it("texto que nao fala de nenhum dos dois nao inventa especie", () => {
+  it("texto que não fala de nenhum dos dois não inventa espécie", () => {
     expect(especiePeloTexto("Publicado o acordao. Nada mais.")).toBeNull();
   });
 
@@ -63,16 +63,16 @@ describe("agendar ou trabalhar", () => {
 });
 
 describe("que tipo de compromisso cada uma gera", () => {
-  it("pericia e pericia, audiencia e audiencia", () => {
-    expect(tipoDoCompromisso("AGENDAMENTO", "pericia medica")).toBe("PERICIA");
-    expect(tipoDoCompromisso("AGENDAMENTO", "audiencia una")).toBe("AUDIENCIA");
+  it("perícia e perícia, audiência e audiência", () => {
+    expect(tipoDoCompromisso("AGENDAMENTO", "perícia médica")).toBe("PERICIA");
+    expect(tipoDoCompromisso("AGENDAMENTO", "audiência una")).toBe("AUDIENCIA");
     expect(tipoDoCompromisso("AGENDAMENTO", "atendimento no cartorio")).toBe(
       "COMPROMISSO",
     );
     expect(tipoDoCompromisso("TAREFA", "manifeste-se")).toBe("TAREFA");
   });
 
-  it("o titulo leva o numero do processo", () => {
+  it("o título leva o número do processo", () => {
     // Uma agenda com cinco linhas escritas "Manifestacao" nao diz qual e qual.
     expect(tituloPadrao("TAREFA", "TAREFA", "0001234-56.2026.8.26.0100")).toContain(
       "0001234-56.2026.8.26.0100",
@@ -80,9 +80,9 @@ describe("que tipo de compromisso cada uma gera", () => {
   });
 });
 
-describe("dias uteis ou corridos", () => {
-  it("processo civel conta em dias uteis — CPC 219", () => {
-    expect(contagemPeloTexto("Manifeste-se em 15 dias. 2ª Vara Civel")).toBe(
+describe("dias úteis ou corridos", () => {
+  it("processo cível conta em dias úteis — CPC 219", () => {
+    expect(contagemPeloTexto("Manifeste-se em 15 dias. 2ª Vara Cível")).toBe(
       "UTEIS",
     );
   });
@@ -92,40 +92,40 @@ describe("dias uteis ou corridos", () => {
     // depois do que vence de verdade.
     for (const t of [
       "2ª Vara Criminal da comarca",
-      "Nos autos da execucao penal",
-      "Recebida a denuncia, acao penal",
+      "Nos autos da execução penal",
+      "Recebida a denuncia, ação penal",
     ]) {
       expect(contagemPeloTexto(t), t).toBe("CORRIDOS");
     }
   });
 });
 
-describe("a data sugerida, tres dias uteis antes do fatal", () => {
+describe("a data sugerida, três dias úteis antes do fatal", () => {
   it("recua pulando fim de semana", () => {
     // 2026-11-10 e uma terca. Tres dias uteis antes: 5 (quinta).
     expect(recuarDiasUteis("2026-11-10", 3)).toBe("2026-11-05");
   });
 
-  it("tres dias UTEIS, e nao corridos — senao cairia no domingo", () => {
+  it("três dias UTEIS, e não corridos — senão cairia no domingo", () => {
     // 2026-11-11 e quarta. Tres dias CORRIDOS antes seria domingo, 8.
     const sugerida = recuarDiasUteis("2026-11-11", ANTECEDENCIA_SUGERIDA_DIAS);
     expect(sugerida).toBe("2026-11-06");
     expect(new Date(`${sugerida}T12:00:00Z`).getUTCDay()).not.toBe(0);
   });
 
-  it("NUNCA sugere data que ja passou", () => {
+  it("NUNCA sugere data que já passou", () => {
     // Publicacao lida com atraso: o fatal e daqui a dois dias, e recuar tres
     // cairia ontem. O sistema estaria mandando trabalhar no passado.
     const sugerida = recuarDiasUteis("2026-11-10", 3, "2026-11-09");
     expect(sugerida).toBe("2026-11-09");
   });
 
-  it("e nunca sugere depois do proprio fatal", () => {
+  it("e nunca sugere depois do próprio fatal", () => {
     const sugerida = recuarDiasUteis("2026-11-10", 3, "2026-11-20");
     expect(sugerida).toBe("2026-11-10");
   });
 
-  it("da conta inteira: 15 dias uteis a partir da publicacao, menos 3", () => {
+  it("da conta inteira: 15 dias úteis a partir da publicação, menos 3", () => {
     // O caminho completo que o sistema faz: a IA diz "15 dias"; prazos.ts
     // transforma em data; a triagem recua tres dias uteis.
     const fatal = calcularPrazo("2026-11-03", 15, "UTEIS").vencimento;

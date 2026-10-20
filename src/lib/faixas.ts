@@ -11,8 +11,8 @@ export class FaixaEsgotada extends Error {
   readonly status = 409;
   constructor(quem: "advogados" | "apoio", limite: number, rotulo: string) {
     super(
-      `A faixa ${rotulo} permite ate ${limite} ${
-        quem === "advogados" ? "advogados" : "usuarios de apoio"
+      `A faixa ${rotulo} permite até ${limite} ${
+        quem === "advogados" ? "advogados" : "usuários de apoio"
       }. Para cadastrar mais, e preciso mudar de faixa.`,
     );
     this.name = "FaixaEsgotada";

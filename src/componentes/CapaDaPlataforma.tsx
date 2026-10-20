@@ -409,7 +409,7 @@ export function CapaDaPlataforma({
               Planos
             </Link>
             <Link href="/#recursos" className="hover:text-white">
-              Servicos
+              Serviços
             </Link>
             <Link href="/#quem-somos" className="hover:text-white">
               Quem somos

@@ -74,7 +74,7 @@ export function ConfigFiscal({
     pTotTribMun: e?.pTotTribMun ?? "",
     codigoTributacao: e?.codigoTributacao ?? "171401",
     codigoNbs: e?.codigoNbs ?? "113012000",
-    descricaoPadrao: e?.descricaoPadrao ?? "Prestacao de servicos advocaticios",
+    descricaoPadrao: e?.descricaoPadrao ?? "Prestação de serviços advocatícios",
     serie: e?.serie ?? "1",
     proximoNumero: String(e?.proximoNumero ?? 1),
     ambiente: e?.ambiente ?? "HOMOLOGACAO",
@@ -179,8 +179,8 @@ export function ConfigFiscal({
     });
     const json = await res.json().catch(() => ({}));
     setSalvando(false);
-    if (!res.ok) return setMsg({ texto: json.erro ?? "Nao foi possivel salvar.", tipo: "erro" });
-    setMsg({ texto: "Configuracao salva.", tipo: "ok" });
+    if (!res.ok) return setMsg({ texto: json.erro ?? "Não foi possível salvar.", tipo: "erro" });
+    setMsg({ texto: "Configuração salva.", tipo: "ok" });
     setLidoPelaIA(false);
     router.refresh();
   }
@@ -201,7 +201,7 @@ export function ConfigFiscal({
   return (
     <details className="mt-4" open={aberto} onToggle={(ev) => setAberto((ev.target as HTMLDetailsElement).open)}>
       <summary className="cursor-pointer text-sm font-semibold text-marca">
-        Configurar emissor {fiscal ? "" : "(obrigatorio antes da primeira nota)"}
+        Configurar emissor {fiscal ? "" : "(obrigatório antes da primeira nota)"}
       </summary>
 
       {temIA ? (
@@ -211,21 +211,21 @@ export function ConfigFiscal({
       ) : null}
       {lidoPelaIA ? (
         <p className="mt-3 rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
-          Sugestao da IA no formulario abaixo: confira cada campo, e o regime, o codigo do servico e os percentuais com o
+          Sugestao da IA no formulário abaixo: confira cada campo, e o regime, o código do serviço e os percentuais com o
           contador, antes de salvar.
         </p>
       ) : null}
 
       <form onSubmit={salvar} className="mt-3 grid gap-4 md:grid-cols-2">
-        <div className="md:col-span-2">{campo("Razao social", "razaoSocial")}</div>
+        <div className="md:col-span-2">{campo("Razão social", "razaoSocial")}</div>
         {campo("CNPJ", "cnpj")}
-        {campo("Inscricao municipal", "inscricaoMunicipal", { placeholder: "Se a prefeitura exigir" })}
-        {campo("Codigo IBGE do municipio (sede)", "codigoMunicipio", { ajuda: "7 digitos." })}
+        {campo("Inscrição municipal", "inscricaoMunicipal", { placeholder: "Se a prefeitura exigir" })}
+        {campo("Código IBGE do município (sede)", "codigoMunicipio", { ajuda: "7 dígitos." })}
         {campo("Telefone (na nota)", "telefone")}
         <div className="md:col-span-2">{campo("E-mail (na nota)", "email")}</div>
 
         <fieldset className="grid gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 md:col-span-2">
-          <legend className="px-1 text-sm font-semibold">Regime tributario e ISS</legend>
+          <legend className="px-1 text-sm font-semibold">Regime tributário e ISS</legend>
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input type="radio" checked={form.simples === "SIM"} onChange={() => set("simples", "SIM")} />
@@ -233,10 +233,10 @@ export function ConfigFiscal({
             </label>
             <label className="flex items-center gap-2">
               <input type="radio" checked={form.simples === "NAO"} onChange={() => set("simples", "NAO")} />
-              Nao optante (lucro presumido ou real)
+              Não optante (lucro presumido ou real)
             </label>
           </div>
-          <p className="text-xs text-slate-600">A Receita confere: se nao bater com o cadastro dela, a nota e recusada (E0160).</p>
+          <p className="text-xs text-slate-600">A Receita confere: se não bater com o cadastro dela, a nota é recusada (E0160).</p>
           <label className="flex items-start gap-2 text-sm">
             <input type="radio" className="mt-1" checked={form.modoIss === "DAS"} onChange={() => set("modoIss", "DAS")} />
             <span>
@@ -269,16 +269,16 @@ export function ConfigFiscal({
               {campo("% municipais", "pTotTribMun", { placeholder: "2,00" })}
             </div>
           )}
-          <p className="text-xs text-amber-900">Confirme o regime e os percentuais com o contador antes de emitir em producao.</p>
+          <p className="text-xs text-amber-900">Confirme o regime e os percentuais com o contador antes de emitir em produção.</p>
         </fieldset>
 
         <fieldset className="grid gap-2 rounded-md border border-slate-200 p-3 md:col-span-2">
-          <legend className="px-1 text-sm font-semibold">Mudanca de regime em data marcada</legend>
+          <legend className="px-1 text-sm font-semibold">Mudança de regime em data marcada</legend>
           <label className="flex items-start gap-2 text-sm">
             <input type="checkbox" className="mt-1" checked={mudaRegime} onChange={(x) => setMudaRegime(x.target.checked)} />
             <span>
-              O escritorio muda de regime numa data certa (ex.: entra no Simples em 1/1). O sistema passa a usar o novo
-              regime sozinho, pela <strong>competencia</strong> de cada nota.
+              O escritório muda de regime numa data certa (ex.: entra no Simples em 1/1). O sistema passa a usar o novo
+              regime sozinho, pela <strong>competência</strong> de cada nota.
             </span>
           </label>
           {mudaRegime ? (
@@ -294,7 +294,7 @@ export function ConfigFiscal({
                 </label>
                 <label className="flex items-center gap-2">
                   <input type="radio" checked={form.futuroSimples === "NAO"} onChange={() => set("futuroSimples", "NAO")} />
-                  Passa a ser nao optante
+                  Passa a ser não optante
                 </label>
               </div>
               <div className="flex flex-wrap gap-4 text-sm">
@@ -321,63 +321,63 @@ export function ConfigFiscal({
         </fieldset>
 
         <fieldset className="grid gap-2 rounded-md border border-slate-200 p-3 md:col-span-2">
-          <legend className="px-1 text-sm font-semibold">IBS e CBS (reforma tributaria)</legend>
+          <legend className="px-1 text-sm font-semibold">IBS e CBS (reforma tributária)</legend>
           <label className="flex items-start gap-2 text-sm">
             <input type="checkbox" className="mt-1" checked={usaIbsCbs} onChange={(x) => setUsaIbsCbs(x.target.checked)} />
             <span>
-              A nota passa a declarar IBS e CBS a partir de uma competencia. Para optante do Simples isso e obrigatorio
-              desde 1/1/2027; antes de 1/1/2026 a Receita recusa a nota. Os valores sao calculados pela Receita — o
-              sistema declara o tipo da operacao.
+              A nota passa a declarar IBS e CBS a partir de uma competência. Para optante do Simples isso é obrigatório
+              desde 1/1/2027; antes de 1/1/2026 a Receita recusa a nota. Os valores são calculados pela Receita — o
+              sistema declara o tipo da operação.
             </span>
           </label>
           {usaIbsCbs ? (
             <div className="grid gap-3 pl-6 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                A partir da competencia
+                A partir da competência
                 <input type="date" className="campo" value={form.ibsCbsDesde} onChange={(x) => set("ibsCbsDesde", x.target.value)} />
               </label>
-              {campo("Codigo da operacao", "cIndOp", { ajuda: "100301 = demais servicos, operacao onerosa." })}
-              {campo("Situacao tributaria (CST)", "cstIbsCbs", { ajuda: "000 = tributacao integral." })}
-              {campo("Classificacao tributaria", "cClassTribIbsCbs", { ajuda: "000001 = tributada integralmente." })}
+              {campo("Código da operação", "cIndOp", { ajuda: "100301 = demais serviços, operação onerosa." })}
+              {campo("Situação tributária (CST)", "cstIbsCbs", { ajuda: "000 = tributação integral." })}
+              {campo("Classificação tributária", "cClassTribIbsCbs", { ajuda: "000001 = tributada integralmente." })}
               <label className="grid gap-1 text-sm">
                 Apuracao do IBS/CBS no Simples
                 <select className="campo" value={form.regApIBSCBSSN} onChange={(x) => set("regApIBSCBSSN", x.target.value)}>
-                  <option value="">Nao informar por enquanto</option>
+                  <option value="">Não informar por enquanto</option>
                   <option value="1">1 — IBS e CBS dentro do Simples (DAS)</option>
                   <option value="2">2 — CBS no Simples e IBS por fora</option>
                   <option value="3">3 — IBS e CBS por fora do Simples</option>
                 </select>
               </label>
-              {campo("Codigo da atividade no Simples", "cAtvSN", { placeholder: "14", ajuda: "14 = servicos do Anexo IV (advocacia)." })}
+              {campo("Código da atividade no Simples", "cAtvSN", { placeholder: "14", ajuda: "14 = serviços do Anexo IV (advocacia)." })}
               <p className="text-xs text-amber-900 sm:col-span-2">
-                Os dois ultimos campos sao da Nota Tecnica 009: so preencha quando a Receita publicar o novo esquema. Em
-                branco, a nota sai sem eles. Com IBS/CBS, o cliente precisa de endereco completo com CEP no cadastro.
+                Os dois últimos campos são da Nota Técnica 009: só preencha quando a Receita publicar o novo esquema. Em
+                branco, a nota sai sem eles. Com IBS/CBS, o cliente precisa de endereço completo com CEP no cadastro.
               </p>
             </div>
           ) : null}
         </fieldset>
 
-        {campo("Codigo de tributacao nacional", "codigoTributacao", { ajuda: "171401 = advocacia." })}
-        {campo("Codigo NBS", "codigoNbs", { ajuda: "113012000 = representacao e consultoria juridica." })}
-        <div className="md:col-span-2">{campo("Descricao padrao do servico", "descricaoPadrao")}</div>
+        {campo("Código de tributação nacional", "codigoTributacao", { ajuda: "171401 = advocacia." })}
+        {campo("Código NBS", "codigoNbs", { ajuda: "113012000 = representação e consultoria jurídica." })}
+        <div className="md:col-span-2">{campo("Descrição padrão do serviço", "descricaoPadrao")}</div>
         {campo("Serie da DPS", "serie")}
-        {campo("Numero da proxima DPS", "proximoNumero")}
+        {campo("Número da próxima DPS", "proximoNumero")}
 
         <fieldset className="grid gap-2 rounded-md border border-slate-200 p-3 md:col-span-2">
           <legend className="px-1 text-sm font-semibold">Ambiente</legend>
           <label className="flex items-center gap-2 text-sm">
             <input type="radio" checked={form.ambiente === "HOMOLOGACAO"} onChange={() => set("ambiente", "HOMOLOGACAO")} />
-            Testes (producao restrita) — nota sem validade juridica, para conferir tudo antes
+            Testes (produção restrita) — nota sem validade jurídica, para conferir tudo antes
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="radio" checked={form.ambiente === "PRODUCAO"} onChange={() => set("ambiente", "PRODUCAO")} />
-            <span className="font-semibold text-red-700">Producao — nota fiscal real</span>
+            <span className="font-semibold text-red-700">Produção — nota fiscal real</span>
           </label>
         </fieldset>
 
         <div className="md:col-span-2">
           <button type="submit" className="botao-principal" disabled={salvando}>
-            {salvando ? "Salvando..." : "Salvar configuracao"}
+            {salvando ? "Salvando..." : "Salvar configuração"}
           </button>
           {msg ? <span className={`ml-3 text-sm ${msg.tipo === "erro" ? "text-red-700" : "text-emerald-700"}`}>{msg.texto}</span> : null}
         </div>

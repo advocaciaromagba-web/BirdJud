@@ -19,15 +19,15 @@ const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
 describe("e-mail da redefinicao", () => {
-  it("diz a validade, o uso unico e o que fazer se nao foi voce", () => {
+  it("diz a validade, o uso único e o que fazer se não foi você", () => {
     const m = mensagemDeRedefinicaoDoOperador({ nome: "Operador", link: "https://birdjud.com.br/plataforma/redefinir-senha?t=x" });
-    expect(m.texto).toContain("30 minutos e uma unica vez");
-    expect(m.texto).toContain("Se nao foi voce");
+    expect(m.texto).toContain("30 minutos e uma única vez");
+    expect(m.texto).toContain("Se não foi você");
     expect(m.texto).toContain("https://birdjud.com.br/plataforma/redefinir-senha?t=x");
   });
 });
 
-d("redefinicao da senha do operador", () => {
+d("redefinição da senha do operador", () => {
   const marca = Date.now();
   const email = `op-${marca}@teste.local`;
   const inativo = `op-inativo-${marca}@teste.local`;
@@ -48,11 +48,11 @@ d("redefinicao da senha do operador", () => {
   });
 
   it("e-mail que nao e de operador ativo nao gera link", async () => {
-    expect(await pedirRedefinicaoDoOperador(`ninguem-${marca}@teste.local`, null)).toBeNull();
+    expect(await pedirRedefinicaoDoOperador(`ninguém-${marca}@teste.local`, null)).toBeNull();
     expect(await pedirRedefinicaoDoOperador(inativo, null)).toBeNull();
   });
 
-  it("o link troca a senha uma vez so, e derruba as sessoes antigas", async () => {
+  it("o link troca a senha uma vez só, e derruba as sessões antigas", async () => {
     // Antes: tentativas erradas de entrada acumuladas na conta.
     await registrarTentativa(`operador:${email}`, 5, 3600);
     const pedido = await pedirRedefinicaoDoOperador(email.toUpperCase(), "1.2.3.4");
@@ -75,7 +75,7 @@ d("redefinicao da senha do operador", () => {
     await redefinirSenhaDoOperador(segundo!.token, "senha-nova-do-console-456");
   });
 
-  it("link vencido (30 minutos) nao vale", async () => {
+  it("link vencido (30 minutos) não vale", async () => {
     const pedido = await pedirRedefinicaoDoOperador(email, null, new Date(Date.now() - 31 * 60_000));
     await expect(redefinirSenhaDoOperador(pedido!.token, "senha-nova-do-console-789")).rejects.toThrow(TokenInvalido);
   });
@@ -86,7 +86,7 @@ d("redefinicao da senha do operador", () => {
     await redefinirSenhaDoOperador(pedido!.token, "agora-sim-uma-senha-longa");
   });
 
-  it("token inventado nao vale", async () => {
+  it("token inventado não vale", async () => {
     await expect(redefinirSenhaDoOperador("x".repeat(43), "senha-nova-do-console-000")).rejects.toThrow(TokenInvalido);
   });
 });

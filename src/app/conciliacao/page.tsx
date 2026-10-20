@@ -38,7 +38,7 @@ export default async function PaginaConciliacao() {
       sugestao = c
         ? ehParcela
           ? `Parece ser a parcela a receber de ${c.nomeDoCliente} — ${c.descricao}`
-          : `${e.sugestao.tipo === "CERTA" ? "E" : "Parece ser"} a cobranca de ${c.nomeDoCliente} — ${c.descricao}`
+          : `${e.sugestao.tipo === "CERTA" ? "E" : "Parece ser"} a cobrança de ${c.nomeDoCliente} — ${c.descricao}`
         : null;
     } else if (e.sugestao.tipo === "AMBIGUA") {
       ambigua = true;

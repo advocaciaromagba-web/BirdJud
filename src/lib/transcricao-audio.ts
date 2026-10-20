@@ -52,20 +52,20 @@ export const FORMATOS_ACEITOS = [
  * quem nao e de la.
  */
 export const VOCABULARIO =
-  "Entrevista entre advogado e cliente em um escritorio de advocacia no " +
-  "Brasil. Podem aparecer: audiencia, pericia, peticao inicial, " +
-  "contestacao, procuracao, honorarios, verbas rescisorias, rescisao, " +
-  "insalubridade, periculosidade, INSS, CNIS, CTPS, FGTS, usucapiao, " +
-  "inventario, alvara, justica gratuita, prescricao, tutela de urgencia, " +
-  "comarca, vara civel, vara do trabalho, Juizado Especial, agravo, " +
-  "embargos, credito rural, cedula de produto rural.";
+  "Entrevista entre advogado e cliente em um escritório de advocacia no " +
+  "Brasil. Podem aparecer: audiência, perícia, petição inicial, " +
+  "contestação, procuração, honorários, verbas rescisórias, rescisão, " +
+  "insalubridade, periculosidade, INSS, CNIS, CTPS, FGTS, usucapião, " +
+  "inventário, alvará, justiça gratuita, prescrição, tutela de urgência, " +
+  "comarca, vara cível, vara do trabalho, Juizado Especial, agravo, " +
+  "embargos, crédito rural, cédula de produto rural.";
 
 export class SemChaveDeTranscricao extends Error {
   readonly status = 503;
   constructor() {
     super(
-      "A plataforma ainda nao configurou a transcricao de audio. " +
-        "Use a transcricao ao vivo, que roda no proprio computador.",
+      "A plataforma ainda não configurou a transcrição de áudio. " +
+        "Use a transcrição ao vivo, que roda no próprio computador.",
     );
     this.name = "SemChaveDeTranscricao";
   }
@@ -97,21 +97,21 @@ export class TranscricaoFalhou extends Error {
 export function explicarFalha(status: number, corpo: string): string {
   if (status === 401 || status === 403) {
     return (
-      "A plataforma nao conseguiu autenticar na transcricao. Avise o " +
-      "suporte; enquanto isso, use a transcricao ao vivo ou digite."
+      "A plataforma não conseguiu autenticar na transcrição. Avise o " +
+      "suporte; enquanto isso, use a transcrição ao vivo ou digite."
     );
   }
   if (status === 429) {
     return (
-      "A transcricao esta sem capacidade no momento. Tente de novo em " +
-      "alguns minutos, ou use a transcricao ao vivo."
+      "A transcrição está sem capacidade no momento. Tente de novo em " +
+      "alguns minutos, ou use a transcrição ao vivo."
     );
   }
   if (status === 413) {
-    return "O audio e grande demais para a transcricao. Corte em partes menores.";
+    return "O áudio é grande demais para a transcrição. Corte em partes menores.";
   }
   if (status >= 500) {
-    return "O servico de transcricao esta fora do ar. Tente mais tarde.";
+    return "O serviço de transcrição está fora do ar. Tente mais tarde.";
   }
   const detalhe = corpo.slice(0, 200).replace(/\s+/g, " ").trim();
   return `A transcricao recusou o audio${detalhe ? `: ${detalhe}` : "."}`;
@@ -129,18 +129,18 @@ export function conferirAudio(arquivo: {
 }): void {
   if (arquivo.tamanho > LIMITE_DE_BYTES) {
     throw new AudioRecusado(
-      `O audio tem ${Math.round(arquivo.tamanho / 1024 / 1024)} MB; o limite ` +
+      `O áudio tem ${Math.round(arquivo.tamanho / 1024 / 1024)} MB; o limite ` +
         `e ${LIMITE_DE_BYTES / 1024 / 1024} MB. Corte em partes menores.`,
     );
   }
   if (arquivo.tamanho < MINIMO_DE_BYTES) {
-    throw new AudioRecusado("O arquivo esta vazio ou quase vazio.");
+    throw new AudioRecusado("O arquivo está vazio ou quase vazio.");
   }
   // O tipo pode vir com parametro ("audio/webm;codecs=opus").
   const tipo = arquivo.tipo.split(";")[0].trim().toLowerCase();
   if (!FORMATOS_ACEITOS.includes(tipo as (typeof FORMATOS_ACEITOS)[number])) {
     throw new AudioRecusado(
-      `Formato ${tipo || "desconhecido"} nao serve. Envie MP3, M4A, WAV, ` +
+      `Formato ${tipo || "desconhecido"} não serve. Envie MP3, M4A, WAV, ` +
         "WebM, OGG ou MP4.",
     );
   }
@@ -193,7 +193,7 @@ export async function transcrever(
     });
   } catch (falha) {
     throw new TranscricaoFalhou(
-      `Nao deu para falar com a transcricao: ${(falha as Error).message}`,
+      `Não deu para falar com a transcrição: ${(falha as Error).message}`,
     );
   }
 
@@ -212,7 +212,7 @@ export async function transcrever(
   const texto = (dados.text ?? "").trim();
   if (!texto) {
     throw new TranscricaoFalhou(
-      "A transcricao voltou vazia. O audio pode estar mudo ou baixo demais.",
+      "A transcrição voltou vazia. O áudio pode estar mudo ou baixo demais.",
       422,
     );
   }

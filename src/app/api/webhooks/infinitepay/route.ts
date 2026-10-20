@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   try {
     const r = await tratarAviso(corpo.data);
     console.log(
-      `webhook infinitepay ${corpo.data.order_nsu}: ${r.tratado ? "" : "nao tratado — "}${r.motivo}`,
+      `webhook infinitepay ${corpo.data.order_nsu}: ${r.tratado ? "" : "não tratado — "}${r.motivo}`,
     );
     return NextResponse.json({ ok: true });
   } catch (erro) {

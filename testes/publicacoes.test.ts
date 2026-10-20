@@ -28,13 +28,13 @@ const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 const DIA = 24 * 60 * 60 * 1000;
 
-describe("leitura do texto da publicacao", () => {
-  it("acha o prazo em numero", () => {
+describe("leitura do texto da publicação", () => {
+  it("acha o prazo em número", () => {
     expect(
       detectarPrazo("Fica intimado para, no prazo de 15 dias, manifestar-se."),
     ).toBe(15);
     expect(
-      detectarPrazo("apresentar contestacao em 5 (cinco) dias uteis"),
+      detectarPrazo("apresentar contestação em 5 (cinco) dias úteis"),
     ).toBe(5);
   });
 
@@ -48,40 +48,40 @@ describe("leitura do texto da publicacao", () => {
     expect(detectarPrazo("recurso em 15 dias; embargos em 5 dias")).toBe(5);
   });
 
-  it("ignora numero que nao e prazo", () => {
+  it("ignora número que não e prazo", () => {
     expect(
       detectarPrazo("processo 0001234-56.2026.8.26.0100 distribuido"),
     ).toBeNull();
     expect(detectarPrazo("valor de R$ 1.500,00")).toBeNull();
   });
 
-  it("marca urgencia por ato, mesmo sem prazo", () => {
-    expect(ehUrgente("Designada audiencia de instrucao para 10/10", null)).toBe(
+  it("marca urgência por ato, mesmo sem prazo", () => {
+    expect(ehUrgente("Designada audiência de instrução para 10/10", null)).toBe(
       true,
     );
     expect(ehUrgente("Deferida a liminar", null)).toBe(true);
     expect(ehUrgente("Determinada a penhora de bens", null)).toBe(true);
-    expect(ehUrgente("Juntada de peticao", null)).toBe(false);
+    expect(ehUrgente("Juntada de petição", null)).toBe(false);
   });
 
-  it("marca urgencia por prazo curto", () => {
+  it("marca urgência por prazo curto", () => {
     expect(ehUrgente("Manifeste-se em 5 dias", 5)).toBe(true);
     expect(ehUrgente("Manifeste-se em 15 dias", 15)).toBe(false);
   });
 
   it("le com e sem acento", () => {
     expect(ehUrgente("AUDIÊNCIA designada", null)).toBe(true);
-    expect(ehUrgente("audiencia designada", null)).toBe(true);
+    expect(ehUrgente("audiência designada", null)).toBe(true);
   });
 
   it("triagem junta as duas leituras", () => {
-    expect(triar("Audiencia designada. Prazo de 10 dias.")).toEqual({
+    expect(triar("Audiência designada. Prazo de 10 dias.")).toEqual({
       prazoDias: 10,
       urgente: true,
     });
   });
 
-  it("numero de processo: aceita so o formato CNJ", () => {
+  it("número de processo: aceita só o formato CNJ", () => {
     expect(normalizarNumeroProcesso("0001234-56.2026.8.26.0100")).toBe(
       "00012345620268260100",
     );
@@ -89,13 +89,13 @@ describe("leitura do texto da publicacao", () => {
     expect(normalizarNumeroProcesso(null)).toBeNull();
   });
 
-  it("formata o numero de volta para leitura humana", () => {
+  it("formata o número de volta para leitura humana", () => {
     expect(formatarNumeroProcesso("00012345620268260100")).toBe(
       "0001234-56.2026.8.26.0100",
     );
   });
 
-  it("grava sempre a mesma grafia, digitado com ou sem mascara", () => {
+  it("grava sempre a mesma grafia, digitado com ou sem máscara", () => {
     // Sem isto, processo cadastrado com mascara nunca casa com a publicacao
     // do DJEN — e o vinculo automatico, que e o valor do modulo, nao acontece.
     expect(numeroParaGravar("0001234-56.2026.8.26.0100")).toBe(
@@ -106,7 +106,7 @@ describe("leitura do texto da publicacao", () => {
     );
   });
 
-  it("numero que nao e CNJ fica como foi digitado", () => {
+  it("número que não e CNJ fica como foi digitado", () => {
     // Processo antigo, de numeracao anterior ao CNJ, continua cadastravel.
     expect(numeroParaGravar("123/2001")).toBe("123/2001");
   });
@@ -133,7 +133,7 @@ describe("conversao do item do DJEN", () => {
     expect(comCamel?.numeroProcesso).toBe("0001234-56.2026.8.26.0100");
   });
 
-  it("descarta item sem id, sem texto ou com data invalida", () => {
+  it("descarta item sem id, sem texto ou com data inválida", () => {
     expect(
       converter({ texto: "x", data_disponibilizacao: "2026-09-10" }),
     ).toBeNull();
@@ -146,7 +146,7 @@ describe("conversao do item do DJEN", () => {
   });
 });
 
-describe("periodo da consulta", () => {
+describe("período da consulta", () => {
   it("OAB nova busca a janela inicial", () => {
     const agora = new Date("2026-09-18T03:00:00Z");
     const { de, ate } = periodoDaConsulta(null, agora);
@@ -154,7 +154,7 @@ describe("periodo da consulta", () => {
     expect(Math.round((agora.getTime() - de.getTime()) / DIA)).toBe(7);
   });
 
-  it("OAB ja capturada volta um pouco para tras", () => {
+  it("OAB já capturada volta um pouco para trás", () => {
     const agora = new Date("2026-09-18T03:00:00Z");
     const ontem = new Date("2026-09-17T03:00:00Z");
     const { de } = periodoDaConsulta(ontem, agora);
@@ -206,7 +206,7 @@ function comunicacao(id: number, texto: string, numero?: string) {
     data_disponibilizacao: "2026-09-17",
     numero_processo: numero ?? "0001234-56.2026.8.26.0100",
     siglaTribunal: "TJSP",
-    nomeOrgao: "1a Vara Civel",
+    nomeOrgao: "1a Vara Cível",
     tipoComunicacao: "Intimacao",
     texto,
     link: `https://dje.exemplo/${id}`,
@@ -214,7 +214,7 @@ function comunicacao(id: number, texto: string, numero?: string) {
 }
 
 describe("cliente do DJEN", () => {
-  it("manda OAB, UF e periodo na consulta", async () => {
+  it("manda OAB, UF e período na consulta", async () => {
     let vistos: Record<string, string> = {};
     responder = (url) => {
       vistos = Object.fromEntries(url.searchParams);
@@ -241,7 +241,7 @@ describe("cliente do DJEN", () => {
   // filtro de tribunal. Conferido contra o CNJ — ufOab=BA devolveu TJBA, TJSP
   // e TRF1 juntos. Este teste existe para que ninguem acrescente um filtro
   // achando que falta, e estreite o que o escritorio recebe.
-  it("nao manda filtro de tribunal, e guarda o que vem de qualquer um", async () => {
+  it("não manda filtro de tribunal, e guarda o que vem de qualquer um", async () => {
     let vistos: Record<string, string> = {};
     responder = (url) => {
       vistos = Object.fromEntries(url.searchParams);
@@ -271,7 +271,7 @@ describe("cliente do DJEN", () => {
     expect(achadas.map((c) => c.tribunal)).toEqual(["TJBA", "TJSP", "TRF1"]);
   });
 
-  it("comunicacao de outro advogado (mesmo numero, outra UF) fica de fora", async () => {
+  it("comunicação de outro advogado (mesmo número, outra UF) fica de fora", async () => {
     responder = () => ({
       status: 200,
       json: {
@@ -309,7 +309,7 @@ describe("cliente do DJEN", () => {
     expect(c.partes).toEqual([{ nome: "MARIA APARECIDA SOUZA", polo: "A" }]);
   });
 
-  it("nunca pede mais que 50 por pagina (acima disso a API devolve vazio)", async () => {
+  it("nunca pede mais que 50 por página (acima disso a API devolve vazio)", async () => {
     let pedido = "";
     responder = (url) => {
       pedido = url.searchParams.get("itensPorPagina") ?? "";
@@ -331,7 +331,7 @@ describe("cliente do DJEN", () => {
     ).rejects.toThrow(/fora do Brasil/);
   });
 
-  it("recusa resposta sem a lista de comunicacoes", async () => {
+  it("recusa resposta sem a lista de comunicações", async () => {
     responder = () => ({ status: 200, json: { mensagem: "ok" } });
     await expect(
       buscarPeriodo({
@@ -343,7 +343,7 @@ describe("cliente do DJEN", () => {
     ).rejects.toBeInstanceOf(FalhaNoDjen);
   });
 
-  it("percorre as paginas ate completar o total", async () => {
+  it("percorre as páginas até completar o total", async () => {
     responder = (url) => {
       const pagina = Number(url.searchParams.get("pagina"));
       const itens =
@@ -366,13 +366,13 @@ let alfa = "";
 let beta = "";
 const marca = Date.now();
 
-d("captura por escritorio", () => {
+d("captura por escritório", () => {
   beforeAll(async () => {
     const a = await prismaPlataforma().escritorio.create({
-      data: { slug: `pub-a-${marca}`, nome: "Alfa Publicacoes" },
+      data: { slug: `pub-a-${marca}`, nome: "Alfa Publicações" },
     });
     const b = await prismaPlataforma().escritorio.create({
-      data: { slug: `pub-b-${marca}`, nome: "Beta Publicacoes" },
+      data: { slug: `pub-b-${marca}`, nome: "Beta Publicações" },
     });
     alfa = a.id;
     beta = b.id;
@@ -407,7 +407,7 @@ d("captura por escritorio", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("grava, tria e vincula ao processo ja cadastrado", async () => {
+  it("grava, tria e vincula ao processo já cadastrado", async () => {
     responder = () => ({
       status: 200,
       json: {
@@ -415,9 +415,9 @@ d("captura por escritorio", () => {
         items: [
           comunicacao(
             1001,
-            "Designada audiencia de instrucao. Prazo de 5 dias.",
+            "Designada audiência de instrução. Prazo de 5 dias.",
           ),
-          comunicacao(1002, "Juntada de peticao.", "9999999-99.2026.8.26.0100"),
+          comunicacao(1002, "Juntada de petição.", "9999999-99.2026.8.26.0100"),
         ],
       },
     });
@@ -441,7 +441,7 @@ d("captura por escritorio", () => {
     expect(publicacoes[1]?.processoId).not.toBeNull();
   });
 
-  it("capturar de novo nao duplica", async () => {
+  it("capturar de novo não duplica", async () => {
     const resultado = await capturarPublicacoes(alfa);
     expect(resultado.novas).toBe(0);
     await expect(
@@ -449,7 +449,7 @@ d("captura por escritorio", () => {
     ).resolves.toBe(2);
   });
 
-  it("a mesma comunicacao por duas OABs entra uma vez so", async () => {
+  it("a mesma comunicação por duas OABs entra uma vez só", async () => {
     await comEscritorio(alfa, (db) =>
       db.oabMonitorada.create({
         data: semEscritorio({ numero: "333333", uf: "SP" }),
@@ -459,7 +459,7 @@ d("captura por escritorio", () => {
       status: 200,
       json: {
         count: 1,
-        items: [comunicacao(2001, "Intimacao compartilhada.")],
+        items: [comunicacao(2001, "Intimação compartilhada.")],
       },
     });
 
@@ -476,13 +476,13 @@ d("captura por escritorio", () => {
     expect(oabs?.quantidade).toBeGreaterThan(0);
   });
 
-  it("publicacao de um escritorio nao aparece no outro", async () => {
+  it("publicação de um escritório não aparece no outro", async () => {
     await expect(
       comEscritorio(beta, (db) => db.publicacao.count()),
     ).resolves.toBe(0);
   });
 
-  it("falha de uma OAB nao impede as outras, e nao avanca a marca dela", async () => {
+  it("falha de uma OAB não impede as outras, e não avanca a marca dela", async () => {
     const antes = await comEscritorio(alfa, (db) =>
       db.oabMonitorada.findFirstOrThrow({ where: { numero: "111111" } }),
     );
@@ -492,7 +492,7 @@ d("captura por escritorio", () => {
         return { status: 500, json: {} };
       return {
         status: 200,
-        json: { count: 1, items: [comunicacao(3001, "Outra intimacao.")] },
+        json: { count: 1, items: [comunicacao(3001, "Outra intimação.")] },
       };
     };
 
@@ -511,7 +511,7 @@ d("captura por escritorio", () => {
     expect(depois.ultimaCaptura).toEqual(antes.ultimaCaptura);
   });
 
-  it("OAB desativada nao e consultada", async () => {
+  it("OAB desativada não e consultada", async () => {
     await comEscritorio(alfa, (db) =>
       db.oabMonitorada.updateMany({ data: { ativo: false } }),
     );

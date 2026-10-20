@@ -55,7 +55,7 @@ export class ModeloRecusado extends Error {
 export class ModeloNaoEncontrado extends Error {
   readonly status = 404;
   constructor() {
-    super("Modelo nao encontrado.");
+    super("Modelo não encontrado.");
     this.name = "ModeloNaoEncontrado";
   }
 }
@@ -77,7 +77,7 @@ export async function guardarModelo(
   enviadoPor: string | null = null,
 ): Promise<{ id: string; usados: string[]; desconhecidos: string[] }> {
   if (arquivo.conteudo.byteLength === 0) {
-    throw new ModeloRecusado("O arquivo esta vazio.");
+    throw new ModeloRecusado("O arquivo está vazio.");
   }
   if (arquivo.conteudo.byteLength > TAMANHO_MAXIMO_MB * 1024 * 1024) {
     throw new ModeloRecusado(`O modelo passa de ${TAMANHO_MAXIMO_MB} MB.`);
@@ -266,7 +266,7 @@ const NOME_DA_FORMA: Record<string, string> = {
   BOLETO: "boleto",
   PIX: "Pix",
   CARTAO: "cartao",
-  QUALQUER: "Pix, boleto ou cartao, a escolha do CONTRATANTE",
+  QUALQUER: "Pix, boleto ou cartão, a escolha do CONTRATANTE",
 };
 
 const MES = [
@@ -354,7 +354,7 @@ export function qualificacaoDoCliente(
     pj ? null : texto(cliente.profissao),
     rg ? `${f ? "portadora" : "portador"} do RG nº ${rg}` : null,
     doc ? `${f ? "inscrita" : pj ? "inscrita" : "inscrito"} no ${pj ? "CNPJ" : "CPF"} sob o nº ${doc}` : null,
-    endereco ? `com endereco em ${endereco}` : null,
+    endereco ? `com endereço em ${endereco}` : null,
   ].filter(Boolean);
 
   const base = partes.length > 0 ? `${cliente.nome}, ${partes.join(", ")}` : cliente.nome;

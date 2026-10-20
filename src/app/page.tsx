@@ -73,7 +73,7 @@ export default async function Painel() {
     },
     { rotulo: "Compromissos", valor: numeros.compromissos, href: "/agenda" },
     {
-      rotulo: "Publicacoes nao lidas",
+      rotulo: "Publicações não lidas",
       valor: painel.naoLidas,
       href: "/publicacoes",
     },
@@ -88,7 +88,7 @@ export default async function Painel() {
       acesso={contexto.acesso}
       modulos={painel.modulos}
       titulo="Hoje"
-      chamada="O que pede atencao agora, em uma tela."
+      chamada="O que pede atenção agora, em uma tela."
     >
       {comRoteiro ? (
         <CartaoPrimeirosPassos roteiro={comRoteiro} nomeEscritorio={marca.nome} />
@@ -111,14 +111,14 @@ export default async function Painel() {
 
       {nada && !chegando ? (
         <p className="vazio mt-6">
-          Nada pedindo atencao agora: sem compromisso nas proximas 48 horas, sem
-          publicacao nova e sem cobranca vencida.
+          Nada pedindo atenção agora: sem compromisso nas próximas 48 horas, sem
+          publicação nova e sem cobrança vencida.
         </p>
       ) : null}
 
       {pendencias.length > 0 ? (
         <section className="mt-8">
-          <h2>Precisa de voce</h2>
+          <h2>Precisa de você</h2>
           <ul className="mt-3 grid gap-2">
             {pendencias.map((pendencia) => (
               <li key={pendencia.tipo}>
@@ -137,7 +137,7 @@ export default async function Painel() {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {painel.compromissos.length > 0 ? (
           <section className="cartao">
-            <h2>Agenda · proximas 48 horas</h2>
+            <h2>Agenda · próximas 48 horas</h2>
             <ul className="mt-3 divide-y divide-slate-100 text-sm">
               {painel.compromissos.map((compromisso) => (
                 <li
@@ -172,7 +172,7 @@ export default async function Painel() {
         {painel.publicacoes.length > 0 ? (
           <section className="cartao">
             <h2>
-              Publicacoes nao lidas
+              Publicações não lidas
               {painel.naoLidas > painel.publicacoes.length
                 ? ` (${painel.publicacoes.length} de ${painel.naoLidas})`
                 : ""}
@@ -187,7 +187,7 @@ export default async function Painel() {
                     <span className="font-semibold">
                       {publicacao.numeroProcesso
                         ? formatarNumeroProcesso(publicacao.numeroProcesso)
-                        : "sem numero de processo"}
+                        : "sem número de processo"}
                     </span>
                     {publicacao.prazoDias !== null ? (
                       <span className="text-slate-600">
@@ -202,10 +202,10 @@ export default async function Painel() {
               ))}
             </ul>
             <Link href="/publicacoes" className="botao-discreto mt-2">
-              Ler as publicacoes
+              Ler as publicações
             </Link>
             <p className="ajuda">
-              O prazo indicado e leitura automatica do texto e serve como alerta
+              O prazo indicado é leitura automática do texto e serve como alerta
               — confira sempre nos autos.
             </p>
           </section>
@@ -220,7 +220,7 @@ export default async function Painel() {
           >
             <Icone nome="cobrancas" />
             <span>
-              {painel.cobrancasVencidas.quantidade} cobranca(s) ·{" "}
+              {painel.cobrancasVencidas.quantidade} cobrança(s) ·{" "}
               {emReais(painel.cobrancasVencidas.totalCentavos)} em aberto depois
               do vencimento
             </span>
@@ -235,8 +235,8 @@ export default async function Painel() {
             <table className="tabela">
               <thead>
                 <tr>
-                  <th>Metrica</th>
-                  <th className="text-right">No mes</th>
+                  <th>Métrica</th>
+                  <th className="text-right">No mês</th>
                 </tr>
               </thead>
               <tbody>

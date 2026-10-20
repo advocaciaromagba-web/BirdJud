@@ -38,7 +38,7 @@ export class PlataformaSemRemetente extends Error {
   readonly status = 503;
   constructor() {
     super(
-      "A plataforma ainda nao tem remetente de e-mail configurado. Fale com o administrador do escritorio.",
+      "A plataforma ainda não tem remetente de e-mail configurado. Fale com o administrador do escritório.",
     );
     this.name = "PlataformaSemRemetente";
   }
@@ -47,7 +47,7 @@ export class PlataformaSemRemetente extends Error {
 export class FalhaNoEnvio extends Error {
   readonly status = 502;
   constructor(motivo: string) {
-    super(`O e-mail nao pode ser enviado: ${motivo}`);
+    super(`O e-mail não pode ser enviado: ${motivo}`);
     this.name = "FalhaNoEnvio";
   }
 }
@@ -148,7 +148,7 @@ async function enviarPeloRele(
     // Rele fora do ar e falha nossa, nao do Gmail. Dizer qual dos dois e a
     // diferenca entre olhar o lugar certo e procurar no lugar errado.
     throw new FalhaNoEnvio(
-      `o rele de e-mail nao respondeu (${(erro as Error).message})`,
+      `o rele de e-mail não respondeu (${(erro as Error).message})`,
     );
   }
 
@@ -182,7 +182,7 @@ async function enviarPorHttps(
       signal: AbortSignal.timeout(25_000),
     });
   } catch (erro) {
-    throw new FalhaNoEnvio(`o Resend nao respondeu (${(erro as Error).message})`);
+    throw new FalhaNoEnvio(`o Resend não respondeu (${(erro as Error).message})`);
   }
 
   if (!resposta.ok) {
@@ -220,7 +220,7 @@ async function enviarPorSmtp(
     const motivo = (erro as Error).message;
     throw new FalhaNoEnvio(
       /timeout|ETIMEDOUT|ECONNREFUSED/i.test(motivo)
-        ? `${motivo} — em nuvem isto costuma ser bloqueio de saida SMTP do provedor, nao senha errada. Use RESEND_API_KEY.`
+        ? `${motivo} — em nuvem isto costuma ser bloqueio de saída SMTP do provedor, não senha errada. Use RESEND_API_KEY.`
         : motivo,
     );
   } finally {
@@ -251,7 +251,7 @@ export async function enviarPelaPlataforma(
       return await enviarPorSmtp(transporte, mensagem);
     } catch (erro) {
       if (!(erro instanceof FalhaNoEnvio)) throw erro;
-      motivos.push(erro.message.replace(/^O e-mail nao pode ser enviado: /, ""));
+      motivos.push(erro.message.replace(/^O e-mail não pode ser enviado: /, ""));
     }
   }
   throw new FalhaNoEnvio(motivos.join(" | "));

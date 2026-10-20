@@ -25,8 +25,8 @@ export type Marco = {
 
 export const MARCOS: Marco[] = [
   { chave: "3d", horas: 72, rotulo: "faltam 3 dias" },
-  { chave: "24h", horas: 24, rotulo: "e amanha" },
-  { chave: "1h", horas: 1, rotulo: "e daqui a pouco" },
+  { chave: "24h", horas: 24, rotulo: "é amanhã" },
+  { chave: "1h", horas: 1, rotulo: "é daqui a pouco" },
 ];
 
 /** O marco mais distante: define ate onde a busca precisa olhar. */
@@ -112,9 +112,9 @@ export type MarcoDoFatal = { chave: "4du" | "1du" | "hoje"; rotulo: string };
 export function marcoDoFatal(diasUteis: number): MarcoDoFatal | null {
   if (diasUteis < 0) return null;
   if (diasUteis === 0) return { chave: "hoje", rotulo: "vence HOJE" };
-  if (diasUteis === 1) return { chave: "1du", rotulo: "vence no proximo dia util" };
+  if (diasUteis === 1) return { chave: "1du", rotulo: "vence no próximo dia útil" };
   if (diasUteis <= AVISO_DO_FATAL_EM_DIAS_UTEIS) {
-    return { chave: "4du", rotulo: `faltam ${diasUteis} dias uteis` };
+    return { chave: "4du", rotulo: `faltam ${diasUteis} dias úteis` };
   }
   return null;
 }

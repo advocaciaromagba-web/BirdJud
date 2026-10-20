@@ -192,7 +192,7 @@ export function FormularioCriar({
       return;
     }
     const json = await resposta.json().catch(() => ({}));
-    setErro(json.erro ?? "Nao foi possivel gravar.");
+    setErro(json.erro ?? "Não foi possível gravar.");
     // So da para confirmar o que o servidor disse que da: documento igual e a
     // mesma pessoa, e isso nao se confirma, se corrige.
     setConfirmavel(json.podeConfirmar ? (json.erro ?? "") : null);

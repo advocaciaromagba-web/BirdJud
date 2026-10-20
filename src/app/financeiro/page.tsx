@@ -33,7 +33,7 @@ const TIPOS = [
 
 const SIM_NAO = [
   { valor: "nao", rotulo: "Em aberto" },
-  { valor: "sim", rotulo: "Ja pago / recebido" },
+  { valor: "sim", rotulo: "Já pago / recebido" },
 ];
 
 const NOME_DO_MES = [
@@ -71,9 +71,9 @@ export default async function PaginaFinanceiro({
     if (erro instanceof ModuloNaoContratado) {
       return (
         <main className="mx-auto max-w-2xl p-10">
-          <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
+          <h1 className="text-2xl font-bold">Módulo não contratado</h1>
           <p className="mt-3 leitura text-slate-600">
-            O modulo Financeiro nao faz parte do plano deste escritorio.
+            O módulo Financeiro não faz parte do plano deste escritório.
           </p>
         </main>
       );
@@ -144,7 +144,7 @@ export default async function PaginaFinanceiro({
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Financeiro"
-      chamada={`Competencia de ${nomeDaCompetencia(competencia)}.`}
+      chamada={`Competência de ${nomeDaCompetencia(competencia)}.`}
     >
       <AbasDoFinanceiro
         ativa="LANCAMENTOS"
@@ -162,7 +162,7 @@ export default async function PaginaFinanceiro({
       </nav>
 
       {/* Realizado e previsto separados: um mes com R$ 40 mil lancados e R$ 38
-          mil ainda por receber nao e um mes bom, e um total unico esconderia
+          mil ainda por receber não é um mês bom, e um total único esconderia
           isso. */}
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="cartao">
@@ -193,11 +193,11 @@ export default async function PaginaFinanceiro({
             {emReais(resumo.saldo)}
           </p>
           <p className="mt-1 text-sm text-slate-500 esquerda">
-            entradas menos saidas ja liquidadas
+            entradas menos saídas já liquidadas
           </p>
         </div>
         <div className="cartao">
-          <p className="sobretitulo">Previsto no mes</p>
+          <p className="sobretitulo">Previsto no mês</p>
           <p
             className={`mt-1 text-2xl font-bold tabular-nums ${
               resumo.saldo + resumo.aReceber - resumo.aPagar < 0
@@ -227,11 +227,11 @@ export default async function PaginaFinanceiro({
         <FormularioCriar
           rota="/api/lancamentos"
           recolhivel
-          textoAbrir="Novo lancamento"
+          textoAbrir="Novo lançamento"
           textoBotao="Lancar"
           leitura={modulos.includes("IA") ? "CONTA" : undefined}
           campos={[
-            { nome: "descricao", rotulo: "Descricao", obrigatorio: true, largo: true },
+            { nome: "descricao", rotulo: "Descrição", obrigatorio: true, largo: true },
             { nome: "valor", rotulo: "Valor (R$)", obrigatorio: true },
             { nome: "tipo", rotulo: "Tipo", tipo: "select", opcoes: TIPOS, obrigatorio: true },
             {
@@ -242,19 +242,19 @@ export default async function PaginaFinanceiro({
                 valor: c,
                 rotulo: rotuloDaCategoria(c),
               })),
-              ajuda: "Precisa combinar com o tipo: aluguel e despesa, honorarios e receita.",
+              ajuda: "Precisa combinar com o tipo: aluguel é despesa, honorários é receita.",
             },
             { nome: "fornecedor", rotulo: "Fornecedor / quem emitiu" },
             { nome: "vencimento", rotulo: "Vencimento", tipo: "date" },
-            { nome: "pago", rotulo: "Situacao", tipo: "select", opcoes: SIM_NAO },
-            { nome: "observacoes", rotulo: "Observacoes", tipo: "textarea" },
+            { nome: "pago", rotulo: "Situação", tipo: "select", opcoes: SIM_NAO },
+            { nome: "observacoes", rotulo: "Observações", tipo: "textarea" },
           ]}
         />
       </div>
 
       <section className="mt-5">
         <h2 className="text-lg font-bold">
-          Lancamentos de {nomeDaCompetencia(competencia)}
+          Lançamentos de {nomeDaCompetencia(competencia)}
         </h2>
         <div className="mt-3">
           <ListaFinanceira

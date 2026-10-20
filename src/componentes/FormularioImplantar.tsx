@@ -72,7 +72,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
       ? Math.round(Number(valor.replace(/\./g, "").replace(",", ".")) * 100)
       : undefined;
     if (valorDigitado !== undefined && (!Number.isFinite(valorDigitado) || valorDigitado < 0)) {
-      setErro("Valor fechado invalido. Use o formato 279,00.");
+      setErro("Valor fechado inválido. Use o formato 279,00.");
       return;
     }
     setEnviando(true);
@@ -117,7 +117,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
     const json = await r.json().catch(() => ({}));
     setEnviando(false);
     if (!r.ok) {
-      setErro(json.erro ?? "Nao foi possivel implantar.");
+      setErro(json.erro ?? "Não foi possível implantar.");
       return;
     }
     router.push(`/plataforma/${json.id}/implantacao`);
@@ -134,9 +134,9 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
   return (
     <form ref={formulario} onSubmit={enviar} className="mt-6 grid gap-6">
       <section className="cartao grid gap-4 sm:grid-cols-2">
-        <h2 className="sm:col-span-2 text-lg font-bold">1. O escritorio</h2>
+        <h2 className="sm:col-span-2 text-lg font-bold">1. O escritório</h2>
         <label className="grid gap-1 text-sm sm:col-span-2">
-          <span className="rotulo mb-0">Nome do escritorio *</span>
+          <span className="rotulo mb-0">Nome do escritório *</span>
           <input
             required
             minLength={2}
@@ -147,7 +147,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
           />
         </label>
         <label className="grid gap-1 text-sm sm:col-span-2">
-          <span className="rotulo mb-0">Endereco *</span>
+          <span className="rotulo mb-0">Endereço *</span>
           <div className="flex items-center gap-2">
             <input
               required
@@ -163,18 +163,18 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
             />
             <span className="whitespace-nowrap text-sm text-slate-500">.{dominio}</span>
           </div>
-          <span className="ajuda mt-0">Sai do nome sozinho. Letras minusculas, numeros e hifen.</span>
+          <span className="ajuda mt-0">Sai do nome sozinho. Letras minúsculas, números e hífen.</span>
         </label>
         <div className="sm:col-span-2">
           <LeitorDeDocumentos perfil="FISCAL" aoAplicar={aplicarLeitura} rota="/api/plataforma/leitura" />
           {lidoPelaIA ? (
             <p className="mt-3 rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
-              Dados do cartao CNPJ lidos pela IA nos campos abaixo: confira antes de implantar.
+              Dados do cartão CNPJ lidos pela IA nos campos abaixo: confira antes de implantar.
             </p>
           ) : null}
         </div>
-        {campo("razaoSocial", "Razao social")}
-        {campo("cnpj", "CNPJ", { inputMode: "numeric" }, "Conferido no digito. Sem ele a fatura da assinatura nao sai.")}
+        {campo("razaoSocial", "Razão social")}
+        {campo("cnpj", "CNPJ", { inputMode: "numeric" }, "Conferido no dígito. Sem ele a fatura da assinatura não sai.")}
         {campo("telefoneAtendimento", "Telefone de atendimento", {}, "Vai em toda mensagem que o cliente recebe.")}
         {campo("cep", "CEP da sede", { inputMode: "numeric" })}
         {campo("logradouro", "Rua da sede")}
@@ -186,7 +186,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
       </section>
 
       <section className="cartao grid gap-4 sm:grid-cols-2">
-        <h2 className="sm:col-span-2 text-lg font-bold">2. Plano e preco</h2>
+        <h2 className="sm:col-span-2 text-lg font-bold">2. Plano e preço</h2>
         <label className="grid gap-1 text-sm">
           <span className="rotulo mb-0">Plano</span>
           <select className="campo" value={plano} onChange={(e) => setPlano(e.target.value as Plano)}>
@@ -209,7 +209,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
           </select>
         </label>
         <label className="grid gap-1 text-sm">
-          <span className="rotulo mb-0">Valor fechado (R$ por mes)</span>
+          <span className="rotulo mb-0">Valor fechado (R$ por mês)</span>
           <input
             className="campo"
             inputMode="decimal"
@@ -218,21 +218,21 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
             onChange={(e) => setValor(e.target.value)}
           />
           <span className="ajuda mt-0">
-            Tabela: <strong>{emReais(tabela)}</strong>. Em branco, vale a tabela. Fica gravado no contrato do escritorio.
+            Tabela: <strong>{emReais(tabela)}</strong>. Em branco, vale a tabela. Fica gravado no contrato do escritório.
           </span>
         </label>
         <label className="grid gap-1 text-sm">
           <span className="rotulo mb-0">Dias de teste</span>
           <input name="diasDeTeste" type="number" min={0} max={90} defaultValue={diasPadrao} className="campo" />
-          <span className="ajuda mt-0">Zero: a primeira fatura sai no proximo vencimento.</span>
+          <span className="ajuda mt-0">Zero: a primeira fatura sai no próximo vencimento.</span>
         </label>
       </section>
 
       <section className="cartao grid gap-4 sm:grid-cols-2">
         <h2 className="sm:col-span-2 text-lg font-bold">3. Quem administra</h2>
         <p className="sm:col-span-2 text-sm text-slate-600">
-          O administrador recebe o convite na entrega, escolhe a propria senha, aceita os termos e
-          cria a senha de administracao. A plataforma nunca conhece nenhuma das duas.
+          O administrador recebe o convite na entrega, escolhe a própria senha, aceita os termos e
+          cria a senha de administração. A plataforma nunca conhece nenhuma das duas.
         </p>
         {campo("adminNome", "Nome *", { required: true, minLength: 2 })}
         {campo("adminEmail", "E-mail *", { required: true, type: "email" })}
@@ -240,14 +240,14 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
         {campo("adminTelefone", "Celular", { placeholder: "(16) 99999-0000" })}
         <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
           <input type="checkbox" name="adminWhatsapp" defaultChecked />
-          Receber os avisos do escritorio pelo WhatsApp neste celular
+          Receber os avisos do escritório pelo WhatsApp neste celular
         </label>
       </section>
 
       {erro ? <p className="aviso-erro">{erro}</p> : null}
       <div>
         <button type="submit" disabled={enviando} className="botao-principal">
-          {enviando ? "Implantando..." : "Implantar e seguir para a configuracao"}
+          {enviando ? "Implantando..." : "Implantar e seguir para a configuração"}
         </button>
       </div>
     </form>

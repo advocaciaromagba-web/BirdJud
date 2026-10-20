@@ -39,7 +39,7 @@ describe("busca na agenda", () => {
 });
 
 describe("status do compromisso", () => {
-  it("agendado, passou ou concluido", () => {
+  it("agendado, passou ou concluído", () => {
     const agora = new Date("2026-11-01T12:00:00Z");
     expect(statusDe(compromisso(), agora)).toBe("Agendado");
     expect(statusDe(compromisso({ inicioISO: "2026-10-30T12:00:00Z" }), agora)).toBe("Passou");

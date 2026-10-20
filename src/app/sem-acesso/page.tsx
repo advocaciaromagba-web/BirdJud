@@ -29,16 +29,16 @@ export default async function PaginaSemAcesso({
       nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
-      titulo="Area fechada"
-      chamada="Esta parte do sistema nao esta liberada para voce."
+      titulo="Área fechada"
+      chamada="Esta parte do sistema não está liberada para você."
     >
       <section className="cartao max-w-xl">
         <p className="text-sm text-slate-700">
-          {motivo?.slice(0, 200) ?? "Seu acesso a esta area esta fechado neste escritorio."}
+          {motivo?.slice(0, 200) ?? "Seu acesso a esta área está fechado neste escritório."}
         </p>
         <p className="mt-3 text-sm text-slate-600">
-          Quem libera e o administrador do escritorio, em Usuarios. Nao e erro do
-          sistema nem falta de contratacao: e uma decisao de quem administra a
+          Quem libera é o administrador do escritório, em Usuários. Não é erro do
+          sistema nem falta de contratação: é uma decisão de quem administra a
           banca.
         </p>
         <Link href="/" className="botao-principal mt-4 inline-block">

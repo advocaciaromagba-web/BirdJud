@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirAdmin();
     const corpo = pedido.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
 
     const recusa = senhaAceitavel(corpo.data.nova);
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       const atual = corpo.data.atual ?? "";
       if (!(await conferirSenha(atual, escritorio.senhaAdminHash))) {
         return NextResponse.json(
-          { erro: "A senha de administracao atual nao confere." },
+          { erro: "A senha de administração atual não confere." },
           { status: 403 },
         );
       }
@@ -58,8 +58,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       detalhe: escritorio?.senhaAdminHash
-        ? "Senha de administracao trocada. Digite-a de novo para continuar."
-        : "Senha de administracao definida.",
+        ? "Senha de administração trocada. Digite-a de novo para continuar."
+        : "Senha de administração definida.",
     });
   } catch (erro) {
     return tratarErro(erro);

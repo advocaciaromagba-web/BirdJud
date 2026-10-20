@@ -28,12 +28,12 @@ const TODOS: Modulo[] = [
   "NUVEM",
 ];
 
-describe("o catalogo", () => {
-  it("nao repete chave", () => {
+describe("o catálogo", () => {
+  it("não repete chave", () => {
     expect(new Set(AREAS.map((a) => a.chave)).size).toBe(AREAS.length);
   });
 
-  it("todo endereco aponta para uma area que existe", () => {
+  it("todo endereço aponta para uma área que existe", () => {
     for (const area of Object.values(AREA_DO_ENDERECO)) {
       expect(ehArea(area)).toBe(true);
     }
@@ -68,14 +68,14 @@ describe("quem ve o que", () => {
   });
 
   // Ligar o painel de permissoes nao pode mudar o trabalho de ninguem.
-  it("sem nada gravado, vale o padrao", () => {
+  it("sem nada gravado, vale o padrão", () => {
     const m = mapaDeAcesso("USUARIO", [], TODOS);
     expect(m.CLIENTES).toBe(true);
     expect(m.AGENDA).toBe(true);
     expect(m.FINANCEIRO).toBe(false);
   });
 
-  it("o gravado manda sobre o padrao, nos dois sentidos", () => {
+  it("o gravado manda sobre o padrão, nos dois sentidos", () => {
     const m = mapaDeAcesso(
       "ADVOGADO",
       [
@@ -89,7 +89,7 @@ describe("quem ve o que", () => {
   });
 
   // A tela de permissoes nao pode virar um caminho para promover alguem.
-  it("area so de admin nao se abre por registro gravado", () => {
+  it("área só de admin não se abre por registro gravado", () => {
     const m = mapaDeAcesso("ADVOGADO", [{ area: "USUARIOS", permitido: true }], TODOS);
     expect(m.USUARIOS).toBe(false);
     expect(mapaDeAcesso("ADVOGADO", [{ area: "ADMINISTRACAO", permitido: true }], TODOS).ADMINISTRACAO).toBe(false);
@@ -97,14 +97,14 @@ describe("quem ve o que", () => {
 
   // Sem modulo a area nem existe: mostrar como "bloqueada" faria o escritorio
   // procurar uma permissao que nao e o problema.
-  it("sem o modulo, nem admin ve", () => {
+  it("sem o módulo, nem admin ve", () => {
     const m = mapaDeAcesso("ADMIN", [], ["NUCLEO"]);
     expect(m.FINANCEIRO).toBe(false);
     expect(m.PUBLICACOES).toBe(false);
     expect(m.CLIENTES).toBe(true);
   });
 
-  it("modulo ganha do registro gravado", () => {
+  it("módulo ganha do registro gravado", () => {
     const m = mapaDeAcesso("ADVOGADO", [{ area: "FINANCEIRO", permitido: true }], ["NUCLEO"]);
     expect(m.FINANCEIRO).toBe(false);
   });
@@ -116,8 +116,8 @@ describe("quem ve o que", () => {
   });
 });
 
-describe("o que o escritorio distribui", () => {
-  it("nao oferece o que so o admin ve", () => {
+describe("o que o escritório distribui", () => {
+  it("não oferece o que só o admin ve", () => {
     const chaves = areasDistribuiveis(TODOS).map((a) => a.chave);
     expect(chaves).not.toContain("USUARIOS");
     expect(chaves).not.toContain("ADMINISTRACAO");
@@ -125,7 +125,7 @@ describe("o que o escritorio distribui", () => {
     expect(chaves).toContain("FINANCEIRO");
   });
 
-  it("nao oferece area de modulo nao contratado", () => {
+  it("não oferece área de módulo não contratado", () => {
     const chaves = areasDistribuiveis(["NUCLEO", "COBRANCAS"]).map((a) => a.chave);
     expect(chaves).toContain("COBRANCAS");
     expect(chaves).not.toContain("FINANCEIRO");

@@ -146,7 +146,7 @@ export function proximoDiaUtil(d: Date, calendario?: Calendario): Date {
     atual = somaDias(atual, 1);
   }
   throw new Error(
-    "Mais de 400 dias seguidos sem expediente: confira os dias cadastrados pelo escritorio.",
+    "Mais de 400 dias seguidos sem expediente: confira os dias cadastrados pelo escritório.",
   );
 }
 
@@ -210,7 +210,7 @@ export function calcularPrazo(
   calendario?: Calendario,
 ): PrazoCalculado {
   if (!dataValida(termoInicial)) {
-    throw new PrazoInvalido("Data do termo inicial invalida.");
+    throw new PrazoInvalido("Data do termo inicial inválida.");
   }
   if (!Number.isInteger(dias) || dias < 1 || dias > 1000) {
     throw new PrazoInvalido("O prazo precisa ser de 1 a 1000 dias.");
@@ -229,12 +229,12 @@ export function calcularPrazo(
       vencimento: chave(vencimento),
       inicioContagem: chave(somaDias(inicio, 1)),
       explicacao:
-        `${dias} dias corridos a partir de ${formatar(inicio)}, excluido o dia do ` +
-        `comeco (CPC 224). ` +
+        `${dias} dias corridos a partir de ${formatar(inicio)}, excluído o dia do ` +
+        `começo (CPC 224). ` +
         (prorrogou
           ? `Cairia em ${formatar(bruto)}, dia sem expediente, e foi prorrogado para ` +
             `${formatar(vencimento)} (CPC 224 § 1º).`
-          : `Vence em ${formatar(vencimento)}, dia util.`),
+          : `Vence em ${formatar(vencimento)}, dia útil.`),
     };
   }
 
@@ -253,8 +253,8 @@ export function calcularPrazo(
     vencimento: chave(atual),
     inicioContagem: chave(inicioContagem),
     explicacao:
-      `${dias} dias uteis (CPC 219). Comecou a correr em ${formatar(inicioContagem)} ` +
-      `e vence em ${formatar(atual)}. Sabado, domingo e feriado nao contam` +
+      `${dias} dias úteis (CPC 219). Começou a correr em ${formatar(inicioContagem)} ` +
+      `e vence em ${formatar(atual)}. Sabado, domingo e feriado não contam` +
       (suspendeu
         ? ", e o prazo ficou suspenso no recesso de 20/12 a 20/01 (CPC 220)"
         : "") +
@@ -269,7 +269,7 @@ export function diasUteisAte(
   calendario?: Calendario,
 ): number {
   if (!dataValida(deISO) || !dataValida(ateISO)) {
-    throw new PrazoInvalido("Data invalida.");
+    throw new PrazoInvalido("Data inválida.");
   }
   const de = new Date(`${deISO}T00:00:00Z`);
   const ate = new Date(`${ateISO}T00:00:00Z`);
@@ -309,10 +309,10 @@ export function recuarDiasUteis(
   calendario?: Calendario,
 ): string {
   if (!dataValida(vencimentoISO)) {
-    throw new PrazoInvalido("Data de vencimento invalida.");
+    throw new PrazoInvalido("Data de vencimento inválida.");
   }
   if (!Number.isInteger(dias) || dias < 0 || dias > 365) {
-    throw new PrazoInvalido("A antecedencia precisa ser de 0 a 365 dias.");
+    throw new PrazoInvalido("A antecedência precisa ser de 0 a 365 dias.");
   }
 
   let d = new Date(`${vencimentoISO}T00:00:00Z`);
@@ -327,7 +327,7 @@ export function recuarDiasUteis(
 
   const recuada = chave(d);
   if (!piso) return recuada;
-  if (!dataValida(piso)) throw new PrazoInvalido("Data de piso invalida.");
+  if (!dataValida(piso)) throw new PrazoInvalido("Data de piso inválida.");
 
   if (recuada >= piso) return recuada;
   // Ja passou: o mais cedo possivel e o proximo dia util a partir do piso —
@@ -363,7 +363,7 @@ export function calcularPrazoDaPublicacao(
   calendario?: Calendario,
 ): PrazoDaPublicacao {
   if (!dataValida(dataDisponibilizacao)) {
-    throw new PrazoInvalido("Data de disponibilizacao invalida.");
+    throw new PrazoInvalido("Data de disponibilização inválida.");
   }
   const disponibilizacao = new Date(`${dataDisponibilizacao}T00:00:00Z`);
   // Salto 1: disponibilizacao -> publicacao.
@@ -376,8 +376,8 @@ export function calcularPrazoDaPublicacao(
     dataPublicacao,
     explicacao:
       `Disponibilizada em ${formatar(disponibilizacao)}; publicada em ${formatar(publicacao)}, ` +
-      `1º dia util seguinte (CPC 224 § 2º). O prazo comeca no 1º dia util depois da ` +
-      `publicacao (CPC 224 § 3º). ` +
+      `1º dia útil seguinte (CPC 224 § 2º). O prazo começa no 1º dia útil depois da ` +
+      `publicação (CPC 224 § 3º). ` +
       conta.explicacao,
   };
 }

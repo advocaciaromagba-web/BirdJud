@@ -4,9 +4,9 @@
 export type MotivoDaExclusao = "VENCIDO" | "EXCLUIDO" | "VIROU_TAREFA";
 
 export const TEXTO_DO_MOTIVO: Record<string, string> = {
-  VENCIDO: "Venceu o horario — arquivado pela rotina.",
-  EXCLUIDO: "Apagado por alguem do escritorio.",
-  VIROU_TAREFA: "Era peca ou prazo, nao compromisso: passou para Tarefas.",
+  VENCIDO: "Venceu o horário — arquivado pela rotina.",
+  EXCLUIDO: "Apagado por alguém do escritório.",
+  VIROU_TAREFA: "Era peça ou prazo, não compromisso: passou para Tarefas.",
 };
 
 /** Os tipos de aviso que nascem de um compromisso. */
@@ -19,16 +19,16 @@ export const TIPOS_DE_AVISO_DA_AGENDA = [
 ] as const;
 
 export const ROTULO_DO_TIPO_DE_AVISO: Record<string, string> = {
-  COMPROMISSO_MARCADO: "Confirmacao do agendamento",
+  COMPROMISSO_MARCADO: "Confirmação do agendamento",
   LEMBRETE_AO_PARTICIPANTE: "Lembrete ao participante",
   LEMBRETE_COMPROMISSO: "Lembrete a equipe",
   TAREFA_DESIGNADA: "Designacao",
   LEMBRETE_TAREFA: "Lembrete de tarefa",
   NFSE_ASSINATURA: "Nota fiscal para assinar",
   DOCUMENTO: "Documento por WhatsApp",
-  RESUMO_PUBLICACOES: "Resumo de publicacoes",
+  RESUMO_PUBLICACOES: "Resumo de publicações",
   RESUMO_DO_DIA: "Resumo do dia",
-  FALHA_DE_ENTREGA: "Alerta de mensagem nao entregue",
+  FALHA_DE_ENTREGA: "Alerta de mensagem não entregue",
 };
 
 /** Rotulo de qualquer aviso, inclusive os financeiros (CONTA_*, RECEBIMENTO_*). */

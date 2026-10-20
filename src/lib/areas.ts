@@ -52,7 +52,7 @@ export const AREAS: Area[] = [
   // proprio faturamento.
   //
   // Tudo aqui nasce FECHADO: e dinheiro de verdade, e exige alguem dizer sim.
-  { chave: "COBRANCAS", nome: "Cobrancas e honorarios", padrao: false, modulo: "COBRANCAS" },
+  { chave: "COBRANCAS", nome: "Cobranças e honorários", padrao: false, modulo: "COBRANCAS" },
   { chave: "CONCILIACAO", nome: "Conferir o extrato", padrao: false, modulo: "COBRANCAS" },
   { chave: "FINANCEIRO", nome: "Financeiro (livro-caixa, despesas, metas)", padrao: false, modulo: "FINANCEIRO" },
   { chave: "NOTAS", nome: "Notas fiscais", padrao: false, modulo: "NFSE" },
@@ -62,7 +62,7 @@ export const AREAS: Area[] = [
   // amplia.
   { chave: "USUARIOS", nome: "Usuarios", padrao: false, soAdmin: true },
   { chave: "INTEGRACOES", nome: "Integracoes", padrao: false, soAdmin: true },
-  { chave: "ADMINISTRACAO", nome: "Administracao do escritorio", padrao: false, soAdmin: true },
+  { chave: "ADMINISTRACAO", nome: "Administração do escritório", padrao: false, soAdmin: true },
 ];
 
 export const CHAVES = new Set(AREAS.map((a) => a.chave));

@@ -20,7 +20,7 @@ const DONO = {
 };
 
 describe("marca da senha", () => {
-  it("muda quando o hash muda, e nao devolve o hash", () => {
+  it("muda quando o hash muda, e não devolve o hash", () => {
     const a = marcaDaSenha("$2a$12$um");
     const b = marcaDaSenha("$2a$12$outro");
     expect(a).not.toBe(b);
@@ -35,7 +35,7 @@ describe("destravamento", () => {
     expect(conferirDestravamento(t, DONO, SEGREDO, AGORA)).toBeNull();
   });
 
-  it("recusa quando nao ha cookie", () => {
+  it("recusa quando não há cookie", () => {
     expect(conferirDestravamento(undefined, DONO, SEGREDO, AGORA)).toBe(
       "sem destravamento",
     );
@@ -47,22 +47,22 @@ describe("destravamento", () => {
     // Esticar a validade sem reassinar e a tentativa obvia.
     const esticado = [e, u, m, String(Number(exp) + 10 * 60_000), ass].join(".");
     expect(conferirDestravamento(esticado, DONO, SEGREDO, AGORA)).toBe(
-      "assinatura invalida",
+      "assinatura inválida",
     );
   });
 
   it("recusa assinatura de outro segredo", () => {
     const t = emitirDestravamento(DONO, "outro-segredo", AGORA);
     expect(conferirDestravamento(t, DONO, SEGREDO, AGORA)).toBe(
-      "assinatura invalida",
+      "assinatura inválida",
     );
   });
 
   // Isolamento: destravar no escritorio A nao pode valer no B.
-  it("recusa destravamento de outro escritorio", () => {
+  it("recusa destravamento de outro escritório", () => {
     const t = emitirDestravamento({ ...DONO, escritorioId: "esc-2" }, SEGREDO, AGORA);
     expect(conferirDestravamento(t, DONO, SEGREDO, AGORA)).toBe(
-      "destravamento de outro escritorio",
+      "destravamento de outro escritório",
     );
   });
 
@@ -75,11 +75,11 @@ describe("destravamento", () => {
 
   // Trocar a senha e o que se faz quando alguem sai do escritorio: se o
   // destravamento dele sobrevivesse, a troca nao serviria para nada.
-  it("cai quando a senha de administracao muda", () => {
+  it("cai quando a senha de administração muda", () => {
     const t = emitirDestravamento(DONO, SEGREDO, AGORA);
     const depois = { ...DONO, marca: marcaDaSenha("$2a$12$senhanova") };
     expect(conferirDestravamento(t, depois, SEGREDO, AGORA)).toBe(
-      "a senha de administracao mudou",
+      "a senha de administração mudou",
     );
   });
 
@@ -101,13 +101,13 @@ describe("destravamento", () => {
 });
 
 describe("exigencia da senha", () => {
-  it("recusa curta demais e sem numero", () => {
+  it("recusa curta demais e sem número", () => {
     expect(senhaAceitavel("a1")).toContain(String(MINIMO_DE_CARACTERES));
-    expect(senhaAceitavel("somenteletras")).toContain("letras e numeros");
-    expect(senhaAceitavel("123456789012")).toContain("letras e numeros");
+    expect(senhaAceitavel("somenteletras")).toContain("letras e números");
+    expect(senhaAceitavel("123456789012")).toContain("letras e números");
   });
 
-  it("aceita senha razoavel", () => {
+  it("aceita senha razoável", () => {
     expect(senhaAceitavel("roma2026forte")).toBeNull();
   });
 });

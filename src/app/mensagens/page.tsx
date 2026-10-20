@@ -29,7 +29,7 @@ export default async function PaginaMensagens() {
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Mensagens"
-      chamada="O que nao chegou ao cliente, e o que fazer com cada uma."
+      chamada="O que não chegou ao cliente, e o que fazer com cada uma."
     >
       <PainelMensagens {...mensagens} />
     </Estrutura>

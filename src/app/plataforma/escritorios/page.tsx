@@ -37,19 +37,19 @@ export default async function EscritoriosDaPlataforma() {
     <main className="pagina">
       <NavegacaoDaPlataforma ativo="/plataforma/escritorios" operador={operador.nome} />
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <h1>Escritorios</h1>
+        <h1>Escritórios</h1>
         <Link href="/plataforma/novo" className="botao-principal">
-          Implantar escritorio
+          Implantar escritório
         </Link>
       </div>
       <div className="mt-6 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-              <th className="py-2">Escritorio</th>
+              <th className="py-2">Escritório</th>
               <th className="py-2">Status</th>
               <th className="py-2">Faixa</th>
-              <th className="py-2">Teste ate</th>
+              <th className="py-2">Teste até</th>
               <th className="py-2 text-right">Em aberto</th>
               <th className="py-2 text-right">Maior atraso</th>
             </tr>
@@ -106,7 +106,7 @@ export default async function EscritoriosDaPlataforma() {
 
       {escritorios.length === 0 ? (
         <p className="mt-6 text-slate-600">
-          Nenhum escritorio cadastrado ainda.
+          Nenhum escritório cadastrado ainda.
         </p>
       ) : null}
     </main>

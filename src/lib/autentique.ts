@@ -107,13 +107,13 @@ export function montarSignatarios(
 export function impedimentosDoEnvio(signatarios: Signatario[]): string[] {
   const motivos: string[] = [];
   if (signatarios.length === 0) {
-    motivos.push("Nenhum signatario: nao ha quem assine.");
+    motivos.push("Nenhum signatário: não há quem assine.");
   }
   for (const s of signatarios) {
     if (s.email === "") {
-      motivos.push(`${s.nome} esta sem e-mail no cadastro.`);
+      motivos.push(`${s.nome} está sem e-mail no cadastro.`);
     } else if (!ehEmail(s.email)) {
-      motivos.push(`O e-mail de ${s.nome} nao parece um e-mail: ${s.email}.`);
+      motivos.push(`O e-mail de ${s.nome} não parece um e-mail: ${s.email}.`);
     }
   }
   return motivos;
@@ -278,7 +278,7 @@ export async function enviarDocumento(
 
   if (resposta.status === 401 || resposta.status === 403) {
     throw new AutentiqueRecusou(
-      "O Autentique recusou o token. Reconecte a integracao em Integracoes.",
+      "O Autentique recusou o token. Reconecte a integração em Integrações.",
     );
   }
   if (!resposta.ok) {
@@ -289,7 +289,7 @@ export async function enviarDocumento(
     data?: { createDocument?: DocumentoDoProvedor };
     errors?: Array<{ message?: string }>;
   } | null;
-  if (!json) throw new AutentiqueRecusou("O Autentique respondeu algo que nao e JSON.");
+  if (!json) throw new AutentiqueRecusou("O Autentique respondeu algo que não é JSON.");
   conferirCorpo(json);
 
   const documento = json.data?.createDocument;
@@ -319,10 +319,10 @@ export async function consultarDocumento(
     data?: { document?: DocumentoDoProvedor };
     errors?: Array<{ message?: string }>;
   } | null;
-  if (!json) throw new AutentiqueRecusou("O Autentique respondeu algo que nao e JSON.");
+  if (!json) throw new AutentiqueRecusou("O Autentique respondeu algo que não é JSON.");
   conferirCorpo(json);
 
   const documento = json.data?.document;
-  if (!documento?.id) throw new AutentiqueRecusou("Documento nao encontrado no Autentique.");
+  if (!documento?.id) throw new AutentiqueRecusou("Documento não encontrado no Autentique.");
   return lerDocumento(documento);
 }

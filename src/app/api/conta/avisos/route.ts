@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const { escritorioId, usuarioId } = await exigirSessao();
     const corpo = preferencias.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const { telefone, ...resto } = corpo.data;
@@ -29,14 +29,14 @@ export async function POST(req: Request) {
     // perdido: recusa aqui, com a pessoa olhando para o campo.
     if (telefone !== undefined && telefone.trim() && !paraE164BR(telefone)) {
       return NextResponse.json(
-        { erro: "Telefone invalido. Use DDD e numero, como (71) 99999-8888." },
+        { erro: "Telefone inválido. Use DDD e número, como (71) 99999-8888." },
         { status: 400 },
       );
     }
     if (resto.recebeWhatsapp && !paraE164BR(telefone ?? "")) {
       return NextResponse.json(
         {
-          erro: "Para receber no WhatsApp e preciso informar um telefone valido.",
+          erro: "Para receber no WhatsApp é preciso informar um telefone válido.",
         },
         { status: 400 },
       );

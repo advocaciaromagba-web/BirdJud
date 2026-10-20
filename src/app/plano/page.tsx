@@ -35,7 +35,7 @@ export default async function PaginaDoPlano() {
         titulo="Plano"
       >
         <p className="vazio">
-          O plano do escritorio e visto por quem administra a conta.
+          O plano do escritório é visto por quem administra a conta.
         </p>
       </Estrutura>
     );
@@ -85,11 +85,11 @@ export default async function PaginaDoPlano() {
       papel={contexto.papel}
       nomeUsuario={contexto.nomeUsuario}
       modulos={modulos}
-      titulo="Plano do escritorio"
+      titulo="Plano do escritório"
       chamada={
         plano
           ? `Plano ${PLANO[plano].rotulo}.`
-          : "Plano montado para este escritorio."
+          : "Plano montado para este escritório."
       }
     >
       <div className="grid gap-4 lg:grid-cols-3">
@@ -101,7 +101,7 @@ export default async function PaginaDoPlano() {
             {emCortesia
               ? "Sem mensalidade"
               : anual
-                ? `Plano anual (${emReais(mensalidade)}/mes com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto)`
+                ? `Plano anual (${emReais(mensalidade)}/mês com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto)`
                 : "Mensalidade contratada"}
           </p>
         </section>
@@ -123,14 +123,14 @@ export default async function PaginaDoPlano() {
 
       {emCortesia ? (
         <p className="aviso-ok mt-4">
-          Este escritorio esta em cortesia: usa o sistema sem custo e nenhuma fatura e gerada.
+          Este escritório está em cortesia: usa o sistema sem custo e nenhuma fatura é gerada.
         </p>
       ) : null}
 
       {emTeste && assinatura ? (
         <p className="aviso-info mt-4">
-          Periodo de teste ate {dataBR.format(assinatura.fimDoTeste)}. A
-          primeira fatura so e gerada depois disso.
+          Período de teste até {dataBR.format(assinatura.fimDoTeste)}. A
+          primeira fatura só é gerada depois disso.
         </p>
       ) : null}
 
@@ -148,13 +148,13 @@ export default async function PaginaDoPlano() {
                     </span>
                     <span className="block text-sm text-slate-500">
                       {emReais(f.valorCentavos)} · vence em {dataBR.format(f.vencimento)}
-                      {f.parcelas ? ` · ${f.parcelas > 1 ? `em ${f.parcelas}x` : "a vista"} no cartao, com a tarifa` : ""}
+                      {f.parcelas ? ` · ${f.parcelas > 1 ? `em ${f.parcelas}x` : "a vista"} no cartão, com a tarifa` : ""}
                     </span>
                   </span>
                   <span className="flex flex-wrap items-center gap-3">
                     {f.linkPagamento ? (
                       <a className="botao-principal" href={f.linkPagamento} target="_blank" rel="noopener noreferrer">
-                        {f.parcelas ? "Pagar no cartao" : "Pagar (boleto ou Pix)"}
+                        {f.parcelas ? "Pagar no cartão" : "Pagar (boleto ou Pix)"}
                       </a>
                     ) : (
                       <span className="text-sm text-slate-500">Link de pagamento a caminho</span>
@@ -168,7 +168,7 @@ export default async function PaginaDoPlano() {
             })}
           </ul>
           <p className="ajuda">
-            A baixa e automatica: depois de pagar, nao e preciso mandar comprovante.
+            A baixa é automática: depois de pagar, não é preciso mandar comprovante.
           </p>
         </section>
       ) : null}
@@ -204,12 +204,12 @@ export default async function PaginaDoPlano() {
       ) : null}
 
       <section className="mt-8">
-        <h2>O que esta contratado</h2>
+        <h2>O que está contratado</h2>
         <div className="cartao mt-3 overflow-x-auto p-0">
           <table className="tabela">
             <thead>
               <tr>
-                <th>Modulo</th>
+                <th>Módulo</th>
                 <th className="text-right">Na tabela de hoje</th>
               </tr>
             </thead>
@@ -250,15 +250,15 @@ export default async function PaginaDoPlano() {
           </table>
         </div>
         <p className="ajuda">
-          Esta coluna e a tabela vigente. O que o escritorio paga e o valor
-          fechado na assinatura, acima — mudanca de tabela nao altera contrato
+          Esta coluna é a tabela vigente. O que o escritório paga é o valor
+          fechado na assinatura, acima — mudança de tabela não altera contrato
           assinado.
         </p>
       </section>
 
       {faltando.length > 0 ? (
         <section className="mt-8">
-          <h2>O que da para acrescentar</h2>
+          <h2>O que dá para acrescentar</h2>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {faltando.map((modulo) => (
               <li
@@ -273,15 +273,15 @@ export default async function PaginaDoPlano() {
             ))}
           </ul>
           <p className="ajuda">
-            Contratar ou cancelar modulo e mudanca de contrato: fale com quem
-            atende o escritorio na plataforma. O sistema nao liga modulo
+            Contratar ou cancelar módulo é mudança de contrato: fale com quem
+            atende o escritório na plataforma. O sistema não liga módulo
             sozinho.
           </p>
         </section>
       ) : (
         <p className="aviso-ok mt-8">
-          Este escritorio esta no plano mais completo: todos os modulos da
-          plataforma estao contratados.
+          Este escritório está no plano mais completo: todos os módulos da
+          plataforma estão contratados.
         </p>
       )}
     </Estrutura>

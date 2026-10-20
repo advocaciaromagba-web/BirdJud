@@ -12,7 +12,7 @@ import { contaMontada, contaDoPlano, modulosDoPlano } from "../src/lib/planos";
 import { PRECO_DA_FAIXA, custoDaAntecipacao, opcoesNoCartao, pagamentoNoCartao, precoDoModulo, somar } from "../src/lib/precos";
 
 describe("a fatura e a vitrine", () => {
-  it("plano Completo: a fatura cobra o pacote, nao a soma avulsa", () => {
+  it("plano Completo: a fatura cobra o pacote, não a soma avulsa", () => {
     const modulos = modulosDoPlano("COMPLETO");
     expect(somar(mensalidadeDaConta("ATE_1", modulos))).toBe(contaDoPlano("COMPLETO", "ATE_1").totalCentavos);
     expect(somar(mensalidadeDaConta("ATE_1", modulos))).toBe(27_900);
@@ -21,12 +21,12 @@ describe("a fatura e a vitrine", () => {
     }
   });
 
-  it("modulo avulso leva o fator da faixa, como na vitrine", () => {
+  it("módulo avulso leva o fator da faixa, como na vitrine", () => {
     const itens = mensalidadeDaConta("ATE_10", ["WHATSAPP"]);
     expect(somar(itens)).toBe(PRECO_DA_FAIXA.ATE_10 + precoDoModulo("WHATSAPP", "ATE_10"));
   });
 
-  it("contrato assinado nao muda com a tabela: vale o valor fechado", () => {
+  it("contrato assinado não muda com a tabela: vale o valor fechado", () => {
     // Fechou por R$ 299 antes da tabela de 14/10/2026: continua R$ 299.
     expect(somar(mensalidadeDoEscritorio("ATE_1", modulosDoPlano("COMPLETO"), 29_900))).toBe(29_900);
     // Sem valor gravado, vale a vitrine.
@@ -92,8 +92,8 @@ d("assinatura anual na regua", () => {
   });
 });
 
-describe("cartao: tarifa e antecipacao repassadas", () => {
-  it("a BirdJud recebe o valor da fatura depois de tarifa e antecipacao", () => {
+describe("cartão: tarifa e antecipação repassadas", () => {
+  it("a BirdJud recebe o valor da fatura depois de tarifa e antecipação", () => {
     for (const p of opcoesNoCartao(301_320, true)) {
       const liquido = p.totalCentavos - p.totalCentavos * p.percentual - 49;
       expect(liquido).toBeGreaterThanOrEqual(301_320);
@@ -101,13 +101,13 @@ describe("cartao: tarifa e antecipacao repassadas", () => {
     }
   });
 
-  it("a vista: 2,99% + 0,49, sem antecipacao", () => {
+  it("a vista: 2,99% + 0,49, sem antecipação", () => {
     const p = pagamentoNoCartao(27_900, 1);
     expect(p.percentual).toBe(0.0299);
     expect(p.totalCentavos).toBe(28_811);
   });
 
-  it("parcelado: faixa do cartao mais a antecipacao media das parcelas", () => {
+  it("parcelado: faixa do cartão mais a antecipação média das parcelas", () => {
     expect(custoDaAntecipacao(1)).toBe(0);
     // 6x: 1,70% x 32/30 x 3,5 meses em media.
     expect(custoDaAntecipacao(6)).toBeCloseTo(0.017 * (32 / 30) * 3.5, 10);
@@ -118,11 +118,11 @@ describe("cartao: tarifa e antecipacao repassadas", () => {
 
   // Limite de 6x: o anual no cartao nunca pode sair mais caro que pagar 12
   // mensalidades no boleto — senao o "desconto" do anual e de mentira.
-  it("qualquer opcao do anual no cartao sai mais barata que 12 mensalidades", () => {
+  it("qualquer opção do anual no cartão sai mais barata que 12 mensalidades", () => {
     for (const p of opcoesNoCartao(301_320, true)) expect(p.totalCentavos).toBeLessThan(12 * 27_900);
   });
 
-  it("mensalidade so a vista; anual de 1x a 6x", () => {
+  it("mensalidade só a vista; anual de 1x a 6x", () => {
     expect(opcoesNoCartao(27_900, false).map((p) => p.parcelas)).toEqual([1]);
     expect(opcoesNoCartao(301_320, true).map((p) => p.parcelas)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(() => pagamentoNoCartao(100, 0)).toThrow(RangeError);
@@ -166,7 +166,7 @@ d("trocar de ciclo", () => {
     for (const id of ids) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
   });
 
-  it("mensal por meses e depois anual: o ano conta da troca, nao do fim do teste", async () => {
+  it("mensal por meses e depois anual: o ano conta da troca, não do fim do teste", async () => {
     const esc = await escritorio(new Date("2026-01-05T12:00:00Z"));
     const julho = await aplicarRegua(esc, new Date("2026-07-01T12:00:00Z"));
     const mensal = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: julho.faturaGerada! } });
@@ -184,7 +184,7 @@ d("trocar de ciclo", () => {
 
   // Um nome fora do catalogo na tabela (area antiga, teste) fazia o pacote
   // "nao cobrir" e a fatura do Completo sair pelo preco avulso.
-  it("nome estranho entre os modulos nao derruba o preco do pacote", async () => {
+  it("nome estranho entre os módulos não derruba o preço do pacote", async () => {
     const fim = new Date("2026-01-05T12:00:00Z");
     const esc = await escritorio(fim);
     await comEscritorio(esc, (db) => db.moduloContratado.create({ data: semEscritorio({ modulo: "ENTREVISTAS", ativo: true }) }));
@@ -194,7 +194,7 @@ d("trocar de ciclo", () => {
     expect(f.valorCentavos).toBe(301_320);
   });
 
-  it("pagou o anual e voltou ao mensal: nada de mensalidade ate o ano acabar", async () => {
+  it("pagou o anual e voltou ao mensal: nada de mensalidade até o ano acabar", async () => {
     const fim = new Date("2026-01-05T12:00:00Z");
     const esc = await escritorio(fim);
     await prismaPlataforma().assinatura.update({ where: { escritorioId: esc }, data: { ciclo: "ANUAL" } });

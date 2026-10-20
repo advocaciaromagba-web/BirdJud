@@ -37,8 +37,8 @@ const COMPROMISSO = (titulo: string, hora = "14:30") => ({
   local: "Forum Central",
 });
 
-describe("quando nao mandar", () => {
-  it("dia sem nada nao gera mensagem", () => {
+describe("quando não mandar", () => {
+  it("dia sem nada não gera mensagem", () => {
     expect(mereceMensagem(VAZIO)).toBe(false);
     expect(montarResumo(VAZIO, "Escritorio").vazio).toBe(true);
   });
@@ -62,7 +62,7 @@ describe("quando nao mandar", () => {
 describe("assunto", () => {
   // A ordem e a de quem perde mais: prazo vencido perde direito, prazo de hoje
   // esta a horas de perder, audiencia nao se remarca por esquecimento.
-  it("o que mais pesa vem no assunto, nao a soma de tudo", () => {
+  it("o que mais pesa vem no assunto, não a soma de tudo", () => {
     const tudo: FatosDoDia = {
       prazosVencidos: [PRAZO("Recurso")],
       prazosHoje: [PRAZO("Contestacao")],
@@ -87,21 +87,21 @@ describe("assunto", () => {
     ).toBe("Roma — seu dia: 1 compromisso");
   });
 
-  it("so audiencia de amanha ainda tem assunto", () => {
+  it("só audiência de amanhã ainda tem assunto", () => {
     expect(assuntoDoResumo({ ...VAZIO, audienciasAmanha: 1 }, "Roma")).toBe(
-      "Roma — seu dia: 1 audiencia amanha",
+      "Roma — seu dia: 1 audiência amanhã",
     );
   });
 
-  it("o nome do escritorio e parametro, nunca constante", () => {
-    expect(assuntoDoResumo({ ...VAZIO, audienciasAmanha: 1 }, "Outro Escritorio")).toContain(
-      "Outro Escritorio",
+  it("o nome do escritório e parametro, nunca constante", () => {
+    expect(assuntoDoResumo({ ...VAZIO, audienciasAmanha: 1 }, "Outro Escritório")).toContain(
+      "Outro Escritório",
     );
   });
 });
 
 describe("linha do WhatsApp", () => {
-  it("e numero, nao narrativa", () => {
+  it("e número, não narrativa", () => {
     const f: FatosDoDia = {
       prazosVencidos: [PRAZO("a")],
       prazosHoje: [PRAZO("b"), PRAZO("c")],
@@ -112,7 +112,7 @@ describe("linha do WhatsApp", () => {
       publicacoesNovas: 4,
     };
     expect(linhaDoResumo(f)).toBe(
-      "1 prazo vencido, 2 vencendo hoje, 1 compromisso hoje, 4 publicacoes novas.",
+      "1 prazo vencido, 2 vencendo hoje, 1 compromisso hoje, 4 publicações novas.",
     );
   });
 
@@ -126,27 +126,27 @@ describe("linha do WhatsApp", () => {
 describe("corpo do e-mail", () => {
   it("o que se perde primeiro vem primeiro", () => {
     const f: FatosDoDia = {
-      prazosVencidos: [PRAZO("Recurso de apelacao")],
+      prazosVencidos: [PRAZO("Recurso de apelação")],
       prazosHoje: [PRAZO("Contestacao")],
       prazosAmanha: [PRAZO("Replica")],
       prazosProximos: [],
-      compromissosHoje: [COMPROMISSO("Audiencia de instrucao", "09:00")],
+      compromissosHoje: [COMPROMISSO("Audiência de instrução", "09:00")],
       audienciasAmanha: 1,
       publicacoesNovas: 3,
     };
     const html = corpoDoResumo(f, "Roma", "https://roma.birdjud.com.br");
-    expect(html.indexOf("Recurso de apelacao")).toBeLessThan(html.indexOf("Contestacao"));
-    expect(html.indexOf("Contestacao")).toBeLessThan(html.indexOf("Audiencia de instrucao"));
-    expect(html.indexOf("Audiencia de instrucao")).toBeLessThan(html.indexOf("Replica"));
+    expect(html.indexOf("Recurso de apelação")).toBeLessThan(html.indexOf("Contestacao"));
+    expect(html.indexOf("Contestacao")).toBeLessThan(html.indexOf("Audiência de instrução"));
+    expect(html.indexOf("Audiência de instrução")).toBeLessThan(html.indexOf("Replica"));
     expect(html).toContain("09:00");
     expect(html).toContain("Forum Central");
-    expect(html).toContain("1 audiencia amanha, 3 publicacoes novas");
+    expect(html).toContain("1 audiência amanhã, 3 publicações novas");
     expect(html).toContain("https://roma.birdjud.com.br");
   });
 
   // O prazo vencido leva a data: "venceu" sem dizer quando nao ajuda a decidir
   // o que fazer primeiro.
-  it("o vencido diz quando venceu; o de hoje nao precisa", () => {
+  it("o vencido diz quando venceu; o de hoje não precisa", () => {
     const html = corpoDoResumo(
       { ...VAZIO, prazosVencidos: [PRAZO("Recurso", "2026-09-28")], prazosHoje: [PRAZO("Hoje")] },
       "Roma",
@@ -166,29 +166,29 @@ describe("corpo do e-mail", () => {
     expect(html).toContain("Roma &amp; Cia");
   });
 
-  it("bloco sem nada nao aparece", () => {
+  it("bloco sem nada não aparece", () => {
     const html = corpoDoResumo({ ...VAZIO, compromissosHoje: [COMPROMISSO("a")] }, "Roma", "https://x");
     expect(html).not.toContain("Vence hoje");
     expect(html).not.toContain("Prazo vencido");
   });
 });
 
-describe("prazo fatal nos proximos 4 dias uteis", () => {
-  it("sozinho ja vale a mensagem, com a data de cada um", () => {
+describe("prazo fatal nos próximos 4 dias úteis", () => {
+  it("sozinho já vale a mensagem, com a data de cada um", () => {
     const f = { ...VAZIO, prazosProximos: [PRAZO("Contestacao", "2026-10-26")] };
     expect(mereceMensagem(f)).toBe(true);
-    expect(assuntoDoResumo(f, "Banca")).toBe("Banca — seu dia: 1 prazo nos proximos 4 dias uteis");
-    expect(linhaDoResumo(f)).toBe("1 nos proximos 4 dias uteis.");
-    expect(corpoDoResumo(f, "Banca", "https://x")).toContain("Prazo fatal nos proximos 4 dias uteis");
+    expect(assuntoDoResumo(f, "Banca")).toBe("Banca — seu dia: 1 prazo nos próximos 4 dias úteis");
+    expect(linhaDoResumo(f)).toBe("1 nos próximos 4 dias úteis.");
+    expect(corpoDoResumo(f, "Banca", "https://x")).toContain("Prazo fatal nos próximos 4 dias úteis");
     expect(corpoDoResumo(f, "Banca", "https://x")).toContain("(26/10/2026)");
   });
 
-  it("o do proximo dia util pesa mais que os dos proximos dias", () => {
+  it("o do próximo dia útil pesa mais que os dos próximos dias", () => {
     const f = {
       ...VAZIO,
       prazosAmanha: [PRAZO("Replica", "2026-10-26")],
       prazosProximos: [PRAZO("Contestacao", "2026-10-29")],
     };
-    expect(assuntoDoResumo(f, "Banca")).toContain("1 prazo vence no proximo dia util");
+    expect(assuntoDoResumo(f, "Banca")).toContain("1 prazo vence no próximo dia útil");
   });
 });

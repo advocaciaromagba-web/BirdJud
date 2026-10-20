@@ -48,9 +48,9 @@ export default async function PaginaPublicacoes() {
     if (erro instanceof ModuloNaoContratado) {
       return (
         <main className="mx-auto max-w-2xl p-10">
-          <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
+          <h1 className="text-2xl font-bold">Módulo não contratado</h1>
           <p className="mt-3 text-slate-600">
-            O modulo Publicacoes nao faz parte do plano deste escritorio.
+            O módulo Publicações não faz parte do plano deste escritório.
           </p>
         </main>
       );
@@ -137,14 +137,14 @@ export default async function PaginaPublicacoes() {
       titulo="Publicacoes"
     >
       <p className="mt-1 text-sm text-slate-500">
-        {dados.naoLidas} nao lida(s) ·{" "}
+        {dados.naoLidas} não lida(s) ·{" "}
         {dados.oabs.filter((o) => o.ativo).length} OAB(s) monitorada(s) · fonte:
         DJEN
       </p>
 
       {dados.oabs.length === 0 ? (
         <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
-          Nenhuma OAB monitorada ainda. Sem OAB cadastrada, nao ha o que
+          Nenhuma OAB monitorada ainda. Sem OAB cadastrada, não há o que
           capturar.
         </div>
       ) : null}
@@ -170,11 +170,11 @@ export default async function PaginaPublicacoes() {
                 <span className="text-right text-slate-500">
                   {oab.ultimaCaptura
                     ? `capturada em ${data.format(oab.ultimaCaptura)}`
-                    : "ainda nao capturada"}
+                    : "ainda não capturada"}
                   <span className="block text-xs">
                     {oab.processosImportadosEm
                       ? `processos buscados em ${data.format(oab.processosImportadosEm)}`
-                      : "buscando os processos dos ultimos 12 meses"}
+                      : "buscando os processos dos últimos 12 meses"}
                   </span>
                 </span>
               </li>
@@ -183,7 +183,7 @@ export default async function PaginaPublicacoes() {
           <FormularioCriar
             rota="/api/oabs"
             campos={[
-              { nome: "numero", rotulo: "Numero da OAB", obrigatorio: true },
+              { nome: "numero", rotulo: "Número da OAB", obrigatorio: true },
               {
                 nome: "uf",
                 rotulo: "UF",

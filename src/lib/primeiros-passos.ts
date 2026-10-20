@@ -24,17 +24,17 @@ import type { Modulo } from "./catalogo";
 export const FASES = [
   {
     chave: "ESCRITORIO",
-    titulo: "O escritorio",
-    resumo: "Quem e o escritorio, quem trabalha nele e quem pode mexer no que e sensivel.",
+    titulo: "O escritório",
+    resumo: "Quem é o escritório, quem trabalha nele e quem pode mexer no que é sensível.",
   },
   {
     chave: "CONEXOES",
     titulo: "Ligar o sistema ao mundo",
-    resumo: "As contas que fazem o sistema trabalhar sozinho: publicacoes, avisos, cobranca, assinatura e nuvem.",
+    resumo: "As contas que fazem o sistema trabalhar sozinho: publicações, avisos, cobrança, assinatura e nuvem.",
   },
   {
     chave: "USO",
-    titulo: "Comecar a usar",
+    titulo: "Começar a usar",
     resumo: "O primeiro cliente, o primeiro processo e o primeiro compromisso — o sistema passa a ter o que fazer.",
   },
 ] as const;
@@ -102,11 +102,11 @@ const DEFINICOES: Definicao[] = [
   {
     chave: "SENHA_ADMIN",
     fase: "ESCRITORIO",
-    titulo: "Criar a senha de administracao",
+    titulo: "Criar a senha de administração",
     porque:
-      "E uma segunda senha, so do administrador, pedida antes de mexer no que e sensivel: financeiro, certificado digital e os dados do escritorio. Sem ela essas areas ficam trancadas — inclusive para voce.",
+      "É uma segunda senha, só do administrador, pedida antes de mexer no que é sensível: financeiro, certificado digital e os dados do escritório. Sem ela essas áreas ficam trancadas — inclusive para você.",
     como:
-      "Abra Administracao e crie a senha. Use uma diferente da senha de entrar no sistema: e ela que protege o escritorio se a sua sessao ficar aberta num computador.",
+      "Abra Administração e crie a senha. Use uma diferente da senha de entrar no sistema: é ela que protege o escritório se a sua sessão ficar aberta num computador.",
     destino: "/administracao",
     textoDoBotao: "Criar a senha",
     minutos: 1,
@@ -116,11 +116,11 @@ const DEFINICOES: Definicao[] = [
   {
     chave: "IDENTIDADE",
     fase: "ESCRITORIO",
-    titulo: "Dados e identidade do escritorio",
+    titulo: "Dados e identidade do escritório",
     porque:
-      "O CNPJ e exigido para emitir a fatura da assinatura. O telefone de atendimento vai em toda mensagem que o cliente recebe — e o numero para onde ele liga com duvida. Logo e cores deixam o sistema e os documentos com a cara do escritorio.",
+      "O CNPJ é exigido para emitir a fatura da assinatura. O telefone de atendimento vai em toda mensagem que o cliente recebe — é o número para onde ele liga com dúvida. Logo e cores deixam o sistema e os documentos com a cara do escritório.",
     como:
-      "Em Administracao, preencha CNPJ, telefone de atendimento e cidade. O logo e as cores sao opcionais, mas mudam o sistema inteiro na hora.",
+      "Em Administração, preencha CNPJ, telefone de atendimento e cidade. O logo e as cores são opcionais, mas mudam o sistema inteiro na hora.",
     destino: "/administracao",
     textoDoBotao: "Preencher os dados",
     minutos: 3,
@@ -140,11 +140,11 @@ const DEFINICOES: Definicao[] = [
     fase: "ESCRITORIO",
     titulo: "Cadastrar os advogados, com OAB",
     porque:
-      "O advogado com OAB e quem assina as pecas geradas, quem fica responsavel por prazos e audiencias e quem recebe os avisos. Peca gerada sem advogado sai sem assinatura e sem qualificacao.",
+      "O advogado com OAB é quem assina as peças geradas, quem fica responsável por prazos e audiências e quem recebe os avisos. Peça gerada sem advogado sai sem assinatura e sem qualificação.",
     como:
-      "Em Usuarios, inclua cada advogado com e-mail e numero da OAB (com a UF). Quem e do apoio entra tambem, sem OAB. O limite de pessoas depende da faixa contratada.",
+      "Em Usuários, inclua cada advogado com e-mail e número da OAB (com a UF). Quem é do apoio entra também, sem OAB. O limite de pessoas depende da faixa contratada.",
     destino: "/usuarios",
-    textoDoBotao: "Abrir usuarios",
+    textoDoBotao: "Abrir usuários",
     minutos: 5,
     essencial: true,
     feito: (f) => f.advogadosComOab > 0,
@@ -159,11 +159,11 @@ const DEFINICOES: Definicao[] = [
     chave: "OAB_MONITORADA",
     fase: "CONEXOES",
     modulos: ["PUBLICACOES_DJEN"],
-    titulo: "Monitorar as OABs no Diario de Justica",
+    titulo: "Monitorar as OABs no Diário de Justiça",
     porque:
-      "E daqui que vem a publicacao de cada processo, toda madrugada, ja lida pela IA e com o prazo sugerido. Sem OAB cadastrada, o sistema nao tem o que buscar — e a intimacao so aparece quando alguem lembrar de olhar o tribunal.",
+      "E daqui que vem a publicação de cada processo, toda madrugada, já lida pela IA e com o prazo sugerido. Sem OAB cadastrada, o sistema não tem o que buscar — e a intimação só aparece quando alguém lembrar de olhar o tribunal.",
     como:
-      "Em Publicacoes, cadastre o numero e a UF de cada OAB do escritorio. A primeira captura acontece na madrugada seguinte.",
+      "Em Publicações, cadastre o número e a UF de cada OAB do escritório. A primeira captura acontece na madrugada seguinte.",
     destino: "/publicacoes",
     textoDoBotao: "Cadastrar OABs",
     minutos: 2,
@@ -175,17 +175,17 @@ const DEFINICOES: Definicao[] = [
     chave: "EMAIL",
     fase: "CONEXOES",
     modulos: ["EMAIL"],
-    titulo: "Conectar o e-mail do escritorio",
+    titulo: "Conectar o e-mail do escritório",
     porque:
-      "Lembrete de audiencia, resumo do dia, recibo e aviso de compromisso saem pelo e-mail do proprio escritorio. Sem ele, os avisos ficam parados na fila — gerados, mas sem sair.",
+      "Lembrete de audiência, resumo do dia, recibo e aviso de compromisso saem pelo e-mail do próprio escritório. Sem ele, os avisos ficam parados na fila — gerados, mas sem sair.",
     como:
-      "Em Integracoes, informe o servidor de envio (SMTP) do e-mail do escritorio. O sistema manda uma mensagem de teste antes de guardar.",
+      "Em Integrações, informe o servidor de envio (SMTP) do e-mail do escritório. O sistema manda uma mensagem de teste antes de guardar.",
     destino: "/integracoes",
     textoDoBotao: "Conectar o e-mail",
     minutos: 4,
     essencial: false,
     feito: (f) => ok(f, "SMTP"),
-    detalhe: (f) => (comErro(f, "SMTP") ? "Conectado, mas o ultimo teste falhou." : null),
+    detalhe: (f) => (comErro(f, "SMTP") ? "Conectado, mas o último teste falhou." : null),
   },
   {
     chave: "WHATSAPP",
@@ -193,7 +193,7 @@ const DEFINICOES: Definicao[] = [
     modulos: ["WHATSAPP"],
     titulo: "Quem recebe avisos pelo WhatsApp",
     porque:
-      "O numero do WhatsApp e da plataforma, nao precisa ligar nada. Mas o sistema so avisa pelo WhatsApp quem tem celular cadastrado e marcou que quer receber — sem isso, a audiencia de amanha nao chega no bolso de ninguem do escritorio.",
+      "O número do WhatsApp é da plataforma, não precisa ligar nada. Mas o sistema só avisa pelo WhatsApp quem tem celular cadastrado e marcou que quer receber — sem isso, a audiência de amanhã não chega no bolso de ninguém do escritório.",
     como:
       "Cada pessoa, em Minha conta, informa o celular e marca \"receber pelo WhatsApp\". Para o cliente, basta o celular no cadastro dele.",
     destino: "/conta",
@@ -208,32 +208,32 @@ const DEFINICOES: Definicao[] = [
     chave: "COBRANCA",
     fase: "CONEXOES",
     modulos: ["COBRANCAS"],
-    titulo: "Conectar a conta de cobranca",
+    titulo: "Conectar a conta de cobrança",
     porque:
-      "Boleto e Pix de honorarios saem pela conta do escritorio no Asaas (ou InfinitePay), e o pagamento da baixa sozinho. Sem a conta, honorario continua sendo cobrado a mao e conferido no extrato.",
+      "Boleto e Pix de honorários saem pela conta do escritório no Asaas (ou InfinitePay), e o pagamento dá baixa sozinho. Sem a conta, honorário continua sendo cobrado a mão e conferido no extrato.",
     como:
-      "Em Integracoes, cole a chave de API da conta Asaas do escritorio. O sistema confere a chave antes de guardar.",
+      "Em Integrações, cole a chave de API da conta Asaas do escritório. O sistema confere a chave antes de guardar.",
     destino: "/integracoes",
-    textoDoBotao: "Conectar a cobranca",
+    textoDoBotao: "Conectar a cobrança",
     minutos: 4,
     essencial: false,
     feito: (f) => ok(f, "ASAAS", "INFINITEPAY"),
-    detalhe: (f) => (comErro(f, "ASAAS", "INFINITEPAY") ? "Conectada, mas o ultimo teste falhou." : null),
+    detalhe: (f) => (comErro(f, "ASAAS", "INFINITEPAY") ? "Conectada, mas o último teste falhou." : null),
   },
   {
     chave: "ASSINATURA",
     fase: "CONEXOES",
     modulos: ["ASSINATURA"],
-    titulo: "Conectar a assinatura eletronica",
+    titulo: "Conectar a assinatura eletrônica",
     porque:
-      "Contrato, procuracao e declaracao saem do sistema direto para o cliente assinar pelo celular, e a via assinada volta sozinha. Sem a conta, e imprimir, assinar, escanear e anexar.",
-    como: "Em Integracoes, cole o token da conta Autentique do escritorio.",
+      "Contrato, procuração e declaração saem do sistema direto para o cliente assinar pelo celular, e a via assinada volta sozinha. Sem a conta, é imprimir, assinar, escanear e anexar.",
+    como: "Em Integrações, cole o token da conta Autentique do escritório.",
     destino: "/integracoes",
     textoDoBotao: "Conectar a assinatura",
     minutos: 3,
     essencial: false,
     feito: (f) => ok(f, "AUTENTIQUE"),
-    detalhe: (f) => (comErro(f, "AUTENTIQUE") ? "Conectada, mas o ultimo teste falhou." : null),
+    detalhe: (f) => (comErro(f, "AUTENTIQUE") ? "Conectada, mas o último teste falhou." : null),
   },
   {
     chave: "NUVEM",
@@ -241,16 +241,16 @@ const DEFINICOES: Definicao[] = [
     modulos: ["NUVEM"],
     titulo: "Conectar o OneDrive ou o Google Drive",
     porque:
-      "O sistema cria uma pasta para cada cliente na nuvem do escritorio e copia para la todo documento anexado. O escritorio passa a achar tudo no lugar de sempre, sem baixar e reorganizar.",
+      "O sistema cria uma pasta para cada cliente na nuvem do escritório e copia para lá todo documento anexado. O escritório passa a achar tudo no lugar de sempre, sem baixar e reorganizar.",
     como:
-      "Em Integracoes, clique em \"Entrar com a conta Microsoft\" ou \"Entrar com a conta Google\" e autorize. As pastas sao criadas sozinhas.",
+      "Em Integrações, clique em \"Entrar com a conta Microsoft\" ou \"Entrar com a conta Google\" e autorize. As pastas são criadas sozinhas.",
     destino: "/integracoes",
     textoDoBotao: "Conectar a nuvem",
     minutos: 2,
     essencial: false,
     feito: (f) => ok(f, "MICROSOFT", "GOOGLE"),
     indisponivel: (f) =>
-      f.nuvemDisponivel ? null : "A plataforma ainda esta liberando a conexao com a Microsoft e o Google.",
+      f.nuvemDisponivel ? null : "A plataforma ainda está liberando a conexão com a Microsoft e o Google.",
   },
   {
     chave: "NOTA_FISCAL",
@@ -258,9 +258,9 @@ const DEFINICOES: Definicao[] = [
     modulos: ["NFSE"],
     titulo: "Preparar a nota fiscal",
     porque:
-      "A nota de servico sai assinada com o certificado digital A1 do escritorio, com os dados fiscais da prefeitura. Sem os dois, nao sai nota — e honorario recebido fica sem documento fiscal.",
+      "A nota de serviço sai assinada com o certificado digital A1 do escritório, com os dados fiscais da prefeitura. Sem os dois, não sai nota — e honorário recebido fica sem documento fiscal.",
     como:
-      "Em Administracao, envie o certificado A1 (arquivo .pfx e senha). Em Notas fiscais, preencha inscricao municipal e o codigo de servico.",
+      "Em Administração, envie o certificado A1 (arquivo .pfx e senha). Em Notas fiscais, preencha inscrição municipal e o código de serviço.",
     destino: "/notas",
     textoDoBotao: "Preparar a nota",
     minutos: 6,
@@ -277,11 +277,11 @@ const DEFINICOES: Definicao[] = [
   {
     chave: "MODELOS",
     fase: "CONEXOES",
-    titulo: "Enviar os modelos do escritorio",
+    titulo: "Enviar os modelos do escritório",
     porque:
-      "Contrato de honorarios, procuracao e declaracao saem no papel timbrado do proprio escritorio, ja preenchidos com os dados do cliente. Sem modelo, o sistema usa o padrao dele, sem o timbre.",
+      "Contrato de honorários, procuração e declaração saem no papel timbrado do próprio escritório, já preenchidos com os dados do cliente. Sem modelo, o sistema usa o padrão dele, sem o timbre.",
     como:
-      "Em Modelos, envie o .docx de cada documento que o escritorio ja usa. As marcacoes de onde entra cada dado estao explicadas na propria tela.",
+      "Em Modelos, envie o .docx de cada documento que o escritório já usa. As marcações de onde entra cada dado estão explicadas na própria tela.",
     destino: "/modelos",
     textoDoBotao: "Enviar modelos",
     minutos: 10,
@@ -296,9 +296,9 @@ const DEFINICOES: Definicao[] = [
     fase: "USO",
     titulo: "Cadastrar os primeiros clientes",
     porque:
-      "Cliente e o centro de tudo: processo, compromisso, documento, cobranca e pasta na nuvem se penduram nele. Comece pelos que tem algo acontecendo agora.",
+      "Cliente é o centro de tudo: processo, compromisso, documento, cobrança e pasta na nuvem se penduram nele. Comece pelos que tem algo acontecendo agora.",
     como:
-      "Em Clientes, cadastre nome, CPF ou CNPJ e celular — da para preencher lendo a foto do documento, com a IA. Vindo de outro sistema? Em Clientes > Importar planilha, traga todos de uma vez pelo Excel.",
+      "Em Clientes, cadastre nome, CPF ou CNPJ e celular — dá para preencher lendo a foto do documento, com a IA. Vindo de outro sistema? Em Clientes > Importar planilha, traga todos de uma vez pelo Excel.",
     destino: "/clientes",
     textoDoBotao: "Cadastrar cliente",
     minutos: 3,
@@ -311,8 +311,8 @@ const DEFINICOES: Definicao[] = [
     fase: "USO",
     titulo: "Cadastrar os processos em andamento",
     porque:
-      "Com o processo cadastrado, a publicacao capturada se liga a ele sozinha, o prazo nasce no processo certo e o cliente certo e avisado.",
-    como: "Em Processos, informe o numero CNJ e o cliente. Vara e comarca podem vir da leitura da peca.",
+      "Com o processo cadastrado, a publicação capturada se liga a ele sozinha, o prazo nasce no processo certo e o cliente certo é avisado.",
+    como: "Em Processos, informe o número CNJ e o cliente. Vara e comarca podem vir da leitura da peça.",
     destino: "/processos",
     textoDoBotao: "Cadastrar processo",
     minutos: 3,
@@ -323,11 +323,11 @@ const DEFINICOES: Definicao[] = [
   {
     chave: "PRIMEIRO_COMPROMISSO",
     fase: "USO",
-    titulo: "Lancar a proxima audiencia ou reuniao",
+    titulo: "Lançar a próxima audiência ou reunião",
     porque:
-      "E o primeiro aviso de verdade: o cliente recebe a confirmacao na hora e os lembretes 3 dias, 1 dia e 1 hora antes, sem ninguem do escritorio lembrar de mandar.",
+      "É o primeiro aviso de verdade: o cliente recebe a confirmação na hora e os lembretes 3 dias, 1 dia e 1 hora antes, sem ninguém do escritório lembrar de mandar.",
     como:
-      "Em Agenda, clique em Novo compromisso — ou em Agendar lendo documento, e envie a intimacao. Depois, em Ver, inclua quem vai.",
+      "Em Agenda, clique em Novo compromisso — ou em Agendar lendo documento, e envie a intimação. Depois, em Ver, inclua quem vai.",
     destino: "/agenda",
     textoDoBotao: "Abrir a agenda",
     minutos: 2,

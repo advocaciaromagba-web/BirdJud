@@ -42,13 +42,13 @@ describe("divisao do valor", () => {
     }
   });
 
-  it("a sobra de centavos fica na ultima", () => {
+  it("a sobra de centavos fica na última", () => {
     expect(dividir(10_000, 3)).toEqual([3333, 3333, 3334]);
   });
 });
 
-describe("vencimentos mes a mes", () => {
-  it("mantem o dia contratado", () => {
+describe("vencimentos mês a mês", () => {
+  it("mantém o dia contratado", () => {
     expect(mesesAdiante("2026-11-10", 0)).toBe("2026-11-10");
     expect(mesesAdiante("2026-11-10", 1)).toBe("2026-12-10");
     expect(mesesAdiante("2026-11-10", 3)).toBe("2027-02-10");
@@ -56,13 +56,13 @@ describe("vencimentos mes a mes", () => {
 
   // Somar 30 dias faria 31/01 virar 02/03 e depois 01/04: o vencimento anda
   // para tras e deixa de ser o dia que o cliente combinou.
-  it("dia 31 em mes curto cai no ultimo dia do mes", () => {
+  it("dia 31 em mês curto cai no último dia do mês", () => {
     expect(mesesAdiante("2027-01-31", 1)).toBe("2027-02-28");
     expect(mesesAdiante("2028-01-31", 1)).toBe("2028-02-29");
     expect(mesesAdiante("2027-01-31", 2)).toBe("2027-03-31");
   });
 
-  it("nao perde o dia depois de passar por um mes curto", () => {
+  it("não perde o dia depois de passar por um mês curto", () => {
     const p = planoDoContrato(CONTRATO({ primeiroVencimento: "2027-01-31", parcelas: 3 }));
     expect(p.parcelas.map((x) => x.vencimento)).toEqual([
       "2027-01-31",
@@ -86,19 +86,19 @@ describe("plano do contrato", () => {
     expect(p.parcelas[0].descricao).toContain("parcela 1/3");
   });
 
-  it("a vista nao escreve 'parcela 1/1'", () => {
+  it("a vista não escreve 'parcela 1/1'", () => {
     const p = planoDoContrato(CONTRATO({ parcelas: 1 }));
-    expect(p.parcelas[0].descricao).toBe("Honorarios advocaticios");
+    expect(p.parcelas[0].descricao).toBe("Honorários advocatícios");
   });
 
-  it("a descricao do contrato entra no nome da cobranca", () => {
-    const p = planoDoContrato(CONTRATO({ parcelas: 1, descricao: "acao trabalhista" }));
-    expect(p.parcelas[0].descricao).toBe("Honorarios advocaticios — acao trabalhista");
+  it("a descrição do contrato entra no nome da cobrança", () => {
+    const p = planoDoContrato(CONTRATO({ parcelas: 1, descricao: "ação trabalhista" }));
+    expect(p.parcelas[0].descricao).toBe("Honorários advocatícios — ação trabalhista");
   });
 
   // O valor do exito so existe quando a acao termina: emitir antes seria
   // cobrar um numero que ninguem sabe ainda.
-  it("percentual de exito nao gera parcela", () => {
+  it("percentual de êxito não gera parcela", () => {
     const p = planoDoContrato(CONTRATO({ tipo: "PERCENTUAL", percentualBp: 3000, valorCentavos: null }));
     expect(p.emiteSozinho).toBe(false);
     expect(p.parcelas).toEqual([]);
@@ -111,7 +111,7 @@ describe("plano do contrato", () => {
     expect(p.parcelas[0].descricao).toContain("(parte fixa)");
   });
 
-  it("contrato encerrado nao gera mais nada", () => {
+  it("contrato encerrado não gera mais nada", () => {
     expect(planoDoContrato(CONTRATO({ ativo: false })).emiteSozinho).toBe(false);
   });
 
@@ -125,8 +125,8 @@ describe("plano do contrato", () => {
   });
 });
 
-describe("proxima parcela", () => {
-  it("pula as que ja viraram cobranca", () => {
+describe("próxima parcela", () => {
+  it("pula as que já viraram cobrança", () => {
     const p = planoDoContrato(CONTRATO());
     expect(proximaParcela(p, [])?.numero).toBe(1);
     expect(proximaParcela(p, [1])?.numero).toBe(2);
@@ -134,18 +134,18 @@ describe("proxima parcela", () => {
   });
 
   // Se a 2a saiu antes da 1a (emissao a mao), a 1a continua devida.
-  it("volta na que ficou para tras", () => {
+  it("volta na que ficou para trás", () => {
     const p = planoDoContrato(CONTRATO());
     expect(proximaParcela(p, [2])?.numero).toBe(1);
   });
 
-  it("contrato que nao emite sozinho nao tem proxima", () => {
+  it("contrato que não emite sozinho não tem próxima", () => {
     expect(proximaParcela(planoDoContrato(CONTRATO({ tipo: "PERCENTUAL" })), [])).toBeNull();
   });
 });
 
-describe("janela de emissao", () => {
-  it("so emite perto do vencimento", () => {
+describe("janela de emissão", () => {
+  it("só emite perto do vencimento", () => {
     expect(naJanela("2026-11-10", "2026-11-01")).toBe(true);
     // Dez dias antes e o primeiro dia que vale; onze dias antes ainda nao.
     expect(naJanela("2026-11-10", "2026-10-31")).toBe(true);
@@ -158,14 +158,14 @@ describe("janela de emissao", () => {
     expect(ANTECEDENCIA_DIAS).toBe(10);
   });
 
-  it("atravessa a virada do mes sem errar", () => {
+  it("atravessa a virada do mês sem errar", () => {
     expect(naJanela("2027-01-05", "2026-12-26")).toBe(true);
     expect(naJanela("2027-01-05", "2026-12-25")).toBe(false);
   });
 });
 
 describe("impedimentos do cadastro", () => {
-  it("sem CPF ou CNPJ valido nao emite", () => {
+  it("sem CPF ou CNPJ válido não emite", () => {
     expect(impedimentos({ nome: "Ana", documento: null })).toHaveLength(1);
     expect(impedimentos({ nome: "Ana", documento: "123" })).toHaveLength(1);
     expect(impedimentos({ nome: "", documento: "52998224725" })).toHaveLength(1);
@@ -185,7 +185,7 @@ describe("percentual na tela", () => {
 describe("parcela atrasada", () => {
   // O provedor recusa boleto com vencimento no passado, e emitir com a data de
   // hoje mudaria caladamente o que o contrato diz.
-  it("vencida e so o que ja passou", () => {
+  it("vencida e só o que já passou", () => {
     expect(vencida("2026-11-10", "2026-11-11")).toBe(true);
     expect(vencida("2026-11-10", "2026-11-10")).toBe(false);
     expect(vencida("2026-11-10", "2026-11-09")).toBe(false);
@@ -196,7 +196,7 @@ describe("parcela atrasada", () => {
 describe("a vista mais parcelamento", () => {
   // O caso que o sistema nao sabia representar: entrada na assinatura e o
   // resto parcelado. "Entrada mais 3x" sao QUATRO cobrancas, nao tres.
-  it("a entrada e uma cobranca, e as parcelas vem depois dela", () => {
+  it("a entrada e uma cobrança, e as parcelas vem depois dela", () => {
     const p = planoDoContrato(
       CONTRATO({ valorCentavos: 400_000, entradaCentavos: 100_000, parcelas: 3 }),
     );
@@ -216,7 +216,7 @@ describe("a vista mais parcelamento", () => {
     ]);
   });
 
-  it("a soma continua batendo com o total ate o ultimo centavo", () => {
+  it("a soma continua batendo com o total até o último centavo", () => {
     const p = planoDoContrato(
       CONTRATO({ valorCentavos: 100_00, entradaCentavos: 30_00, parcelas: 3 }),
     );
@@ -226,7 +226,7 @@ describe("a vista mais parcelamento", () => {
 
   // Entrada que cobre o contrato inteiro e pagamento a vista: gerar "entrada
   // + 1 parcela de zero" seria mandar um boleto de R$ 0,00.
-  it("entrada igual ao total e pagamento a vista, nao entrada", () => {
+  it("entrada igual ao total e pagamento a vista, não entrada", () => {
     const p = planoDoContrato(
       CONTRATO({ valorCentavos: 300_000, entradaCentavos: 300_000, parcelas: 3 }),
     );
@@ -247,20 +247,20 @@ describe("a vista mais parcelamento", () => {
   });
 });
 
-describe("como a contratacao se chama", () => {
-  // Derivado, nunca gravado: gravar "a vista" e depois alguem mudar para 3
+describe("como a contratação se chama", () => {
+  // Derivado, nunca gravado: gravar "à vista" e depois alguem mudar para 3
   // parcelas deixaria um contrato que se diz uma coisa e cobra outra.
-  it("acompanha os numeros", () => {
-    expect(comoSeContrata(CONTRATO({ parcelas: 1 }))).toBe("a vista");
+  it("acompanha os números", () => {
+    expect(comoSeContrata(CONTRATO({ parcelas: 1 }))).toBe("à vista");
     expect(comoSeContrata(CONTRATO({ parcelas: 3 }))).toBe("3x");
     expect(
       comoSeContrata(CONTRATO({ valorCentavos: 400_000, entradaCentavos: 100_000, parcelas: 3 })),
     ).toBe("entrada mais 3x");
     expect(
       comoSeContrata(CONTRATO({ parcelas: 1, percentualBp: 3000, tipo: "MISTO" })),
-    ).toBe("a vista + 30% de exito");
+    ).toBe("à vista + 30% de êxito");
     expect(
       comoSeContrata(CONTRATO({ tipo: "PERCENTUAL", valorCentavos: null, percentualBp: 2000 })),
-    ).toBe("20% de exito");
+    ).toBe("20% de êxito");
   });
 });

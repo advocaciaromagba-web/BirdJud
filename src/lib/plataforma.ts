@@ -13,7 +13,7 @@ import { prismaPlataforma } from "./prisma";
 
 export class SemOperador extends Error {
   readonly status = 401;
-  constructor(motivo = "Sessao de operador ausente ou invalida.") {
+  constructor(motivo = "Sessão de operador ausente ou inválida.") {
     super(motivo);
     this.name = "SemOperador";
   }
@@ -27,7 +27,7 @@ export type ContextoOperador = {
 export async function exigirOperador(): Promise<ContextoOperador> {
   if ((await headers()).get(CABECALHO_SLUG)) {
     throw new SemOperador(
-      "O painel da plataforma nao abre dentro de um escritorio.",
+      "O painel da plataforma não abre dentro de um escritório.",
     );
   }
 

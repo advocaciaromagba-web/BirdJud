@@ -9,8 +9,8 @@ import { describe, expect, it } from "vitest";
 import { iniciaisDe } from "../src/lib/nomes";
 
 describe("iniciais do nome", () => {
-  it("usa o primeiro e o ultimo pedaco", () => {
-    expect(iniciaisDe("Jose Luciano da Costa Roma")).toBe("JR");
+  it("usa o primeiro e o último pedaco", () => {
+    expect(iniciaisDe("José Luciano da Costa Roma")).toBe("JR");
     expect(iniciaisDe("Maria Silva")).toBe("MS");
   });
 
@@ -19,15 +19,15 @@ describe("iniciais do nome", () => {
     expect(iniciaisDe("Pedro dos Santos")).toBe("PS");
   });
 
-  it("nome de uma palavra so devolve uma letra", () => {
+  it("nome de uma palavra só devolve uma letra", () => {
     expect(iniciaisDe("Roma")).toBe("R");
   });
 
-  it("aguenta espaco a mais e caixa baixa", () => {
+  it("aguenta espaço a mais e caixa baixa", () => {
     expect(iniciaisDe("  joao   pereira  ")).toBe("JP");
   });
 
-  it("nome vazio nao quebra a tela", () => {
+  it("nome vazio não quebra a tela", () => {
     expect(iniciaisDe("")).toBe("?");
     expect(iniciaisDe("   ")).toBe("?");
     expect(iniciaisDe("de da dos")).toBe("?");

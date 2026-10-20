@@ -53,14 +53,14 @@ export async function GET(
     contexto.marca.slug !== estado.s ||
     !nonceConfere(nonce, estado.n)
   ) {
-    return voltar(false, "A conexao foi iniciada em outra sessao. Clique em Conectar de novo.");
+    return voltar(false, "A conexão foi iniciada em outra sessão. Clique em Conectar de novo.");
   }
 
   if (url.searchParams.get("error")) {
-    return voltar(false, `A autorizacao no ${NUVENS[provedor].rotulo} foi cancelada.`);
+    return voltar(false, `A autorização no ${NUVENS[provedor].rotulo} foi cancelada.`);
   }
   const codigo = url.searchParams.get("code");
-  if (!codigo) return voltar(false, "O provedor nao devolveu a autorizacao.");
+  if (!codigo) return voltar(false, "O provedor não devolveu a autorização.");
 
   try {
     await conectarNuvem(contexto.escritorioId, provedor, codigo, enderecoDeRetorno(provedor));
@@ -68,8 +68,8 @@ export async function GET(
     if (erro instanceof OutraNuvemConectada || erro instanceof FalhaNaNuvem) {
       return voltar(false, erro.message);
     }
-    console.log(`nuvem ${contexto.escritorioId}: conexao falhou ${(erro as Error).message}`.slice(0, 300));
-    return voltar(false, "Nao foi possivel concluir a conexao. Tente de novo em instantes.");
+    console.log(`nuvem ${contexto.escritorioId}: conexão falhou ${(erro as Error).message}`.slice(0, 300));
+    return voltar(false, "Não foi possível concluir a conexão. Tente de novo em instantes.");
   }
 
   // As pastas dos clientes que ja existem saem pela fila, em seguida.

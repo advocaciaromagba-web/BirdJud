@@ -39,7 +39,7 @@ export type Regra = {
  * um erro que ninguem percebe porque o numero continua "plausivel".
  */
 export const REGRAS: Record<string, Regra> = {
-  PAYMENT_RECEIVED: { destino: "RECEITA", automatico: true, rotulo: "Cobranca recebida" },
+  PAYMENT_RECEIVED: { destino: "RECEITA", automatico: true, rotulo: "Cobrança recebida" },
   PIX_RECEIVED: { destino: "RECEITA", automatico: true, rotulo: "Pix recebido" },
   PIX_TRANSACTION_DEBIT_REFUND: {
     destino: "RECEITA",
@@ -56,7 +56,7 @@ export const REGRAS: Record<string, Regra> = {
     destino: "DESPESA",
     automatico: true,
     categoria: "TARIFAS",
-    rotulo: "Tarifa de cobranca",
+    rotulo: "Tarifa de cobrança",
   },
   INSTANT_TEXT_MESSAGE_FEE: {
     destino: "DESPESA",
@@ -75,17 +75,17 @@ export const REGRAS: Record<string, Regra> = {
   TRANSFER: {
     destino: "IGNORAR",
     automatico: true,
-    rotulo: "Transferencia para a conta do banco",
+    rotulo: "Transferência para a conta do banco",
   },
   TRANSFER_CANCELLED: {
     destino: "IGNORAR",
     automatico: true,
-    rotulo: "Transferencia cancelada",
+    rotulo: "Transferência cancelada",
   },
   ASAAS_CARD_BALANCE_CREDIT: {
     destino: "IGNORAR",
     automatico: true,
-    rotulo: "Movimentacao interna",
+    rotulo: "Movimentação interna",
   },
 
   // Estes dependem de contexto que o extrato nao tem: qual conta foi paga, a
@@ -122,7 +122,7 @@ export function regraDoTipo(tipo: string): Regra {
     REGRAS[tipo] ?? {
       destino: "IGNORAR",
       automatico: false,
-      rotulo: `Tipo nao reconhecido (${tipo})`,
+      rotulo: `Tipo não reconhecido (${tipo})`,
     }
   );
 }
@@ -221,7 +221,7 @@ export function sugerir(
         saida.set(entrada.id, {
           tipo: "CERTA",
           cobrancaId: certa.id,
-          motivo: "o proprio provedor ligou este lancamento a esta cobranca",
+          motivo: "o próprio provedor ligou este lançamento a esta cobrança",
         });
         continue;
       }
@@ -236,13 +236,13 @@ export function sugerir(
       saida.set(entrada.id, {
         tipo: "PROVAVEL",
         cobrancaId: candidatos[0]!.id,
-        motivo: "o nome de quem pagou e o valor batem com uma cobranca em aberto",
+        motivo: "o nome de quem pagou e o valor batem com uma cobrança em aberto",
       });
     } else if (candidatos.length > 1) {
       saida.set(entrada.id, {
         tipo: "AMBIGUA",
         candidatos: candidatos.map((c) => c.id),
-        motivo: `${candidatos.length} cobrancas em aberto batem com este pagamento`,
+        motivo: `${candidatos.length} cobranças em aberto batem com este pagamento`,
       });
     } else {
       saida.set(entrada.id, { tipo: "NENHUMA" });

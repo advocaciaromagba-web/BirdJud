@@ -24,8 +24,8 @@ const deploy = (id: string, situacao: string): EstadoDeDeploy => ({
 const caiu = Array(FALHAS_SEGUIDAS).fill(false);
 const base = { ultimaVolta: null, agora: AGORA };
 
-describe("volta automatica de deploy", () => {
-  it("volta quando o deploy falhou e o site nao responde", () => {
+describe("volta automática de deploy", () => {
+  it("volta quando o deploy falhou e o site não responde", () => {
     const d = decidir({
       ...base,
       saude: caiu,
@@ -35,7 +35,7 @@ describe("volta automatica de deploy", () => {
     if (d.acao === "voltar") expect(d.alvo.id).toBe("bom");
   });
 
-  it("nao volta se o site respondeu em alguma das ultimas batidas", () => {
+  it("não volta se o site respondeu em alguma das últimas batidas", () => {
     const d = decidir({
       ...base,
       saude: [false, true, false],
@@ -44,7 +44,7 @@ describe("volta automatica de deploy", () => {
     expect(d.acao).toBe("nada");
   });
 
-  it("nao volta com menos batidas do que o minimo", () => {
+  it("não volta com menos batidas do que o mínimo", () => {
     const d = decidir({
       ...base,
       saude: [false, false],
@@ -65,17 +65,17 @@ describe("volta automatica de deploy", () => {
     }
   });
 
-  it("nao volta quando o deploy no ar deu certo: a queda nao e da versao", () => {
+  it("não volta quando o deploy no ar deu certo: a queda não é da versão", () => {
     const d = decidir({
       ...base,
       saude: caiu,
       deploys: [deploy("atual", "SUCCESS"), deploy("velho", "SUCCESS")],
     });
     expect(d.acao).toBe("nada");
-    expect(d.motivo).toContain("nao e da versao");
+    expect(d.motivo).toContain("não é da versão");
   });
 
-  it("nao volta se nao ha versao anterior que tenha subido", () => {
+  it("não volta se não há versão anterior que tenha subido", () => {
     const d = decidir({
       ...base,
       saude: caiu,
@@ -84,7 +84,7 @@ describe("volta automatica de deploy", () => {
     expect(d.acao).toBe("nada");
   });
 
-  it("pula deploys removidos e intermediarios ate achar o ultimo que subiu", () => {
+  it("pula deploys removidos e intermediarios até achar o último que subiu", () => {
     const d = decidir({
       ...base,
       saude: caiu,
@@ -98,7 +98,7 @@ describe("volta automatica de deploy", () => {
     if (d.acao === "voltar") expect(d.alvo.id).toBe("bom");
   });
 
-  it("nao repete a mesma volta dentro da janela", () => {
+  it("não repete a mesma volta dentro da janela", () => {
     const d = decidir({
       saude: caiu,
       deploys: [deploy("novo", "FAILED"), deploy("bom", "SUCCESS")],
@@ -106,7 +106,7 @@ describe("volta automatica de deploy", () => {
       agora: AGORA,
     });
     expect(d.acao).toBe("nada");
-    expect(d.motivo).toContain("ja foi tentada");
+    expect(d.motivo).toContain("já foi tentada");
   });
 
   it("depois da janela, tenta de novo", () => {

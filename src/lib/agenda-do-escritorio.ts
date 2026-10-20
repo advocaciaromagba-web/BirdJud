@@ -32,7 +32,7 @@ export {
 
 export class CompromissoNaoEncontrado extends Error {
   constructor() {
-    super("Compromisso nao encontrado.");
+    super("Compromisso não encontrado.");
   }
 }
 
@@ -76,17 +76,17 @@ export async function editarCompromisso(
 
     if (campos.processoId) {
       const processo = await db.processo.findFirst({ where: { id: campos.processoId } });
-      if (!processo) throw new Error("Processo nao encontrado.");
+      if (!processo) throw new Error("Processo não encontrado.");
     }
     if (campos.clienteId) {
       const cliente = await db.cliente.findFirst({ where: { id: campos.clienteId } });
-      if (!cliente) throw new Error("Cliente nao encontrado.");
+      if (!cliente) throw new Error("Cliente não encontrado.");
     }
     if (campos.responsavelId) {
       const pessoa = await db.usuario.findFirst({
         where: { id: campos.responsavelId, ativo: true },
       });
-      if (!pessoa) throw new Error("Responsavel nao encontrado.");
+      if (!pessoa) throw new Error("Responsável não encontrado.");
     }
 
     await db.compromisso.update({ where: { id }, data: campos });
@@ -149,7 +149,7 @@ export async function excluirCompromisso(
     const c = await db.compromisso.findFirst({ where: { id }, include: COM_TUDO });
     if (!c) throw new CompromissoNaoEncontrado();
 
-    await cancelarLembretesPendentes(db, id, "compromisso excluido");
+    await cancelarLembretesPendentes(db, id, "compromisso excluído");
     await db.compromissoExcluido.create({
       data: semEscritorio({
         ...retrato(c),

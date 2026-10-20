@@ -5,7 +5,7 @@ export const AVISOS_MANUAIS = ["AGENDADO", "LEMBRETE_24H", "LEMBRETE_1H"] as con
 export type AvisoManual = (typeof AVISOS_MANUAIS)[number];
 
 export const ROTULO_DO_AVISO_MANUAL: Record<AvisoManual, string> = {
-  AGENDADO: "Confirmacao do agendamento",
-  LEMBRETE_24H: "Lembrete de vespera",
+  AGENDADO: "Confirmação do agendamento",
+  LEMBRETE_24H: "Lembrete de véspera",
   LEMBRETE_1H: "Lembrete de 1 hora antes",
 };

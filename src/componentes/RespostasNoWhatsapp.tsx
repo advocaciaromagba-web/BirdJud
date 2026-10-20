@@ -43,8 +43,8 @@ export function RespostasNoWhatsapp({ respostas }: { respostas: RespostaNaCaixa[
         Respostas no WhatsApp que ninguem leu ({respostas.length})
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        O sistema nao entendeu estas respostas. Quem escreveu ja recebeu de
-        volta o telefone do escritorio — este numero so avisa, nao atende.
+        O sistema não entendeu estas respostas. Quem escreveu já recebeu de
+        volta o telefone do escritório — este número só avisa, não atende.
         &quot;1&quot; e &quot;2&quot; ele entende sozinho e ja anota na agenda.
       </p>
       <ul className="mt-3 space-y-2">
@@ -64,7 +64,7 @@ export function RespostasNoWhatsapp({ respostas }: { respostas: RespostaNaCaixa[
               className="botao-discreto disabled:opacity-50"
               onClick={() => lida(r.id)}
             >
-              {ocupado === r.id ? "..." : "ja li"}
+              {ocupado === r.id ? "..." : "já li"}
             </button>
           </li>
         ))}

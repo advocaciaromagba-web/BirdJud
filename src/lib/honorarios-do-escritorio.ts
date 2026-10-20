@@ -94,7 +94,7 @@ export async function situacaoDoContrato(
 export class ContratoNaoEncontrado extends Error {
   readonly status = 404;
   constructor() {
-    super("Contrato de honorarios nao encontrado.");
+    super("Contrato de honorários não encontrado.");
     this.name = "ContratoNaoEncontrado";
   }
 }
@@ -126,7 +126,7 @@ export async function gerarParcela(
     }),
   );
   if (jaTem && jaTem.status !== "CANCELADA") {
-    return { ok: false, erro: `A parcela ${parcela.numero} ja tem cobranca.` };
+    return { ok: false, erro: `A parcela ${parcela.numero} já tem cobrança.` };
   }
 
   try {
@@ -163,13 +163,13 @@ export async function gerarProximaParcela(
 
   const s = await situacaoDoContrato(escritorioId, contrato);
   if (!s.plano.emiteSozinho) return { ok: false, erro: s.plano.motivo };
-  if (!s.proxima) return { ok: false, erro: "Todas as parcelas ja foram emitidas." };
+  if (!s.proxima) return { ok: false, erro: "Todas as parcelas já foram emitidas." };
   // Forcar e decisao de quem olha a tela: "sei que falta, quero antecipar".
   // O cron nunca forca.
   if (s.atrasada) {
     return {
       ok: false,
-      erro: `A parcela ${s.proxima.numero} venceu em ${s.proxima.vencimento} e nunca foi emitida: escolha a data da cobranca.`,
+      erro: `A parcela ${s.proxima.numero} venceu em ${s.proxima.vencimento} e nunca foi emitida: escolha a data da cobrança.`,
     };
   }
   if (!s.naJanela && !opcoes.forcar) {
@@ -248,14 +248,14 @@ export async function salvarContrato(
   const cliente = await comEscritorio(escritorioId, (db) =>
     db.cliente.findFirst({ where: { id: dados.clienteId }, select: { id: true } }),
   );
-  if (!cliente) throw new PedidoInvalido("Cliente nao encontrado.");
+  if (!cliente) throw new PedidoInvalido("Cliente não encontrado.");
 
   if (dados.processoId) {
     const processoId = dados.processoId;
     const processo = await comEscritorio(escritorioId, (db) =>
       db.processo.findFirst({ where: { id: processoId }, select: { id: true } }),
     );
-    if (!processo) throw new PedidoInvalido("Processo nao encontrado.");
+    if (!processo) throw new PedidoInvalido("Processo não encontrado.");
   }
 
   const campos = {
@@ -347,7 +347,7 @@ export async function preverRecebimentos(
     for (const p of plano.parcelas) {
       noPlano.add(p.numero);
       const dados = {
-        descricao: `Honorarios: ${contrato.cliente.nome} — ${p.descricao}`.slice(0, 200),
+        descricao: `Honorários: ${contrato.cliente.nome} — ${p.descricao}`.slice(0, 200),
         valorCentavos: p.valorCentavos,
         competencia: p.vencimento.slice(0, 7),
         vencimento: new Date(`${p.vencimento}T12:00:00Z`),

@@ -80,13 +80,13 @@ d("fase 2", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  describe("modulo contratado", () => {
-    it("o nucleo vale sempre, sem contrato", async () => {
+  describe("módulo contratado", () => {
+    it("o núcleo vale sempre, sem contrato", async () => {
       await expect(moduloAtivo(alfa, "NUCLEO")).resolves.toBe(true);
       await expect(modulosAtivos(alfa)).resolves.toContain("NUCLEO");
     });
 
-    it("modulo nao contratado bloqueia com 403", async () => {
+    it("módulo não contratado bloqueia com 403", async () => {
       await expect(moduloAtivo(alfa, "FINANCEIRO")).resolves.toBe(false);
       await expect(exigirModulo(alfa, "FINANCEIRO")).rejects.toBeInstanceOf(
         ModuloNaoContratado,
@@ -96,7 +96,7 @@ d("fase 2", () => {
       });
     });
 
-    it("contratar libera so para quem contratou", async () => {
+    it("contratar libera só para quem contratou", async () => {
       await comEscritorio(alfa, (db) =>
         db.moduloContratado.create({
           data: semEscritorio({ modulo: "FINANCEIRO" }),
@@ -106,7 +106,7 @@ d("fase 2", () => {
       await expect(moduloAtivo(beta, "FINANCEIRO")).resolves.toBe(false);
     });
 
-    it("desligar o modulo volta a bloquear", async () => {
+    it("desligar o módulo volta a bloquear", async () => {
       await comEscritorio(alfa, (db) =>
         db.moduloContratado.update({
           where: {
@@ -129,7 +129,7 @@ d("fase 2", () => {
   });
 
   describe("limite da faixa", () => {
-    it("conta so usuario ativo e respeita o limite da faixa", async () => {
+    it("conta só usuário ativo e respeita o limite da faixa", async () => {
       // Alfa e ATE_3: tres advogados cabem, o quarto nao.
       for (let i = 0; i < 3; i += 1) {
         await exigirVagaNaFaixa(alfa, true);
@@ -147,7 +147,7 @@ d("fase 2", () => {
       await expect(exigirVagaNaFaixa(alfa, false)).resolves.toBeUndefined();
     });
 
-    it("desativar um usuario devolve a vaga", async () => {
+    it("desativar um usuário devolve a vaga", async () => {
       const usuario = await comEscritorio(alfa, (db) =>
         db.usuario.findFirstOrThrow({ where: { advogado: true } }),
       );
@@ -163,14 +163,14 @@ d("fase 2", () => {
       expect(uso.advogados.usados).toBe(2);
     });
 
-    it("a faixa de um escritorio nao interfere na do outro", async () => {
+    it("a faixa de um escritório não interfere na do outro", async () => {
       const usoBeta = await usoDaFaixa(beta);
       expect(usoBeta.faixa).toBe("ATE_10");
       expect(usoBeta.advogados).toEqual({ usados: 0, limite: 10 });
     });
   });
 
-  describe("medicao de consumo", () => {
+  describe("medição de consumo", () => {
     it("registrar soma e definir substitui", async () => {
       await registrarConsumo(alfa, "WHATSAPP_MSG", 30);
       await registrarConsumo(alfa, "WHATSAPP_MSG", 12);
@@ -183,7 +183,7 @@ d("fase 2", () => {
       expect(mapa.get("REGISTROS")).toBe(9);
     });
 
-    it("excedente sai da franquia do modulo contratado", async () => {
+    it("excedente sai da franquia do módulo contratado", async () => {
       await comEscritorio(alfa, (db) =>
         db.moduloContratado.create({
           data: semEscritorio({ modulo: "WHATSAPP", franquia: 40 }),
@@ -206,7 +206,7 @@ d("fase 2", () => {
       expect(registros).toMatchObject({ franquia: null, excedente: 0 });
     });
 
-    it("consumo de um escritorio nao aparece no outro", async () => {
+    it("consumo de um escritório não aparece no outro", async () => {
       await expect(consumoDoMes(beta)).resolves.toHaveLength(0);
     });
   });
@@ -220,7 +220,7 @@ d("fase 2", () => {
       await prismaPlataforma().trabalho.deleteMany({ where: { escritorioId: { in: [alfa, beta] } } });
     });
 
-    it("um trabalho em execucao por escritorio", async () => {
+    it("um trabalho em execução por escritório", async () => {
       await enfileirar("APURAR_CONSUMO", alfa);
       await enfileirar("APURAR_CONSUMO", alfa);
       await enfileirar("APURAR_CONSUMO", beta);
@@ -241,7 +241,7 @@ d("fase 2", () => {
       await concluir(segundo!.id);
     });
 
-    it("o executor roda dentro do escritorio do trabalho", async () => {
+    it("o executor roda dentro do escritório do trabalho", async () => {
       await EXECUTORES.APURAR_CONSUMO({ escritorioId: beta, dados: {} });
       const linhas = await consumoDoMes(beta);
       const mapa = new Map(linhas.map((l) => [l.metrica, l.quantidade]));
@@ -266,7 +266,7 @@ d("fase 2", () => {
 
       await falhar(
         { ...trabalho!, tentativas: 3, maxTentativas: 3 },
-        new Error("ultima falha"),
+        new Error("última falha"),
       );
       estado = await prismaPlataforma().trabalho.findUniqueOrThrow({
         where: { id },
@@ -274,7 +274,7 @@ d("fase 2", () => {
       expect(estado.estado).toBe("FALHOU");
     });
 
-    it("trabalho preso em execucao volta para a fila", async () => {
+    it("trabalho preso em execução volta para a fila", async () => {
       const id = await enfileirar("APURAR_CONSUMO", beta);
       await reclamar([alfa, beta]);
       await prismaPlataforma().trabalho.update({
@@ -292,7 +292,7 @@ d("fase 2", () => {
       expect(estado.estado).toBe("PENDENTE");
     });
 
-    it("espalhar agenda um trabalho por escritorio que pode receber", async () => {
+    it("espalhar agenda um trabalho por escritório que pode receber", async () => {
       await prismaPlataforma().trabalho.deleteMany({
         where: { escritorioId: { in: [alfa, beta] } },
       });
@@ -305,7 +305,7 @@ d("fase 2", () => {
       expect(deAlfa).toBe(1);
     });
 
-    it("escritorio apagado no meio do espalhamento nao tira a rotina dos outros", async () => {
+    it("escritório apagado no meio do espalhamento não tira a rotina dos outros", async () => {
       await prismaPlataforma().trabalho.deleteMany({
         where: { escritorioId: { in: [alfa, beta] }, tipo: "APURAR_CONSUMO" },
       });
@@ -326,7 +326,7 @@ d("fase 2", () => {
       expect(deAlfa).toBe(1);
     });
 
-    it("escritorio encerrado fica de fora do espalhamento", async () => {
+    it("escritório encerrado fica de fora do espalhamento", async () => {
       await prismaPlataforma().escritorio.update({
         where: { id: beta },
         data: { status: "ENCERRADO" },
@@ -349,7 +349,7 @@ d("fase 2", () => {
 
     // Emitir cobranca no nome de um escritorio que nao contratou cobranca
     // seria cobrar cliente dele sem que ele tenha o modulo.
-    it("so vai emitir honorarios em escritorio com COBRANCAS", async () => {
+    it("só vai emitir honorários em escritório com COBRANCAS", async () => {
       expect(EXECUTORES.EMITIR_HONORARIOS).toBeTypeOf("function");
 
       await prismaPlataforma().trabalho.deleteMany({
@@ -376,14 +376,14 @@ d("fase 2", () => {
   });
 
   describe("valor em centavos", () => {
-    it("aceita virgula, ponto e R$", () => {
+    it("aceita vírgula, ponto e R$", () => {
       expect(paraCentavos("1.234,56")).toBe(123456);
       expect(paraCentavos("1234.56")).toBe(123456);
       expect(paraCentavos("R$ 10")).toBe(1000);
       expect(paraCentavos("0,05")).toBe(5);
     });
 
-    it("recusa o que nao e valor", () => {
+    it("recusa o que não e valor", () => {
       expect(paraCentavos("abc")).toBeNull();
       expect(paraCentavos("-5")).toBeNull();
     });

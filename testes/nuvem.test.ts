@@ -45,7 +45,7 @@ process.env.NEXTAUTH_SECRET ??= "segredo-de-teste-da-nuvem";
 describe("bilhete do OAuth (state)", () => {
   const base = { e: "esc1", u: "usu1", s: "roma", p: "MICROSOFT" as const };
 
-  it("volta igual quando ninguem mexeu", () => {
+  it("volta igual quando ninguém mexeu", () => {
     const { estado, nonce } = assinarEstado(base);
     const lido = lerEstado(estado)!;
     expect(lido).toMatchObject({ ...base, n: nonce });
@@ -54,7 +54,7 @@ describe("bilhete do OAuth (state)", () => {
     expect(nonceConfere(undefined, lido.n)).toBe(false);
   });
 
-  it("recusa bilhete adulterado: trocar o escritorio invalida a assinatura", () => {
+  it("recusa bilhete adulterado: trocar o escritório inválida a assinatura", () => {
     const { estado } = assinarEstado(base);
     const [corpo, assinatura] = estado.split(".");
     const dados = JSON.parse(Buffer.from(corpo, "base64url").toString());
@@ -75,8 +75,8 @@ describe("bilhete do OAuth (state)", () => {
     expect(lerEstado(estado, agora + VALIDADE_MS + 1)).toBeNull();
   });
 
-  it("slug que nao e subdominio nao passa, nem assinado", () => {
-    // O slug vira endereco de redirecionamento: "evil.com/x" seria open redirect.
+  it("slug que não e subdomínio não passa, nem assinado", () => {
+    // O slug vira endereço de redirecionamento: "evil.com/x" seria open redirect.
     const { estado } = assinarEstado({ ...base, s: "evil.com/x" });
     expect(lerEstado(estado)).toBeNull();
   });
@@ -92,7 +92,7 @@ describe("nomes na nuvem", () => {
     expect(nomeSeguro("arquivo. ")).toBe("arquivo");
   });
 
-  it("arquivo leva a data de Brasilia na frente", () => {
+  it("arquivo leva a data de Brasília na frente", () => {
     // 01h de 10/10 em UTC ainda e dia 09 em Brasilia.
     expect(nomeNaNuvem("procuracao.pdf", new Date("2026-10-10T01:00:00Z"))).toBe(
       "2026-10-09 - procuracao.pdf",
@@ -106,7 +106,7 @@ describe("nomes na nuvem", () => {
     expect(emailDoIdToken("sem-pontos")).toBeNull();
   });
 
-  it("retorno e um so, na plataforma; a volta e para o subdominio", () => {
+  it("retorno e um só, na plataforma; a volta e para o subdomínio", () => {
     const antes = process.env.NUVEM_URL_RETORNO;
     process.env.NUVEM_URL_RETORNO = "https://birdjud.com.br/";
     expect(baseDaPlataforma()).toBe("https://birdjud.com.br");
@@ -250,7 +250,7 @@ async function responder(req: IncomingMessage, res: import("node:http").ServerRe
     return json(404, { caminho });
   }
   if (url.pathname.startsWith("/ms/envio/")) {
-    if (req.headers.authorization) return json(401, { erro: "uploadUrl nao leva Bearer" });
+    if (req.headers.authorization) return json(401, { erro: "uploadUrl não leva Bearer" });
     const s = sessoesDeEnvio.get(url.pathname.split("/").pop()!)!;
     const faixa = /bytes (\d+)-(\d+)\/(\d+)/.exec(String(req.headers["content-range"]))!;
     s.recebidos += bruto.byteLength;
@@ -365,7 +365,7 @@ async function anexar(clienteId: string | null, nome: string, bytes: number) {
   });
 }
 
-d("nuvem do escritorio", () => {
+d("nuvem do escritório", () => {
   beforeAll(async () => {
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 9).toString("base64");
     process.env.RAIZ_ARQUIVOS = await mkdtemp(join(tmpdir(), "birdjud-nuvem-"));
@@ -384,7 +384,7 @@ d("nuvem do escritorio", () => {
     process.env.GOOGLE_UPLOAD_URL = `${base}/gg/upload`;
 
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `nuvem-${Date.now()}`, nome: "Escritorio da Nuvem" },
+      data: { slug: `nuvem-${Date.now()}`, nome: "Escritório da Nuvem" },
     });
     escritorio = e.id;
     await prismaPlataforma().moduloContratado.create({
@@ -426,7 +426,7 @@ d("nuvem do escritorio", () => {
     expect(await pastaDoCliente(escritorio, c.id)).toBeNull();
   });
 
-  it("codigo invalido nao conecta nada", async () => {
+  it("código inválido não conecta nada", async () => {
     await expect(conectarNuvem(escritorio, "MICROSOFT", "codigo-ruim", retornoMs)).rejects.toThrow(/Conecte o OneDrive de novo/);
     expect(await nuvemConectada(escritorio)).toBeNull();
     expect(ms.retrato()).toEqual([]);
@@ -443,7 +443,7 @@ d("nuvem do escritorio", () => {
     expect(dados.conta).toBe("escritorio@outlook.com");
   });
 
-  it("organizar cria uma pasta por cliente, e rodar de novo nao duplica", async () => {
+  it("organizar cria uma pasta por cliente, e rodar de novo não duplica", async () => {
     await cliente("Maria Silva", "123.456.789-00");
     await cliente("Maria Silva", "987.654.321-00");
 
@@ -497,7 +497,7 @@ d("nuvem do escritorio", () => {
     expect(await arquivosParaEspelhar(escritorio)).toEqual([]);
   });
 
-  it("pasta apagada na nuvem e recriada no proximo uso", async () => {
+  it("pasta apagada na nuvem e recriada no próximo uso", async () => {
     const c = await cliente("Cliente Apagado");
     await organizarPastas(escritorio);
     const pasta = [...ms.nos.values()].find((n) => n.nome === "Cliente Apagado")!;
@@ -522,11 +522,11 @@ d("nuvem do escritorio", () => {
     expect(nova.filter((n) => n.nome === "Clientes")).toHaveLength(1);
   });
 
-  it("nao deixa ligar o Google Drive com o OneDrive ligado", async () => {
+  it("não deixa ligar o Google Drive com o OneDrive ligado", async () => {
     await expect(conectarNuvem(escritorio, "GOOGLE", "codigo-bom", retornoGg)).rejects.toBeInstanceOf(OutraNuvemConectada);
   });
 
-  it("acesso revogado na Microsoft vira ERRO na tela, sem lancar na rotina", async () => {
+  it("acesso revogado na Microsoft vira ERRO na tela, sem lançar na rotina", async () => {
     const dados = await obterIntegracao<Record<string, string>>(escritorio, "MICROSOFT");
     revogados.add(dados.renovacao);
     expect(await organizarPastas(escritorio)).toMatchObject({ conectada: false });
@@ -536,7 +536,7 @@ d("nuvem do escritorio", () => {
     expect((await testarNuvem(escritorio)).ok).toBe(false);
   });
 
-  it("desconectar apaga token e mapa; os arquivos ficam na conta do escritorio", async () => {
+  it("desconectar apaga token e mapa; os arquivos ficam na conta do escritório", async () => {
     const antes = ms.retrato().length;
     await desconectarNuvem(escritorio, "MICROSOFT");
     expect(await nuvemConectada(escritorio)).toBeNull();
@@ -549,12 +549,12 @@ d("nuvem do escritorio", () => {
     expect(ms.retrato().length).toBe(antes);
   });
 
-  it("Google Drive: sem a caixa do Drive marcada, recusa com explicacao", async () => {
+  it("Google Drive: sem a caixa do Drive marcada, recusa com explicação", async () => {
     await expect(conectarNuvem(escritorio, "GOOGLE", "sem-drive", retornoGg)).rejects.toThrow(/caixa do Drive/);
     expect(await nuvemConectada(escritorio)).toBeNull();
   });
 
-  it("Google Drive: mesma estrutura, mesmos nomes, mesma copia", async () => {
+  it("Google Drive: mesma estrutura, mesmos nomes, mesma cópia", async () => {
     const r = await conectarNuvem(escritorio, "GOOGLE", "codigo-bom", retornoGg);
     expect(r.conta).toBe("escritorio@gmail.com");
     // Reconectar acha a pasta pelo nome e nao duplica.

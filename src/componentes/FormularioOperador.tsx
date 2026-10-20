@@ -26,7 +26,7 @@ export function FormularioOperador() {
       window.location.href = "/plataforma";
       return;
     }
-    setErro("Nao foi possivel entrar.");
+    setErro("Não foi possível entrar.");
   }
 
   return (

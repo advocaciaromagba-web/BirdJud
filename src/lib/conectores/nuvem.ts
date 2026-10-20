@@ -19,7 +19,7 @@ function conectorDaNuvem(provedor: Provedor, descricao: string): Conector {
     oauth: provedor,
     resumo: (dados) => (dados.conta ? `Conta ${dados.conta}` : "Conta conectada"),
     async testar(_dados, contexto) {
-      if (!contexto) return { ok: false, detalhe: "Teste sem escritorio." };
+      if (!contexto) return { ok: false, detalhe: "Teste sem escritório." };
       return testarNuvem(contexto.escritorioId);
     },
   };
@@ -27,10 +27,10 @@ function conectorDaNuvem(provedor: Provedor, descricao: string): Conector {
 
 export const conectorMicrosoft = conectorDaNuvem(
   "MICROSOFT",
-  "A pasta de cada cliente no OneDrive do escritorio — conta pessoal (Outlook, Hotmail) ou Microsoft 365. O sistema cria as pastas sozinho e copia para la os documentos anexados.",
+  "A pasta de cada cliente no OneDrive do escritório — conta pessoal (Outlook, Hotmail) ou Microsoft 365. O sistema cria as pastas sozinho e copia para lá os documentos anexados.",
 );
 
 export const conectorGoogle = conectorDaNuvem(
   "GOOGLE",
-  "A pasta de cada cliente no Google Drive do escritorio — Gmail ou Google Workspace. O sistema cria as pastas sozinho e copia para la os documentos anexados.",
+  "A pasta de cada cliente no Google Drive do escritório — Gmail ou Google Workspace. O sistema cria as pastas sozinho e copia para lá os documentos anexados.",
 );

@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { escritorioId } = await exigirSessao(undefined, "PROCESSOS");
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
-    if (!corpo.success) return NextResponse.json({ erro: "Nome invalido." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Nome inválido." }, { status: 400 });
 
     const r = await comEscritorio(escritorioId, async (db) => {
       const processo = await db.processo.findFirst({ where: { id }, select: { id: true, clienteId: true } });
@@ -39,7 +39,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
       return { clienteId: cliente.id, novo: !existente };
     });
-    if (!r) return NextResponse.json({ erro: "Processo nao encontrado." }, { status: 404 });
+    if (!r) return NextResponse.json({ erro: "Processo não encontrado." }, { status: 404 });
 
     const outros = await vincularProcessosAoCliente(escritorioId, r.clienteId).catch(() => 0);
     if (r.novo) await cutucarNuvem(escritorioId);

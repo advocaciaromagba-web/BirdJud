@@ -64,7 +64,7 @@ export default async function PaginaDoProcesso({
       <div className="mt-4 flex flex-wrap gap-3 text-sm">
         {naoLidas > 0 ? (
           <span className="rounded bg-amber-100 px-2 py-1 text-amber-900">
-            {naoLidas} publicacao(oes) nao lida(s)
+            {naoLidas} publicação(ões) não lida(s)
           </span>
         ) : null}
         {aReceber > 0 ? (
@@ -77,7 +77,7 @@ export default async function PaginaDoProcesso({
       {ficha.publicacoes.length > 0 ? (
         <section className="mt-8">
           <h2 className="font-semibold">
-            Publicacoes ({ficha.publicacoes.length})
+            Publicações ({ficha.publicacoes.length})
           </h2>
           <ul className="mt-2 divide-y divide-slate-200 text-sm">
             {ficha.publicacoes.map((publicacao) => (
@@ -90,7 +90,7 @@ export default async function PaginaDoProcesso({
                   ) : null}
                   {!publicacao.lida ? (
                     <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                      nao lida
+                      não lida
                     </span>
                   ) : null}
                   <span className="text-slate-500">
@@ -112,7 +112,7 @@ export default async function PaginaDoProcesso({
             href="/publicacoes"
             className="mt-2 inline-block text-sm text-marca hover:underline"
           >
-            Abrir as publicacoes
+            Abrir as publicações
           </Link>
         </section>
       ) : null}
@@ -211,8 +211,8 @@ export default async function PaginaDoProcesso({
       ficha.arquivos.length === 0 &&
       ficha.cobrancas.length === 0 ? (
         <p className="mt-8 text-slate-600">
-          Nada ligado a este processo ainda. Publicacao capturada com este
-          numero, documento enviado, compromisso marcado ou cobranca emitida
+          Nada ligado a este processo ainda. Publicação capturada com este
+          número, documento enviado, compromisso marcado ou cobrança emitida
           aparecem aqui.
         </p>
       ) : null}

@@ -46,14 +46,14 @@ export function FormularioRedefinirSenha({
       setPronto(true);
       return;
     }
-    setErro(json.erro ?? "Nao foi possivel trocar a senha.");
+    setErro(json.erro ?? "Não foi possível trocar a senha.");
   }
 
   if (pronto) {
     return (
       <div className="mt-6">
         <p className="aviso-ok">
-          Senha trocada. As sessoes que estavam abertas foram encerradas, aqui e
+          Senha trocada. As sessões que estavam abertas foram encerradas, aqui e
           em qualquer outro aparelho.
         </p>
         <Link href={entrada} className="botao-principal mt-4">
@@ -77,7 +77,7 @@ export function FormularioRedefinirSenha({
           autoComplete="new-password"
           className="campo"
         />
-        <p className="ajuda esquerda">Minimo de {minimo} caracteres.</p>
+        <p className="ajuda esquerda">Mínimo de {minimo} caracteres.</p>
       </div>
 
       <div>

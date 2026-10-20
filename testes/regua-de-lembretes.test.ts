@@ -41,33 +41,33 @@ describe("em qual marco o compromisso esta", () => {
     expect(chave(23)).not.toBe("3d");
   });
 
-  it("alem de 3 dias, nenhum marco ainda", () => {
+  it("além de 3 dias, nenhum marco ainda", () => {
     expect(chave(100)).toBeNull();
   });
 
-  it("compromisso que ja comecou nao gera aviso", () => {
+  it("compromisso que já começou não gera aviso", () => {
     // Lembrete de audiencia que ja passou deixa o sistema com cara de
     // quebrado, e nao ajuda ninguem.
     expect(chave(0)).toBeNull();
     expect(chave(-1)).toBeNull();
   });
 
-  it("nas bordas exatas, o marco e o proprio", () => {
+  it("nas bordas exatas, o marco e o próprio", () => {
     expect(chave(72)).toBe("3d");
     expect(chave(24)).toBe("24h");
     expect(chave(1)).toBe("1h");
   });
 });
 
-describe("quem tem regua e quem nao tem", () => {
-  it("encontro tem os tres marcos", () => {
+describe("quem tem regua e quem não tem", () => {
+  it("encontro tem os três marcos", () => {
     for (const tipo of ["AUDIENCIA", "PERICIA", "COMPROMISSO"]) {
       expect(marcosDoTipo(tipo), tipo).toHaveLength(3);
       expect(TIPOS_COM_REGUA.has(tipo), tipo).toBe(true);
     }
   });
 
-  it("prazo e tarefa tem um aviso so, de 24 horas", () => {
+  it("prazo e tarefa tem um aviso só, de 24 horas", () => {
     // Tres avisos de cada tarefa enchem o WhatsApp da equipe e ensinam todo
     // mundo a ignorar — o contrario do que se quer no dia do prazo.
     for (const tipo of ["PRAZO", "TAREFA"]) {
@@ -79,16 +79,16 @@ describe("quem tem regua e quem nao tem", () => {
 });
 
 describe("a forma dos marcos", () => {
-  it("as chaves sao estaveis — elas entram na chave do aviso", () => {
+  it("as chaves são estaveis — elas entram na chave do aviso", () => {
     // Mudar uma chave aqui faz o sistema reenviar avisos que ja sairam.
     expect(MARCOS.map((m) => m.chave)).toEqual(["3d", "24h", "1h"]);
     expect(MAIOR_ANTECEDENCIA_HORAS).toBe(72);
   });
 
-  it("a mensagem diz quanto falta, nao so a data", () => {
+  it("a mensagem diz quanto falta, não só a data", () => {
     const m = MARCOS.find((x) => x.chave === "24h")!;
     expect(quandoComMarco("10/11/2026, 14:00", m)).toBe(
-      "10/11/2026, 14:00 — e amanha",
+      "10/11/2026, 14:00 — é amanhã",
     );
   });
 });

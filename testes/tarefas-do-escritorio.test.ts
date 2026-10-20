@@ -18,7 +18,7 @@ import {
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
-d("tarefas do escritorio", () => {
+d("tarefas do escritório", () => {
   let escritorio = "";
   let pessoa = "";
   let outraPessoa = "";
@@ -32,7 +32,7 @@ d("tarefas do escritorio", () => {
     await comEscritorio(escritorio, async (db) => {
       const a = await db.usuario.create({
         data: semEscritorio({
-          nome: "Dra. Responsavel",
+          nome: "Dra. Responsável",
           email: `a-${Date.now()}@t.test`,
           senhaHash: "x",
           papel: "ADVOGADO",
@@ -75,13 +75,13 @@ d("tarefas do escritorio", () => {
       pessoa,
     );
 
-  it("liga ao processo quando o numero digitado existe", async () => {
+  it("liga ao processo quando o número digitado existe", async () => {
     const t = await nova({ numeroProcesso: NUMERO });
     expect(t.processoId).not.toBeNull();
     expect(t.numeroProcesso).toBe(NUMERO);
   });
 
-  it("guarda o numero mesmo sem processo cadastrado, para nao perder o vinculo", async () => {
+  it("guarda o número mesmo sem processo cadastrado, para não perder o vínculo", async () => {
     const t = await nova({ numeroProcesso: "9999999-99.2099.8.26.0000" });
     expect(t.processoId).toBeNull();
     expect(t.numeroProcesso).toBe("9999999-99.2099.8.26.0000");
@@ -117,7 +117,7 @@ d("tarefas do escritorio", () => {
     expect(contagem.concluidas).toBe(feitas.length);
   });
 
-  it("editar troca o responsavel e refaz o vinculo do processo", async () => {
+  it("editar troca o responsável e refaz o vínculo do processo", async () => {
     const t = await nova({ numeroProcesso: null });
     const mudada = await editarTarefa(escritorio, t.id, {
       responsavelId: outraPessoa,
@@ -127,13 +127,13 @@ d("tarefas do escritorio", () => {
     expect(mudada.processoId).not.toBeNull();
   });
 
-  it("editar sem mexer no processo nao desfaz o vinculo", async () => {
+  it("editar sem mexer no processo não desfaz o vínculo", async () => {
     const t = await nova({ numeroProcesso: NUMERO });
-    const mudada = await editarTarefa(escritorio, t.id, { titulo: "Outro titulo" });
+    const mudada = await editarTarefa(escritorio, t.id, { titulo: "Outro título" });
     expect(mudada.processoId).toBe(t.processoId);
   });
 
-  it("tarefa de outro escritorio nao e encontrada nem para apagar", async () => {
+  it("tarefa de outro escritório não e encontrada nem para apagar", async () => {
     await expect(
       apagarTarefa(escritorio, "id-que-nao-existe"),
     ).rejects.toBeInstanceOf(TarefaNaoEncontrada);

@@ -12,6 +12,6 @@ export const PAPEIS_SUGERIDOS = [
   "testemunha",
   "preposto",
   "perito",
-  "assistente tecnico",
-  "advogado da parte contraria",
+  "assistente técnico",
+  "advogado da parte contrária",
 ] as const;

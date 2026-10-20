@@ -74,14 +74,14 @@ export async function salvarParticipantes(
       db.cliente.findMany({ where: { id: { in: ids } }, select: { id: true } }),
     );
     if (achados.length !== ids.length) {
-      throw new ParticipanteInvalido("Cliente nao encontrado.");
+      throw new ParticipanteInvalido("Cliente não encontrado.");
     }
   }
 
   const doEscritorio = await comEscritorio(escritorioId, (db) =>
     db.compromisso.findFirst({ where: { id: compromissoId }, select: { id: true } }),
   );
-  if (!doEscritorio) throw new ParticipanteInvalido("Compromisso nao encontrado.");
+  if (!doEscritorio) throw new ParticipanteInvalido("Compromisso não encontrado.");
 
   const antigos = await comEscritorio(escritorioId, (db) =>
     db.participanteDeCompromisso.findMany({

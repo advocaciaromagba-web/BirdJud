@@ -29,7 +29,7 @@ function resumoDoContrato(c: {
   const vezes = c.parcelas > 1 ? ` em ${c.parcelas}x` : " a vista";
 
   if (c.tipo === "PERCENTUAL") return `${exito ?? "?"} de exito`;
-  if (c.tipo === "MISTO") return `${fixo ?? "?"}${vezes} de entrada + ${exito ?? "?"} de exito`;
+  if (c.tipo === "MISTO") return `${fixo ?? "?"}${vezes} de entrada + ${exito ?? "?"} de êxito`;
   return `${fixo ?? "?"}${vezes}`;
 }
 

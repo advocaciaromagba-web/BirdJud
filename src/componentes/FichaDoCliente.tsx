@@ -105,7 +105,7 @@ export function FichaDoCliente({
 
     if (!resposta.ok) {
       const detalhe = await resposta.json().catch(() => null);
-      setErro(detalhe?.erro ?? "Nao consegui salvar.");
+      setErro(detalhe?.erro ?? "Não consegui salvar.");
       return;
     }
     setSalvo(true);
@@ -178,7 +178,7 @@ export function FichaDoCliente({
           disabled={!mudou || salvando}
           className="botao-principal disabled:opacity-50"
         >
-          {salvando ? "Salvando..." : "Salvar alteracoes"}
+          {salvando ? "Salvando..." : "Salvar alterações"}
         </button>
       </div>
     </form>

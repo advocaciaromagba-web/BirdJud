@@ -99,7 +99,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
     if (mapeamento) f.set("mapeamento", JSON.stringify(mapeamento));
     const r = await fetch(rota, { method: "POST", body: f });
     const json = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(json.erro ?? "Nao foi possivel ler a planilha.");
+    if (!r.ok) throw new Error(json.erro ?? "Não foi possível ler a planilha.");
     return json;
   }
 
@@ -123,7 +123,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
 
   async function importar() {
     if (!analise) return;
-    if (!window.confirm(`Importar ${analise.contagem.NOVO} cliente(s) novo(s)? O resto fica no relatorio.`)) return;
+    if (!window.confirm(`Importar ${analise.contagem.NOVO} cliente(s) novo(s)? O resto fica no relatório.`)) return;
     setOcupado("importar");
     setErro(null);
     try {
@@ -140,7 +140,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
   }
 
   async function desfazer(id: string) {
-    if (!window.confirm("Desfazer esta importacao? Os clientes que ela criou e que ainda nao tem nada ligado (processo, cobranca, documento...) serao apagados.")) return;
+    if (!window.confirm("Desfazer esta importação? Os clientes que ela criou e que ainda não têm nada ligado (processo, cobrança, documento...) serão apagados.")) return;
     setOcupado(`desfazer-${id}`);
     const r = await fetch(rota, {
       method: "POST",
@@ -150,14 +150,14 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
     const json = await r.json().catch(() => ({}));
     setOcupado(null);
     if (!r.ok) {
-      setErro(json.erro ?? "Nao foi possivel desfazer.");
+      setErro(json.erro ?? "Não foi possível desfazer.");
       return;
     }
     setResultado(null);
     setErro(null);
     window.alert(
       `${json.apagados} cliente(s) apagado(s).` +
-        (json.mantidos ? ` ${json.mantidos} ficaram porque ja tem dados ligados.` : ""),
+        (json.mantidos ? ` ${json.mantidos} ficaram porque já tem dados ligados.` : ""),
     );
     router.refresh();
   }
@@ -173,8 +173,8 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
       <section className="cartao">
         <h2 className="text-lg font-bold">1. A planilha</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Excel (.xlsx) ou CSV, exportados do sistema anterior. Uma linha por cliente, com os titulos das
-          colunas na primeira linha. Ate 5 mil linhas e 10 MB. O arquivo e lido e descartado: nao fica guardado.
+          Excel (.xlsx) ou CSV, exportados do sistema anterior. Uma linha por cliente, com os títulos das
+          colunas na primeira linha. Até 5 mil linhas e 10 MB. O arquivo é lido e descartado: não fica guardado.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <input
@@ -197,14 +197,14 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
         {resultado ? (
           <div className="aviso-ok mt-3">
             <p>
-              <strong>{resultado.importados}</strong> cliente(s) importado(s). Eles ja aparecem em Clientes.
+              <strong>{resultado.importados}</strong> cliente(s) importado(s). Eles já aparecem em Clientes.
             </p>
             <button
               type="button"
               onClick={() => desfazer(resultado.importacaoId)}
               className="mt-2 text-sm font-medium underline"
             >
-              Desfazer esta importacao
+              Desfazer esta importação
             </button>
           </div>
         ) : null}
@@ -216,7 +216,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
             <h2 className="text-lg font-bold">2. As colunas</h2>
             <p className="mt-1 text-sm text-slate-600">
               O sistema sugeriu para onde vai cada coluna{analise.aba ? ` da aba "${analise.aba}"` : ""}. Confira pelos
-              exemplos e corrija o que estiver errado; coluna que nao interessa fica em "nao importar".
+              exemplos e corrija o que estiver errado; coluna que nao interessa fica em "não importar".
             </p>
             <div className="mt-3 overflow-x-auto">
               <table className="tabela">
@@ -246,7 +246,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
                             setMapaMudou(true);
                           }}
                         >
-                          <option value="">nao importar</option>
+                          <option value="">não importar</option>
                           {CAMPOS_IMPORTAVEIS.map((c) => (
                             <option key={c.chave} value={c.chave}>
                               {c.rotulo}
@@ -259,7 +259,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
                 </tbody>
               </table>
             </div>
-            {semNome ? <p className="aviso-erro mt-3">Escolha qual coluna e o nome do cliente: sem ela, nada entra.</p> : null}
+            {semNome ? <p className="aviso-erro mt-3">Escolha qual coluna é o nome do cliente: sem ela, nada entra.</p> : null}
             {mapaMudou ? (
               <button type="button" onClick={() => analisar(mapa)} disabled={ocupado === "analisar"} className="botao-principal mt-3">
                 {ocupado === "analisar" ? "Conferindo..." : "Conferir de novo com estas colunas"}
@@ -269,14 +269,14 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
 
           <section className="cartao">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-lg font-bold">3. A conferencia</h2>
+              <h2 className="text-lg font-bold">3. A conferência</h2>
               <button type="button" onClick={() => baixarRelatorio(analise.linhas, arquivo?.name ?? "planilha")} className="botao-secundario">
-                Baixar relatorio (CSV)
+                Baixar relatório (CSV)
               </button>
             </div>
             <p className="mt-1 text-sm text-slate-600">
               Nada foi gravado ainda. So os <strong>novos</strong> entram; o resto fica no relatorio, com o motivo, para
-              corrigir na planilha e importar de novo — quem ja entrou nao entra duas vezes.
+              corrigir na planilha e importar de novo — quem já entrou não éntra duas vezes.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {(["TODAS", "NOVO", "PROBLEMA", "JA_CADASTRADO", "REPETIDO_NA_PLANILHA"] as const).map((s) => {
@@ -302,7 +302,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
                     <th>Linha</th>
                     <th>Nome</th>
                     <th>CPF / CNPJ</th>
-                    <th>Situacao</th>
+                    <th>Situação</th>
                     <th>Motivo e avisos</th>
                   </tr>
                 </thead>
@@ -326,7 +326,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
                 </tbody>
               </table>
               {visiveis.length > 300 ? (
-                <p className="mt-2 text-xs text-slate-500">Mostrando 300 de {visiveis.length}. O relatorio tem todas.</p>
+                <p className="mt-2 text-xs text-slate-500">Mostrando 300 de {visiveis.length}. O relatório tem todas.</p>
               ) : null}
             </div>
           </section>
@@ -335,7 +335,7 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
             <h2 className="text-lg font-bold">4. Importar</h2>
             <p className="mt-1 text-sm text-slate-600">
               Entram {analise.contagem.NOVO} cliente(s). A importacao fica registrada e pode ser desfeita: saem os
-              clientes que ainda nao tiverem nada ligado.
+              clientes que ainda não tiverem nada ligado.
             </p>
             <button
               type="button"
@@ -360,9 +360,9 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
                 <th>Arquivo</th>
                 <th>Quem</th>
                 <th className="text-right">Entraram</th>
-                <th className="text-right">Ja existiam</th>
+                <th className="text-right">Já existiam</th>
                 <th className="text-right">Recusados</th>
-                <th><span className="sr-only">Acoes</span></th>
+                <th><span className="sr-only">Ações</span></th>
               </tr>
             </thead>
             <tbody>

@@ -15,65 +15,65 @@ import {
 
 describe("o que a pessoa quis dizer", () => {
   it("confirma com o que as pessoas realmente escrevem", () => {
-    for (const t of ["1", "sim", "Sim", "SIM", "s", "ok", "confirmo", "Confirmado", "estarei la", "beleza", "👍"]) {
+    for (const t of ["1", "sim", "Sim", "SIM", "s", "ok", "confirmo", "Confirmado", "estarei lá", "beleza", "👍"]) {
       expect(interpretar(t), t).toBe("CONFIRMA");
     }
   });
 
   it("desmarca com o que as pessoas realmente escrevem", () => {
-    for (const t of ["2", "nao", "Não", "NAO", "n", "nao posso", "nao vou poder", "desmarcar", "preciso remarcar", "👎"]) {
+    for (const t of ["2", "nao", "Não", "NAO", "n", "não posso", "não vou poder", "desmarcar", "preciso remarcar", "👎"]) {
       expect(interpretar(t), t).toBe("DESMARCA");
     }
   });
 
-  it("NEGACAO VENCE: 'nao confirmo' nunca vira confirmacao", () => {
+  it("NEGACAO VENCE: 'não confirmo' nunca vira confirmação", () => {
     // A armadilha que este arquivo existe para evitar: uma busca por palavra
     // acha "confirmo" dentro de "nao confirmo" e marca a audiencia como
     // confirmada. O cliente nao aparece, e ninguem sabe por que.
-    expect(interpretar("nao confirmo")).toBe("DESMARCA");
-    expect(interpretar("nao vou confirmar")).toBe("DESMARCA");
-    expect(interpretar("nao, nao posso ir")).toBe("DESMARCA");
+    expect(interpretar("não confirmo")).toBe("DESMARCA");
+    expect(interpretar("não vou confirmar")).toBe("DESMARCA");
+    expect(interpretar("não, não posso ir")).toBe("DESMARCA");
   });
 
   it("mensagem comprida nunca confirma sozinha", () => {
     // Gente falando e para uma pessoa ler. O "quase sempre acerta" e que e o
     // problema: o erro restante e uma ausencia em audiencia.
     expect(
-      interpretar("bom dia doutor tudo bem vou tentar chegar no horario combinado"),
+      interpretar("bom dia doutor tudo bem vou tentar chegar no horário combinado"),
     ).toBe("NAO_ENTENDI");
-    expect(interpretar("entao eu vou ver com meu patrao se consigo sair mais cedo")).toBe(
+    expect(interpretar("então eu vou ver com meu patrao se consigo sair mais cedo")).toBe(
       "NAO_ENTENDI",
     );
   });
 
-  it("mas mensagem comprida com negacao vira desmarcacao, nao duvida", () => {
+  it("mas mensagem comprida com negacao vira desmarcacao, não dúvida", () => {
     // Uma ausencia que o escritorio precisa saber hoje nao pode ficar
     // guardada como "nao entendi".
-    expect(interpretar("doutor eu nao vou conseguir ir nesse dia infelizmente")).toBe(
+    expect(interpretar("doutor eu não vou conseguir ir nesse dia infelizmente")).toBe(
       "DESMARCA",
     );
   });
 
-  it("sair da lista e pedido proprio, e vem antes de tudo", () => {
-    for (const t of ["parar", "PARE", "sair", "stop", "descadastrar", "nao quero mais receber"]) {
+  it("sair da lista e pedido próprio, e vem antes de tudo", () => {
+    for (const t of ["parar", "PARE", "sair", "stop", "descadastrar", "não quero mais receber"]) {
       expect(interpretar(t), t).toBe("PARAR");
     }
   });
 
-  it("'cancelar' sozinho desmarca o compromisso, nao a lista de avisos", () => {
+  it("'cancelar' sozinho desmarca o compromisso, não a lista de avisos", () => {
     // Confundir as duas coisas tira do ar o aviso de quem so queria desmarcar
     // uma audiencia.
     expect(interpretar("cancelar")).toBe("DESMARCA");
-    expect(interpretar("cancelar inscricao")).toBe("PARAR");
+    expect(interpretar("cancelar inscrição")).toBe("PARAR");
   });
 
-  it("o que nao se entende fica para uma pessoa", () => {
+  it("o que não se entende fica para uma pessoa", () => {
     for (const t of ["", "   ", "quem e?", "???", "oi", "audio"]) {
       expect(interpretar(t), JSON.stringify(t)).toBe("NAO_ENTENDI");
     }
   });
 
-  it("normaliza acento, emoji e pontuacao", () => {
+  it("normaliza acento, emoji e pontuação", () => {
     expect(normalizar("Não!! 👎")).toBe("nao");
     expect(normalizar("  SIM,  claro ")).toBe("sim claro");
   });
@@ -81,15 +81,15 @@ describe("o que a pessoa quis dizer", () => {
 
 describe("o que o sistema responde", () => {
   const d = {
-    nomeEscritorio: "Escritorio Modelo",
+    nomeEscritorio: "Escritório Modelo",
     telefoneDoEscritorio: "(77) 3611-0000",
-    titulo: "Audiencia de instrucao",
+    titulo: "Audiência de instrução",
     quando: "10/11/2026 as 14h",
   };
 
   it("confirmando, diz o que foi registrado", () => {
     expect(textoDaResposta("CONFIRMA", d)).toContain("confirmada");
-    expect(textoDaResposta("CONFIRMA", d)).toContain("Audiencia de instrucao");
+    expect(textoDaResposta("CONFIRMA", d)).toContain("Audiência de instrução");
   });
 
   it("desmarcando, NAO promete que o compromisso foi desmarcado", () => {
@@ -99,30 +99,30 @@ describe("o que o sistema responde", () => {
     expect(texto).toContain("NAO foi desmarcado");
   });
 
-  it("TODA resposta diz que este numero nao atende, e para onde ligar", () => {
+  it("TODA resposta diz que este número não atende, e para onde ligar", () => {
     // O numero e da plataforma e so notifica. Quem escrever aqui esperando o
     // advogado esperaria para sempre.
     for (const i of ["CONFIRMA", "DESMARCA", "NAO_ENTENDI"] as const) {
       const texto = textoDaResposta(i, d);
-      expect(texto, i).toContain("nao recebe mensagens");
+      expect(texto, i).toContain("não recebe mensagens");
       expect(texto, i).toContain("(77) 3611-0000");
     }
   });
 
-  it("sem telefone cadastrado, manda procurar o escritorio em vez de deixar buraco", () => {
+  it("sem telefone cadastrado, manda procurar o escritório em vez de deixar buraco", () => {
     const texto = textoDaResposta("CONFIRMA", { nomeEscritorio: "Banca" });
-    expect(texto).toContain("procure o escritorio");
+    expect(texto).toContain("procure o escritório");
     expect(texto).not.toContain("undefined");
     expect(texto).not.toContain("null");
   });
 
-  it("sem compromisso ligado, fala em termos gerais e nao inventa", () => {
+  it("sem compromisso ligado, fala em termos gerais e não inventa", () => {
     const texto = textoDaResposta("CONFIRMA", { nomeEscritorio: "Banca" });
     expect(texto).toContain("o compromisso");
     expect(texto).not.toContain("undefined");
   });
 
-  it("no que nao entendeu, ensina o atalho e NAO promete leitura", () => {
+  it("no que não entendeu, ensina o atalho e NAO promete leitura", () => {
     // Prometer "alguem vai ler" num numero que nao atende e pior do que nao
     // responder nada.
     const texto = textoDaResposta("NAO_ENTENDI", d);
@@ -132,7 +132,7 @@ describe("o que o sistema responde", () => {
 });
 
 describe("de qual lembrete veio", () => {
-  it("le a chave do aviso do participante e a do usuario", () => {
+  it("le a chave do aviso do participante e a do usuário", () => {
     expect(origemDaChave("zap:participante:comp1:part9")).toEqual({
       compromissoId: "comp1",
       participanteId: "part9",
@@ -154,7 +154,7 @@ describe("de qual lembrete veio", () => {
     expect(origemDaChave("zap:lembrete:1h:comp1:user7")?.usuarioId).toBe("user7");
   });
 
-  it("chave de outro tipo de aviso nao vira compromisso", () => {
+  it("chave de outro tipo de aviso não vira compromisso", () => {
     expect(origemDaChave("zap:resumo:2026-10-07")).toBeNull();
     expect(origemDaChave("lembrete:comp1:user7")).toBeNull();
   });
@@ -168,7 +168,7 @@ describe("a qual lembrete a resposta responde", () => {
     enviadoEm: new Date(Date.now() - minutos * 60_000),
   });
 
-  it("do mesmo escritorio, pega o mais recente", () => {
+  it("do mesmo escritório, pega o mais recente", () => {
     const r = aQualLembreteResponde([aviso("a", "e1", 600), aviso("b", "e1", 30)]);
     expect(r.tipo).toBe("UM");
     expect(r.tipo === "UM" && r.aviso.id).toBe("b");
@@ -183,7 +183,7 @@ describe("a qual lembrete a resposta responde", () => {
     expect(r.tipo === "AMBIGUO" && r.escritorios.sort()).toEqual(["e1", "e2"]);
   });
 
-  it("aviso que nunca saiu nao conta como respondido", () => {
+  it("aviso que nunca saiu não conta como respondido", () => {
     const naoSaiu = { id: "x", escritorioId: "e1", chave: "zap:participante:c:x", enviadoEm: null };
     expect(aQualLembreteResponde([naoSaiu]).tipo).toBe("NENHUM");
   });
@@ -199,7 +199,7 @@ describe("o contrato dos modelos aprovados na Meta", () => {
   // cliente — e ninguem percebe ate alguem receber.
   const modelos = Object.entries(MODELOS);
 
-  it("cada {{n}} tem um parametro, e os numeros vao de 1 a N sem pular", () => {
+  it("cada {{n}} tem um parametro, e os números vão de 1 a N sem pular", () => {
     for (const [chave, m] of modelos) {
       const numeros = [...m.texto.matchAll(/\{\{(\d+)\}\}/g)].map((x) => Number(x[1]));
       expect(numeros.length, chave).toBe(m.parametros.length);
@@ -207,22 +207,22 @@ describe("o contrato dos modelos aprovados na Meta", () => {
     }
   });
 
-  it("nenhum modelo comeca, termina ou cola parametros — a Meta recusa os tres", () => {
+  it("nenhum modelo começa, termina ou cola parâmetros — a Meta recusa os três", () => {
     // Nenhuma das tres aparece como erro no codigo. So na recusa, dias depois
     // de submeter — e a razao e sempre a mesma: modelo que e quase so
     // variavel pode virar qualquer coisa depois de aprovado.
     for (const [chave, m] of modelos) {
       const texto = m.texto.trim();
-      expect(texto.startsWith("{{"), `${chave} comeca com parametro`).toBe(false);
+      expect(texto.startsWith("{{"), `${chave} começa com parametro`).toBe(false);
       expect(texto.endsWith("}}"), `${chave} termina com parametro`).toBe(false);
       expect(
         /\}\}\s*\{\{/.test(texto),
-        `${chave} tem dois parametros colados`,
+        `${chave} tem dois parâmetros colados`,
       ).toBe(false);
     }
   });
 
-  it("todo modelo se apresenta e diz que o numero nao atende", () => {
+  it("todo modelo se apresenta e diz que o número não atende", () => {
     // O numero e da plataforma, nao da banca: quem recebe nao o conhece. Sem
     // o nome do escritorio e sem o telefone dele, a mensagem chega como numero
     // desconhecido falando de audiencia.
@@ -233,7 +233,7 @@ describe("o contrato dos modelos aprovados na Meta", () => {
     }
   });
 
-  it("o telefone e sempre o ultimo parametro", () => {
+  it("o telefone e sempre o último parametro", () => {
     // E o que deixa avisos.ts acrescentar o telefone no fim de cada lista sem
     // ter de saber de que modelo se trata.
     for (const [chave, m] of modelos) {

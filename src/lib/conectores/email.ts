@@ -9,7 +9,7 @@ export const conectorEmail: Conector = {
   tipo: "SMTP",
   rotulo: "E-mail (SMTP)",
   descricao:
-    "Envio de compromissos, recibos e avisos pelo dominio do escritorio.",
+    "Envio de compromissos, recibos e avisos pelo domínio do escritório.",
   modulo: "EMAIL",
   campos: [
     {
@@ -26,7 +26,7 @@ export const conectorEmail: Conector = {
       obrigatorio: true,
       ajuda: "587 (TLS) ou 465 (SSL)",
     },
-    { nome: "usuario", rotulo: "Usuario", tipo: "text", obrigatorio: true },
+    { nome: "usuario", rotulo: "Usuário", tipo: "text", obrigatorio: true },
     { nome: "senha", rotulo: "Senha", tipo: "password", obrigatorio: true },
     {
       nome: "remetente",
@@ -42,7 +42,7 @@ export const conectorEmail: Conector = {
   async testar(dados) {
     const porta = Number(dados.porta);
     if (!Number.isInteger(porta) || porta <= 0 || porta > 65535) {
-      return { ok: false, detalhe: "Porta invalida." };
+      return { ok: false, detalhe: "Porta inválida." };
     }
 
     const transporte = nodemailer.createTransport({

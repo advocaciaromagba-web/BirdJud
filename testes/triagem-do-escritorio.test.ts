@@ -17,7 +17,7 @@ import {
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
-d("triagem da publicacao", () => {
+d("triagem da publicação", () => {
   let escritorio = "";
   let advogada = "";
   let servidor: Server;
@@ -97,7 +97,7 @@ d("triagem da publicacao", () => {
     saida = {
       especie: "TAREFA",
       tipo: "TAREFA",
-      titulo: "Contestacao",
+      titulo: "Contestação",
       resumo: "Citada a parte re para contestar.",
       prazoDias: 15,
       contagem: "UTEIS",
@@ -121,7 +121,7 @@ d("triagem da publicacao", () => {
     );
   }
 
-  it("A DATA SAI DO SISTEMA, nao da IA", async () => {
+  it("A DATA SAI DO SISTEMA, não da IA", async () => {
     // A IA so disse "15 dias". O vencimento abaixo so esta certo porque o
     // calculo pulou fins de semana e feriados — inclusive 20/11, Consciencia
     // Negra, que um modelo de linguagem esquece com frequencia.
@@ -145,7 +145,7 @@ d("triagem da publicacao", () => {
     await comEscritorio(escritorio, (db) =>
       db.triagemDePublicacao.update({
         where: { id: t.id },
-        data: { prazoFatal: new Date("2026-11-25T12:00:00Z"), explicacao: "15 dias uteis (CPC 219)." },
+        data: { prazoFatal: new Date("2026-11-25T12:00:00Z"), explicacao: "15 dias úteis (CPC 219)." },
       }),
     );
     expect(await recontarPrazosPendentes(escritorio)).toBeGreaterThanOrEqual(1);
@@ -156,19 +156,19 @@ d("triagem da publicacao", () => {
     expect(await recontarPrazosPendentes(escritorio)).toBe(0);
   });
 
-  it("audiencia com data marcada vira agendamento naquela data", async () => {
+  it("audiência com data marcada vira agendamento naquela data", async () => {
     saida = {
       especie: "AGENDAMENTO",
       tipo: "AUDIENCIA",
-      titulo: "Audiencia de instrucao",
-      resumo: "Designada audiencia.",
+      titulo: "Audiência de instrução",
+      resumo: "Designada audiência.",
       prazoDias: null,
       contagem: "UTEIS",
       dataDoAto: "2026-12-10T14:30",
       confianca: "ALTA",
       atencao: "O cliente precisa comparecer.",
     };
-    const p = await publicacao("Designo audiencia para 10/12/2026 as 14h30.");
+    const p = await publicacao("Designo audiência para 10/12/2026 as 14h30.");
     const t = await triarPublicacao(escritorio, p.id);
 
     expect(t.especie).toBe("AGENDAMENTO");
@@ -177,28 +177,28 @@ d("triagem da publicacao", () => {
     expect(t.atencao).toContain("comparecer");
   });
 
-  it("DATA NO PASSADO e descartada, nao agendada", async () => {
+  it("DATA NO PASSADO e descartada, não agendada", async () => {
     // Publicacao velha reprocessada encheria a agenda de audiencias que ja
     // aconteceram, e ninguem mais olharia a agenda.
     saida = { ...saida, especie: "AGENDAMENTO", tipo: "AUDIENCIA", dataDoAto: "2020-01-02T10:00", prazoDias: null };
-    const p = await publicacao("Audiencia designada ha muito tempo.");
+    const p = await publicacao("Audiência designada há muito tempo.");
     const t = await triarPublicacao(escritorio, p.id);
     expect(t.dataDoAto).toBeNull();
   });
 
-  it("IA fora do ar nao deixa a publicacao sem sugestao", async () => {
+  it("IA fora do ar não deixa a publicação sem sugestao", async () => {
     // A lista sem sugestao e a lista de antes, e e dela que o prazo escapa.
     // A sugestao simples sai de palavra-chave, e a confianca BAIXA e o aviso
     // disso para quem le.
     quebrado = true;
-    const p = await publicacao("Fica designada audiencia de conciliacao.");
+    const p = await publicacao("Fica designada audiência de conciliação.");
     const t = await triarPublicacao(escritorio, p.id);
     expect(t.especie).toBe("AGENDAMENTO");
     expect(t.tipo).toBe("AUDIENCIA");
     expect(t.confianca).toBe("BAIXA");
   });
 
-  it("aceitar peca cria TAREFA com entrega na sugerida e prazo fatal no fatal", async () => {
+  it("aceitar peça cria TAREFA com entrega na sugerida e prazo fatal no fatal", async () => {
     const p = await publicacao("Citada para contestar no prazo de 15 dias.");
     const t = await triarPublicacao(escritorio, p.id);
     const aceite = await aceitarTriagem(escritorio, t.id, {}, advogada);
@@ -227,16 +227,16 @@ d("triagem da publicacao", () => {
     expect(depois.lida).toBe(true);
   });
 
-  it("tarefa sem responsavel e sem quem aceitou e recusada", async () => {
+  it("tarefa sem responsável e sem quem aceitou e recusada", async () => {
     const p = await publicacao("Manifeste-se em 5 dias, sem dono.");
     const t = await triarPublicacao(escritorio, p.id);
     await expect(aceitarTriagem(escritorio, t.id)).rejects.toThrow("Escolha quem vai fazer");
   });
 
-  it("aceitar audiencia cria COMPROMISSO na agenda, nao tarefa", async () => {
+  it("aceitar audiência cria COMPROMISSO na agenda, não tarefa", async () => {
     const antes = saida;
-    saida = { ...saida, especie: "AGENDAMENTO", tipo: "AUDIENCIA", titulo: "Audiencia de conciliacao", dataDoAto: "2026-12-10T14:00", prazoDias: null };
-    const p = await publicacao("Fica designada audiencia de conciliacao para 10/12/2026 as 14h.");
+    saida = { ...saida, especie: "AGENDAMENTO", tipo: "AUDIENCIA", titulo: "Audiência de conciliação", dataDoAto: "2026-12-10T14:00", prazoDias: null };
+    const p = await publicacao("Fica designada audiência de conciliação para 10/12/2026 as 14h.");
     const t = await triarPublicacao(escritorio, p.id);
     const aceite = await aceitarTriagem(escritorio, t.id, {}, advogada);
     saida = antes;
@@ -247,7 +247,7 @@ d("triagem da publicacao", () => {
     expect(c.tipo).toBe("AUDIENCIA");
   });
 
-  it("aceitar duas vezes nao cria duas tarefas", async () => {
+  it("aceitar duas vezes não cria duas tarefas", async () => {
     const p = await publicacao("Manifeste-se em 5 dias.");
     const t = await triarPublicacao(escritorio, p.id);
     const um = await aceitarTriagem(escritorio, t.id, {}, advogada);
@@ -256,7 +256,7 @@ d("triagem da publicacao", () => {
     expect(dois.tarefaId).toBe(um.tarefaId);
   });
 
-  it("triar de novo refaz a sugestao, mas nao mexe na ja aceita", async () => {
+  it("triar de novo refaz a sugestao, mas não mexe na já aceita", async () => {
     const p = await publicacao("Manifeste-se em 5 dias.");
     const t = await triarPublicacao(escritorio, p.id);
     await aceitarTriagem(escritorio, t.id, {}, advogada);
@@ -266,7 +266,7 @@ d("triagem da publicacao", () => {
     expect(refeita.titulo).not.toBe("Outra coisa");
   });
 
-  it("recusar tira a sugestao da frente sem apagar a publicacao", async () => {
+  it("recusar tira a sugestao da frente sem apagar a publicação", async () => {
     const p = await publicacao("Publicado o acordao.");
     const t = await triarPublicacao(escritorio, p.id);
     await recusarTriagem(escritorio, t.id);
@@ -281,9 +281,9 @@ d("triagem da publicacao", () => {
     ).toBe(1);
   });
 
-  it("a rotina tria so o que falta, e nao gasta IA de novo no que ja tem", async () => {
+  it("a rotina tria só o que falta, e não gasta IA de novo no que já tem", async () => {
     await publicacao("Manifeste-se em 10 dias, nova.");
-    await publicacao("Contestar em 15 dias, nova tambem.");
+    await publicacao("Contestar em 15 dias, nova também.");
     chamadas = 0;
     const feitas = await triarPendentes(escritorio);
     expect(feitas).toBeGreaterThanOrEqual(2);

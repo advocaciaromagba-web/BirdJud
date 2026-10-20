@@ -52,31 +52,31 @@ async function criarUsuario(
 }
 
 describe("texto do e-mail", () => {
-  it("diz o prazo e o que fazer se nao foi voce", () => {
+  it("diz o prazo e o que fazer se não foi você", () => {
     const mensagem = mensagemDeRedefinicao({
-      nomeDoEscritorio: "Escritorio Teste",
+      nomeDoEscritorio: "Escritório Teste",
       link: "https://teste.birdjud.com.br/redefinir-senha?t=abc",
       validadeMinutos: VALIDADE_MINUTOS,
     });
-    expect(mensagem.assunto).toContain("Escritorio Teste");
+    expect(mensagem.assunto).toContain("Escritório Teste");
     expect(mensagem.texto).toContain(
       "https://teste.birdjud.com.br/redefinir-senha?t=abc",
     );
     expect(mensagem.texto).toContain("60 minutos");
-    expect(mensagem.texto).toContain("Se nao foi voce");
+    expect(mensagem.texto).toContain("Se não foi você");
     // Nada de senha, nem de e-mail de terceiro, no corpo da mensagem.
     expect(mensagem.texto).not.toContain("senha-");
   });
 });
 
-d("redefinicao de senha", () => {
+d("redefinição de senha", () => {
   beforeAll(async () => {
     const marca = Date.now();
     const a = await prismaPlataforma().escritorio.create({
-      data: { slug: `redef-a-${marca}`, nome: "Escritorio Alfa" },
+      data: { slug: `redef-a-${marca}`, nome: "Escritório Alfa" },
     });
     const b = await prismaPlataforma().escritorio.create({
-      data: { slug: `redef-b-${marca}`, nome: "Escritorio Beta" },
+      data: { slug: `redef-b-${marca}`, nome: "Escritório Beta" },
     });
     alfa = a.id;
     beta = b.id;
@@ -109,7 +109,7 @@ d("redefinicao de senha", () => {
     expect(JSON.stringify(guardado)).not.toContain(token);
   });
 
-  it("troca a senha, encerra as sessoes e solta o bloqueio", async () => {
+  it("troca a senha, encerra as sessões e solta o bloqueio", async () => {
     await comEscritorio(alfa, (db) =>
       db.usuario.update({
         where: { id: usuarioAlfa },
@@ -139,7 +139,7 @@ d("redefinicao de senha", () => {
     expect(usuario!.sessoesValidasApos).not.toBeNull();
   });
 
-  it("o mesmo link nao serve duas vezes", async () => {
+  it("o mesmo link não serve duas vezes", async () => {
     const { token } = await criarPedido(alfa, usuarioAlfa, null);
     await redefinirComToken(alfa, token, "senha-nova-5555");
     await expect(
@@ -159,7 +159,7 @@ d("redefinicao de senha", () => {
     ).resolves.toBe("titular@alfa.adv.br");
   });
 
-  it("link vencido nao vale", async () => {
+  it("link vencido não vale", async () => {
     const { token } = await criarPedido(alfa, usuarioAlfa, null);
     const daquiA61Minutos = new Date(Date.now() + 61 * MINUTO);
 
@@ -168,7 +168,7 @@ d("redefinicao de senha", () => {
     ).rejects.toThrow(TokenInvalido);
   });
 
-  it("o token de um escritorio nao serve no outro", async () => {
+  it("o token de um escritório não serve no outro", async () => {
     const { token } = await criarPedido(beta, usuarioBeta, null);
 
     // Tentar usar no Alfa nao acha nada: a extensao filtra por escritorio.
@@ -185,7 +185,7 @@ d("redefinicao de senha", () => {
     );
   });
 
-  it("usuario desativado nao redefine senha", async () => {
+  it("usuário desativado não redefine senha", async () => {
     const { token } = await criarPedido(beta, usuarioBeta, null);
     await comEscritorio(beta, (db) =>
       db.usuario.update({ where: { id: usuarioBeta }, data: { ativo: false } }),
@@ -200,7 +200,7 @@ d("redefinicao de senha", () => {
     );
   });
 
-  it("a limpeza tira o que venceu e o que ja foi usado", async () => {
+  it("a limpeza tira o que venceu e o que já foi usado", async () => {
     const { token } = await criarPedido(alfa, usuarioAlfa, null);
     await redefinirComToken(alfa, token, "senha-nova-3333");
     await criarPedido(alfa, usuarioAlfa, null);
@@ -217,13 +217,13 @@ d("redefinicao de senha", () => {
   });
 });
 
-d("convite de usuario", () => {
+d("convite de usuário", () => {
   let escritorio = "";
   let convidado = "";
 
   beforeAll(async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `convite-${Date.now()}`, nome: "Escritorio do Convite" },
+      data: { slug: `convite-${Date.now()}`, nome: "Escritório do Convite" },
     });
     escritorio = e.id;
     convidado = await criarUsuario(escritorio, "novato@convite.adv.br");
@@ -237,7 +237,7 @@ d("convite de usuario", () => {
     }
   });
 
-  it("convite vale dias; redefinicao vale uma hora", () => {
+  it("convite vale dias; redefinição vale uma hora", () => {
     expect(validadeEmMinutos("CONVITE")).toBe(VALIDADE_DO_CONVITE_MINUTOS);
     expect(validadeEmMinutos("REDEFINICAO")).toBe(VALIDADE_MINUTOS);
     expect(VALIDADE_DO_CONVITE_MINUTOS).toBeGreaterThan(VALIDADE_MINUTOS);
@@ -265,25 +265,25 @@ d("convite de usuario", () => {
     expect(horas).toBeGreaterThan(24);
   });
 
-  it("o convite troca a senha pelo mesmo caminho da redefinicao", async () => {
+  it("o convite troca a senha pelo mesmo caminho da redefinição", async () => {
     const { token } = await criarPedido(escritorio, convidado, null, "CONVITE");
     await expect(
       redefinirComToken(escritorio, token, "primeira-senha-123"),
     ).resolves.toBe("novato@convite.adv.br");
   });
 
-  it("o texto do convite diz quem convidou, o prazo e o que fazer se nao esperava", () => {
+  it("o texto do convite diz quem convidou, o prazo e o que fazer se não esperava", () => {
     const mensagem = mensagemDeConvite({
-      nomeDoEscritorio: "Escritorio do Convite",
+      nomeDoEscritorio: "Escritório do Convite",
       nomeDeQuemConvidou: "Helena Vasconcelos",
       link: "https://convite.birdjud.com.br/redefinir-senha?t=abc&c=1",
       validadeMinutos: VALIDADE_DO_CONVITE_MINUTOS,
     });
 
-    expect(mensagem.assunto).toContain("Escritorio do Convite");
+    expect(mensagem.assunto).toContain("Escritório do Convite");
     expect(mensagem.texto).toContain("Helena Vasconcelos");
     expect(mensagem.texto).toContain("7 dia(s)");
-    expect(mensagem.texto).toContain("nao esperava este convite");
+    expect(mensagem.texto).toContain("não esperava este convite");
     // Convite nunca CARREGA senha: o que vai e o link. (O texto fala em
     // "escolher sua senha", o que e outra coisa — por isso a regra e sobre
     // senha atribuida, "senha: xxx", e nao sobre a palavra.)

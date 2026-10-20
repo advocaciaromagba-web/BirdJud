@@ -55,7 +55,7 @@ import {
 export class EntrevistaNaoEncontrada extends Error {
   readonly status = 404;
   constructor() {
-    super("Entrevista nao encontrada.");
+    super("Entrevista não encontrada.");
     this.name = "EntrevistaNaoEncontrada";
   }
 }
@@ -101,7 +101,7 @@ export async function criarEntrevista(
 export class ProcessoNaoCadastrado extends Error {
   readonly status = 404;
   constructor(numero: string) {
-    super(`O processo ${numero} nao esta cadastrado em Processos. Cadastre antes, ou deixe o campo vazio.`);
+    super(`O processo ${numero} não está cadastrado em Processos. Cadastre antes, ou deixe o campo vazio.`);
     this.name = "ProcessoNaoCadastrado";
   }
 }
@@ -136,7 +136,7 @@ async function contextoDoProcesso(escritorioId: string, processoId: string | nul
     `Processo: ${p.numero}${p.classe ? ` — ${p.classe}` : ""}${p.tribunal ? ` (${p.tribunal})` : ""}`,
     partes ? `Partes: ${partes}` : null,
     p.ultimoAndamentoTipo || p.ultimoAndamentoTexto
-      ? `Ultimo andamento: ${[p.ultimoAndamentoTipo, (p.ultimoAndamentoTexto ?? "").slice(0, 600)].filter(Boolean).join(" — ")}`
+      ? `Último andamento: ${[p.ultimoAndamentoTipo, (p.ultimoAndamentoTexto ?? "").slice(0, 600)].filter(Boolean).join(" — ")}`
       : null,
   ]
     .filter(Boolean)
@@ -204,9 +204,9 @@ export async function gerarRoteiro(
         sistema,
         [
           `Entrevista: ${ROTULO_DO_TIPO[especie]}`,
-          tipo ? `Tipo de acao: ${tipo}` : null,
+          tipo ? `Tipo de ação: ${tipo}` : null,
           processo,
-          `Assunto, nas palavras de quem procurou o escritorio:\n${entrevista.assunto}`,
+          `Assunto, nas palavras de quem procurou o escritório:\n${entrevista.assunto}`,
         ]
           .filter(Boolean)
           .join("\n\n"),
@@ -245,7 +245,7 @@ export async function gerarRoteiro(
 export class ProcuracaoIlegivel extends Error {
   readonly status = 422;
   constructor() {
-    super("Nao consegui ler a procuracao. Envie um PDF ou uma foto nitida da procuracao inteira.");
+    super("Não consegui ler a procuração. Envie um PDF ou uma foto nítida da procuração inteira.");
     this.name = "ProcuracaoIlegivel";
   }
 }
@@ -298,7 +298,7 @@ export async function roteiroDaProcuracao(
     [procuracao],
     [
       `Assunto informado no atendimento: ${entrevista.assunto}`,
-      "Leia a procuracao acima e responda com o JSON pedido.",
+      "Leia a procuração acima e responda com o JSON pedido.",
     ].join("\n"),
     "medium",
   );
@@ -372,18 +372,18 @@ export async function organizar(
       [
         `Entrevista: ${ROTULO_DO_TIPO[tipoDe(entrevista.tipo)]}` +
           (tipoDe(entrevista.tipo) === "TESTEMUNHA"
-            ? " — quem fala e a TESTEMUNHA, nao o cliente. Em pretensoes, ponha o que o depoimento ajuda a provar."
+            ? " — quem fala é a TESTEMUNHA, não o cliente. Em pretensões, ponha o que o depoimento ajuda a provar."
             : tipoDe(entrevista.tipo) === "COLETA"
-              ? " — o objetivo e reunir informacoes para um documento. Em pretensoes, ponha o que o documento deve conter."
+              ? " — o objetivo é reunir informações para um documento. Em pretensões, ponha o que o documento deve conter."
               : ""),
         `Assunto informado: ${entrevista.assunto}`,
-        entrevista.tipoAcao ? `Tipo de acao: ${entrevista.tipoAcao}` : "",
+        entrevista.tipoAcao ? `Tipo de ação: ${entrevista.tipoAcao}` : "",
         "",
         "O que foi dito na entrevista:",
         texto,
         "",
-        "Anotacoes do advogado:",
-        entrevista.anotacoes?.trim() || "(sem anotacoes)",
+        "Anotações do advogado:",
+        entrevista.anotacoes?.trim() || "(sem anotações)",
       ].join("\n"),
       ESQUEMA_ANALISE_ENTREVISTA,
       "high",
@@ -541,11 +541,11 @@ export async function gerarMinuta(
 ): Promise<{ prompt: string | null; faltando: string[] }> {
   const e = await entrevistaPorId(escritorioId, id);
   if (tipoDe(e.tipo) !== "TRIAGEM") {
-    throw new EntrevistaIncompleta("O texto da peticao inicial e da entrevista de triagem. Desta, gere o PDF.");
+    throw new EntrevistaIncompleta("O texto da petição inicial e da entrevista de triagem. Desta, gere o PDF.");
   }
-  if (!e.encerradaEm) throw new EntrevistaIncompleta("Encerre a entrevista antes de gerar o texto da peticao inicial.");
-  if (!e.analise) throw new EntrevistaIncompleta("Organize a entrevista primeiro — o texto e montado a partir dessa organizacao.");
-  if (!e.clienteId) throw new EntrevistaIncompleta("Ligue a entrevista ao cliente: a qualificacao vem do cadastro dele.");
+  if (!e.encerradaEm) throw new EntrevistaIncompleta("Encerre a entrevista antes de gerar o texto da petição inicial.");
+  if (!e.analise) throw new EntrevistaIncompleta("Organize a entrevista primeiro — o texto é montado a partir dessa organização.");
+  if (!e.clienteId) throw new EntrevistaIncompleta("Ligue a entrevista ao cliente: a qualificação vem do cadastro dele.");
 
   const [cliente, advogado, escritorio] = await Promise.all([
     comEscritorio(escritorioId, (db) => db.cliente.findFirst({ where: { id: e.clienteId! } })),
@@ -554,7 +554,7 @@ export async function gerarMinuta(
     ),
     prismaPlataforma().escritorio.findUnique({ where: { id: escritorioId }, select: { nome: true } }),
   ]);
-  if (!cliente) throw new EntrevistaIncompleta("O cliente desta entrevista nao existe mais.");
+  if (!cliente) throw new EntrevistaIncompleta("O cliente desta entrevista não existe mais.");
 
   const paraMinuta: ClienteParaMinuta = {
     nome: cliente.nome,
@@ -620,7 +620,7 @@ export async function pdfDaEntrevista(escritorioId: string, id: string): Promise
 export class SemPerguntas extends Error {
   readonly status = 400;
   constructor() {
-    super("Gere as perguntas antes: pela procuracao ou pelo tipo de acao.");
+    super("Gere as perguntas antes: pela procuração ou pelo tipo de ação.");
     this.name = "SemPerguntas";
   }
 }
@@ -673,7 +673,7 @@ export async function mandarPerguntasNoWhatsapp(
       arquivo: Buffer.from(pdf),
       nomeDoArquivo: nome,
       oQueE: "Perguntas para a sua entrevista",
-      oQueFazer: "Responda gravando audios no celular, como explica o documento, e envie ao escritorio",
+      oQueFazer: "Responda gravando áudios no celular, como explica o documento, e envie ao escritório",
       rotulo: "PERGUNTAS",
     },
     usuarioId,
@@ -718,13 +718,13 @@ export async function guardarGravacaoNaPasta(
   id: string,
   usuarioId: string,
   audio: { tipo: string; dados: Buffer },
-  sufixo = "gravacao",
+  sufixo = "gravação",
 ): Promise<Guardado> {
   const e = await entrevistaPorId(escritorioId, id);
-  if (!e.clienteId) return { guardado: false, motivo: "Ligue a entrevista a um cliente para a gravacao ficar na pasta dele." };
+  if (!e.clienteId) return { guardado: false, motivo: "Ligue a entrevista a um cliente para a gravação ficar na pasta dele." };
   const tipo = audio.tipo.split(";")[0].trim().toLowerCase();
   const extensao = EXTENSAO_DO_AUDIO[tipo];
-  if (!extensao) return { guardado: false, motivo: `Formato de audio ${tipo || "desconhecido"} nao e guardado na pasta.` };
+  if (!extensao) return { guardado: false, motivo: `Formato de áudio ${tipo || "desconhecido"} não é guardado na pasta.` };
   try {
     const nome = nomeNaPasta(e, `${sufixo} ${new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(new Date()).replace(":", "h")}`, extensao);
     await guardarArquivo(escritorioId, {
@@ -734,12 +734,12 @@ export async function guardarGravacaoNaPasta(
       usuarioId,
       clienteId: e.clienteId,
       processoId: e.processoId,
-      descricao: `Gravacao da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
+      descricao: `Gravação da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
     });
     await cutucarNuvem(escritorioId);
     return { guardado: true, nome };
   } catch (falha) {
-    return { guardado: false, motivo: `A gravacao nao foi guardada na pasta: ${(falha as Error).message}` };
+    return { guardado: false, motivo: `A gravação não foi guardada na pasta: ${(falha as Error).message}` };
   }
 }
 
@@ -757,16 +757,16 @@ export async function guardarGravacaoDoEnvio(
   const e = await entrevistaPorId(escritorioId, id);
   if (!e.clienteId) {
     await descartarEnvio(escritorioId, envio).catch(() => {});
-    return { guardado: false, motivo: "Ligue a entrevista a um cliente para a gravacao ficar na pasta dele." };
+    return { guardado: false, motivo: "Ligue a entrevista a um cliente para a gravação ficar na pasta dele." };
   }
   const tipo = tipoBruto.split(";")[0].trim().toLowerCase();
   const extensao = EXTENSAO_DO_AUDIO[tipo];
   if (!extensao) {
     await descartarEnvio(escritorioId, envio).catch(() => {});
-    return { guardado: false, motivo: `Formato de audio ${tipo || "desconhecido"} nao e guardado na pasta.` };
+    return { guardado: false, motivo: `Formato de áudio ${tipo || "desconhecido"} não é guardado na pasta.` };
   }
   try {
-    const nome = nomeNaPasta(e, `gravacao ${new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(new Date()).replace(":", "h")}`, extensao);
+    const nome = nomeNaPasta(e, `gravação ${new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }).format(new Date()).replace(":", "h")}`, extensao);
     await registrarArquivoDoEnvio(
       escritorioId,
       {
@@ -775,21 +775,21 @@ export async function guardarGravacaoDoEnvio(
         usuarioId,
         clienteId: e.clienteId,
         processoId: e.processoId,
-        descricao: `Gravacao da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
+        descricao: `Gravação da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
       },
       envio,
     );
     await cutucarNuvem(escritorioId);
     return { guardado: true, nome };
   } catch (falha) {
-    return { guardado: false, motivo: `A gravacao nao foi guardada na pasta: ${(falha as Error).message}` };
+    return { guardado: false, motivo: `A gravação não foi guardada na pasta: ${(falha as Error).message}` };
   }
 }
 
 /** Ao encerrar: o PDF da transcricao vai para a pasta do cliente. */
 export async function guardarPdfNaPasta(escritorioId: string, id: string, usuarioId: string): Promise<Guardado> {
   const e = await entrevistaPorId(escritorioId, id);
-  if (!e.clienteId) return { guardado: false, motivo: "Sem cliente ligado, o PDF nao vai para pasta nenhuma." };
+  if (!e.clienteId) return { guardado: false, motivo: "Sem cliente ligado, o PDF não vai para pasta nenhuma." };
   try {
     const { pdf } = await pdfDaEntrevista(escritorioId, id);
     const hora = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })
@@ -803,11 +803,11 @@ export async function guardarPdfNaPasta(escritorioId: string, id: string, usuari
       usuarioId,
       clienteId: e.clienteId,
       processoId: e.processoId,
-      descricao: `Transcricao da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
+      descricao: `Transcrição da entrevista (${ROTULO_DO_TIPO[tipoDe(e.tipo)].toLowerCase()}) de ${e.nome}`,
     });
     await cutucarNuvem(escritorioId);
     return { guardado: true, nome };
   } catch (falha) {
-    return { guardado: false, motivo: `O PDF nao foi guardado na pasta: ${(falha as Error).message}` };
+    return { guardado: false, motivo: `O PDF não foi guardado na pasta: ${(falha as Error).message}` };
   }
 }

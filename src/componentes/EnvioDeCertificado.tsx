@@ -48,7 +48,7 @@ export function EnvioDeCertificado({
       });
       const corpo = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        setErro(corpo.erro ?? "Nao foi possivel enviar o certificado.");
+        setErro(corpo.erro ?? "Não foi possível enviar o certificado.");
         return;
       }
       setAviso(corpo.detalhe ?? "Certificado enviado.");
@@ -72,10 +72,10 @@ export function EnvioDeCertificado({
       });
       if (!resposta.ok) {
         const corpo = await resposta.json().catch(() => ({}));
-        setErro(corpo.erro ?? "Nao foi possivel remover.");
+        setErro(corpo.erro ?? "Não foi possível remover.");
         return;
       }
-      setAviso("Certificado removido. Sem ele nao ha emissao de nota.");
+      setAviso("Certificado removido. Sem ele não há emissão de nota.");
       router.refresh();
     } finally {
       setEnviando(false);
@@ -90,9 +90,9 @@ export function EnvioDeCertificado({
       <p className="mt-2 leitura text-slate-600">
         E com ele que a NFS-e e assinada. O arquivo termina em{" "}
         <code>.pfx</code> ou <code>.p12</code> e foi entregue pela
-        certificadora. Ele e guardado cifrado e nunca sai daqui — a plataforma
-        nao tem certificado proprio, porque assinar nota de escritorio com
-        certificado nosso seria falsidade, nao conveniencia.
+        certificadora. Ele é guardado cifrado e nunca sai daqui — a plataforma
+        não tem certificado próprio, porque assinar nota de escritório com
+        certificado nosso seria falsidade, não conveniência.
       </p>
 
       {jaEnviado && (
@@ -129,7 +129,7 @@ export function EnvioDeCertificado({
             required
           />
           <p className="mt-1 text-sm text-slate-500">
-            A senha e conferida agora: o arquivo so e guardado se abrir e
+            A senha é conferida agora: o arquivo só é guardado se abrir e
             estiver dentro da validade.
           </p>
         </div>

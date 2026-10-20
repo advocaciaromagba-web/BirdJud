@@ -53,7 +53,7 @@ export async function PATCH(
     const { situacao, vencimento, prazoFatal: fatalTexto, ...resto } = dados;
     const prazoFatal = fatalTexto === undefined ? undefined : fimDoDia(fatalTexto);
     if (fatalTexto !== undefined && prazoFatal === undefined) {
-      return NextResponse.json({ erro: "Prazo fatal invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Prazo fatal inválido." }, { status: 400 });
     }
     const tarefa = await editarTarefa(escritorioId, id, {
       ...resto,

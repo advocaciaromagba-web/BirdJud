@@ -30,7 +30,7 @@ export function DocumentosDaEntrevista({ clienteId, modelos }: { clienteId: stri
       });
       if (!resposta.ok) {
         const det = await resposta.json().catch(() => null);
-        throw new Error(det?.erro ?? "Nao consegui montar o documento.");
+        throw new Error(det?.erro ?? "Não consegui montar o documento.");
       }
       const nome = resposta.headers.get("x-nome-do-arquivo") ?? `${especie.toLowerCase()}.${formato.toLowerCase()}`;
       const url = URL.createObjectURL(await resposta.blob());
@@ -57,7 +57,7 @@ export function DocumentosDaEntrevista({ clienteId, modelos }: { clienteId: stri
             <span>
               {m.nome}{" "}
               <span className="text-xs text-slate-500">
-                ({m.doEscritorio ? "modelo do escritorio" : "modelo do sistema"})
+                ({m.doEscritorio ? "modelo do escritório" : "modelo do sistema"})
               </span>
             </span>
             <span className="flex gap-2">

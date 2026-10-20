@@ -19,12 +19,12 @@ import {
 } from "../src/lib/duplicados";
 
 const EXISTENTES: Existente[] = [
-  { id: "c1", nome: "Jose Cicero dos Santos", documento: "529.982.247-25" },
+  { id: "c1", nome: "José Cicero dos Santos", documento: "529.982.247-25" },
   { id: "c2", nome: "AURORA COMERCIO LTDA", documento: "11222333000181" },
 ];
 
 describe("cliente repetido", () => {
-  it("nome compara sem acento, sem caixa e sem espaco a mais", () => {
+  it("nome compara sem acento, sem caixa e sem espaço a mais", () => {
     expect(normalizarNome("  José   Cícero  dos Santos ")).toBe("JOSE CICERO DOS SANTOS");
   });
 
@@ -36,15 +36,15 @@ describe("cliente repetido", () => {
       .toMatchObject({ motivo: "DOCUMENTO" });
   });
 
-  it("nome igual avisa, com quem ja existe", () => {
-    const c = conflitoDeCliente({ nome: "jose cicero DOS santos" }, EXISTENTES)!;
+  it("nome igual avisa, com quem já existe", () => {
+    const c = conflitoDeCliente({ nome: "José cicero DOS santos" }, EXISTENTES)!;
     expect(c.motivo).toBe("NOME");
     expect(mensagemDoConflito(c)).toContain("confirme para cadastrar assim mesmo");
   });
 
   // Num sistema de muitos escritorios ha bancas com milhares de clientes, e
   // dois "Jose Silva" diferentes sao questao de tempo.
-  it("a mensagem de nome mostra o documento de quem ja existe, para dar como decidir", () => {
+  it("a mensagem de nome mostra o documento de quem já existe, para dar como decidir", () => {
     const c = conflitoDeCliente({ nome: "AURORA COMERCIO LTDA" }, EXISTENTES)!;
     expect(mensagemDoConflito(c)).toContain("11222333000181");
   });
@@ -52,7 +52,7 @@ describe("cliente repetido", () => {
   it("documento ganha de nome quando os dois batem", () => {
     expect(
       conflitoDeCliente(
-        { nome: "Jose Cicero dos Santos", documento: "52998224725" },
+        { nome: "José Cicero dos Santos", documento: "52998224725" },
         EXISTENTES,
       )!.motivo,
     ).toBe("DOCUMENTO");
@@ -63,7 +63,7 @@ describe("cliente repetido", () => {
     expect(conflitoDeCliente({ nome: "Maria Souza" }, EXISTENTES)).toBeNull();
   });
 
-  it("sem documento no cadastro existente, documento novo nao casa com nada", () => {
+  it("sem documento no cadastro existente, documento novo não casa com nada", () => {
     const semDoc: Existente[] = [{ id: "c9", nome: "Alguem", documento: null }];
     expect(conflitoDeCliente({ nome: "Outro", documento: "52998224725" }, semDoc)).toBeNull();
   });
@@ -75,13 +75,13 @@ describe("contencao", () => {
   // caso que mais importa pegar.
   it("mede quanto do menor esta no maior", () => {
     expect(contencao("a b c", "a b c")).toBe(1);
-    expect(contencao("a b c", "cabecalho a b c rodape")).toBe(1);
+    expect(contencao("a b c", "cabeçalho a b c rodapé")).toBe(1);
     expect(contencao("a b c d", "a b")).toBe(1);
     expect(contencao("a b c d", "a x y z")).toBe(0.25);
     expect(contencao("", "a b")).toBe(0);
   });
 
-  it("texto normaliza tirando marcacao, acento e pontuacao", () => {
+  it("texto normaliza tirando marcação, acento e pontuação", () => {
     expect(normalizarTexto("<p>Intime-se o <b>Réu</b>.</p>")).toBe("intime se o reu");
   });
 });
@@ -90,14 +90,14 @@ const PUB = (over: Partial<{ id: string; numeroProcesso: string | null; dia: str
   id: "p1",
   numeroProcesso: "1000123-45.2026.8.26.0100",
   dia: "2026-10-01",
-  texto: "Intimem-se as partes para manifestacao no prazo de 15 dias, nos termos do artigo 437 do CPC.",
+  texto: "Intimem-se as partes para manifestação no prazo de 15 dias, nos termos do artigo 437 do CPC.",
   ...over,
 });
 
-describe("publicacao repetida", () => {
+describe("publicação repetida", () => {
   // O mesmo despacho publicado uma vez por parte: texto igual, so muda o
   // "Intimado(s)" do fim. Cada uma vem com id proprio do diario.
-  it("mesmo despacho por parte e repeticao", () => {
+  it("mesmo despacho por parte e repetição", () => {
     const a = PUB();
     const b = PUB({
       id: "p2",
@@ -108,7 +108,7 @@ describe("publicacao repetida", () => {
     expect(r.contencao).toBeGreaterThanOrEqual(CERTEZA);
   });
 
-  it("processo diferente nunca e repeticao, por mais parecido que seja", () => {
+  it("processo diferente nunca e repetição, por mais parecido que seja", () => {
     const a = PUB();
     const b = PUB({ id: "p2", numeroProcesso: "9999999-99.2026.8.26.0100" });
     expect(compararPublicacoes(a, b).veredito).toBe("DIFERENTE");
@@ -116,13 +116,13 @@ describe("publicacao repetida", () => {
 
   // Sem o processo, dois textos parecidos podem ser dois despachos padrao de
   // processos que nada tem a ver.
-  it("publicacao sem processo nao se compara com nada", () => {
+  it("publicação sem processo não se compara com nada", () => {
     expect(compararPublicacoes(PUB({ numeroProcesso: null }), PUB({ id: "p2" })).veredito).toBe(
       "DIFERENTE",
     );
   });
 
-  it("longe no tempo nao e repeticao", () => {
+  it("longe no tempo não e repetição", () => {
     expect(
       compararPublicacoes(PUB(), PUB({ id: "p2", dia: "2026-10-20" })).veredito,
     ).toBe("DIFERENTE");
@@ -134,9 +134,9 @@ describe("publicacao repetida", () => {
 
   // Na duvida, NAO e duplicata: a faixa do meio fica visivel para uma pessoa
   // decidir, em vez de sumir sozinha da tela.
-  it("a faixa do meio nao decide sozinha", () => {
-    const a = PUB({ texto: "um dois tres quatro cinco seis sete oito nove dez" });
-    const b = PUB({ id: "p2", texto: "um dois tres quatro cinco seis sete xxx yyy zzz" });
+  it("a faixa do meio não decide sozinha", () => {
+    const a = PUB({ texto: "um dois três quatro cinco seis sete oito nove dez" });
+    const b = PUB({ id: "p2", texto: "um dois três quatro cinco seis sete xxx yyy zzz" });
     const r = compararPublicacoes(a, b);
     expect(r.contencao).toBeGreaterThanOrEqual(PARECIDO);
     expect(r.contencao).toBeLessThan(CERTEZA);
@@ -145,7 +145,7 @@ describe("publicacao repetida", () => {
 
   it("texto bem diferente e diferente", () => {
     expect(
-      compararPublicacoes(PUB(), PUB({ id: "p2", texto: "Designo audiencia de conciliacao para o dia 20." }))
+      compararPublicacoes(PUB(), PUB({ id: "p2", texto: "Designo audiência de conciliação para o dia 20." }))
         .veredito,
     ).toBe("DIFERENTE");
   });
@@ -166,15 +166,15 @@ describe("achar as repeticoes de um lote", () => {
     expect(r.every((m) => m.duplicataDe === "velha")).toBe(true);
   });
 
-  it("ato diferente no mesmo processo nao e marcado", () => {
+  it("ato diferente no mesmo processo não e marcado", () => {
     const r = acharRepeticoes([
       PUB({ id: "a" }),
-      PUB({ id: "b", dia: "2026-10-02", texto: "Designo pericia medica para 10 de novembro." }),
+      PUB({ id: "b", dia: "2026-10-02", texto: "Designo perícia médica para 10 de novembro." }),
     ]);
     expect(r).toEqual([]);
   });
 
-  it("lote sem nada repetido nao marca nada", () => {
+  it("lote sem nada repetido não marca nada", () => {
     expect(acharRepeticoes([PUB()])).toEqual([]);
     expect(acharRepeticoes([])).toEqual([]);
   });

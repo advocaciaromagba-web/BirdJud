@@ -229,13 +229,13 @@ export async function buscarPagina(consulta: ConsultaDjen): Promise<{
 
   if (resposta.status === 401 && peloRele) {
     throw new FalhaNoDjen(
-      "O rele do DJEN recusou o token (401). Confira se DJEN_RELE_TOKEN e o mesmo RELE_TOKEN configurado na Vercel.",
+      "O rele do DJEN recusou o token (401). Confira se DJEN_RELE_TOKEN é o mesmo RELE_TOKEN configurado na Vercel.",
     );
   }
   if (resposta.status === 403) {
     throw new FalhaNoDjen(
       peloRele
-        ? "O DJEN recusou a consulta (403) mesmo pelo rele. Confira se o projeto do rele na Vercel esta fixado na regiao gru1 (Sao Paulo)."
+        ? "O DJEN recusou a consulta (403) mesmo pelo rele. Confira se o projeto do rele na Vercel está fixado na região gru1 (São Paulo)."
         : "O DJEN recusou a consulta (403). A API bloqueia acesso de fora do Brasil: configure DJEN_RELE_URL para sair pelo rele.",
     );
   }
@@ -247,7 +247,7 @@ export async function buscarPagina(consulta: ConsultaDjen): Promise<{
     count?: number;
   } | null;
   if (!corpo || !Array.isArray(corpo.items)) {
-    throw new FalhaNoDjen("Resposta do DJEN sem a lista de comunicacoes.");
+    throw new FalhaNoDjen("Resposta do DJEN sem a lista de comunicações.");
   }
 
   const recebidos = corpo.items.length;

@@ -76,6 +76,6 @@ export async function saudeDoEspaco(): Promise<SaudeDoEspaco> {
     medirArquivos().catch(() => null),
     medirBanco().catch(() => null),
   ]);
-  if (!arquivos && !banco) throw new Error("Nenhuma medida de espaco respondeu.");
+  if (!arquivos && !banco) throw new Error("Nenhuma medida de espaço respondeu.");
   return avaliarEspaco({ arquivos, banco });
 }

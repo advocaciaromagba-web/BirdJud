@@ -73,7 +73,7 @@ export function decidir({
 }: Observacao): Decisao {
   const ultimas = saude.slice(-FALHAS_SEGUIDAS);
   if (ultimas.length < FALHAS_SEGUIDAS || ultimas.some(Boolean)) {
-    return { acao: "nada", motivo: "o site respondeu em alguma das ultimas batidas" };
+    return { acao: "nada", motivo: "o site respondeu em alguma das últimas batidas" };
   }
 
   const atual = deploys[0];
@@ -91,12 +91,12 @@ export function decidir({
     // troca um problema conhecido por um desconhecido.
     return {
       acao: "nada",
-      motivo: `o deploy no ar esta ${atual.situacao}: a queda nao e da versao`,
+      motivo: `o deploy no ar esta ${atual.situacao}: a queda não é da versão`,
     };
   }
 
   const alvo = deploys.slice(1).find((d) => d.situacao === "SUCCESS");
-  if (!alvo) return { acao: "nada", motivo: "nao ha versao anterior que tenha subido" };
+  if (!alvo) return { acao: "nada", motivo: "não há versão anterior que tenha subido" };
 
   if (
     ultimaVolta &&
@@ -105,7 +105,7 @@ export function decidir({
   ) {
     return {
       acao: "nada",
-      motivo: "esta volta ja foi tentada ha pouco e nao resolveu",
+      motivo: "esta volta já foi tentada há pouco e não resolveu",
     };
   }
 

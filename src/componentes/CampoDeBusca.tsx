@@ -21,7 +21,7 @@ export function CampoDeBusca({ termoInicial = "" }: { termoInicial?: string }) {
       <input
         value={termo}
         onChange={(e) => setTermo(e.target.value)}
-        placeholder="Buscar cliente, processo, publicacao…"
+        placeholder="Buscar cliente, processo, publicação…"
         aria-label="Buscar"
         className="campo lg:max-w-sm"
       />

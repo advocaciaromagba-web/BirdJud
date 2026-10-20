@@ -26,7 +26,7 @@ const STATUS: Record<string, { texto: string; classe: string }> = {
   AGUARDANDO_ASSINATURA: { texto: "Aguardando assinatura", classe: "bg-amber-100 text-amber-900" },
   EMITIDA: { texto: "Emitida", classe: "bg-emerald-100 text-emerald-800" },
   REJEITADA: { texto: "Recusada", classe: "bg-red-100 text-red-800" },
-  PROCESSANDO: { texto: "Confirmacao pendente", classe: "bg-amber-100 text-amber-900" },
+  PROCESSANDO: { texto: "Confirmação pendente", classe: "bg-amber-100 text-amber-900" },
   CANCELADA: { texto: "Cancelada", classe: "bg-slate-100 text-slate-600" },
 };
 
@@ -88,7 +88,7 @@ export function PainelNotas({
 
   async function preparar(ev: FormEvent) {
     ev.preventDefault();
-    if (!form.clienteId) return setResultado({ ok: false, texto: "Escolha o cliente (tomador do servico).", avisos: [] });
+    if (!form.clienteId) return setResultado({ ok: false, texto: "Escolha o cliente (tomador do serviço).", avisos: [] });
     setPreparando(true);
     setResultado(null);
     const envioCliente = [form.email ? "EMAIL" : null, form.whatsapp ? "WHATSAPP" : null].filter(Boolean);
@@ -107,7 +107,7 @@ export function PainelNotas({
     });
     const json = await res.json().catch(() => ({}));
     setPreparando(false);
-    if (!res.ok) return setResultado({ ok: false, texto: json.erro ?? "Nao foi possivel preparar a nota.", avisos: [] });
+    if (!res.ok) return setResultado({ ok: false, texto: json.erro ?? "Não foi possível preparar a nota.", avisos: [] });
     setResultado({
       ok: true,
       texto: `Nota preparada — agora aguarda a assinatura de ${titularNome ?? "titular do certificado"}.`,
@@ -125,7 +125,7 @@ export function PainelNotas({
     if (reais.length > 0) {
       const total = reais.reduce((t, n) => t + n.valorCentavos, 0);
       const ok = window.confirm(
-        `Assinar e emitir ${reais.length} NOTA(S) FISCAL(IS) REAL(IS), total ${moeda(total)}? Elas vao para a Receita e a prefeitura.`,
+        `Assinar e emitir ${reais.length} NOTA(S) FISCAL(IS) REAL(IS), total ${moeda(total)}? Elas vão para a Receita e a prefeitura.`,
       );
       if (!ok) return;
     }
@@ -140,7 +140,7 @@ export function PainelNotas({
     setAssinando(false);
     setSenha("");
     if (!res.ok) {
-      setResultadoAssinatura([{ texto: json.erro ?? "Nao foi possivel assinar.", ok: false }]);
+      setResultadoAssinatura([{ texto: json.erro ?? "Não foi possível assinar.", ok: false }]);
     } else {
       const nomes = new Map(escolhidas.map((n) => [n.id, `${n.tomadorNome} (${moeda(n.valorCentavos)})`]));
       setResultadoAssinatura(
@@ -155,11 +155,11 @@ export function PainelNotas({
             const quem = nomes.get(r.id) ?? "Nota";
             if (r.status === "EMITIDA") {
               const enviada = r.entrega?.enviados.length ? ` — enviada ao cliente por ${r.entrega.enviados.join(" e ")}` : "";
-              const falha = r.entrega?.falhas.length ? ` (nao entregue: ${r.entrega.falhas.join("; ")})` : "";
+              const falha = r.entrega?.falhas.length ? ` (não entregue: ${r.entrega.falhas.join("; ")})` : "";
               return { texto: `${quem}: emitida, no ${r.numeroNfse ?? "-"}${enviada}${falha}`, ok: true };
             }
-            if (r.status === "PROCESSANDO") return { texto: `${quem}: sem resposta da API — use "Verificar situacao" na lista.`, ok: false };
-            return { texto: `${quem}: ${r.status === "REJEITADA" ? "recusada" : "nao assinada"} — ${r.erro}`, ok: false };
+            if (r.status === "PROCESSANDO") return { texto: `${quem}: sem resposta da API — use "Verificar situação" na lista.`, ok: false };
+            return { texto: `${quem}: ${r.status === "REJEITADA" ? "recusada" : "não assinada"} — ${r.erro}`, ok: false };
           },
         ),
       );
@@ -179,7 +179,7 @@ export function PainelNotas({
     const json = await res.json().catch(() => ({}));
     setAcaoNota(null);
     setSenha("");
-    if (!res.ok) return setErroLista(json.erro ?? "Nao foi possivel concluir.");
+    if (!res.ok) return setErroLista(json.erro ?? "Não foi possível concluir.");
     setCancelandoId(null);
     setVerificandoId(null);
     setCancelamento({ motivo: "1", descricao: "" });
@@ -187,14 +187,14 @@ export function PainelNotas({
   }
 
   async function descartar(nota: NotaNaTela) {
-    if (!window.confirm(`Descartar a nota de ${moeda(nota.valorCentavos)} para ${nota.tomadorNome}? Ela nao foi emitida e sai da lista.`))
+    if (!window.confirm(`Descartar a nota de ${moeda(nota.valorCentavos)} para ${nota.tomadorNome}? Ela não foi emitida e sai da lista.`))
       return;
     setAcaoNota(nota.id);
     setErroLista(null);
     const res = await fetch(`/api/nfse/${nota.id}`, { method: "DELETE" });
     const json = await res.json().catch(() => ({}));
     setAcaoNota(null);
-    if (!res.ok) setErroLista(json.erro ?? "Nao foi possivel descartar.");
+    if (!res.ok) setErroLista(json.erro ?? "Não foi possível descartar.");
     setSelecionadas((sel) => sel.filter((id) => id !== nota.id));
     router.refresh();
   }
@@ -215,15 +215,15 @@ export function PainelNotas({
       <section className="cartao">
         <h2 className="font-semibold">Preparar nota fiscal</h2>
         <p className="mt-1 text-xs text-slate-500">
-          A nota fica aguardando a assinatura de {titularNome ?? "quem tiver o certificado"} — so o titular emite, com a
+          A nota fica aguardando a assinatura de {titularNome ?? "quem tiver o certificado"} — só o titular emite, com a
           senha do certificado.
         </p>
         {!pronto ? (
-          <p className="mt-3 text-sm text-slate-500">Resolva as pendencias do emissor acima para preparar notas.</p>
+          <p className="mt-3 text-sm text-slate-500">Resolva as pendências do emissor acima para preparar notas.</p>
         ) : (
           <form onSubmit={preparar} className="mt-3 grid gap-4 md:grid-cols-2">
             <label className="grid gap-1 text-sm md:col-span-2">
-              Cliente (tomador do servico)
+              Cliente (tomador do serviço)
               <select className="campo" value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: e.target.value })}>
                 <option value="">Escolha o cliente</option>
                 {clientes.map((c) => (
@@ -234,11 +234,11 @@ export function PainelNotas({
               </select>
             </label>
             <label className="grid gap-1 text-sm">
-              Valor do servico (R$)
+              Valor do serviço (R$)
               <input className="campo" inputMode="decimal" placeholder="0,00" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
             </label>
             <label className="grid gap-1 text-sm">
-              Data de competencia (quando o servico foi prestado)
+              Data de competência (quando o serviço foi prestado)
               <input
                 className="campo"
                 type="date"
@@ -248,11 +248,11 @@ export function PainelNotas({
               />
             </label>
             <label className="grid gap-1 text-sm md:col-span-2">
-              Descricao do servico
+              Descrição do serviço
               <textarea className="campo" rows={3} maxLength={2000} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
             </label>
             <label className="grid gap-1 text-sm md:col-span-2">
-              Informacoes complementares (opcional)
+              Informações complementares (opcional)
               <input
                 className="campo"
                 maxLength={2000}
@@ -275,7 +275,7 @@ export function PainelNotas({
               <button type="submit" className="botao-principal" disabled={preparando}>
                 {preparando ? "Preparando..." : producao ? "Enviar para assinatura" : "Enviar nota de teste para assinatura"}
               </button>
-              {!producao ? <span className="text-xs text-slate-500">Ambiente de testes do governo: a nota nao tem valor fiscal.</span> : null}
+              {!producao ? <span className="text-xs text-slate-500">Ambiente de testes do governo: a nota não tem valor fiscal.</span> : null}
             </div>
           </form>
         )}
@@ -299,7 +299,7 @@ export function PainelNotas({
         <section className="cartao border-amber-200">
           <h2 className="font-semibold">Aguardando assinatura</h2>
           <p className="mt-1 text-xs text-slate-500">
-            So {titularNome ?? "o titular do certificado"} assina. A senha do certificado e pedida a cada assinatura e nao
+            Só {titularNome ?? "o titular do certificado"} assina. A senha do certificado e pedida a cada assinatura e não
             fica guardada.
           </p>
           <ul className="mt-3 divide-y divide-slate-100">
@@ -375,8 +375,8 @@ export function PainelNotas({
                   <th className="py-2 pr-3">No</th>
                   <th className="py-2 pr-3">Tomador</th>
                   <th className="py-2 pr-3 text-right">Valor</th>
-                  <th className="py-2 pr-3">Situacao</th>
-                  <th className="py-2">Acoes</th>
+                  <th className="py-2 pr-3">Situação</th>
+                  <th className="py-2">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -423,7 +423,7 @@ export function PainelNotas({
                         ) : null}
                         {n.status === "PROCESSANDO" && souTitular ? (
                           <button type="button" className="text-xs text-marca hover:underline" onClick={() => setVerificandoId(verificandoId === n.id ? null : n.id)}>
-                            Verificar situacao
+                            Verificar situação
                           </button>
                         ) : null}
                       </div>
@@ -438,8 +438,8 @@ export function PainelNotas({
                       {cancelandoId === n.id ? (
                         <div className="mt-2 grid w-64 gap-2 whitespace-normal">
                           <select className="campo" value={cancelamento.motivo} onChange={(e) => setCancelamento({ ...cancelamento, motivo: e.target.value })}>
-                            <option value="1">Erro na emissao</option>
-                            <option value="2">Servico nao prestado</option>
+                            <option value="1">Erro na emissão</option>
+                            <option value="2">Serviço não prestado</option>
                             <option value="9">Outros</option>
                           </select>
                           <textarea

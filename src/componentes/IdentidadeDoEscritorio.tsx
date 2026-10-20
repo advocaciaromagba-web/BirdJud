@@ -82,10 +82,10 @@ export function IdentidadeDoEscritorio({
       });
       const corpo = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        setErro(corpo.erro ?? "Nao foi possivel gravar.");
+        setErro(corpo.erro ?? "Não foi possível gravar.");
         return;
       }
-      setAviso("Identidade gravada. Ela vale em todas as telas do escritorio.");
+      setAviso("Identidade gravada. Ela vale em todas as telas do escritório.");
       router.refresh();
     } finally {
       setOcupado(false);
@@ -110,7 +110,7 @@ export function IdentidadeDoEscritorio({
       });
       const corpo = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        setErro(corpo.erro ?? "Nao foi possivel enviar o logotipo.");
+        setErro(corpo.erro ?? "Não foi possível enviar o logotipo.");
         return;
       }
       if (logoRef.current) logoRef.current.value = "";
@@ -120,11 +120,11 @@ export function IdentidadeDoEscritorio({
         if (cores.corSecundaria) setSecundaria(cores.corSecundaria);
         setAviso(
           "Logotipo enviado. As cores do sistema foram ajustadas pela paleta do logotipo" +
-            (cores.corSecundaria ? "" : " (ele tem uma cor so: o destaque ficou como estava)") +
+            (cores.corSecundaria ? "" : " (ele tem uma cor só: o destaque ficou como estava)") +
             ". Se quiser, ajuste abaixo e salve.",
         );
       } else {
-        setAviso("Logotipo enviado. Nao achamos cor de marca na imagem: as cores ficaram como estavam.");
+        setAviso("Logotipo enviado. Não achamos cor de marca na imagem: as cores ficaram como estavam.");
       }
       router.refresh();
     } finally {
@@ -146,11 +146,11 @@ export function IdentidadeDoEscritorio({
   return (
     <section className="cartao">
       <p className="sobretitulo">Marca</p>
-      <h2 className="mt-1 text-lg font-bold">Identidade do escritorio</h2>
+      <h2 className="mt-1 text-lg font-bold">Identidade do escritório</h2>
       <p className="mt-2 leitura text-slate-600">
-        O sistema e do escritorio, nao da plataforma: quem entra em{" "}
-        <code>{nome}</code> ve a marca dele. Escolha duas cores — o resto da
-        paleta e derivado delas, para que os contrastes fechem e nada fique
+        O sistema e do escritório, não da plataforma: quem entra em{" "}
+        <code>{nome}</code> vê a marca dele. Escolha duas cores — o resto da
+        paleta é derivado delas, para que os contrastes fechem e nada fique
         ilegivel.
       </p>
 
@@ -175,7 +175,7 @@ export function IdentidadeDoEscritorio({
                 aria-label="Cor principal em hexadecimal"
               />
             </div>
-            <p className="ajuda">Menu, botoes e titulos.</p>
+            <p className="ajuda">Menu, botões e títulos.</p>
           </div>
 
           <div>
@@ -202,7 +202,7 @@ export function IdentidadeDoEscritorio({
 
           <div>
             <label className="rotulo" htmlFor="ident-cnpj">
-              CNPJ do escritorio
+              CNPJ do escritório
             </label>
             <input
               id="ident-cnpj"
@@ -212,7 +212,7 @@ export function IdentidadeDoEscritorio({
               placeholder="00.000.000/0001-00"
             />
             <p className="ajuda">
-              Usado na cobranca da assinatura. Sem ele, a fatura mensal nao
+              Usado na cobrança da assinatura. Sem ele, a fatura mensal não
               pode ser emitida.
             </p>
           </div>
@@ -247,10 +247,10 @@ export function IdentidadeDoEscritorio({
           </div>
 
           <div className="mt-2">
-            <p className="rotulo">Endereco da sede</p>
+            <p className="rotulo">Endereço da sede</p>
             <p className="ajuda mb-2 mt-0">
-              Entra na qualificacao do escritorio nas pecas. Comece pelo CEP: o
-              resto se preenche, falta so o numero.
+              Entra na qualificação do escritório nas peças. Comece pelo CEP: o
+              resto se preenche, falta só o número.
             </p>
             <EnderecoComCep prefixo="sede" valor={sede} aoMudar={setSede} />
           </div>
@@ -293,7 +293,7 @@ export function IdentidadeDoEscritorio({
                 className="border-l-[3px] pl-2 text-sm font-semibold"
                 style={{ borderColor: "var(--previa-secundaria)" }}
               >
-                Audiencia de instrucao
+                Audiência de instrução
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <span
@@ -330,7 +330,7 @@ export function IdentidadeDoEscritorio({
               accept="image/png,image/jpeg,image/webp,image/svg+xml"
             />
             <p className="ajuda">
-              PNG, JPG, WEBP ou SVG, ate 1 MB. Fundo transparente fica melhor
+              PNG, JPG, WEBP ou SVG, até 1 MB. Fundo transparente fica melhor
               sobre a cor principal. Ao enviar, a cor principal e a de destaque
               passam a seguir as cores do logotipo.
             </p>

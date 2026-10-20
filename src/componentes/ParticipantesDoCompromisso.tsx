@@ -93,7 +93,7 @@ export function ParticipantesDoCompromisso({
     setOcupado(false);
     const d = await resposta.json().catch(() => null);
     if (!resposta.ok) {
-      setErro(d?.erro ?? "Nao consegui gravar.");
+      setErro(d?.erro ?? "Não consegui gravar.");
       return;
     }
     setAviso(
@@ -129,8 +129,8 @@ export function ParticipantesDoCompromisso({
         <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs text-slate-600">
             Quem mais precisa saber da hora e do lugar de <strong>{titulo}</strong>.
-            Pode ser um cliente do escritorio ou alguem de fora — testemunha,
-            conjuge, preposto. Quem e de fora NAO entra na lista de clientes.
+            Pode ser um cliente do escritório ou alguém de fora — testemunha,
+            cônjuge, preposto. Quem é de fora NÃO entra na lista de clientes.
           </p>
 
           {respondeu.length > 0 ? (
@@ -140,7 +140,7 @@ export function ParticipantesDoCompromisso({
                 <span key={r.nome + i}>
                   {i > 0 ? " · " : ""}
                   <span className={r.confirmou ? "text-emerald-700" : "text-red-700"}>
-                    {r.nome} {r.confirmou ? "confirmou" : "NAO podera ir"}
+                    {r.nome} {r.confirmou ? "confirmou" : "NAO poderá ir"}
                   </span>
                 </span>
               ))}
@@ -157,7 +157,7 @@ export function ParticipantesDoCompromisso({
                     value={p.clienteId ?? ""}
                     onChange={(e) => mudar(i, "clienteId", e.target.value || null)}
                   >
-                    <option value="">Alguem de fora (digite o nome)</option>
+                    <option value="">Alguém de fora (digite o nome)</option>
                     {clientes.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nome}
@@ -192,7 +192,7 @@ export function ParticipantesDoCompromisso({
                   <label className="rotulo">
                     Telefone{" "}
                     {p.clienteId ? (
-                      <span className="text-slate-500">so se for outro</span>
+                      <span className="text-slate-500">só se for outro</span>
                     ) : null}
                   </label>
                   <input
@@ -205,7 +205,7 @@ export function ParticipantesDoCompromisso({
                   <label className="rotulo">
                     E-mail{" "}
                     {p.clienteId ? (
-                      <span className="text-slate-500">so se for outro</span>
+                      <span className="text-slate-500">só se for outro</span>
                     ) : null}
                   </label>
                   <input
@@ -245,16 +245,16 @@ export function ParticipantesDoCompromisso({
 
           {semContato.length > 0 ? (
             <p className="mt-2 text-xs text-amber-700">
-              Sem telefone nem e-mail, nao da para avisar{" "}
+              Sem telefone nem e-mail, não da para avisar{" "}
               {semContato.map((p) => p.nome || "(sem nome)").join(", ")}.
             </p>
           ) : null}
           {soTelefone.length > 0 ? (
             <p className="mt-2 text-xs text-amber-700">
-              O WhatsApp do escritorio nao esta conectado, entao quem so tem
-              telefone NAO sera avisado:{" "}
+              O WhatsApp do escritório não está conectado, então quem só tem
+              telefone NAO será avisado:{" "}
               {soTelefone.map((p) => p.nome || "(sem nome)").join(", ")}. Ponha um
-              e-mail, ou conecte o WhatsApp em Integracoes.
+              e-mail, ou conecte o WhatsApp em Integrações.
             </p>
           ) : null}
 

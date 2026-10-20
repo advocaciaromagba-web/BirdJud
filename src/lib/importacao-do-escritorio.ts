@@ -34,7 +34,7 @@ export type Analise = {
 /** A primeira linha com algum texto e o cabecalho. */
 function separarCabecalho(linhas: Celula[][]) {
   const i = linhas.findIndex((l) => l.some((c) => c?.texto));
-  if (i < 0) throw new PlanilhaInvalida("A planilha esta vazia.");
+  if (i < 0) throw new PlanilhaInvalida("A planilha está vazia.");
   const cabecalho = linhas[i].map((c) => c?.texto ?? "");
   const largura = Math.max(cabecalho.length, ...linhas.slice(i + 1).map((l) => l.length));
   while (cabecalho.length < largura) cabecalho.push(`Coluna ${cabecalho.length + 1}`);
@@ -65,7 +65,7 @@ export async function analisarPlanilha(
   const { cabecalho, dados } = separarCabecalho(p.linhas);
   if (dados.length > LIMITE_DE_LINHAS) {
     throw new PlanilhaInvalida(
-      `A planilha tem ${dados.length} linhas; o limite por importacao e ${LIMITE_DE_LINHAS}. Divida em partes.`,
+      `A planilha tem ${dados.length} linhas; o limite por importação é ${LIMITE_DE_LINHAS}. Divida em partes.`,
     );
   }
   const mapa =
@@ -85,7 +85,7 @@ export async function analisarPlanilha(
 export class SemColunaDeNome extends Error {
   readonly status = 400;
   constructor() {
-    super("Escolha qual coluna da planilha e o nome do cliente.");
+    super("Escolha qual coluna da planilha é o nome do cliente.");
     this.name = "SemColunaDeNome";
   }
 }
@@ -164,7 +164,7 @@ export async function importarPlanilha(
 export async function desfazerImportacao(escritorioId: string, importacaoId: string) {
   return comEscritorio(escritorioId, async (db) => {
     const imp = await db.importacaoDeClientes.findFirst({ where: { id: importacaoId } });
-    if (!imp) throw new PlanilhaInvalida("Importacao nao encontrada.");
+    if (!imp) throw new PlanilhaInvalida("Importação não encontrada.");
     if (imp.desfeitaEm) return { apagados: 0, mantidos: imp.mantidosAoDesfazer ?? 0 };
 
     const { count } = await db.cliente.deleteMany({

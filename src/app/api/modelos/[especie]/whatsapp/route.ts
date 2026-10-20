@@ -15,7 +15,7 @@ const NOME_DA_FORMA: Record<string, string> = {
   BOLETO: "boleto",
   PIX: "Pix",
   CARTAO: "cartao",
-  QUALQUER: "Pix ou cartao",
+  QUALQUER: "Pix ou cartão",
 };
 
 const pedido = z.object({
@@ -43,12 +43,12 @@ export async function POST(
     const { escritorioId, usuarioId } = await exigirSessao("WHATSAPP");
     const { especie } = await params;
     if (!ehEspecie(especie)) {
-      return NextResponse.json({ erro: "Especie invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
     }
 
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
     const { clienteId, contratoId, processoId } = corpo.data;
 
@@ -56,7 +56,7 @@ export async function POST(
       db.cliente.findFirst({ where: { id: clienteId } }),
     );
     if (!cliente) {
-      return NextResponse.json({ erro: "Cliente nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Cliente não encontrado." }, { status: 404 });
     }
 
     const [representantes, contrato, processo, escritorio, advogados] = await Promise.all([
@@ -113,7 +113,7 @@ export async function POST(
     ]);
 
     if (!escritorio) {
-      return NextResponse.json({ erro: "Escritorio nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Escritório não encontrado." }, { status: 404 });
     }
 
     const escolhidos =
@@ -140,7 +140,7 @@ export async function POST(
       if (valorDoRecibo !== null && valorDoRecibo > 0) {
         recibo = {
           valorCentavos: valorDoRecibo,
-          referenteA: corpo.data.reciboReferenteA?.trim() || "honorarios advocaticios",
+          referenteA: corpo.data.reciboReferenteA?.trim() || "honorários advocatícios",
           forma: corpo.data.reciboForma?.trim() || null,
           quando: corpo.data.reciboData
             ? new Date(`${corpo.data.reciboData}T00:00:00Z`)
@@ -157,7 +157,7 @@ export async function POST(
           return NextResponse.json(
             {
               erro:
-                "Nao ha pagamento para este recibo. Digite o valor na tela de gerar documentos antes de mandar.",
+                "Não há pagamento para este recibo. Digite o valor na tela de gerar documentos antes de mandar.",
             },
             { status: 422 },
           );

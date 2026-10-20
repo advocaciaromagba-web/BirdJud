@@ -53,7 +53,7 @@ export default async function PaginaPlanos() {
           <ul className="mt-3 grid gap-2 text-sm leading-relaxed text-slate-600">
             <li className="filete-destaque pl-4">
               O endereço e a marca são do escritório:{" "}
-              <code>seu-escritorio.birdjud.com.br</code>, com a logo e as cores
+              <code>seu-escritório.birdjud.com.br</code>, com a logo e as cores
               dele.
             </li>
             <li className="filete-destaque pl-4">

@@ -43,13 +43,13 @@ export default async function PaginaBusca({
       <p className="mt-1 text-sm text-slate-500">
         {termoUtil(termo)
           ? `${achados.length} resultado(s) para "${termo}"`
-          : `Digite ao menos ${MINIMO_DE_LETRAS} letras. Numero de processo pode vir com ou sem mascara.`}
+          : `Digite ao menos ${MINIMO_DE_LETRAS} letras. Número de processo pode vir com ou sem máscara.`}
       </p>
 
       {termoUtil(termo) && achados.length === 0 ? (
         <p className="mt-6 text-slate-600">
-          Nada encontrado. A busca cobre nome e documento de cliente, numero de
-          processo, texto de publicacao e nome de arquivo.
+          Nada encontrado. A busca cobre nome e documento de cliente, número de
+          processo, texto de publicação e nome de arquivo.
         </p>
       ) : null}
 

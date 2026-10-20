@@ -31,7 +31,7 @@ function Mensagem({ m, resolvida }: { m: MensagemNaTela; resolvida?: boolean }) 
     });
     const json = await r.json().catch(() => ({}));
     setOcupado(null);
-    setRecado({ texto: json.mensagem ?? json.erro ?? (r.ok ? "Feito." : "Nao deu certo."), ok: r.ok });
+    setRecado({ texto: json.mensagem ?? json.erro ?? (r.ok ? "Feito." : "Não deu certo."), ok: r.ok });
     if (r.ok) {
       setResolvendo(false);
       router.refresh();
@@ -65,7 +65,7 @@ function Mensagem({ m, resolvida }: { m: MensagemNaTela; resolvida?: boolean }) 
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {etiqueta ? <span className={`etiqueta ${etiqueta.classe}`}>{etiqueta.texto}</span> : null}
-          {!m.categoria && !resolvida ? <span className="etiqueta etiqueta-atencao">Sem confirmacao</span> : null}
+          {!m.categoria && !resolvida ? <span className="etiqueta etiqueta-atencao">Sem confirmação</span> : null}
           {resolvida && m.tratamento ? <span className="etiqueta etiqueta-ok">{m.tratamento}</span> : null}
           <span className="whitespace-nowrap text-xs text-slate-500">{m.quando}</span>
         </div>
@@ -127,7 +127,7 @@ function Mensagem({ m, resolvida }: { m: MensagemNaTela; resolvida?: boolean }) 
           <input
             id={`obs-${m.id}`}
             className="campo"
-            placeholder="Ex.: liguei e confirmei a audiencia"
+            placeholder="Ex.: liguei e confirmei a audiência"
             value={observacao}
             maxLength={500}
             onChange={(e) => setObservacao(e.target.value)}
@@ -147,7 +147,7 @@ function Mensagem({ m, resolvida }: { m: MensagemNaTela; resolvida?: boolean }) 
               disabled={ocupado !== null}
               onClick={() => agir({ acao: "resolver", tratamento: "DESCARTADO", observacao }, "descartar")}
             >
-              Nao precisa mais
+              Não precisa mais
             </button>
           </div>
         </div>
@@ -194,7 +194,7 @@ export function PainelMensagens({ naoEntregues, semConfirmacao, resolvidas }: Me
   return (
     <div>
       {naoEntregues.length + semConfirmacao.length === 0 ? (
-        <p className="aviso-ok mt-4">Tudo entregue: nenhuma mensagem pendente de atencao.</p>
+        <p className="aviso-ok mt-4">Tudo entregue: nenhuma mensagem pendente de atenção.</p>
       ) : (
         <p className="aviso-atencao mt-4">
           {naoEntregues.length + semConfirmacao.length} mensagem(ns) podem nao ter chegado. Reenvie ou avise a pessoa
@@ -203,21 +203,21 @@ export function PainelMensagens({ naoEntregues, semConfirmacao, resolvidas }: Me
       )}
 
       <Secao
-        titulo="Nao entregues"
-        explicacao="O envio falhou ou a Meta devolveu que nao entregou. Quem enviou cada uma recebe o alerta por e-mail e, se recebe WhatsApp, tambem por la."
+        titulo="Não entregues"
+        explicacao="O envio falhou ou a Meta devolveu que não entregou. Quem enviou cada uma recebe o alerta por e-mail e, se recebe WhatsApp, também por lá."
         vazio="Nenhuma mensagem falhou."
         itens={naoEntregues}
       />
       <Secao
-        titulo="Sem confirmacao de entrega"
-        explicacao="WhatsApp aceito pela Meta ha mais de 6 horas, sem a confirmacao de que chegou ao celular. A Meta continua tentando; se for importante, reenvie ou ligue."
+        titulo="Sem confirmação de entrega"
+        explicacao="WhatsApp aceito pela Meta há mais de 6 horas, sem a confirmação de que chegou ao celular. A Meta continua tentando; se for importante, reenvie ou ligue."
         vazio="Todas as mensagens de WhatsApp tiveram a entrega confirmada."
         itens={semConfirmacao}
       />
       <Secao
-        titulo="Resolvidas nos ultimos 30 dias"
+        titulo="Resolvidas nos últimos 30 dias"
         explicacao="O que foi reenviado ou resolvido por outro meio, com quem fez."
-        vazio="Nada resolvido no periodo."
+        vazio="Nada resolvido no período."
         itens={resolvidas}
         resolvidas
       />

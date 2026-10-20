@@ -48,7 +48,7 @@ function novo(extra: Partial<Fatos> = {}): Fatos {
 const chaves = (f: Fatos) => montarRoteiro(f).passos.map((p) => p.chave);
 
 describe("roteiro: o que aparece", () => {
-  it("escritorio com tudo contratado ve os catorze passos, na ordem das fases", () => {
+  it("escritório com tudo contratado ve os catorze passos, na ordem das fases", () => {
     const r = montarRoteiro(novo());
     expect(r.passos.map((p) => p.chave)).toEqual([
       "SENHA_ADMIN", "IDENTIDADE", "EQUIPE",
@@ -65,7 +65,7 @@ describe("roteiro: o que aparece", () => {
     expect(r.porcento).toBe(0);
   });
 
-  it("plano basico nao ve passo de modulo que nao comprou", () => {
+  it("plano básico não ve passo de módulo que não comprou", () => {
     const basico = chaves(novo({ modulos: ["NUCLEO", "PUBLICACOES_DJEN", "NUVEM", "EMAIL"] }));
     expect(basico).not.toContain("COBRANCA");
     expect(basico).not.toContain("ASSINATURA");
@@ -86,7 +86,7 @@ describe("roteiro: o que aparece", () => {
 });
 
 describe("roteiro: o que conta como feito", () => {
-  it("o passo so se marca com o fato, nunca com metade dele", () => {
+  it("o passo só se marca com o fato, nunca com metade dele", () => {
     const so = (f: Partial<Fatos>, chave: string) =>
       montarRoteiro(novo(f)).passos.find((p) => p.chave === chave)!.situacao;
 
@@ -103,17 +103,17 @@ describe("roteiro: o que conta como feito", () => {
     expect(so({ integracoes: { NFSE_CERT: "OK" }, temCadastroFiscal: true }, "NOTA_FISCAL")).toBe("FEITO");
   });
 
-  it("o detalhe diz o que falta, com numero", () => {
+  it("o detalhe diz o que falta, com número", () => {
     const p = (f: Partial<Fatos>, chave: string) =>
       montarRoteiro(novo(f)).passos.find((x) => x.chave === chave)!.detalhe;
     expect(p({ cnpj: true }, "IDENTIDADE")).toBe("Falta: telefone de atendimento.");
     expect(p({}, "IDENTIDADE")).toBe("Falta: CNPJ e telefone de atendimento.");
     expect(p({ advogados: 3, advogadosComOab: 1 }, "EQUIPE")).toBe("1 de 3 advogado(s) com OAB.");
-    expect(p({ integracoes: { SMTP: "ERRO" } }, "EMAIL")).toMatch(/ultimo teste falhou/);
+    expect(p({ integracoes: { SMTP: "ERRO" } }, "EMAIL")).toMatch(/último teste falhou/);
     expect(p({ integracoes: { NFSE_CERT: "OK" } }, "NOTA_FISCAL")).toBe("Falta: cadastro fiscal.");
   });
 
-  it("nuvem sem aplicativo da plataforma fica 'em breve' e nao conta", () => {
+  it("nuvem sem aplicativo da plataforma fica 'em breve' e não conta", () => {
     const r = montarRoteiro(novo({ nuvemDisponivel: false }));
     const nuvem = r.passos.find((p) => p.chave === "NUVEM")!;
     expect(nuvem.situacao).toBe("INDISPONIVEL");
@@ -123,7 +123,7 @@ describe("roteiro: o que conta como feito", () => {
 });
 
 describe("roteiro: pular, progresso e conclusao", () => {
-  it("essencial nao se pula, nem forcando", () => {
+  it("essencial não se pula, nem forcando", () => {
     expect(podePular("SENHA_ADMIN")).toBe(false);
     expect(podePular("IDENTIDADE")).toBe(false);
     expect(podePular("EQUIPE")).toBe(false);
@@ -134,7 +134,7 @@ describe("roteiro: pular, progresso e conclusao", () => {
     expect(r.passos[0].situacao).toBe("PENDENTE");
   });
 
-  it("pulado sai da conta e o proximo avanca", () => {
+  it("pulado sai da conta e o próximo avanca", () => {
     const base = { temSenhaAdmin: true, cnpj: true, telefoneAtendimento: true, advogados: 1, advogadosComOab: 1 };
     const antes = montarRoteiro(novo(base));
     expect(antes.essenciaisFeitos).toBe(true);
@@ -146,7 +146,7 @@ describe("roteiro: pular, progresso e conclusao", () => {
     expect(depois.porcento).toBeGreaterThan(antes.porcento);
   });
 
-  it("completo quando nada esta pendente; o tempo restante soma so os pendentes", () => {
+  it("completo quando nada esta pendente; o tempo restante soma só os pendentes", () => {
     const tudo = novo({
       temSenhaAdmin: true, cnpj: true, telefoneAtendimento: true, advogados: 1, advogadosComOab: 1,
       oabsMonitoradas: 1, pessoasComWhatsapp: 1, modelos: 2, clientes: 5, processos: 3, compromissos: 1,
@@ -164,7 +164,7 @@ describe("roteiro: pular, progresso e conclusao", () => {
     expect(quase.minutosRestantes).toBe(2);
   });
 
-  it("toda chave do roteiro e unica", () => {
+  it("toda chave do roteiro e única", () => {
     expect(new Set(CHAVES_DOS_PASSOS).size).toBe(CHAVES_DOS_PASSOS.length);
   });
 });
@@ -177,11 +177,11 @@ const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 let escritorio = "";
 
-d("roteiro do escritorio", () => {
+d("roteiro do escritório", () => {
   beforeAll(async () => {
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 5).toString("base64");
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `passos-${Date.now()}`, nome: "Escritorio Recem-Chegado" },
+      data: { slug: `passos-${Date.now()}`, nome: "Escritório Recem-Chegado" },
     });
     escritorio = e.id;
     for (const modulo of ["PUBLICACOES_DJEN", "EMAIL", "COBRANCAS"]) {
@@ -198,7 +198,7 @@ d("roteiro do escritorio", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("escritorio que acabou de nascer comeca do zero, so com o que contratou", async () => {
+  it("escritório que acabou de nascer começa do zero, só com o que contratou", async () => {
     const r = await roteiroDoEscritorio(escritorio);
     expect(r.feitos).toBe(0);
     expect(r.proximo?.chave).toBe("SENHA_ADMIN");
@@ -262,7 +262,7 @@ d("roteiro do escritorio", () => {
     await expect(pularPasso(escritorio, "EQUIPE", null)).rejects.toBeInstanceOf(PassoNaoPulavel);
   });
 
-  it("dispensar do inicio nao apaga o que foi pulado", async () => {
+  it("dispensar do início não apaga o que foi pulado", async () => {
     await pularPasso(escritorio, "MODELOS", null);
     await dispensarDoInicio(escritorio, true);
     let r = await roteiroDoEscritorio(escritorio);

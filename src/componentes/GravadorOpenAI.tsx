@@ -88,7 +88,7 @@ export function GravadorOpenAI({
         corpo.append("continua", "true");
         const r = await fetch(`/api/entrevistas/${entrevistaId}/audio`, { method: "POST", body: corpo });
         const dados = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(dados.erro ?? "Nao deu para transcrever um trecho.");
+        if (!r.ok) throw new Error(dados.erro ?? "Não deu para transcrever um trecho.");
         onTexto(dados.texto ?? "");
         setEnviados((e) => e + 1);
       } catch (falha) {
@@ -178,17 +178,17 @@ export function GravadorOpenAI({
             }
             dados = (await r?.json().catch(() => ({}))) ?? {};
             if (!r?.ok) {
-              dados = { guardado: false, motivo: dados.motivo ?? dados.erro ?? "A gravacao nao foi guardada na pasta (falha de conexao). A transcricao esta salva." };
+              dados = { guardado: false, motivo: dados.motivo ?? dados.erro ?? "A gravação não foi guardada na pasta (falha de conexão). A transcrição está salva." };
               break;
             }
           }
           onPasta?.(
             dados.guardado
-              ? `Gravacao guardada na pasta do cliente: ${dados.nome}.`
-              : (dados.motivo ?? dados.erro ?? "A gravacao nao foi guardada na pasta."),
+              ? `Gravação guardada na pasta do cliente: ${dados.nome}.`
+              : (dados.motivo ?? dados.erro ?? "A gravação não foi guardada na pasta."),
           );
         } catch {
-          onPasta?.("A gravacao nao foi guardada na pasta (falha de conexao). A transcricao esta salva.");
+          onPasta?.("A gravação não foi guardada na pasta (falha de conexão). A transcrição está salva.");
         }
       });
     };
@@ -211,7 +211,7 @@ export function GravadorOpenAI({
     onErro(null);
     const tipo = formatoDoNavegador();
     if (!tipo || !navigator.mediaDevices?.getUserMedia) {
-      onErro("Este navegador nao grava audio. Use o Chrome, o Edge ou o Safari atualizados, ou importe o audio gravado no celular.");
+      onErro("Este navegador não grava áudio. Use o Chrome, o Edge ou o Safari atualizados, ou importe o áudio gravado no celular.");
       return;
     }
     try {
@@ -220,10 +220,10 @@ export function GravadorOpenAI({
       const nome = (e as { name?: string }).name;
       onErro(
         nome === "NotAllowedError"
-          ? "O navegador bloqueou o microfone. Clique no cadeado ao lado do endereco do site e autorize o microfone."
+          ? "O navegador bloqueou o microfone. Clique no cadeado ao lado do endereço do site e autorize o microfone."
           : nome === "NotFoundError"
             ? "Nenhum microfone foi encontrado neste computador."
-            : "Nao foi possivel acessar o microfone.",
+            : "Não foi possível acessar o microfone.",
       );
       return;
     }
@@ -277,15 +277,15 @@ export function GravadorOpenAI({
     <div className="grid gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3">
       <p className="text-sm font-semibold text-sky-950">Gravar a conversa e transcrever na hora</p>
       <p className="text-xs text-sky-900">
-        O sistema grava pelo microfone e manda cada minuto para a transcricao da OpenAI: o texto vai aparecendo
-        abaixo enquanto a conversa acontece. Ao parar, a gravacao inteira vai para a pasta do cliente ligado a
-        entrevista. Grave so com a ciencia do cliente — o audio sai do escritorio para virar texto.
+        O sistema grava pelo microfone e manda cada minuto para a transcrição da OpenAI: o texto vai aparecendo
+        abaixo enquanto a conversa acontece. Ao parar, a gravação inteira vai para a pasta do cliente ligado a
+        entrevista. Grave só com a ciência do cliente — o áudio sai do escritório para virar texto.
       </p>
 
       {!ciente ? (
         <label className="flex items-start gap-2 text-xs text-sky-950">
           <input type="checkbox" checked={ciente} onChange={(ev) => setCiente(ev.target.checked)} className="mt-0.5" />
-          <span>O cliente esta ciente da gravacao, e autorizo enviar o audio para transcricao.</span>
+          <span>O cliente está ciente da gravação, e autorizo enviar o áudio para transcrição.</span>
         </label>
       ) : (
         <div className="flex flex-wrap items-center gap-3">
@@ -300,7 +300,7 @@ export function GravadorOpenAI({
             </button>
           ) : (
             <button type="button" onClick={parar} className="botao-secundario text-xs">
-              Parar gravacao
+              Parar gravação
             </button>
           )}
           {gravando ? (

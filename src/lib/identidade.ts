@@ -278,9 +278,9 @@ export function variaveisDaPaleta(paleta: Paleta): Record<string, string> {
 export function avisoSobreContraste(cor: string): string | null {
   if (contraste(cor, "#FFFFFF") >= 4.5) return null;
   return (
-    "Esta cor e clara demais para escrever sobre fundo branco: etiquetas e " +
-    "links nela ficam dificeis de ler. Uma versao mais escura da mesma cor " +
-    "resolve, e mantem a identidade."
+    "Esta cor é clara demais para escrever sobre fundo branco: etiquetas e " +
+    "links nela ficam difíceis de ler. Uma versão mais escura da mesma cor " +
+    "resolve, e mantém a identidade."
   );
 }
 

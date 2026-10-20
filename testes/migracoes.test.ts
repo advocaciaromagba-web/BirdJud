@@ -18,13 +18,13 @@ function migracoes(): string[] {
 }
 
 describe("ordem das migracoes", () => {
-  it("toda migracao comeca com dois digitos", () => {
+  it("toda migração começa com dois dígitos", () => {
     for (const nome of migracoes()) {
       expect(nome).toMatch(/^\d{2}_/);
     }
   });
 
-  it("a ordem alfabetica e a ordem numerica sao a mesma", () => {
+  it("a ordem alfabetica e a ordem numerica são a mesma", () => {
     const nomes = migracoes();
     const porNumero = [...nomes].sort(
       (a, b) => Number(a.slice(0, 2)) - Number(b.slice(0, 2)),
@@ -33,7 +33,7 @@ describe("ordem das migracoes", () => {
     expect(porAlfabeto).toEqual(porNumero);
   });
 
-  it("nao ha dois numeros repetidos", () => {
+  it("não há dois números repetidos", () => {
     const numeros = migracoes().map((nome) => nome.slice(0, 2));
     expect(new Set(numeros).size).toBe(numeros.length);
   });

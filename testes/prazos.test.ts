@@ -42,7 +42,7 @@ describe("o calendario movel", () => {
     expect(f.has("2026-06-04")).toBe(true); // corpus christi
   });
 
-  it("traz os feriados forenses, que nao sao feriado nacional", () => {
+  it("traz os feriados forenses, que não são feriado nacional", () => {
     const f = feriadosNacionais(2026);
     expect(f.has("2026-08-11")).toBe(true); // Dia do Advogado
     expect(f.has("2026-11-01")).toBe(true); // Todos os Santos
@@ -50,18 +50,18 @@ describe("o calendario movel", () => {
   });
 });
 
-describe("o que e dia util", () => {
-  it("fim de semana nao e", () => {
+describe("o que e dia útil", () => {
+  it("fim de semana não e", () => {
     expect(ehDiaUtil(dia("2026-10-10"))).toBe(false); // sabado
     expect(ehDiaUtil(dia("2026-10-11"))).toBe(false); // domingo
     expect(ehDiaUtil(dia("2026-10-09"))).toBe(true); // sexta
   });
 
-  it("feriado nacional nao e", () => {
+  it("feriado nacional não e", () => {
     expect(ehDiaUtil(dia("2026-09-07"))).toBe(false); // Independencia, segunda
   });
 
-  it("o recesso inteiro nao e (CPC 220)", () => {
+  it("o recesso inteiro não e (CPC 220)", () => {
     expect(dentroDoRecesso(dia("2026-12-19"))).toBe(false);
     expect(dentroDoRecesso(dia("2026-12-20"))).toBe(true);
     expect(dentroDoRecesso(dia("2027-01-20"))).toBe(true);
@@ -70,7 +70,7 @@ describe("o que e dia util", () => {
     expect(ehDiaUtil(dia("2026-12-22"))).toBe(false);
   });
 
-  it("o dia que o ESCRITORIO marcou nao e", () => {
+  it("o dia que o ESCRITORIO marcou não e", () => {
     // Feriado municipal nao cabe em lista nacional: cada escritorio trabalha
     // em comarcas diferentes. Esta e a diferenca que o multi-inquilino exige.
     const comarca = ["2026-10-08"]; // feriado so naquela cidade
@@ -79,42 +79,42 @@ describe("o que e dia util", () => {
   });
 });
 
-describe("prazo em dias uteis (CPC 219)", () => {
+describe("prazo em dias úteis (CPC 219)", () => {
   // Quinta 08/10/2026. Exclui o dia do comeco: comeca sexta 09/10.
   // 09(1) 13(2) 14(3) 15(4) 16(5) — segunda 12/10 e Nossa Senhora Aparecida.
-  it("exclui o dia do comeco e pula o feriado no meio", () => {
+  it("exclui o dia do começo e pula o feriado no meio", () => {
     const p = calcularPrazo("2026-10-08", 5);
     expect(p.inicioContagem).toBe("2026-10-09");
     expect(p.vencimento).toBe("2026-10-16");
     expect(p.explicacao).toContain("CPC 219");
   });
 
-  it("prazo de 1 dia vence no primeiro dia util seguinte", () => {
+  it("prazo de 1 dia vence no primeiro dia útil seguinte", () => {
     expect(calcularPrazo("2026-10-08", 1).vencimento).toBe("2026-10-09");
   });
 
   // Termo inicial numa sexta: a contagem so comeca na segunda.
-  it("termo inicial na sexta comeca a correr na segunda", () => {
+  it("termo inicial na sexta começa a correr na segunda", () => {
     const p = calcularPrazo("2026-10-09", 1);
     expect(p.inicioContagem).toBe("2026-10-13"); // 12/10 e feriado
     expect(p.vencimento).toBe("2026-10-13");
   });
 
-  // 15 dias uteis a partir de 15/12/2026 atravessam o recesso inteiro.
-  // Comeca 16/12: 16,17,18(3). Recesso de 20/12 a 20/01. Volta 21/01:
+  // 15 dias úteis a partir de 15/12/2026 atravessam o recesso inteiro.
+  // Começa 16/12: 16,17,18(3). Recesso de 20/12 a 20/01. Volta 21/01:
   // 21,22,25,26,27,28,29(10) fev 01,02,03,04,05(15) -> 05/02/2027.
-  it("suspende no recesso e avisa na explicacao (CPC 220)", () => {
+  it("suspende no recesso e avisa na explicação (CPC 220)", () => {
     const p = calcularPrazo("2026-12-15", 15);
     expect(p.inicioContagem).toBe("2026-12-16");
     expect(p.vencimento).toBe("2027-02-05");
     expect(p.explicacao).toContain("CPC 220");
   });
 
-  it("prazo que nao toca o recesso nao fala dele", () => {
+  it("prazo que não toca o recesso não fala dele", () => {
     expect(calcularPrazo("2026-10-08", 5).explicacao).not.toContain("CPC 220");
   });
 
-  it("o calendario do escritorio empurra o vencimento", () => {
+  it("o calendario do escritório empurra o vencimento", () => {
     const sem = calcularPrazo("2026-10-08", 5).vencimento;
     const com = calcularPrazo("2026-10-08", 5, "UTEIS", ["2026-10-14"]).vencimento;
     expect(sem).toBe("2026-10-16");
@@ -136,29 +136,29 @@ describe("prazo em dias corridos (CPP 798, direito material)", () => {
     expect(p.explicacao).toContain("CPC 224 § 1º");
   });
 
-  it("vencimento ja em dia util nao fala em prorrogacao", () => {
+  it("vencimento já em dia útil não fala em prorrogacao", () => {
     const p = calcularPrazo("2026-10-08", 1, "CORRIDOS");
     expect(p.vencimento).toBe("2026-10-09");
     expect(p.explicacao).not.toContain("prorrogado");
   });
 });
 
-describe("o que a funcao recusa", () => {
+describe("o que a função recusa", () => {
   // Recusar e melhor que devolver uma data: data errada aqui perde direito.
-  it("data que nao existe no calendario", () => {
+  it("data que não existe no calendario", () => {
     expect(() => calcularPrazo("2026-11-31", 5)).toThrow(PrazoInvalido);
     expect(() => calcularPrazo("2026-02-30", 5)).toThrow(PrazoInvalido);
     expect(() => calcularPrazo("08/10/2026", 5)).toThrow(PrazoInvalido);
     expect(() => calcularPrazo("", 5)).toThrow(PrazoInvalido);
   });
 
-  it("quantidade de dias que nao serve", () => {
+  it("quantidade de dias que não serve", () => {
     for (const d of [0, -5, 1.5, 1001, Number.NaN, Number.POSITIVE_INFINITY]) {
       expect(() => calcularPrazo("2026-10-08", d), String(d)).toThrow(PrazoInvalido);
     }
   });
 
-  it("ano inteiro sem expediente lanca em vez de devolver dia errado", () => {
+  it("ano inteiro sem expediente lança em vez de devolver dia errado", () => {
     const anoTodo: string[] = [];
     for (let i = 0; i < 420; i++) {
       anoTodo.push(new Date(Date.UTC(2026, 0, 1) + i * 86_400_000).toISOString().slice(0, 10));
@@ -168,12 +168,12 @@ describe("o que a funcao recusa", () => {
 });
 
 describe("quanto falta", () => {
-  it("conta dias uteis entre duas datas", () => {
+  it("conta dias úteis entre duas datas", () => {
     // 08/10 (qui) ate 16/10 (sex): 09,13,14,15,16 = 5 (12/10 e feriado)
     expect(diasUteisAte("2026-10-08", "2026-10-16")).toBe(5);
   });
 
-  it("devolve negativo quando a data ja passou", () => {
+  it("devolve negativo quando a data já passou", () => {
     expect(diasUteisAte("2026-10-16", "2026-10-08")).toBe(-5);
   });
 
@@ -187,7 +187,7 @@ describe("apresentacao", () => {
     expect(paraBR("2026-10-08")).toBe("08/10/2026");
   });
 
-  it("data que nao serve nao vira texto enganoso", () => {
+  it("data que não serve não vira texto enganoso", () => {
     expect(paraBR("2026-11-31")).toBe("");
     expect(paraBR(null)).toBe("");
     expect(paraBR("qualquer coisa")).toBe("");
@@ -201,15 +201,15 @@ describe("apresentacao", () => {
   });
 });
 
-describe("prazo que corre de publicacao no diario (CPC 224 §§ 2º e 3º)", () => {
-  it("publicada no dia 5, comeca no dia 6 se for util; publicada na sexta, comeca na segunda", () => {
+describe("prazo que corre de publicação no diário (CPC 224 §§ 2º e 3º)", () => {
+  it("publicada no dia 5, começa no dia 6 se for útil; publicada na sexta, começa na segunda", () => {
     // Terca 06/10/2026 -> quarta 07/10.
     expect(calcularPrazo("2026-10-06", 5).inicioContagem).toBe("2026-10-07");
     // Sexta 16/10/2026 -> segunda 19/10.
     expect(calcularPrazo("2026-10-16", 5).inicioContagem).toBe("2026-10-19");
   });
 
-  it("do DJEN vem a DISPONIBILIZACAO: publica no util seguinte e corre no util depois", () => {
+  it("do DJEN vem a DISPONIBILIZACAO: pública no útil seguinte e corre no útil depois", () => {
     // Disponibilizada na quinta 15/10: publicada na sexta 16/10, corre na segunda 19/10.
     const quinta = calcularPrazoDaPublicacao("2026-10-15", 15);
     expect(quinta.dataPublicacao).toBe("2026-10-16");
@@ -218,38 +218,38 @@ describe("prazo que corre de publicacao no diario (CPC 224 §§ 2º e 3º)", () 
     const sexta = calcularPrazoDaPublicacao("2026-10-16", 15);
     expect(sexta.dataPublicacao).toBe("2026-10-19");
     expect(sexta.inicioContagem).toBe("2026-10-20");
-    // Mesmo vencimento de quem conta a partir da publicacao em 19/10.
+    // Mesmo vencimento de quem conta a partir da publicação em 19/10.
     expect(sexta.vencimento).toBe(calcularPrazo("2026-10-19", 15).vencimento);
     expect(sexta.explicacao).toContain("publicada em 19/10/2026");
   });
 
-  it("feriado entre a disponibilizacao e a publicacao empurra as duas datas", () => {
+  it("feriado entre a disponibilização e a publicação empurra as duas datas", () => {
     // Sexta 09/10; segunda 12/10 e Nossa Senhora Aparecida: publica na terca 13, corre na quarta 14.
     const r = calcularPrazoDaPublicacao("2026-10-09", 5);
     expect(r.dataPublicacao).toBe("2026-10-13");
     expect(r.inicioContagem).toBe("2026-10-14");
   });
 
-  it("feriado municipal do escritorio tambem conta", () => {
+  it("feriado municipal do escritório também conta", () => {
     const r = calcularPrazoDaPublicacao("2026-10-15", 5, "UTEIS", new Set(["2026-10-16"]));
     expect(r.dataPublicacao).toBe("2026-10-19");
     expect(r.inicioContagem).toBe("2026-10-20");
   });
 });
 
-describe("regua do prazo fatal, em dias uteis", () => {
-  it("avisa a 4 dias uteis, na vespera e no dia", () => {
+describe("regua do prazo fatal, em dias úteis", () => {
+  it("avisa a 4 dias úteis, na véspera e no dia", () => {
     expect(marcoDoFatal(6)).toBeNull();
     expect(marcoDoFatal(5)).toBeNull();
-    expect(marcoDoFatal(4)).toEqual({ chave: "4du", rotulo: "faltam 4 dias uteis" });
+    expect(marcoDoFatal(4)).toEqual({ chave: "4du", rotulo: "faltam 4 dias úteis" });
     expect(marcoDoFatal(3)?.chave).toBe("4du");
-    expect(marcoDoFatal(3)?.rotulo).toBe("faltam 3 dias uteis");
+    expect(marcoDoFatal(3)?.rotulo).toBe("faltam 3 dias úteis");
     expect(marcoDoFatal(1)?.chave).toBe("1du");
     expect(marcoDoFatal(0)?.chave).toBe("hoje");
     expect(marcoDoFatal(-1)).toBeNull();
   });
 
-  it("fatal na segunda, visto na terca anterior: 4 dias uteis", () => {
+  it("fatal na segunda, visto na terca anterior: 4 dias úteis", () => {
     expect(marcoDoFatal(diasUteisAte("2026-10-20", "2026-10-26"))?.chave).toBe("4du");
     // Visto na sexta: um dia util so, e a vespera.
     expect(marcoDoFatal(diasUteisAte("2026-10-23", "2026-10-26"))?.chave).toBe("1du");

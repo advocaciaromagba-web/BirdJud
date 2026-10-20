@@ -51,7 +51,7 @@ export async function PUT(
       }
     } catch (falha) {
       console.log(
-        `participantes ${id}: aviso nao gerado ${
+        `participantes ${id}: aviso não gerado ${
           falha instanceof Error ? falha.message : ""
         }`.slice(0, 300),
       );

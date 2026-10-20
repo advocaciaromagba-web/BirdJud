@@ -31,7 +31,7 @@ export function raiz(): string {
 /** Um identificador nosso, e so isso. Barra, ponto e espaco nao passam. */
 function seguro(parte: string): string {
   if (!/^[A-Za-z0-9_-]{1,64}$/.test(parte)) {
-    throw new Error("Identificador invalido para caminho de arquivo.");
+    throw new Error("Identificador inválido para caminho de arquivo.");
   }
   return parte;
 }
@@ -236,7 +236,7 @@ async function pedir(
   });
   if (!r.ok && !(metodo === "HEAD" && r.status === 404)) {
     // ENOENT no texto: quem ja trata "arquivo sumido" continua tratando igual.
-    throw new Error(`arquivo ${arquivoId ?? "(pasta)"} pela aplicacao: HTTP ${r.status}${r.status === 404 ? " (ENOENT)" : ""}`);
+    throw new Error(`arquivo ${arquivoId ?? "(pasta)"} pela aplicação: HTTP ${r.status}${r.status === 404 ? " (ENOENT)" : ""}`);
   }
   return r;
 }
@@ -287,8 +287,8 @@ export async function conferirViaAplicacao(): Promise<string | null> {
       headers: { "x-segredo-arquivos": remoto.segredo },
       signal: AbortSignal.timeout(10_000),
     });
-    return r.status === 204 ? `arquivos pela aplicacao: ok (${remoto.base})` : `arquivos pela aplicacao: HTTP ${r.status} (${remoto.base})`;
+    return r.status === 204 ? `arquivos pela aplicação: ok (${remoto.base})` : `arquivos pela aplicação: HTTP ${r.status} (${remoto.base})`;
   } catch (e) {
-    return `arquivos pela aplicacao: SEM RESPOSTA (${remoto.base}): ${(e as Error).message}`;
+    return `arquivos pela aplicação: SEM RESPOSTA (${remoto.base}): ${(e as Error).message}`;
   }
 }

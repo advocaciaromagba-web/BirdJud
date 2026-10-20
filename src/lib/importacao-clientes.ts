@@ -19,7 +19,7 @@ import { UFS } from "./ufs";
 import type { Celula } from "./planilha";
 
 export const CAMPOS_IMPORTAVEIS = [
-  { chave: "nome", rotulo: "Nome / razao social", sinonimos: ["nome", "nome completo", "cliente", "nome do cliente", "razao social", "nome razao social", "nome ou razao social", "nome cliente"] },
+  { chave: "nome", rotulo: "Nome / razão social", sinonimos: ["nome", "nome completo", "cliente", "nome do cliente", "razao social", "nome razao social", "nome ou razao social", "nome cliente"] },
   { chave: "documento", rotulo: "CPF / CNPJ", sinonimos: ["cpf", "cnpj", "cpf cnpj", "cnpj cpf", "documento", "cpf ou cnpj", "doc", "n documento", "numero documento", "cpf do cliente"] },
   { chave: "email", rotulo: "E-mail", sinonimos: ["email", "e mail", "correio eletronico", "endereco eletronico", "email do cliente"] },
   { chave: "telefone", rotulo: "Telefone / celular", sinonimos: ["telefone", "celular", "fone", "tel", "whatsapp", "telefone celular", "telefone 1", "fone 1", "contato", "celular 1", "telefone principal"] },
@@ -27,16 +27,16 @@ export const CAMPOS_IMPORTAVEIS = [
   { chave: "nascimento", rotulo: "Data de nascimento", sinonimos: ["nascimento", "data de nascimento", "data nascimento", "dt nascimento", "nasc", "data nasc", "dt nasc"] },
   { chave: "nacionalidade", rotulo: "Nacionalidade", sinonimos: ["nacionalidade"] },
   { chave: "estadoCivil", rotulo: "Estado civil", sinonimos: ["estado civil", "est civil"] },
-  { chave: "profissao", rotulo: "Profissao", sinonimos: ["profissao", "ocupacao", "cargo"] },
+  { chave: "profissao", rotulo: "Profissão", sinonimos: ["profissao", "ocupacao", "cargo"] },
   { chave: "cep", rotulo: "CEP", sinonimos: ["cep", "codigo postal"] },
   { chave: "logradouro", rotulo: "Rua / logradouro", sinonimos: ["logradouro", "rua", "avenida", "endereco rua", "rua avenida"] },
-  { chave: "numero", rotulo: "Numero (endereco)", sinonimos: ["numero", "n", "no", "num", "nro", "numero endereco"] },
+  { chave: "numero", rotulo: "Número (endereço)", sinonimos: ["numero", "n", "no", "num", "nro", "numero endereco"] },
   { chave: "complemento", rotulo: "Complemento", sinonimos: ["complemento", "compl"] },
   { chave: "bairro", rotulo: "Bairro", sinonimos: ["bairro"] },
   { chave: "cidade", rotulo: "Cidade", sinonimos: ["cidade", "municipio"] },
   { chave: "uf", rotulo: "UF", sinonimos: ["uf", "estado", "sigla uf"] },
-  { chave: "enderecoCompleto", rotulo: "Endereco completo (uma coluna)", sinonimos: ["endereco", "endereco completo", "endereco residencial"] },
-  { chave: "observacoes", rotulo: "Observacoes", sinonimos: ["observacoes", "observacao", "obs", "anotacoes", "notas"] },
+  { chave: "enderecoCompleto", rotulo: "Endereço completo (uma coluna)", sinonimos: ["endereco", "endereco completo", "endereco residencial"] },
+  { chave: "observacoes", rotulo: "Observações", sinonimos: ["observacoes", "observacao", "obs", "anotacoes", "notas"] },
 ] as const;
 
 export type CampoImportavel = (typeof CAMPOS_IMPORTAVEIS)[number]["chave"];
@@ -110,7 +110,7 @@ export type LinhaInterpretada = {
 };
 
 const DOC_CIENTIFICO =
-  "o Excel transformou o numero em notacao cientifica e os digitos se perderam. Formate a coluna como Texto no sistema de origem e exporte de novo";
+  "o Excel transformou o número em notação científica e os dígitos se perderam. Formate a coluna como Texto no sistema de origem e exporte de novo";
 
 /**
  * CPF/CNPJ. Celula de NUMERO com 9-10 ou 12-13 digitos: tenta devolver os
@@ -123,7 +123,7 @@ export function lerDocumento(c: Celula | undefined): { valor: string | null; pro
   if (d.length === 11 || d.length === 14) {
     return documentoValido(d)
       ? { valor: formatarDocumento(d) }
-      : { valor: null, problema: `CPF/CNPJ ${c.texto} nao fecha o digito verificador` };
+      : { valor: null, problema: `CPF/CNPJ ${c.texto} não fecha o dígito verificador` };
   }
   if (c.numero && (d.length === 9 || d.length === 10 || d.length === 12 || d.length === 13)) {
     const alvo = d.length <= 10 ? 11 : 14;
@@ -131,11 +131,11 @@ export function lerDocumento(c: Celula | undefined): { valor: string | null; pro
     if (documentoValido(completo)) {
       return {
         valor: formatarDocumento(completo),
-        aviso: `o Excel tinha tirado o zero da frente do ${alvo === 11 ? "CPF" : "CNPJ"}: devolvido e conferido pelo digito`,
+        aviso: `o Excel tinha tirado o zero da frente do ${alvo === 11 ? "CPF" : "CNPJ"}: devolvido e conferido pelo dígito`,
       };
     }
   }
-  return { valor: null, problema: `CPF/CNPJ ${c.texto} tem ${d.length} digito(s): nao e CPF (11) nem CNPJ (14)` };
+  return { valor: null, problema: `CPF/CNPJ ${c.texto} tem ${d.length} dígito(s): não é CPF (11) nem CNPJ (14)` };
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -198,7 +198,7 @@ export function interpretarLinha(celulas: Celula[], mapa: Mapeamento, hoje = new
 
   let email = txt("email")?.toLowerCase() ?? null;
   if (email && !EMAIL.test(email)) {
-    avisos.push(`e-mail "${email}" invalido: ficou de fora`);
+    avisos.push(`e-mail "${email}" inválido: ficou de fora`);
     email = null;
   }
 
@@ -211,14 +211,14 @@ export function interpretarLinha(celulas: Celula[], mapa: Mapeamento, hoje = new
 
   let rg = txt("rg", 30);
   if (rg && de("rg")?.cientifica) {
-    avisos.push("RG em notacao cientifica: ficou de fora");
+    avisos.push("RG em notação científica: ficou de fora");
     rg = null;
   }
 
   let nascimento: string | null = null;
   if (txt("nascimento")) {
     nascimento = lerData(de("nascimento"), hoje);
-    if (!nascimento) avisos.push(`data de nascimento "${txt("nascimento")}" nao e uma data valida: ficou de fora`);
+    if (!nascimento) avisos.push(`data de nascimento "${txt("nascimento")}" não é uma data válida: ficou de fora`);
   }
 
   // Endereco
@@ -245,7 +245,7 @@ export function interpretarLinha(celulas: Celula[], mapa: Mapeamento, hoje = new
   const uf = txt("uf")?.toUpperCase();
   if (uf) {
     if ((UFS as readonly string[]).includes(uf)) endereco.uf = uf;
-    else avisos.push(`UF "${uf}" nao e sigla de estado: ficou de fora`);
+    else avisos.push(`UF "${uf}" não é sigla de estado: ficou de fora`);
   }
 
   return {
@@ -272,7 +272,7 @@ export type Situacao = "NOVO" | "JA_CADASTRADO" | "REPETIDO_NA_PLANILHA" | "PROB
 
 export const ROTULO_DA_SITUACAO: Record<Situacao, string> = {
   NOVO: "Novo",
-  JA_CADASTRADO: "Ja cadastrado",
+  JA_CADASTRADO: "Já cadastrado",
   REPETIDO_NA_PLANILHA: "Repetido na planilha",
   PROBLEMA: "Com problema",
   VAZIA: "Linha vazia",
@@ -317,15 +317,15 @@ export function classificarLinhas(
     const doc = digitos(l.dados.documento);
     const nome = normalizarNome(l.dados.nome);
     if (doc && existentes.documentos.has(doc)) {
-      return { ...base, situacao: "JA_CADASTRADO" as const, motivo: "este CPF/CNPJ ja esta cadastrado" };
+      return { ...base, situacao: "JA_CADASTRADO" as const, motivo: "este CPF/CNPJ já está cadastrado" };
     }
     if (doc && existentes.nomesSemDocumento.has(nome)) {
       // Mesmo nome de um cliente cadastrado SEM CPF: provavelmente e ele.
       // Cadastrar de novo duplicaria; o caminho e completar o CPF na ficha.
-      return { ...base, situacao: "JA_CADASTRADO" as const, motivo: "ja existe cliente com este nome, cadastrado sem CPF: complete o CPF na ficha dele" };
+      return { ...base, situacao: "JA_CADASTRADO" as const, motivo: "já existe cliente com este nome, cadastrado sem CPF: complete o CPF na ficha dele" };
     }
     if (!doc && existentes.nomes.has(nome)) {
-      return { ...base, situacao: "JA_CADASTRADO" as const, motivo: "ja existe cliente com este nome (a planilha nao traz CPF para diferenciar)" };
+      return { ...base, situacao: "JA_CADASTRADO" as const, motivo: "já existe cliente com este nome (a planilha não traz CPF para diferenciar)" };
     }
     if (doc && vistosDoc.has(doc)) {
       return { ...base, situacao: "REPETIDO_NA_PLANILHA" as const, motivo: `mesmo CPF/CNPJ da linha ${vistosDoc.get(doc)}` };

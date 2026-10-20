@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     const corpo = corpoEsperado.safeParse(await req.json());
     if (!corpo.success || !ehTipoDeIntegracao(corpo.data.tipo)) {
       return NextResponse.json(
-        { erro: "Integracao desconhecida." },
+        { erro: "Integração desconhecida." },
         { status: 400 },
       );
     }

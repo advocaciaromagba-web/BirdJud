@@ -27,7 +27,7 @@ export class PlataformaSemCobranca extends Error {
   readonly status = 503;
   constructor() {
     super(
-      "A conta de cobranca da plataforma nao esta configurada (ASAAS_PLATAFORMA_CHAVE).",
+      "A conta de cobrança da plataforma não está configurada (ASAAS_PLATAFORMA_CHAVE).",
     );
     this.name = "PlataformaSemCobranca";
   }
@@ -80,7 +80,7 @@ export class AssinanteSemDocumento extends Error {
   readonly status = 422;
   constructor(nome: string) {
     super(
-      `O escritorio ${nome} nao tem CNPJ cadastrado. O Asaas exige CPF ou CNPJ para emitir cobranca.`,
+      `O escritório ${nome} não tem CNPJ cadastrado. O Asaas exige CPF ou CNPJ para emitir cobrança.`,
     );
     this.name = "AssinanteSemDocumento";
   }
@@ -210,7 +210,7 @@ export async function emitirCobrancaDaFatura(
 
   const idExterno = typeof criada.id === "string" ? criada.id : null;
   if (!idExterno) {
-    throw new FalhaNoAsaas("O Asaas criou a cobranca sem devolver id.");
+    throw new FalhaNoAsaas("O Asaas criou a cobrança sem devolver id.");
   }
   const linkPagamento =
     typeof criada.invoiceUrl === "string" ? criada.invoiceUrl : null;
@@ -250,24 +250,24 @@ export function mensagemDaFatura(dados: {
       `${dados.nomeDoEscritorio},`,
       "",
       dados.anual
-        ? `A fatura do plano anual do BirdJud (12 meses a partir de ${dados.competencia}, com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto) esta disponivel.`
-        : `A fatura da assinatura do BirdJud referente a ${dados.competencia} esta disponivel.`,
+        ? `A fatura do plano anual do BirdJud (12 meses a partir de ${dados.competencia}, com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto) está disponível.`
+        : `A fatura da assinatura do BirdJud referente a ${dados.competencia} está disponível.`,
       "",
       `Valor: ${valor}`,
       `Vencimento: ${vence}`,
       ...(dados.link
         ? ["", `Pagar (boleto ou Pix): ${dados.link}`]
-        : ["", "O link de pagamento sera enviado em seguida."]),
+        : ["", "O link de pagamento será enviado em seguida."]),
       ...(dados.enderecoDoPlano
         ? [
             "",
             dados.anual
-              ? `No cartao, a vista ou em ate ${PARCELAS_DO_ANUAL}x (com a tarifa do cartao), na tela Plano: ${dados.enderecoDoPlano}`
-              : `No cartao (com a tarifa do cartao), na tela Plano: ${dados.enderecoDoPlano}`,
+              ? `No cartão, à vista ou em até ${PARCELAS_DO_ANUAL}x (com a tarifa do cartão), na tela Plano: ${dados.enderecoDoPlano}`
+              : `No cartão (com a tarifa do cartão), na tela Plano: ${dados.enderecoDoPlano}`,
           ]
         : []),
       "",
-      "A baixa e automatica: nao e preciso mandar comprovante.",
+      "A baixa é automática: não é preciso mandar comprovante.",
       "",
       "BirdJud, by Blackbird",
     ].join("\n"),
@@ -312,8 +312,8 @@ export async function pagarFaturaNoCartao(
     where: { id: faturaId, escritorioId },
     include: { escritorio: { select: { nome: true, cnpj: true } } },
   });
-  if (!fatura) throw new PedidoInvalido("Fatura nao encontrada.");
-  if (fatura.status !== "ABERTA") throw new PedidoInvalido("Esta fatura nao esta em aberto.");
+  if (!fatura) throw new PedidoInvalido("Fatura não encontrada.");
+  if (fatura.status !== "ABERTA") throw new PedidoInvalido("Esta fatura não está em aberto.");
   if (fatura.parcelas) {
     return { linkPagamento: fatura.linkPagamento, parcelas: fatura.parcelas, valorCentavos: fatura.valorCentavos };
   }
@@ -321,7 +321,7 @@ export async function pagarFaturaNoCartao(
   const maximo = anual ? PARCELAS_DO_ANUAL : 1;
   if (!Number.isInteger(parcelas) || parcelas < 1 || parcelas > maximo) {
     throw new PedidoInvalido(
-      anual ? `Escolha de 1 a ${PARCELAS_DO_ANUAL} parcelas.` : "A mensalidade so vai ao cartao a vista.",
+      anual ? `Escolha de 1 a ${PARCELAS_DO_ANUAL} parcelas.` : "A mensalidade só vai ao cartão a vista.",
     );
   }
   const conta = pagamentoNoCartao(fatura.valorCentavos, parcelas);
@@ -329,7 +329,7 @@ export async function pagarFaturaNoCartao(
   if (fatura.idExterno) {
     const atual = await chamarAsaas(chave, `/payments/${fatura.idExterno}`);
     if (typeof atual.status === "string" && PAGO_NO_ASAAS.has(atual.status)) {
-      throw new PedidoInvalido("Esta fatura ja foi paga. A baixa chega em instantes.");
+      throw new PedidoInvalido("Esta fatura já foi paga. A baixa chega em instantes.");
     }
     await chamarAsaas(chave, `/payments/${fatura.idExterno}`, { method: "DELETE" });
     await prismaPlataforma().fatura.update({
@@ -352,7 +352,7 @@ export async function pagarFaturaNoCartao(
   // O Asaas recusa vencimento no passado: fatura vencida vai para hoje.
   const hoje = new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(agora)}T12:00:00Z`);
   const vencimento = fatura.vencimento > hoje ? fatura.vencimento : hoje;
-  const forma = parcelas > 1 ? `em ${parcelas}x no cartao` : "no cartao a vista";
+  const forma = parcelas > 1 ? `em ${parcelas}x no cartao` : "no cartão a vista";
   const criada = await chamarAsaas(chave, "/payments", {
     method: "POST",
     body: JSON.stringify({
@@ -364,7 +364,7 @@ export async function pagarFaturaNoCartao(
         ? { installmentCount: parcelas, totalValue: emReaisDecimal(conta.totalCentavos) }
         : { value: emReaisDecimal(conta.totalCentavos) }),
       dueDate: comoDia(vencimento),
-      description: `${descricaoDaFatura(fatura.competencia, anual)}, ${forma} (com a tarifa do cartao)`,
+      description: `${descricaoDaFatura(fatura.competencia, anual)}, ${forma} (com a tarifa do cartão)`,
       externalReference: referencia("fatura", fatura.id),
     }),
   });
@@ -372,7 +372,7 @@ export async function pagarFaturaNoCartao(
   const idExterno = typeof criada.id === "string" ? criada.id : null;
   const parcelamentoId = typeof criada.installment === "string" ? criada.installment : null;
   if (!idExterno || (parcelas > 1 && !parcelamentoId)) {
-    throw new FalhaNoAsaas("O Asaas criou a cobranca no cartao sem devolver os ids.");
+    throw new FalhaNoAsaas("O Asaas criou a cobrança no cartão sem devolver os ids.");
   }
   const linkPagamento = typeof criada.invoiceUrl === "string" ? criada.invoiceUrl : null;
 
@@ -391,8 +391,8 @@ export async function pagarFaturaNoCartao(
         ...(Array.isArray(fatura.detalhe) ? (fatura.detalhe as Prisma.InputJsonValue[]) : []),
         {
           descricao: parcelas > 1
-            ? `Tarifa do cartao parcelado em ${parcelas}x e antecipacao (repassadas)`
-            : "Tarifa do cartao a vista (repassada)",
+            ? `Tarifa do cartão parcelado em ${parcelas}x e antecipação (repassadas)`
+            : "Tarifa do cartão a vista (repassada)",
           valorCentavos: conta.tarifaCentavos,
         },
       ],

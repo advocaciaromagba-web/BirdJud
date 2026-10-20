@@ -22,40 +22,40 @@ import { separarAgendaETarefas } from "../src/lib/agenda-do-escritorio";
 import { gerarLembretesDeTarefas } from "../src/lib/avisos";
 
 describe("natureza: o que e agenda e o que e tarefa", () => {
-  it("audiencia, pericia e atendimento sao agenda", () => {
+  it("audiência, perícia e atendimento são agenda", () => {
     expect(naturezaDoTitulo("Audiência de instrução")).toBe("AGENDA");
     expect(naturezaDoTitulo("Perícia médica")).toBe("AGENDA");
     expect(naturezaDoTitulo("Atendimento ao cliente")).toBe("AGENDA");
   });
 
-  it("peca, manifestacao e recurso sao tarefa", () => {
+  it("peça, manifestação e recurso são tarefa", () => {
     expect(naturezaDoTitulo("Contestação")).toBe("TAREFA");
     expect(naturezaDoTitulo("Manifestar sobre documentos")).toBe("TAREFA");
     expect(naturezaDoTitulo("Recurso de apelação")).toBe("TAREFA");
     expect(naturezaDoTitulo("Montar a inicial")).toBe("TAREFA");
   });
 
-  it("titulo que fala das duas coisas nao decide sozinho", () => {
+  it("título que fala das duas coisas não decide sozinho", () => {
     // "quesitos para a pericia" e trabalho de escrever sobre uma pericia.
-    expect(naturezaDoTitulo("Quesitos para a pericia")).toBeNull();
-    expect(recusaDeTarefa("Quesitos para a pericia")).toBeNull();
+    expect(naturezaDoTitulo("Quesitos para a perícia")).toBeNull();
+    expect(recusaDeTarefa("Quesitos para a perícia")).toBeNull();
   });
 
-  it("a agenda recusa tarefa, pelo tipo e pelo titulo", () => {
+  it("a agenda recusa tarefa, pelo tipo e pelo título", () => {
     expect(recusaDaAgenda("TAREFA", "Qualquer coisa")).not.toBeNull();
     expect(recusaDaAgenda("PRAZO", "Qualquer coisa")).not.toBeNull();
-    expect(recusaDaAgenda("COMPROMISSO", "Fazer contestacao")).not.toBeNull();
-    expect(recusaDaAgenda("AUDIENCIA", "Audiencia de conciliacao")).toBeNull();
+    expect(recusaDaAgenda("COMPROMISSO", "Fazer contestação")).not.toBeNull();
+    expect(recusaDaAgenda("AUDIENCIA", "Audiência de conciliação")).toBeNull();
     expect(ehTipoDaAgenda("TAREFA")).toBe(false);
   });
 
-  it("tarefas recusa audiencia e pericia", () => {
-    expect(recusaDeTarefa("Audiencia de conciliacao")).not.toBeNull();
-    expect(recusaDeTarefa("Pericia no local")).not.toBeNull();
+  it("tarefas recusa audiência e perícia", () => {
+    expect(recusaDeTarefa("Audiência de conciliação")).not.toBeNull();
+    expect(recusaDeTarefa("Perícia no local")).not.toBeNull();
     expect(recusaDeTarefa("Contestacao")).toBeNull();
   });
 
-  it("prazo fatal vai para o fim do dia em Brasilia", () => {
+  it("prazo fatal vai para o fim do dia em Brasília", () => {
     expect(fimDoDia("2026-11-25")?.toISOString()).toBe("2026-11-26T02:59:00.000Z");
     expect(fimDoDia("")).toBeNull();
     expect(fimDoDia("25/11")).toBeUndefined();
@@ -74,7 +74,7 @@ describe("tarefa lendo o documento", () => {
     observacoes: [],
   });
 
-  it("a instrucao nao pede ao modelo o que o sistema calcula", () => {
+  it("a instrução não pede ao modelo o que o sistema calcula", () => {
     const instrucao = montarInstrucao("TAREFA");
     expect(instrucao).toContain('"prazoDias"');
     expect(instrucao).not.toContain('"prazoFatal"');
@@ -89,7 +89,7 @@ describe("tarefa lendo o documento", () => {
     expect(lida.campos.contagem.valor).toBe("UTEIS");
 
     const comPrazo = calcularPrazoDaLeitura(lida, "2026-11-03");
-    // A mesma conta da triagem de publicacoes (testes/triagem-do-escritorio).
+    // A mesma conta da triagem de publicações (testes/triagem-do-escritorio).
     expect(comPrazo.campos.prazoFatal.valor).toBe("2026-11-25");
     expect(comPrazo.campos.entrega.valor).toBe("2026-11-19");
     // Conta sobre leitura: nunca chega como "leitura clara".
@@ -97,7 +97,7 @@ describe("tarefa lendo o documento", () => {
     expect(comPrazo.observacoes[0]).toMatch(/^Prazo:/);
   });
 
-  it("data de DISPONIBILIZACAO no diario: publica no util seguinte e corre no util depois", () => {
+  it("data de DISPONIBILIZACAO no diário: pública no útil seguinte e corre no útil depois", () => {
     const lida = interpretar(
       "TAREFA",
       JSON.stringify({
@@ -113,12 +113,12 @@ describe("tarefa lendo o documento", () => {
     );
     expect(lida.campos.tipoDaData.valor).toBe("DISPONIBILIZACAO");
     const comPrazo = calcularPrazoDaLeitura(lida, "2026-11-03");
-    // Um dia util a mais que a intimacao do teste acima (25/11).
+    // Um dia útil a mais que a intimação do teste acima (25/11).
     expect(comPrazo.campos.prazoFatal.valor).toBe("2026-11-26");
     expect(comPrazo.observacoes[0]).toContain("publicada em 04/11/2026");
   });
 
-  it("sem os dias, nao inventa data", () => {
+  it("sem os dias, não inventa data", () => {
     const lida = interpretar(
       "TAREFA",
       JSON.stringify({ campos: { titulo: { valor: "Recurso" } }, observacoes: [] }),
@@ -164,7 +164,7 @@ d("o que estava misturado passa para Tarefas", () => {
     const triagemId = await comEscritorio(escritorio, async (db) => {
       const c = await db.compromisso.create({
         data: semEscritorio({
-          titulo: "Contestacao",
+          titulo: "Contestação",
           tipo: "TAREFA",
           inicio: new Date("2026-11-19T12:00:00Z"),
           observacoes: "PRAZO FATAL: 25/11/2026.",
@@ -172,16 +172,16 @@ d("o que estava misturado passa para Tarefas", () => {
       });
       await db.prazo.create({
         data: semEscritorio({
-          titulo: "Contestacao",
+          titulo: "Contestação",
           termoInicial: new Date("2026-11-03"),
           dias: 15,
           inicioContagem: new Date("2026-11-04"),
           vencimento: new Date("2026-11-25"),
-          explicacao: "15 dias uteis",
+          explicacao: "15 dias úteis",
         }),
       });
       await db.compromisso.create({
-        data: semEscritorio({ titulo: "Audiencia", tipo: "AUDIENCIA", inicio: new Date("2026-12-01T13:00:00Z") }),
+        data: semEscritorio({ titulo: "Audiência", tipo: "AUDIENCIA", inicio: new Date("2026-12-01T13:00:00Z") }),
       });
       const p = await db.publicacao.create({
         data: semEscritorio({
@@ -195,7 +195,7 @@ d("o que estava misturado passa para Tarefas", () => {
           publicacaoId: p.id,
           especie: "TAREFA",
           tipo: "TAREFA",
-          titulo: "Contestacao",
+          titulo: "Contestação",
           resumo: "",
           confianca: "ALTA",
           compromissoId: c.id,
@@ -212,15 +212,15 @@ d("o que estava misturado passa para Tarefas", () => {
       const agenda = await db.compromisso.findMany();
       expect(agenda.map((c) => c.tipo)).toEqual(["AUDIENCIA"]);
 
-      const tarefa = await db.tarefa.findFirstOrThrow({ where: { titulo: "Contestacao" } });
+      const tarefa = await db.tarefa.findFirstOrThrow({ where: { titulo: "Contestação" } });
       expect(tarefa.vencimento.toISOString()).toBe("2026-11-19T12:00:00.000Z");
       expect(tarefa.prazoFatal?.toISOString()).toBe("2026-11-26T02:59:00.000Z");
       expect(tarefa.responsavelId).toBe(admin);
 
       // Nada some sem registro.
-      const excluido = await db.compromissoExcluido.findFirstOrThrow({ where: { titulo: "Contestacao" } });
+      const excluido = await db.compromissoExcluido.findFirstOrThrow({ where: { titulo: "Contestação" } });
       expect(excluido.motivo).toBe("VIROU_TAREFA");
-      const prazo = await db.prazo.findFirstOrThrow({ where: { titulo: "Contestacao" } });
+      const prazo = await db.prazo.findFirstOrThrow({ where: { titulo: "Contestação" } });
       expect(prazo.tarefaId).toBe(tarefa.id);
       const triagem = await db.triagemDePublicacao.findFirstOrThrow({ where: { id: triagemId } });
       expect(triagem.tarefaId).toBe(tarefa.id);
@@ -228,34 +228,34 @@ d("o que estava misturado passa para Tarefas", () => {
     });
   });
 
-  it("prazo solto vira tarefa propria; cumprido vira concluida", async () => {
+  it("prazo solto vira tarefa própria; cumprido vira concluída", async () => {
     await comEscritorio(escritorio, (db) =>
       db.prazo.create({
         data: semEscritorio({
-          titulo: "Recurso de apelacao",
+          titulo: "Recurso de apelação",
           termoInicial: new Date("2026-10-01"),
           dias: 15,
           inicioContagem: new Date("2026-10-02"),
           vencimento: new Date("2026-10-22"),
-          explicacao: "15 dias uteis",
+          explicacao: "15 dias úteis",
           cumpridoEm: new Date("2026-10-20T15:00:00Z"),
         }),
       }),
     );
     expect(await separarAgendaETarefas(escritorio)).toEqual({ deCompromissos: 0, dePrazos: 1 });
     const t = await comEscritorio(escritorio, (db) =>
-      db.tarefa.findFirstOrThrow({ where: { titulo: "Recurso de apelacao" } }),
+      db.tarefa.findFirstOrThrow({ where: { titulo: "Recurso de apelação" } }),
     );
     expect(t.situacao).toBe("CONCLUIDA");
     expect(t.prazoFatal?.toISOString()).toBe("2026-10-23T02:59:00.000Z");
   });
 
-  it("rodar de novo nao faz nada", async () => {
+  it("rodar de novo não faz nada", async () => {
     expect(await separarAgendaETarefas(escritorio)).toEqual({ deCompromissos: 0, dePrazos: 0 });
   });
 });
 
-d("regua do prazo fatal: 4 dias uteis antes, vespera e o dia", () => {
+d("regua do prazo fatal: 4 dias úteis antes, véspera e o dia", () => {
   let escritorio = "";
 
   beforeAll(async () => {
@@ -268,7 +268,7 @@ d("regua do prazo fatal: 4 dias uteis antes, vespera e o dia", () => {
       });
       await db.tarefa.create({
         data: semEscritorio({
-          titulo: "Contestacao",
+          titulo: "Contestação",
           // Entrega ja passou: so o fatal avisa daqui para a frente.
           vencimento: new Date("2026-10-19T12:00:00Z"),
           // Fatal na segunda 26/10/2026, fim do dia em Brasilia.
@@ -290,7 +290,7 @@ d("regua do prazo fatal: 4 dias uteis antes, vespera e o dia", () => {
       db.aviso.findMany({ where: { tipo: "LEMBRETE_TAREFA" }, select: { chave: true, assunto: true } }),
     );
 
-  it("na madrugada espera; as 10h de terca (4 dias uteis antes) avisa uma vez", async () => {
+  it("na madrugada espera; as 10h de terca (4 dias úteis antes) avisa uma vez", async () => {
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-20T06:00:00Z"))).toBe(0);
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-20T13:00:00Z"))).toBe(1);
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-20T14:00:00Z"))).toBe(0);
@@ -298,10 +298,10 @@ d("regua do prazo fatal: 4 dias uteis antes, vespera e o dia", () => {
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-21T13:00:00Z"))).toBe(0);
     const [primeiro] = await avisos();
     expect(primeiro.chave).toContain("FATAL-4du");
-    expect(primeiro.assunto).toContain("PRAZO FATAL, faltam 4 dias uteis: 26/10/2026");
+    expect(primeiro.assunto).toContain("PRAZO FATAL, faltam 4 dias úteis: 26/10/2026");
   });
 
-  it("na sexta (vespera util) e na segunda (o dia) avisa de novo", async () => {
+  it("na sexta (véspera útil) e na segunda (o dia) avisa de novo", async () => {
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-23T13:00:00Z"))).toBe(1);
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-26T13:00:00Z"))).toBe(1);
     const chaves = (await avisos()).map((a) => a.chave).sort();

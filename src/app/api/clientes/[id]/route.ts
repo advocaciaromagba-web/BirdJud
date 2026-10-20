@@ -75,7 +75,7 @@ export async function PATCH(
 
     const corpo = edicao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     // Conferido so quando ha texto: vazio quer dizer apagar.
@@ -84,7 +84,7 @@ export async function PATCH(
       // Mensagem do campo, nao "dados invalidos": quem esta no formulario
       // precisa saber QUAL campo recusar.
       return NextResponse.json(
-        { erro: "E-mail invalido." },
+        { erro: "E-mail inválido." },
         { status: 400 },
       );
     }
@@ -94,7 +94,7 @@ export async function PATCH(
     if (bruto !== undefined) {
       nascimento = bruto ? dataDoCampo(bruto) : null;
       if (bruto && !nascimento) {
-        return NextResponse.json({ erro: "Data de nascimento invalida." }, { status: 400 });
+        return NextResponse.json({ erro: "Data de nascimento inválida." }, { status: 400 });
       }
     }
 
@@ -118,10 +118,10 @@ export async function PATCH(
       // Gravar nos dois faz as duas pecas dizerem a mesma rua.
       if (corpo.data.endereco.logradouro !== undefined) endereco.rua = endereco.logradouro ?? null;
       if (endereco.uf && !/^[A-Z]{2}$/.test(endereco.uf)) {
-        return NextResponse.json({ erro: "UF invalida: use a sigla, como SP." }, { status: 400 });
+        return NextResponse.json({ erro: "UF inválida: use a sigla, como SP." }, { status: 400 });
       }
       if (endereco.cep && endereco.cep.length !== 8) {
-        return NextResponse.json({ erro: "CEP invalido: sao 8 digitos." }, { status: 400 });
+        return NextResponse.json({ erro: "CEP inválido: são 8 dígitos." }, { status: 400 });
       }
     }
 
@@ -159,7 +159,7 @@ export async function PATCH(
     );
     if (resultado.count === 0) {
       return NextResponse.json(
-        { erro: "Cliente nao encontrado." },
+        { erro: "Cliente não encontrado." },
         { status: 404 },
       );
     }

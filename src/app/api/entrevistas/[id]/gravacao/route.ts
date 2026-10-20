@@ -35,10 +35,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     if (tipo.startsWith("multipart/form-data")) {
       const formulario = await req.formData();
       const audio = formulario.get("audio");
-      if (!(audio instanceof File)) return NextResponse.json({ erro: "Envie a gravacao." }, { status: 400 });
+      if (!(audio instanceof File)) return NextResponse.json({ erro: "Envie a gravação." }, { status: 400 });
       if (audio.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
         return NextResponse.json(
-          { guardado: false, motivo: `A gravacao passou de ${TAMANHO_MAXIMO_MB} MB. Recarregue a pagina e grave de novo: a versao nova guarda ate ${TAMANHO_MAXIMO_DA_GRAVACAO_MB} MB.` },
+          { guardado: false, motivo: `A gravação passou de ${TAMANHO_MAXIMO_MB} MB. Recarregue a página e grave de novo: a versão nova guarda até ${TAMANHO_MAXIMO_DA_GRAVACAO_MB} MB.` },
           { status: 200 },
         );
       }
@@ -53,7 +53,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const envio = consulta.get("envio") ?? "";
     const inicio = Number(consulta.get("inicio"));
     if (!ENVIO.test(envio) || !Number.isInteger(inicio) || inicio < 0) {
-      return NextResponse.json({ erro: "Parte da gravacao sem identificacao valida." }, { status: 400 });
+      return NextResponse.json({ erro: "Parte da gravação sem identificação valida." }, { status: 400 });
     }
     const declarado = Number(req.headers.get("content-length") ?? "0");
     if (declarado > PEDACO_MAXIMO) return NextResponse.json({ erro: "Parte grande demais." }, { status: 413 });

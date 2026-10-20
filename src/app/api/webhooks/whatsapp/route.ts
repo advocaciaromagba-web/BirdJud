@@ -107,7 +107,7 @@ export async function GET(req: Request) {
   const esperado = process.env.WHATSAPP_VERIFICACAO;
   if (!esperado) {
     anotar("sem WHATSAPP_VERIFICACAO");
-    return new NextResponse("nao configurado", { status: 503 });
+    return new NextResponse("não configurado", { status: 503 });
   }
 
   const url = new URL(req.url);
@@ -116,11 +116,11 @@ export async function GET(req: Request) {
   const desafio = url.searchParams.get("hub.challenge");
 
   if (modo !== "subscribe" || !tokenConfere(token, esperado) || !desafio) {
-    anotar("verificacao recusada");
+    anotar("verificação recusada");
     return new NextResponse("recusado", { status: 403 });
   }
 
-  anotar("verificacao aceita");
+  anotar("verificação aceita");
   return new NextResponse(desafio, {
     status: 200,
     headers: { "content-type": "text/plain" },
@@ -141,15 +141,15 @@ export async function POST(req: Request) {
     // Sem segredo nao ha como saber se foi a Meta que chamou. Processar assim
     // deixaria qualquer um confirmar a audiencia de qualquer cliente.
     anotar("sem WHATSAPP_APP_SECRET");
-    return new NextResponse("nao configurado", { status: 503 });
+    return new NextResponse("não configurado", { status: 503 });
   }
 
   // O corpo CRU, byte a byte: a assinatura e sobre ele. Reserializar o JSON
   // muda espaco e ordem, e a conta nao fecha mais.
   const cru = await req.text();
   if (!assinaturaConfere(cru, req.headers.get("x-hub-signature-256"), segredo)) {
-    anotar("assinatura nao confere");
-    return new NextResponse("assinatura invalida", { status: 401 });
+    anotar("assinatura não confere");
+    return new NextResponse("assinatura inválida", { status: 401 });
   }
 
   const corpo = entrada.safeParse(JSON.parse(cru || "{}"));

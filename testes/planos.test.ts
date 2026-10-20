@@ -25,7 +25,7 @@ import {
 import { MODULO_DA_METRICA, type Metrica } from "../src/lib/catalogo";
 
 describe("planos", () => {
-  it("o Completo entrega todo modulo que a plataforma cobra", () => {
+  it("o Completo entrega todo módulo que a plataforma cobra", () => {
     const completo = new Set(modulosDoPlano("COMPLETO"));
     for (const modulo of MODULOS_COBRAVEIS) {
       expect(completo.has(modulo), `${modulo} fora do plano Completo`).toBe(
@@ -34,7 +34,7 @@ describe("planos", () => {
     }
   });
 
-  it("cada plano contem o anterior: a escada nao tem degrau para tras", () => {
+  it("cada plano contém o anterior: a escada não tem degrau para trás", () => {
     for (let i = 1; i < PLANOS.length; i++) {
       const menor = new Set(modulosDoPlano(PLANOS[i - 1]));
       const maior = new Set(modulosDoPlano(PLANOS[i]));
@@ -55,7 +55,7 @@ describe("planos", () => {
     }
   });
 
-  it("o pacote sai mais barato que a soma dos mesmos modulos avulsos", () => {
+  it("o pacote sai mais barato que a soma dos mesmos módulos avulsos", () => {
     // Em TODA faixa. Quando os modulos nao acompanhavam o tamanho do
     // escritorio, a soma avulsa passava por baixo do pacote nas faixas
     // maiores e o preco de tabela do plano deixava de valer.
@@ -80,7 +80,7 @@ describe("planos", () => {
   });
 
   it("a tabela fica presa entre o piso de 149 e o teto de 279 no solo", () => {
-    // Os dois numeros que amarram o produto (tabela fechada em 14/10/2026):
+    // Os dois números que amarram o produto (tabela fechada em 14/10/2026):
     // R$ 149 e o sistema simples, sem IA, e R$ 279 e o Completo — que e o que o mercado brasileiro cobra por
     // sistema "completo" para escritorio pequeno. Este teste nao e sobre
     // codigo: e para a tabela nao andar sozinha, aos poucos, para fora do
@@ -96,7 +96,7 @@ describe("planos", () => {
     }
   });
 
-  it("quem monta o proprio conjunto nunca paga mais que o plano que o cobre", () => {
+  it("quem monta o próprio conjunto nunca paga mais que o plano que o cobre", () => {
     // IA sozinha: avulsa custa 59; o Completo, com desconto, pode sair mais
     // barato — e entao e o Completo que vale, com o resto de brinde.
     for (const faixa of FAIXAS) {
@@ -119,7 +119,7 @@ describe("planos", () => {
     );
   });
 
-  it("acrescentar modulo nunca barateia a conta montada", () => {
+  it("acrescentar módulo nunca barateia a conta montada", () => {
     const crescente = [...MODULOS_COBRAVEIS];
     let anterior = contaMontada([], "ATE_25").totalCentavos;
     const levados: typeof crescente = [];
@@ -131,7 +131,7 @@ describe("planos", () => {
     }
   });
 
-  it("so o nucleo e o Essencial, e o conjunto completo e o Completo", () => {
+  it("só o núcleo e o Essencial, e o conjunto completo e o Completo", () => {
     expect(planoExato([])).toBe("ESSENCIAL");
     expect(planoExato(modulosDoPlano("COMPLETO"))).toBe("COMPLETO");
     expect(planoExato(["NUCLEO", ...modulosDoPlano("AVANCADO")])).toBe(
@@ -140,7 +140,7 @@ describe("planos", () => {
     expect(planoExato(["IA"])).toBeNull();
   });
 
-  it("o nucleo esta em todo plano e nao e cobrado a parte", () => {
+  it("o núcleo esta em todo plano e não e cobrado a parte", () => {
     expect(PRECO_DO_MODULO.NUCLEO).toBeUndefined();
     expect(MODULOS).toContain("NUCLEO");
     for (const plano of PLANOS) {
@@ -148,7 +148,7 @@ describe("planos", () => {
     }
   });
 
-  it("todo modulo com preco tem franquia em toda faixa", () => {
+  it("todo módulo com preço tem franquia em toda faixa", () => {
     // Franquia nula e consumo ilimitado: consumoDoMes nao gera excedente
     // nenhum. Modulo cobrado sem franquia e conta aberta para a plataforma.
     for (const modulo of MODULOS_COBRAVEIS) {
@@ -163,7 +163,7 @@ describe("planos", () => {
     }
   });
 
-  it("a franquia cresce com o tamanho do escritorio", () => {
+  it("a franquia cresce com o tamanho do escritório", () => {
     for (const [metrica, porFaixa] of Object.entries(FRANQUIA)) {
       if (!porFaixa) continue;
       const valores = FAIXAS.map((faixa) => porFaixa[faixa]);
@@ -178,7 +178,7 @@ describe("planos", () => {
 });
 
 describe("faixa de entrada", () => {
-  it("o sistema comeca no advogado sozinho", () => {
+  it("o sistema começa no advogado sozinho", () => {
     // A primeira faixa e de UM advogado, e e dela que sai o piso de R$ 149.
     // Escritorio novo entra por aqui e so sobe quando tiver gente para isso.
     const primeira = FAIXAS[0];
@@ -194,7 +194,7 @@ describe("faixa de entrada", () => {
     expect(LIMITES.ATE_1.apoio).toBeGreaterThan(0);
   });
 
-  it("a faixa cresce em advogados e em apoio, sem degrau para tras", () => {
+  it("a faixa cresce em advogados e em apoio, sem degrau para trás", () => {
     for (let i = 1; i < FAIXAS.length; i++) {
       expect(LIMITES[FAIXAS[i]].advogados).toBeGreaterThan(
         LIMITES[FAIXAS[i - 1]].advogados,
@@ -205,7 +205,7 @@ describe("faixa de entrada", () => {
     }
   });
 
-  it("o rotulo da faixa fala de tamanho, nao de plano", () => {
+  it("o rotulo da faixa fala de tamanho, não de plano", () => {
     // "Essencial" e "Completo" sao nomes de plano. Enquanto a faixa tambem se
     // chamava assim, a mesma palavra queria dizer duas coisas na mesma tela.
     const nomesDePlano = new Set(PLANOS.map((p) => PLANO[p].rotulo));

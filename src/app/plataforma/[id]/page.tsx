@@ -64,13 +64,13 @@ export default async function EscritorioNoPainel({
   return (
     <main className="mx-auto max-w-3xl p-8">
       <Link href="/plataforma/escritorios" className="text-sm text-slate-500">
-        ← todos os escritorios
+        ← todos os escritórios
       </Link>
       <Link
         href={`/plataforma/${escritorio.id}/implantacao`}
         className="botao-principal float-right"
       >
-        Implantacao e configuracao
+        Implantação e configuração
       </Link>
       <h1 className="mt-2 text-2xl font-bold">{escritorio.nome}</h1>
       <p className="mt-1 text-sm text-slate-500">
@@ -86,13 +86,13 @@ export default async function EscritorioNoPainel({
             {/* O ano faturado vale em qualquer ciclo: quem voltou ao mensal
                 so paga mensalidade quando ele acabar. */}
             {escritorio.assinatura.anualAte && escritorio.assinatura.anualAte > new Date()
-              ? `ano pago ate ${escritorio.assinatura.anualAte.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} · `
+              ? `ano pago até ${escritorio.assinatura.anualAte.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} · `
               : ""}
             {escritorio.assinatura.valorCentavos > 0
-              ? `${emReais(escritorio.assinatura.valorCentavos)} por mes (valor fechado)`
+              ? `${emReais(escritorio.assinatura.valorCentavos)} por mês (valor fechado)`
               : "valor da tabela"}{" "}
             · vencimento
-            dia {escritorio.assinatura.diaVencimento} · teste ate{" "}
+            dia {escritorio.assinatura.diaVencimento} · teste até{" "}
             {escritorio.assinatura.fimDoTeste.toLocaleDateString("pt-BR")}
           </p>
         ) : (
@@ -110,8 +110,8 @@ export default async function EscritorioNoPainel({
           {uso.apoio.usados}/{uso.apoio.limite}
         </p>
         {/* Sem CNPJ o provedor recusa emitir a fatura, e o escritorio fica
-            devendo uma cobranca que nunca lhe foi apresentada. O suporte
-            precisa VER isso antes do primeiro vencimento, nao descobrir
+            devendo uma cobrança que nunca lhe foi apresentada. O suporte
+            precisa VER isso antes do primeiro vencimento, não descobrir
             depois: e o lado de leitura da acao "cnpj" deste console. */}
         <p className="mt-2 text-slate-600">
           CNPJ{" "}
@@ -119,7 +119,7 @@ export default async function EscritorioNoPainel({
             escritorio.cnpj
           ) : (
             <strong className="text-amber-700">
-              nao informado — a cobranca nao sai
+              não informado — a cobrança não sai
             </strong>
           )}
         </p>
@@ -166,7 +166,7 @@ export default async function EscritorioNoPainel({
                     {/*
                       Sem isto nao da para distinguir "a cobranca nao foi
                       emitida" de "foi emitida e o escritorio nao pagou" — dois
-                      problemas com remedios opostos: um e nosso, o outro e
+                      problemas com remédios opostos: um é nosso, o outro é
                       dele.
                     */}
                     <span className="block text-xs">
@@ -181,14 +181,14 @@ export default async function EscritorioNoPainel({
                         </a>
                       ) : fatura.status === "ABERTA" ? (
                         <span className="text-amber-700">
-                          cobranca ainda nao emitida
+                          cobrança ainda não emitida
                         </span>
                       ) : null}
                     </span>
                     {/*
-                      Quem pagou, quanto e como. A conta do provedor e
+                      Quem pagou, quanto e como. A conta do provedor é
                       compartilhada entre sistemas da Blackbird: sem esta
-                      linha, "a fatura esta paga" nao dizia por qual caminho o
+                      linha, "a fatura está paga" nao dizia por qual caminho o
                       dinheiro entrou nem quem deu a baixa.
                     */}
                     {resumoDaBaixa(fatura.baixa) ? (
@@ -235,7 +235,7 @@ export default async function EscritorioNoPainel({
       <section className="mt-6">
         <h2 className="font-semibold">Consumo de {competenciaDe()}</h2>
         {consumo.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-600">Nada medido neste mes.</p>
+          <p className="mt-2 text-sm text-slate-600">Nada medido neste mês.</p>
         ) : (
           <ul className="mt-2 divide-y divide-slate-200 text-sm">
             {consumo.map((linha) => (

@@ -70,11 +70,11 @@ async function aviso(compromissoId: string, estado: string, sufixo: string) {
   );
 }
 
-d("agenda do escritorio", () => {
+d("agenda do escritório", () => {
   beforeAll(async () => {
     process.env.DOMINIO_PLATAFORMA ??= "birdjud.test";
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `agenda-${Date.now()}`, nome: "Escritorio da Agenda" },
+      data: { slug: `agenda-${Date.now()}`, nome: "Escritório da Agenda" },
     });
     escritorio = e.id;
     const u = await comEscritorio(escritorio, (db) =>
@@ -106,7 +106,7 @@ d("agenda do escritorio", () => {
     const enviado = await aviso(c.id, "ENVIADO", "ja-foi");
     const pendente = await aviso(c.id, "PENDENTE", "na-fila");
 
-    const semMudarData = await editarCompromisso(escritorio, c.id, { titulo: "Instrucao e julgamento" });
+    const semMudarData = await editarCompromisso(escritorio, c.id, { titulo: "Instrução e julgamento" });
     expect(semMudarData.mudouAData).toBe(false);
 
     const r = await editarCompromisso(escritorio, c.id, {
@@ -128,21 +128,21 @@ d("agenda do escritorio", () => {
     expect(p.chave).toContain(pendente.chave);
   });
 
-  it("editar recusa processo, cliente ou responsavel que nao existem", async () => {
+  it("editar recusa processo, cliente ou responsável que não existem", async () => {
     const c = await audiencia("Pericia", new Date(Date.now() + 2 * 24 * HORA), "PERICIA");
     await expect(
       editarCompromisso(escritorio, c.id, { processoId: "nao-existe" }),
-    ).rejects.toThrow(/Processo nao encontrado/);
+    ).rejects.toThrow(/Processo não encontrado/);
     await expect(
       editarCompromisso(escritorio, c.id, { responsavelId: "nao-existe" }),
-    ).rejects.toThrow(/Responsavel nao encontrado/);
+    ).rejects.toThrow(/Responsável não encontrado/);
     await expect(
       editarCompromisso(escritorio, "nao-existe", { titulo: "x" }),
-    ).rejects.toThrow(/Compromisso nao encontrado/);
+    ).rejects.toThrow(/Compromisso não encontrado/);
   });
 
   it("excluir deixa o retrato na auditoria, cancela pendentes e guarda os enviados", async () => {
-    const c = await audiencia("Audiencia a excluir", new Date(Date.now() + 3 * 24 * HORA));
+    const c = await audiencia("Audiência a excluir", new Date(Date.now() + 3 * 24 * HORA));
     const enviado = await aviso(c.id, "ENVIADO", "foi");
     const pendente = await aviso(c.id, "PENDENTE", "fila");
 
@@ -157,7 +157,7 @@ d("agenda do escritorio", () => {
       (x) => x.compromissoId === c.id,
     )!;
     expect(auditoria.motivo).toBe("EXCLUIDO");
-    expect(auditoria.titulo).toBe("Audiencia a excluir");
+    expect(auditoria.titulo).toBe("Audiência a excluir");
     expect(auditoria.nomeDoCliente).toBe("Cliente Clara");
     expect(auditoria.nomeDoResponsavel).toBe("Dra. Agenda");
     expect(auditoria.nomeDeQuemExcluiu).toBe("Dra. Agenda");
@@ -173,17 +173,17 @@ d("agenda do escritorio", () => {
 
     await expect(
       excluirCompromisso(escritorio, c.id, { usuarioId, nome: null }),
-    ).rejects.toThrow(/Compromisso nao encontrado/);
+    ).rejects.toThrow(/Compromisso não encontrado/);
   });
 
   it("arquiva o que venceu com margem, e nunca prazo ou tarefa", async () => {
     const agora = new Date();
     const vencida = await audiencia(
-      "Audiencia de ontem",
+      "Audiência de ontem",
       new Date(agora.getTime() - (HORAS_DE_SEGURANCA + 1) * HORA),
     );
     const recente = await audiencia(
-      "Audiencia que atrasou",
+      "Audiência que atrasou",
       new Date(agora.getTime() - (HORAS_DE_SEGURANCA - 1) * HORA),
     );
     const prazo = await audiencia(
@@ -199,8 +199,8 @@ d("agenda do escritorio", () => {
     const pendente = await aviso(vencida.id, "PENDENTE", "atrasado");
 
     const r = await arquivarVencidos(escritorio, agora);
-    expect(r.titulos).toContain("Audiencia de ontem");
-    expect(r.titulos).not.toContain("Audiencia que atrasou");
+    expect(r.titulos).toContain("Audiência de ontem");
+    expect(r.titulos).not.toContain("Audiência que atrasou");
     expect(r.titulos).not.toContain("Prazo vencido");
     expect(r.titulos).not.toContain("Tarefa atrasada");
 
@@ -230,7 +230,7 @@ d("agenda do escritorio", () => {
   });
 
   it("avisar agora grava um aviso novo a cada clique, ligado ao compromisso", async () => {
-    const c = await audiencia("Audiencia com aviso manual", new Date(Date.now() + 4 * 24 * HORA));
+    const c = await audiencia("Audiência com aviso manual", new Date(Date.now() + 4 * 24 * HORA));
 
     const primeira = await avisarAgora(escritorio, c.id, "AGENDADO");
     // Dois participantes com e-mail; sem modulo WhatsApp, so o e-mail sai.
@@ -250,7 +250,7 @@ d("agenda do escritorio", () => {
     expect(lembrete.assunto).toContain("daqui a pouco");
 
     await expect(avisarAgora(escritorio, "nao-existe", "AGENDADO")).rejects.toThrow(
-      /Compromisso nao encontrado/,
+      /Compromisso não encontrado/,
     );
 
     // A auditoria resolve o nome de quem recebeu pelo contato.
@@ -259,7 +259,7 @@ d("agenda do escritorio", () => {
       (n) => n.compromisso?.id === c.id && n.destino === "tereza@agenda.test" && n.tipo === "COMPROMISSO_MARCADO",
     )!;
     expect(daTereza.destinatario).toBe("Testemunha Tereza");
-    expect(daTereza.rotulo).toBe("Confirmacao do agendamento");
+    expect(daTereza.rotulo).toBe("Confirmação do agendamento");
     const daClara = lista.find(
       (n) => n.compromisso?.id === c.id && n.destino === "cliente@agenda.test",
     )!;

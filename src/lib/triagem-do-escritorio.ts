@@ -41,7 +41,7 @@ import {
 export class SemPublicacao extends Error {
   readonly status = 404;
   constructor() {
-    super("Publicacao nao encontrada.");
+    super("Publicação não encontrada.");
     this.name = "SemPublicacao";
   }
 }
@@ -145,7 +145,7 @@ function contarPrazo(
     };
   } catch (erro) {
     if (!(erro instanceof PrazoInvalido)) throw erro;
-    return { prazoFatal: null, prazoSugerido: null, explicacao: `Nao deu para contar o prazo: ${erro.message}` };
+    return { prazoFatal: null, prazoSugerido: null, explicacao: `Não deu para contar o prazo: ${erro.message}` };
   }
 }
 
@@ -329,7 +329,7 @@ export async function triarPendentes(
   limite = 50,
 ): Promise<number> {
   const recontadas = await recontarPrazosPendentes(escritorioId);
-  if (recontadas) console.log(`TRIAGEM ${escritorioId}: ${recontadas} prazo(s) recontado(s) pela data da publicacao.`);
+  if (recontadas) console.log(`TRIAGEM ${escritorioId}: ${recontadas} prazo(s) recontado(s) pela data da publicação.`);
 
   const pendentes = await comEscritorio(escritorioId, (db) =>
     db.publicacao.findMany({
@@ -361,7 +361,7 @@ export async function triarPendentes(
 export class TriagemNaoEncontrada extends Error {
   readonly status = 404;
   constructor() {
-    super("Sugestao nao encontrada.");
+    super("Sugestao não encontrada.");
     this.name = "TriagemNaoEncontrada";
   }
 }
@@ -370,7 +370,7 @@ export class SemDataParaAgendar extends Error {
   readonly status = 422;
   constructor() {
     super(
-      "Esta publicacao nao trouxe data nem prazo. Escolha a data antes de agendar.",
+      "Esta publicação não trouxe data nem prazo. Escolha a data antes de agendar.",
     );
     this.name = "SemDataParaAgendar";
   }
@@ -456,7 +456,7 @@ export async function aceitarTriagem(
       : null,
     t.explicacao,
     t.atencao ? `Atencao: ${t.atencao}` : null,
-    "Sugestao automatica a partir da publicacao — confira nos autos.",
+    "Sugestao automática a partir da publicação — confira nos autos.",
   ]
     .filter(Boolean)
     .join("\n");

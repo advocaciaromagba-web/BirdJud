@@ -27,7 +27,7 @@ let cliente: Anthropic | undefined;
 export class SemChaveDeIA extends Error {
   readonly status = 503;
   constructor() {
-    super("A plataforma ainda nao configurou a chave de IA.");
+    super("A plataforma ainda não configurou a chave de IA.");
     this.name = "SemChaveDeIA";
   }
 }
@@ -36,7 +36,7 @@ export class EntradaLongaDemais extends Error {
   readonly status = 413;
   constructor(caracteres: number) {
     super(
-      `O texto tem ${caracteres} caracteres; o limite por chamada e ${LIMITE_DE_CARACTERES}.`,
+      `O texto tem ${caracteres} caracteres; o limite por chamada é ${LIMITE_DE_CARACTERES}.`,
     );
     this.name = "EntradaLongaDemais";
   }
@@ -273,7 +273,7 @@ export async function pedirSobreDocumentos(
     throw new AnexoRecusado("Envie ao menos um documento.");
   if (anexos.length > MAXIMO_DE_ANEXOS)
     throw new AnexoRecusado(
-      `Envie no maximo ${MAXIMO_DE_ANEXOS} documentos por leitura.`,
+      `Envie no máximo ${MAXIMO_DE_ANEXOS} documentos por leitura.`,
     );
 
   const total = anexos.reduce((soma, anexo) => soma + anexo.dados.length, 0);

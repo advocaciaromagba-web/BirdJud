@@ -21,7 +21,7 @@ export type TipoDaAgenda = (typeof TIPOS_DA_AGENDA)[number];
 export const ROTULO_DO_TIPO_DA_AGENDA: Record<TipoDaAgenda, string> = {
   AUDIENCIA: "Audiencia",
   PERICIA: "Pericia",
-  COMPROMISSO: "Atendimento / reuniao",
+  COMPROMISSO: "Atendimento / reunião",
 };
 
 export function ehTipoDaAgenda(tipo: string): tipo is TipoDaAgenda {
@@ -86,10 +86,10 @@ export function naturezaDoTitulo(titulo: string): Natureza | null {
 }
 
 export const NA_AGENDA_NAO =
-  "Isso e uma tarefa (peca, manifestacao, recurso), nao um compromisso. Cadastre em Tarefas: la ela ganha data de entrega e prazo fatal.";
+  "Isso é uma tarefa (peça, manifestação, recurso), não um compromisso. Cadastre em Tarefas: lá ela ganha data de entrega e prazo fatal.";
 
 export const EM_TAREFAS_NAO =
-  "Audiencia, pericia e atendimento vao na Agenda, nao em Tarefas: la eles ganham os lembretes de 3 dias, 24 horas e 1 hora, para o escritorio e para o cliente.";
+  "Audiência, perícia e atendimento vão na Agenda, não em Tarefas: lá eles ganham os lembretes de 3 dias, 24 horas e 1 hora, para o escritório e para o cliente.";
 
 /** Recusa para a agenda, ou null quando pode gravar. */
 export function recusaDaAgenda(tipo: string, titulo: string): string | null {

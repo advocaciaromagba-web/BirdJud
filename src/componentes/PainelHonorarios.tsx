@@ -95,7 +95,7 @@ export function PainelHonorarios({
     setSalvando(false);
     if (!resposta.ok) {
       const det = await resposta.json().catch(() => null);
-      setErro(det?.erro ?? "Nao consegui gravar o contrato.");
+      setErro(det?.erro ?? "Não consegui gravar o contrato.");
       return;
     }
     formulario.reset();
@@ -103,7 +103,7 @@ export function PainelHonorarios({
     setAberto(false);
     setAviso(
       temFinanceiro
-        ? "Contrato gravado. As parcelas ja estao no financeiro, a receber. Confira o plano abaixo."
+        ? "Contrato gravado. As parcelas já estão no financeiro, a receber. Confira o plano abaixo."
         : "Contrato gravado. Confira o plano de parcelas abaixo.",
     );
     router.refresh();
@@ -121,7 +121,7 @@ export function PainelHonorarios({
     setAgindo(null);
     if (!resposta.ok) {
       const det = await resposta.json().catch(() => null);
-      setErro(det?.erro ?? "Nao consegui concluir.");
+      setErro(det?.erro ?? "Não consegui concluir.");
       return;
     }
     setAviso(feito);
@@ -133,12 +133,12 @@ export function PainelHonorarios({
       <section>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-semibold">Honorarios</h2>
+            <h2 className="font-semibold">Honorários</h2>
             <p className="mt-1 text-sm text-slate-600">
               O valor, a forma e as parcelas combinadas com {cliente.nome}. E
-              daqui que sai o contrato de honorarios em documento
+              daqui que sai o contrato de honorários em documento
               {temFinanceiro
-                ? ", e as parcelas entram no financeiro a receber, com as datas, para a conferencia do extrato dar baixa"
+                ? ", e as parcelas entram no financeiro a receber, com as datas, para a conferência do extrato dar baixa"
                 : ""}
               .
             </p>
@@ -154,8 +154,8 @@ export function PainelHonorarios({
 
         {temCobrancas && !temConta ? (
           <p className="mt-3 text-sm text-amber-700">
-            Para emitir boleto ou Pix das parcelas, conecte a conta de cobranca
-            em Integracoes. O contrato pode ser gravado antes disso.
+            Para emitir boleto ou Pix das parcelas, conecte a conta de cobrança
+            em Integrações. O contrato pode ser gravado antes disso.
           </p>
         ) : null}
 
@@ -173,8 +173,8 @@ export function PainelHonorarios({
                 onChange={(e) => setTipo(e.target.value)}
               >
                 <option value="VALOR">Valor fixo</option>
-                <option value="PERCENTUAL">Percentual de exito</option>
-                <option value="MISTO">Entrada + exito</option>
+                <option value="PERCENTUAL">Percentual de êxito</option>
+                <option value="MISTO">Entrada + êxito</option>
               </select>
             </div>
 
@@ -185,7 +185,7 @@ export function PainelHonorarios({
               <select id="h-forma" name="forma" className="campo" defaultValue="BOLETO">
                 <option value="BOLETO">Boleto</option>
                 <option value="PIX">Pix</option>
-                <option value="CARTAO">Cartao</option>
+                <option value="CARTAO">Cartão</option>
                 <option value="QUALQUER">O cliente escolhe</option>
               </select>
             </div>
@@ -232,13 +232,13 @@ export function PainelHonorarios({
 
             <div className="md:col-span-2">
               <label htmlFor="h-desc" className="rotulo">
-                Sobre o que (aparece na cobranca)
+                Sobre o que (aparece na cobrança)
               </label>
               <input
                 id="h-desc"
                 name="descricao"
                 maxLength={120}
-                placeholder="acao trabalhista"
+                placeholder="ação trabalhista"
                 className="campo"
               />
             </div>
@@ -268,7 +268,7 @@ export function PainelHonorarios({
 
       <section>
         {contratos.length === 0 ? (
-          <p className="vazio">Nenhum contrato de honorarios com este cliente ainda.</p>
+          <p className="vazio">Nenhum contrato de honorários com este cliente ainda.</p>
         ) : (
           <ul className="mt-3 grid gap-3">
             {contratos.map((c) => (
@@ -281,7 +281,7 @@ export function PainelHonorarios({
                     <p className="font-medium">{c.resumo}</p>
                     <p className="text-xs text-slate-500">
                       {c.forma}
-                      {temCobrancas ? (c.automatico ? " · emite sozinho" : " · emite so por clique") : ""}
+                      {temCobrancas ? (c.automatico ? " · emite sozinho" : " · emite só por clique") : ""}
                       {c.ativo ? "" : " · encerrado"}
                     </p>
                     {c.motivo ? (
@@ -289,7 +289,7 @@ export function PainelHonorarios({
                     ) : null}
                     {c.atrasada ? (
                       <p className="mt-1 text-xs text-amber-700">
-                        A parcela {c.proximaNumero} ja venceu e nunca foi
+                        A parcela {c.proximaNumero} já venceu e nunca foi
                         emitida: escolha a data antes de cobrar.
                       </p>
                     ) : null}
@@ -325,7 +325,7 @@ export function PainelHonorarios({
                         onClick={() => {
                           if (
                             !confirm(
-                              "Encerrar o contrato? As parcelas que ainda nao foram cobradas saem do financeiro (a receber). Cobrancas ja emitidas e parcelas recebidas continuam valendo.",
+                              "Encerrar o contrato? As parcelas que ainda não foram cobradas saem do financeiro (a receber). Cobranças já emitidas e parcelas recebidas continuam valendo.",
                             )
                           )
                             return;
@@ -360,7 +360,7 @@ export function PainelHonorarios({
                                   : "text-slate-500"
                             }
                           >
-                            {p.recebida ? "recebida" : p.emitida ? "cobranca emitida" : "a receber"}
+                            {p.recebida ? "recebida" : p.emitida ? "cobrança emitida" : "a receber"}
                           </span>
                           {p.recebida && temNotaFiscal ? (
                             <a
@@ -368,7 +368,7 @@ export function PainelHonorarios({
                               href={`/notas?${new URLSearchParams({
                                 clienteId: cliente.id,
                                 valor: p.valor.replace(/[^\d,]/g, ""),
-                                descricao: `Honorarios advocaticios — ${c.resumo}, parcela ${p.numero}/${p.total}`,
+                                descricao: `Honorários advocatícios — ${c.resumo}, parcela ${p.numero}/${p.total}`,
                               }).toString()}`}
                             >
                               preparar nota

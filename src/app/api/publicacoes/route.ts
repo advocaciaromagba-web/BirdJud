@@ -34,7 +34,7 @@ export async function PATCH(req: Request) {
     const { escritorioId } = await exigirSessao("PUBLICACOES_DJEN");
     const corpo = marcacao.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const { id, ...campos } = corpo.data;
@@ -46,7 +46,7 @@ export async function PATCH(req: Request) {
 
     if (count === 0) {
       return NextResponse.json(
-        { erro: "Publicacao nao encontrada." },
+        { erro: "Publicação não encontrada." },
         { status: 404 },
       );
     }

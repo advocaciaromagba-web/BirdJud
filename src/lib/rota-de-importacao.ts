@@ -35,7 +35,7 @@ export async function atenderImportacao(
     if ((req.headers.get("content-type") ?? "").includes("application/json")) {
       const corpo = (await req.json().catch(() => null)) as { acao?: string; importacaoId?: string } | null;
       if (corpo?.acao !== "desfazer" || !corpo.importacaoId) {
-        return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+        return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
       }
       return NextResponse.json(await desfazerImportacao(escritorioId, corpo.importacaoId));
     }

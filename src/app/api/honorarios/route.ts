@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     }
     const corpo = contrato.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Contrato invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Contrato inválido." }, { status: 400 });
     }
     const d = corpo.data;
 
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     if (d.valor?.trim()) {
       valorCentavos = paraCentavos(d.valor);
       if (valorCentavos === null || valorCentavos <= 0) {
-        return NextResponse.json({ erro: "Valor invalido." }, { status: 400 });
+        return NextResponse.json({ erro: "Valor inválido." }, { status: 400 });
       }
     }
 
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     if (d.entrada?.trim()) {
       entradaCentavos = paraCentavos(d.entrada);
       if (entradaCentavos === null || entradaCentavos < 0) {
-        return NextResponse.json({ erro: "Entrada invalida." }, { status: 400 });
+        return NextResponse.json({ erro: "Entrada inválida." }, { status: 400 });
       }
     }
 
@@ -71,17 +71,17 @@ export async function POST(req: Request) {
     if (d.percentual?.trim()) {
       percentualBp = paraCentesimos(d.percentual);
       if (percentualBp === null) {
-        return NextResponse.json({ erro: "Percentual invalido." }, { status: 400 });
+        return NextResponse.json({ erro: "Percentual inválido." }, { status: 400 });
       }
     }
 
     // O que cada tipo exige. Guardar um contrato pela metade seria guardar um
     // numero que ninguem vai conseguir cobrar depois.
     if (d.tipo !== "PERCENTUAL" && valorCentavos === null) {
-      return NextResponse.json({ erro: "Informe o valor dos honorarios." }, { status: 400 });
+      return NextResponse.json({ erro: "Informe o valor dos honorários." }, { status: 400 });
     }
     if (d.tipo !== "VALOR" && percentualBp === null) {
-      return NextResponse.json({ erro: "Informe o percentual de exito." }, { status: 400 });
+      return NextResponse.json({ erro: "Informe o percentual de êxito." }, { status: 400 });
     }
     if (d.tipo !== "PERCENTUAL" && !d.primeiroVencimento) {
       return NextResponse.json({ erro: "Informe a data do primeiro vencimento." }, { status: 400 });

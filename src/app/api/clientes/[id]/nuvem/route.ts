@@ -21,12 +21,12 @@ export async function GET(
     const pasta = await pastaDoCliente(escritorioId, id);
     if (!pasta) {
       return NextResponse.json(
-        { erro: "Nenhuma nuvem conectada. O administrador conecta em Integracoes." },
+        { erro: "Nenhuma nuvem conectada. O administrador conecta em Integrações." },
         { status: 404 },
       );
     }
     if (!pasta.endereco) {
-      return NextResponse.json({ erro: "A nuvem nao devolveu o endereco da pasta." }, { status: 502 });
+      return NextResponse.json({ erro: "A nuvem não devolveu o endereço da pasta." }, { status: 502 });
     }
     return NextResponse.redirect(pasta.endereco);
   } catch (erro) {

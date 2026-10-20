@@ -39,10 +39,10 @@ export function urgencia(vencimentoISO: string, hojeISO: string): Urgencia {
 export function comoTexto(u: Exclude<Urgencia, null>, dias: number): string {
   if (u === "ATRASADA") {
     const n = Math.abs(dias);
-    return `venceu ha ${n} dia${n === 1 ? "" : "s"}`;
+    return `venceu há ${n} dia${n === 1 ? "" : "s"}`;
   }
   if (u === "HOJE") return "vence hoje";
-  if (u === "AMANHA") return "vence amanha";
+  if (u === "AMANHA") return "vence amanhã";
   return "vence em 3 dias";
 }
 

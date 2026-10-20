@@ -45,14 +45,14 @@ afterEach(() => {
 });
 
 describe("destino do ambiente", () => {
-  it("sem nada configurado, nao ha destino", () => {
+  it("sem nada configurado, não há destino", () => {
     for (const c of CHAVES) delete process.env[c];
     expect(destinoDoAmbiente()).toBeNull();
   });
 
   // Configuracao pela metade e o pior estado possivel: parece configurada e
   // nao copia nada. Por isso levanta em vez de devolver null.
-  it("configuracao pela metade levanta, e diz o que falta", () => {
+  it("configuração pela metade levanta, e diz o que falta", () => {
     for (const c of CHAVES) delete process.env[c];
     process.env.BACKUP_S3_BALDE = "birdjud-backup";
     expect(() => destinoDoAmbiente()).toThrow(CopiaRemotaMalConfigurada);
@@ -61,14 +61,14 @@ describe("destino do ambiente", () => {
 
   // Estas variaveis existem em muitos ambientes por outro motivo. Pegar
   // carona nelas mandaria o backup para um balde que ninguem escolheu.
-  it("nao usa AWS_ACCESS_KEY_ID nem AWS_SECRET_ACCESS_KEY", () => {
+  it("não usa AWS_ACCESS_KEY_ID nem AWS_SECRET_ACCESS_KEY", () => {
     for (const c of CHAVES) delete process.env[c];
     process.env.AWS_ACCESS_KEY_ID = "de-outro-sistema";
     process.env.AWS_SECRET_ACCESS_KEY = "de-outro-sistema";
     expect(destinoDoAmbiente()).toBeNull();
   });
 
-  it("a barra sobrando no endereco nao vira barra dupla", () => {
+  it("a barra sobrando no endereço não vira barra dupla", () => {
     for (const c of CHAVES) delete process.env[c];
     process.env.BACKUP_S3_ENDERECO = "https://conta.r2.cloudflarestorage.com//";
     process.env.BACKUP_S3_BALDE = "b";
@@ -98,7 +98,7 @@ describe("caminho canonico", () => {
     );
   });
 
-  it("codifica espaco e acento", () => {
+  it("codifica espaço e acento", () => {
     expect(caminhoCanonico("pasta com espaco/ção.gz")).toBe(
       "pasta%20com%20espaco/%C3%A7%C3%A3o.gz",
     );
@@ -110,7 +110,7 @@ describe("assinatura", () => {
   const digest =
     "bf2cb58a68f684d95a3b78ef8f661c9a4e5b09e82cc8f9cc88cce90528caeb27";
 
-  it("o metodo entra na requisicao canonica", () => {
+  it("o método entra na requisição canonica", () => {
     const put = assinar(DESTINO, "PUT", "x.gz", digest, 10, AGORA);
     const head = assinar(DESTINO, "HEAD", "x.gz", digest, 10, AGORA);
     expect(put.requisicaoCanonica.startsWith("PUT\n")).toBe(true);
@@ -129,19 +129,19 @@ describe("assinatura", () => {
     expect(a.cabecalhos["x-amz-content-sha256"]).toBe(digest);
   });
 
-  it("o escopo leva data, regiao e servico", () => {
+  it("o escopo leva data, região e serviço", () => {
     const a = assinar(DESTINO, "PUT", "x.gz", digest, 10, AGORA);
     expect(a.cabecalhos.authorization).toContain(
       "Credential=CHAVE-DE-TESTE/20260929/auto/s3/aws4_request",
     );
   });
 
-  it("HEAD nao manda content-length", () => {
+  it("HEAD não manda content-length", () => {
     const head = assinar(DESTINO, "HEAD", "x.gz", digest, 0, AGORA);
     expect(head.cabecalhos["content-length"]).toBeUndefined();
   });
 
-  it("qualquer mudanca muda a assinatura", () => {
+  it("qualquer mudança muda a assinatura", () => {
     const base = assinar(DESTINO, "PUT", "x.gz", digest, 10, AGORA);
     const variacoes = [
       assinar(DESTINO, "PUT", "y.gz", digest, 10, AGORA),
@@ -156,7 +156,7 @@ describe("assinatura", () => {
     }
   });
 
-  it("a url nao duplica barra", () => {
+  it("a url não duplica barra", () => {
     const a = assinar(DESTINO, "PUT", "banco/x.gz", digest, 10, AGORA);
     expect(a.url).toBe(
       "https://conta.r2.cloudflarestorage.com/birdjud-backup/banco/x.gz",
@@ -225,7 +225,7 @@ describe("consulta assinada", () => {
     expect(consultaCanonica({})).toBe("");
   });
 
-  it("entra na requisicao canonica e na url", () => {
+  it("entra na requisição canonica e na url", () => {
     const vazio = "0".repeat(64);
     const com = assinar(DESTINO, "GET", "", vazio, 0, AGORA, {
       "list-type": "2",
@@ -253,7 +253,7 @@ describe("cifra do backup", () => {
     expect(decifrarBackup(cifrado, chave).equals(original)).toBe(true);
   });
 
-  it("chave errada nao decifra", () => {
+  it("chave errada não decifra", () => {
     const cifrado = cifrarBackup(Buffer.from("dados"), chave);
     expect(() => decifrarBackup(cifrado, Buffer.alloc(32, 9))).toThrow();
   });
@@ -265,19 +265,19 @@ describe("cifra do backup", () => {
     expect(() => decifrarBackup(cifrado, chave)).toThrow();
   });
 
-  it("arquivo sem a marca nao e tratado como cifrado", () => {
+  it("arquivo sem a marca não e tratado como cifrado", () => {
     expect(() => decifrarBackup(Buffer.from("dump em claro"), chave)).toThrow(
       /falta a marca/,
     );
   });
 
-  it("cifrar duas vezes o mesmo conteudo da resultados diferentes", () => {
+  it("cifrar duas vezes o mesmo conteúdo da resultados diferentes", () => {
     const a = cifrarBackup(Buffer.from("igual"), chave);
     const b = cifrarBackup(Buffer.from("igual"), chave);
     expect(a.equals(b)).toBe(false);
   });
 
-  it("chave de tamanho errado e recusada com instrucao", () => {
+  it("chave de tamanho errado e recusada com instrução", () => {
     process.env.BACKUP_CHAVE = Buffer.alloc(16).toString("base64");
     expect(() => chaveDoBackup()).toThrow(/32 bytes/);
     delete process.env.BACKUP_CHAVE;
@@ -310,13 +310,13 @@ describe("listagem do balde", () => {
     expect(interpretarListagem("<ListBucketResult></ListBucketResult>")).toEqual([]);
   });
 
-  it("entrada com data ilegivel e descartada em vez de virar NaN", () => {
+  it("entrada com data ilegível e descartada em vez de virar NaN", () => {
     const ruim = `<ListBucketResult><Contents><Key>x</Key><LastModified>ontem</LastModified><Size>1</Size></Contents></ListBucketResult>`;
     expect(interpretarListagem(ruim)).toEqual([]);
   });
 });
 
-describe("avaliacao das copias", () => {
+describe("avaliação das cópias", () => {
   const agora = new Date("2026-09-30T12:00:00Z");
   const copia = (horasAtras: number, tamanho = 9000) => ({
     chave: `banco/x-${horasAtras}.sql.gz.cifrado`,
@@ -324,7 +324,7 @@ describe("avaliacao das copias", () => {
     modificadoEm: new Date(agora.getTime() - horasAtras * 3_600_000),
   });
 
-  it("cala quando ha copia recente", () => {
+  it("cala quando há cópia recente", () => {
     expect(avaliarCopias([copia(6)], agora)).toBeNull();
     expect(avaliarCopias([copia(24)], agora)).toBeNull();
   });
@@ -336,12 +336,12 @@ describe("avaliacao das copias", () => {
     expect(avaliarCopias([copia(31)], agora)).toContain("parou de subir");
   });
 
-  it("olha a MAIS NOVA, nao a primeira da lista", () => {
+  it("olha a MAIS NOVA, não a primeira da lista", () => {
     expect(avaliarCopias([copia(200), copia(3), copia(100)], agora)).toBeNull();
   });
 
   it("balde vazio e o caso mais grave", () => {
-    expect(avaliarCopias([], agora)).toContain("NENHUMA copia");
+    expect(avaliarCopias([], agora)).toContain("NENHUMA cópia");
   });
 
   it("zero byte acusa", () => {
@@ -351,7 +351,7 @@ describe("avaliacao das copias", () => {
   // O script ja confere o conteudo do dump antes de enviar. Inventar um piso
   // aqui produziria alarme falso no dia em que o banco fosse pequeno de
   // verdade — foi o que aconteceu com o piso de 10 KB do backup local.
-  it("copia pequena mas nao vazia NAO acusa", () => {
+  it("cópia pequena mas não vazia NAO acusa", () => {
     expect(avaliarCopias([copia(2, 300)], agora)).toBeNull();
   });
 });

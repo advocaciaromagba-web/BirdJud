@@ -138,9 +138,9 @@ function EntregaDoAviso({ a }: { a: { canal: string; estado: string; idNaMeta?: 
     );
   }
   if (!r) return null;
-  return r === "Sem confirmacao de entrega" ? (
+  return r === "Sem confirmação de entrega" ? (
     <Link href="/mensagens" className="mt-1 block whitespace-nowrap text-xs text-amber-700 underline">
-      sem confirmacao
+      sem confirmação
     </Link>
   ) : (
     <span className="mt-1 block whitespace-nowrap text-xs text-emerald-700">{r.toLowerCase()}</span>
@@ -196,21 +196,21 @@ export function PainelAgenda({
       body: corpo ? JSON.stringify(corpo) : undefined,
     });
     const dados = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(dados.erro ?? "Nao deu certo. Tente de novo.");
+    if (!r.ok) throw new Error(dados.erro ?? "Não deu certo. Tente de novo.");
     return dados;
   }
 
   async function excluir(c: CompromissoNaTela) {
     if (
       !window.confirm(
-        `Excluir "${c.titulo}" da agenda?\n\nO compromisso vai para a auditoria de excluidos. Os avisos ja enviados aos participantes nao sao desfeitos — se precisar, avise-os.`,
+        `Excluir "${c.titulo}" da agenda?\n\nO compromisso vai para a auditoria de excluídos. Os avisos já enviados aos participantes não são desfeitos — se precisar, avise-os.`,
       )
     )
       return;
     setOcupado(c.id);
     try {
       const r = await chamar(`/api/compromissos/${c.id}`, "DELETE");
-      falar(r.mensagem ?? "Compromisso excluido.");
+      falar(r.mensagem ?? "Compromisso excluído.");
       if (verId === c.id) setVerId(null);
       router.refresh();
     } catch (falha) {
@@ -240,7 +240,7 @@ export function PainelAgenda({
   }
 
   const campos: Campo[] = [
-    { nome: "titulo", rotulo: "Titulo", obrigatorio: true, largo: true },
+    { nome: "titulo", rotulo: "Título", obrigatorio: true, largo: true },
     { nome: "inicio", rotulo: "Data e hora", tipo: "datetime-local", obrigatorio: true },
     {
       nome: "tipo",
@@ -248,18 +248,18 @@ export function PainelAgenda({
       tipo: "select",
       // So o que e de estar presente. Peca e prazo vao em Tarefas.
       opcoes: TIPOS_DA_AGENDA.map((valor) => ({ valor, rotulo: ROTULO_DO_TIPO_DA_AGENDA[valor] })),
-      ajuda: "Peca, manifestacao, recurso e prazo nao entram aqui: cadastre em Tarefas.",
+      ajuda: "Peça, manifestação, recurso e prazo não entram aqui: cadastre em Tarefas.",
     },
     {
       nome: "responsavelId",
-      rotulo: "Advogado(a) responsavel",
+      rotulo: "Advogado(a) responsável",
       tipo: "select",
       opcoes: [
-        { valor: "", rotulo: "Sem responsavel (e do escritorio)" },
+        { valor: "", rotulo: "Sem responsável (e do escritório)" },
         ...equipe.map((p) => ({ valor: p.id, rotulo: `${p.nome} (${p.papel.toLowerCase()})` })),
       ],
       ajuda:
-        "Quem fica com isto recebe o aviso na hora, por e-mail e por WhatsApp. Sem responsavel, aparece para todos.",
+        "Quem fica com isto recebe o aviso na hora, por e-mail e por WhatsApp. Sem responsável, aparece para todos.",
     },
     {
       nome: "clienteId",
@@ -268,23 +268,23 @@ export function PainelAgenda({
       largo: true,
       opcoes: clientes.map((c) => ({ valor: c.id, rotulo: c.nome })),
       ajuda:
-        "Opcional — a primeira reuniao pode ser com quem ainda nao e cliente. Quem mais vai (testemunha, perito, acompanhante) entra em Participantes, depois de gravar.",
+        "Opcional — a primeira reunião pode ser com quem ainda não é cliente. Quem mais vai (testemunha, perito, acompanhante) entra em Participantes, depois de gravar.",
     },
     {
       nome: "processoId",
-      rotulo: "Numero do processo",
+      rotulo: "Número do processo",
       tipo: "select",
       opcoes: processos.map((p) => ({ valor: p.id, rotulo: p.numero })),
-      ajuda: "Opcional. Agendamento nao precisa de processo.",
+      ajuda: "Opcional. Agendamento não precisa de processo.",
     },
     { nome: "local", rotulo: "Forum, vara ou local do ato" },
     {
       nome: "link",
       rotulo: "Link da sala virtual (opcional)",
       ajuda:
-        "Cole o link enviado pelo tribunal — Teams, Zoom, Webex — ou o Meet da reuniao. Vai no aviso ao participante junto com o endereco.",
+        "Cole o link enviado pelo tribunal — Teams, Zoom, Webex — ou o Meet da reunião. Vai no aviso ao participante junto com o endereço.",
     },
-    { nome: "observacoes", rotulo: "Observacoes", tipo: "textarea" },
+    { nome: "observacoes", rotulo: "Observações", tipo: "textarea" },
   ];
 
   const valoresDe = (c: CompromissoNaTela): Record<string, string> => ({
@@ -324,14 +324,14 @@ export function PainelAgenda({
             className="botao-secundario"
             onClick={() => setPainel(painel === "excluidos" ? "nenhum" : "excluidos")}
           >
-            {painel === "excluidos" ? "Fechar auditoria" : "Excluidos (auditoria)"}
+            {painel === "excluidos" ? "Fechar auditoria" : "Excluídos (auditoria)"}
           </button>
           <button
             type="button"
             className="botao-secundario"
             onClick={() => setPainel(painel === "notificacoes" ? "nenhum" : "notificacoes")}
           >
-            {painel === "notificacoes" ? "Fechar notificacoes" : "Notificacoes enviadas"}
+            {painel === "notificacoes" ? "Fechar notificações" : "Notificações enviadas"}
           </button>
           {comIA ? (
             <button
@@ -380,12 +380,12 @@ export function PainelAgenda({
           key={editando.id}
           rota={`/api/compromissos/${editando.id}`}
           metodo="PATCH"
-          textoBotao="Salvar alteracoes"
+          textoBotao="Salvar alterações"
           campos={campos}
           valoresIniciais={valoresDe(editando)}
           aoConcluir={() => {
             fecharFormulario();
-            falar("Compromisso alterado. Se a data mudou, os lembretes serao refeitos para a data nova.");
+            falar("Compromisso alterado. Se a data mudou, os lembretes serão refeitos para a data nova.");
           }}
           aoCancelar={fecharFormulario}
         />
@@ -397,12 +397,12 @@ export function PainelAgenda({
             <tr>
               <th>Quando</th>
               <th>Tipo</th>
-              <th>Titulo</th>
+              <th>Título</th>
               <th>Advogado(a)</th>
               <th>Cliente</th>
               <th>Sala</th>
               <th>Status</th>
-              <th><span className="sr-only">Acoes</span></th>
+              <th><span className="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody>
@@ -576,9 +576,9 @@ function VerCompromisso({
         <Dado rotulo="Quando" valor={quando.format(new Date(c.inicioISO))} />
         <Dado rotulo="Tipo" valor={ROTULO_DO_TIPO[c.tipo] ?? c.tipo} />
         <Dado rotulo="Status" valor={statusDe(c)} />
-        <Dado rotulo="Advogado(a) responsavel" valor={c.nomeDoResponsavel ?? "—"} />
+        <Dado rotulo="Advogado(a) responsável" valor={c.nomeDoResponsavel ?? "—"} />
         <Dado rotulo="Cliente" valor={c.nomeDoCliente ?? "—"} />
-        {c.numeroProcesso ? <Dado rotulo="Numero do processo" valor={c.numeroProcesso} /> : null}
+        {c.numeroProcesso ? <Dado rotulo="Número do processo" valor={c.numeroProcesso} /> : null}
         {c.local ? <Dado rotulo="Local" valor={c.local} /> : null}
         {c.link ? (
           <div>
@@ -597,7 +597,7 @@ function VerCompromisso({
         ) : null}
         {c.observacoes ? (
           <div className="sm:col-span-3">
-            <dt className="text-xs text-slate-500">Observacoes</dt>
+            <dt className="text-xs text-slate-500">Observações</dt>
             <dd className="whitespace-pre-wrap text-slate-800">{c.observacoes}</dd>
           </div>
         ) : null}
@@ -676,14 +676,14 @@ function ExcluidosDaAgenda({ aoFechar }: { aoFechar: () => void }) {
   return (
     <section className="cartao border-l-4 border-l-slate-400">
       <div className="flex items-start justify-between">
-        <h2 className="text-base font-semibold">Compromissos excluidos (auditoria)</h2>
+        <h2 className="text-base font-semibold">Compromissos excluídos (auditoria)</h2>
         <button type="button" className="text-sm text-slate-500 hover:underline" onClick={aoFechar}>
           Fechar
         </button>
       </div>
       <p className="mt-1 text-sm text-slate-500">
-        O que saiu da agenda: apagado por alguem do escritorio, ou arquivado pela rotina depois de
-        vencer o horario. Fica aqui so para consulta — nada pode ser reaberto.
+        O que saiu da agenda: apagado por alguém do escritório, ou arquivado pela rotina depois de
+        vencer o horário. Fica aqui só para consulta — nada pode ser reaberto.
       </p>
       {erro ? <p className="aviso-erro mt-3">{erro}</p> : null}
       {itens === null && !erro ? <p className="mt-3 text-sm text-slate-500">Carregando...</p> : null}
@@ -692,7 +692,7 @@ function ExcluidosDaAgenda({ aoFechar }: { aoFechar: () => void }) {
           <table className="tabela">
             <thead>
               <tr>
-                <th>Titulo</th>
+                <th>Título</th>
                 <th>Tipo</th>
                 <th>Cliente / quem ia</th>
                 <th>Advogado(a)</th>
@@ -779,15 +779,15 @@ function NotificacoesDaAgenda({ aoFechar }: { aoFechar: () => void }) {
   return (
     <section className="cartao border-l-4 border-l-slate-400">
       <div className="flex items-start justify-between">
-        <h2 className="text-base font-semibold">Notificacoes enviadas (auditoria)</h2>
+        <h2 className="text-base font-semibold">Notificações enviadas (auditoria)</h2>
         <button type="button" className="text-sm text-slate-500 hover:underline" onClick={aoFechar}>
           Fechar
         </button>
       </div>
       <p className="mt-1 text-sm text-slate-500">
-        Todo aviso de compromisso — confirmacao, lembretes e designacao — por WhatsApp ou e-mail, com
-        data, hora, destinatario e o que aconteceu: enviado, na fila, falhou ou cancelado. Serve de
-        prova contra a alegacao de que a pessoa nao foi avisada.
+        Todo aviso de compromisso — confirmação, lembretes e designação — por WhatsApp ou e-mail, com
+        data, hora, destinatário e o que aconteceu: enviado, na fila, falhou ou cancelado. Serve de
+        prova contra a alegação de que a pessoa não foi avisada.
       </p>
       <input
         type="search"
@@ -806,7 +806,7 @@ function NotificacoesDaAgenda({ aoFechar }: { aoFechar: () => void }) {
                 <th>Enviado em</th>
                 <th>Canal</th>
                 <th>Aviso</th>
-                <th>Destinatario</th>
+                <th>Destinatário</th>
                 <th>Compromisso</th>
                 <th>Data do compromisso</th>
                 <th>Advogado(a)</th>
@@ -836,7 +836,7 @@ function NotificacoesDaAgenda({ aoFechar }: { aoFechar: () => void }) {
                     ) : (
                       <>
                         {it.assunto}
-                        <div className="text-xs text-slate-500">compromisso ja saiu da agenda</div>
+                        <div className="text-xs text-slate-500">compromisso já saiu da agenda</div>
                       </>
                     )}
                   </td>
@@ -855,7 +855,7 @@ function NotificacoesDaAgenda({ aoFechar }: { aoFechar: () => void }) {
               {filtrados.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-6 text-center text-slate-500">
-                    {itens.length === 0 ? "Nenhuma notificacao enviada ainda." : "Nenhum resultado para essa busca."}
+                    {itens.length === 0 ? "Nenhuma notificação enviada ainda." : "Nenhum resultado para essa busca."}
                   </td>
                 </tr>
               ) : null}

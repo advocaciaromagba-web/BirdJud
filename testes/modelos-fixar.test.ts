@@ -34,14 +34,14 @@ d("fixar o modelo", () => {
 
   const vigente = async () => (await modelosVigentes(esc)).find((m) => m.especie === "PROCURACAO")!;
 
-  it("sem modelo proprio: sai o do sistema, e fixar o do escritorio e erro", async () => {
+  it("sem modelo próprio: sai o do sistema, e fixar o do escritório e erro", async () => {
     expect(await vigente()).toMatchObject({ doEscritorio: false, temProprio: false });
     expect((await arquivoDoModelo(esc, "PROCURACAO")).doEscritorio).toBe(false);
     await expect(fixarModelo(esc, "PROCURACAO", "ESCRITORIO")).rejects.toBeInstanceOf(ModeloNaoEncontrado);
     await expect(arquivoDoModelo(esc, "PROCURACAO", "ESCRITORIO")).rejects.toBeInstanceOf(ModeloNaoEncontrado);
   });
 
-  it("enviado passa a valer; fixar o do sistema guarda o do escritorio", async () => {
+  it("enviado passa a valer; fixar o do sistema guarda o do escritório", async () => {
     const meu = await montarDocx(MODELO_PADRAO.PROCURACAO);
     await guardarModelo(esc, "PROCURACAO", { nome: "procuracao-timbrada.docx", conteudo: meu });
     expect(await vigente()).toMatchObject({ doEscritorio: true, temProprio: true, nomeDoArquivo: "procuracao-timbrada.docx" });
@@ -60,7 +60,7 @@ d("fixar o modelo", () => {
     expect((await vigente()).doEscritorio).toBe(true);
   });
 
-  it("excluir apaga o do escritorio e volta ao do sistema", async () => {
+  it("excluir apaga o do escritório e volta ao do sistema", async () => {
     await voltarAoPadrao(esc, "PROCURACAO");
     expect(await vigente()).toMatchObject({ doEscritorio: false, temProprio: false });
   });

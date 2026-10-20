@@ -34,30 +34,30 @@ const d = temBanco ? describe : describe.skip;
 const HORA = 60 * 60 * 1000;
 
 describe("textos do aviso", () => {
-  it("o assunto avisa da urgencia logo no comeco", () => {
+  it("o assunto avisa da urgência logo no começo", () => {
     // A pessoa decide se abre agora pelo assunto, nao pelo corpo.
-    expect(assuntoDoResumo(3, 1)).toBe("[URGENTE] 3 publicacoes novas");
-    expect(assuntoDoResumo(3, 0)).toBe("3 publicacoes novas");
-    expect(assuntoDoResumo(1, 0)).toBe("1 publicacao nova");
+    expect(assuntoDoResumo(3, 1)).toBe("[URGENTE] 3 publicações novas");
+    expect(assuntoDoResumo(3, 0)).toBe("3 publicações novas");
+    expect(assuntoDoResumo(1, 0)).toBe("1 publicação nova");
   });
 
-  it("o resumo separa urgentes das demais e formata o numero", () => {
+  it("o resumo separa urgentes das demais e formata o número", () => {
     const corpo = corpoDoResumo(
-      "Escritorio Alfa",
+      "Escritório Alfa",
       [
         {
           numeroProcesso: "00012345620268260100",
           tribunal: "TJSP",
           urgente: true,
           prazoDias: 5,
-          texto: "Audiencia designada.",
+          texto: "Audiência designada.",
         },
         {
           numeroProcesso: null,
           tribunal: null,
           urgente: false,
           prazoDias: null,
-          texto: "Juntada de peticao.",
+          texto: "Juntada de petição.",
         },
       ],
       "https://alfa.birdjud.com.br",
@@ -67,22 +67,22 @@ describe("textos do aviso", () => {
     expect(corpo).toContain("Demais (1)");
     expect(corpo).toContain("0001234-56.2026.8.26.0100");
     expect(corpo).toContain("prazo indicado: 5 dia(s)");
-    expect(corpo).toContain("sem numero de processo");
+    expect(corpo).toContain("sem número de processo");
     // O aviso nao se apresenta como conclusao juridica.
     expect(corpo).toContain("confira sempre nos autos");
   });
 
   it("o lembrete traz hora, local e processo", () => {
     const compromisso = {
-      titulo: "Audiencia de instrucao",
+      titulo: "Audiência de instrução",
       tipo: "AUDIENCIA",
       inicio: new Date("2026-09-19T14:00:00Z"),
       local: "Forum Central",
       numeroProcesso: "00012345620268260100",
     };
-    expect(assuntoDoLembrete(compromisso)).toContain("Audiencia de instrucao");
+    expect(assuntoDoLembrete(compromisso)).toContain("Audiência de instrução");
     const corpo = corpoDoLembrete(
-      "Escritorio Alfa",
+      "Escritório Alfa",
       compromisso,
       "https://alfa.birdjud.com.br",
     );
@@ -121,7 +121,7 @@ beforeAll(async () => {
         pronto(null, { user: credenciais.username });
         return;
       }
-      pronto(new Error("Usuario ou senha invalidos"));
+      pronto(new Error("Usuário ou senha inválidos"));
     },
     onData(fluxo, sessao, pronto) {
       if (recusarTudo) {
@@ -153,13 +153,13 @@ let escritorio = "";
 let usuarioId = "";
 const marca = Date.now();
 
-d("avisos do escritorio", () => {
+d("avisos do escritório", () => {
   beforeAll(async () => {
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 3).toString("base64");
     process.env.DOMINIO_PLATAFORMA = "birdjud.test";
 
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `avisos-${marca}`, nome: "Escritorio dos Avisos" },
+      data: { slug: `avisos-${marca}`, nome: "Escritório dos Avisos" },
     });
     escritorio = e.id;
 
@@ -186,7 +186,7 @@ d("avisos do escritorio", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("sem publicacao nao lida, nao gera resumo", async () => {
+  it("sem publicação não lida, não gera resumo", async () => {
     // E-mail vazio todo dia treina a equipe a ignorar o remetente.
     const resultado = await gerarAvisos(escritorio);
     expect(resultado.resumos).toBe(0);
@@ -197,7 +197,7 @@ d("avisos do escritorio", () => {
       db.publicacao.create({
         data: semEscritorio({
           idExterno: `pub-${marca}`,
-          texto: "Audiencia designada. Prazo de 5 dias.",
+          texto: "Audiência designada. Prazo de 5 dias.",
           dataDisponibilizacao: new Date(),
           urgente: true,
           prazoDias: 5,
@@ -216,7 +216,7 @@ d("avisos do escritorio", () => {
     expect(aviso.estado).toBe("PENDENTE");
   });
 
-  it("rodar de novo no mesmo dia nao duplica", async () => {
+  it("rodar de novo no mesmo dia não duplica", async () => {
     const resultado = await gerarAvisos(escritorio);
     expect(resultado.resumos).toBe(0);
     await expect(
@@ -226,7 +226,7 @@ d("avisos do escritorio", () => {
     ).resolves.toBe(1);
   });
 
-  it("quem desligou o resumo nao recebe", async () => {
+  it("quem desligou o resumo não recebe", async () => {
     await comEscritorio(escritorio, (db) =>
       db.usuario.update({
         where: { id: usuarioId },
@@ -244,12 +244,12 @@ d("avisos do escritorio", () => {
     );
   });
 
-  it("gera lembrete do compromisso dentro da antecedencia", async () => {
+  it("gera lembrete do compromisso dentro da antecedência", async () => {
     const agora = new Date();
     await comEscritorio(escritorio, async (db) => {
       await db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia de instrucao",
+          titulo: "Audiência de instrução",
           tipo: "AUDIENCIA",
           inicio: new Date(agora.getTime() + 3 * HORA),
           local: "Forum Central",
@@ -258,7 +258,7 @@ d("avisos do escritorio", () => {
       // Alem do marco mais distante (3 dias): nao deve gerar nada ainda.
       await db.compromisso.create({
         data: semEscritorio({
-          titulo: "Reuniao distante",
+          titulo: "Reunião distante",
           inicio: new Date(agora.getTime() + 200 * HORA),
         }),
       });
@@ -270,12 +270,12 @@ d("avisos do escritorio", () => {
     const aviso = await comEscritorio(escritorio, (db) =>
       db.aviso.findFirstOrThrow({ where: { tipo: "LEMBRETE_COMPROMISSO" } }),
     );
-    expect(aviso.assunto).toContain("Audiencia de instrucao");
+    expect(aviso.assunto).toContain("Audiência de instrução");
     // O assunto diz quanto falta, nao so quando e.
-    expect(aviso.assunto).toContain("e amanha");
+    expect(aviso.assunto).toContain("é amanhã");
   });
 
-  it("a regua manda tres vezes na audiencia, e uma so na tarefa", async () => {
+  it("a regua manda três vezes na audiência, e uma só na tarefa", async () => {
     // Tres avisos de cada tarefa enchem o WhatsApp da equipe e ensinam todo
     // mundo a ignorar — o contrario do que se quer no dia do prazo.
     const agora = new Date();
@@ -293,7 +293,7 @@ d("avisos do escritorio", () => {
     const audiencia = await comEscritorio(escritorio, (db) =>
       db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia da regua",
+          titulo: "Audiência da regua",
           tipo: "AUDIENCIA",
           inicio: daqui(70),
         }),
@@ -351,7 +351,7 @@ d("avisos do escritorio", () => {
         where: { id: { in: todos.map((a) => a.id).filter((id) => !jaExistiam.has(id)) } },
       });
       await db.compromisso.deleteMany({
-        where: { titulo: { in: ["Audiencia da regua", "Tarefa da regua"] } },
+        where: { titulo: { in: ["Audiência da regua", "Tarefa da regua"] } },
       });
     });
   });
@@ -389,10 +389,10 @@ d("avisos do escritorio", () => {
     // Sai do dominio do escritorio, nao da plataforma.
     expect(recebidas[0]?.de).toBe("contato@avisos.adv.br");
     expect(recebidas[0]?.para).toEqual(["dra@avisos.adv.br"]);
-    expect(recebidas.some((r) => r.corpo.includes("Audiencia"))).toBe(true);
+    expect(recebidas.some((r) => r.corpo.includes("instru"))).toBe(true);
   });
 
-  it("aviso enviado nao sai de novo", async () => {
+  it("aviso enviado não sai de novo", async () => {
     recebidas = [];
     const resultado = await enviarAvisosPendentes(escritorio);
     expect(resultado.enviados).toBe(0);
@@ -481,7 +481,7 @@ d("avisos do escritorio", () => {
 
 describe("erro de remetente", () => {
   it("SemRemetente diz o que fazer", () => {
-    expect(new SemRemetente().message).toContain("Integracoes");
+    expect(new SemRemetente().message).toContain("Integrações");
   });
 });
 
@@ -505,7 +505,7 @@ d("avisos que saem na hora", () => {
     }
   });
 
-  it("a tarefa designada avisa so quem ficou com ela", async () => {
+  it("a tarefa designada avisa só quem ficou com ela", async () => {
     const dono = await comEscritorio(escritorio, (db) =>
       db.usuario.create({
         data: semEscritorio({
@@ -519,7 +519,7 @@ d("avisos que saem na hora", () => {
     const tarefa = await comEscritorio(escritorio, (db) =>
       db.compromisso.create({
         data: semEscritorio({
-          titulo: "Protocolar a peticao",
+          titulo: "Protocolar a petição",
           tipo: "TAREFA",
           inicio: new Date(Date.now() + 5 * HORA),
           responsavelId: dono.id,
@@ -535,7 +535,7 @@ d("avisos que saem na hora", () => {
     // So o designado. Mandar para o escritorio inteiro faria cada um achar
     // que e do outro — que e o problema que ter responsavel resolve.
     expect(new Set(avisos.map((a) => a.usuarioId))).toEqual(new Set([dono.id]));
-    expect(avisos[0].assunto).toContain("Protocolar a peticao");
+    expect(avisos[0].assunto).toContain("Protocolar a petição");
 
     // De novo nao repete.
     expect(await avisarDesignacao(escritorio, tarefa.id)).toBe(0);
@@ -544,7 +544,7 @@ d("avisos que saem na hora", () => {
     const outra = await comEscritorio(escritorio, (db) =>
       db.compromisso.create({
         data: semEscritorio({
-          titulo: "Minha propria tarefa",
+          titulo: "Minha própria tarefa",
           tipo: "TAREFA",
           inicio: new Date(Date.now() + 5 * HORA),
           responsavelId: dono.id,
@@ -560,11 +560,11 @@ d("avisos que saem na hora", () => {
     });
   });
 
-  it("o agendamento avisa quem vai comparecer — e tarefa nao avisa ninguem", async () => {
+  it("o agendamento avisa quem vai comparecer — e tarefa não avisa ninguém", async () => {
     const audiencia = await comEscritorio(escritorio, (db) =>
       db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia marcada agora",
+          titulo: "Audiência marcada agora",
           tipo: "AUDIENCIA",
           inicio: new Date(Date.now() + 40 * 24 * HORA),
         }),

@@ -338,7 +338,7 @@ export async function registrarPagamento(
     });
     if (emissor?.automatica) {
       await enfileirar("EMITIR_NOTA_DA_PLATAFORMA", fatura.escritorioId, { faturaId: fatura.id }).catch((e) =>
-        console.error(`regua: fatura ${fatura.id} paga, mas a nota nao entrou na fila — ${(e as Error).message}`),
+        console.error(`regua: fatura ${fatura.id} paga, mas a nota não entrou na fila — ${(e as Error).message}`),
       );
     }
   }
@@ -384,8 +384,8 @@ export { semEscritorio };
 async function cobrarEAvisar(faturaId: string): Promise<void> {
   if (!temCobrancaDaPlataforma()) {
     console.warn(
-      `regua: fatura ${faturaId} criada SEM cobranca — ASAAS_PLATAFORMA_CHAVE ausente. ` +
-        "A baixa tera de ser manual.",
+      `regua: fatura ${faturaId} criada SEM cobrança — ASAAS_PLATAFORMA_CHAVE ausente. ` +
+        "A baixa terá de ser manual.",
     );
     return;
   }
@@ -395,8 +395,8 @@ async function cobrarEAvisar(faturaId: string): Promise<void> {
     emitida = await emitirCobrancaDaFatura(faturaId);
   } catch (erro) {
     console.error(
-      `regua: fatura ${faturaId} criada, mas a cobranca falhou — ${(erro as Error).message}. ` +
-        "Sera tentada de novo na proxima passada.",
+      `regua: fatura ${faturaId} criada, mas a cobrança falhou — ${(erro as Error).message}. ` +
+        "Será tentada de novo na próxima passada.",
     );
     return;
   }
@@ -431,7 +431,7 @@ async function cobrarEAvisar(faturaId: string): Promise<void> {
     // O e-mail falhar nao desfaz a cobranca: ela existe, e o escritorio pode
     // pagar pelo link no painel. Fica registrado para nao sumir em silencio.
     console.error(
-      `regua: fatura ${faturaId} cobrada, mas o aviso nao saiu — ${(erro as Error).message}`,
+      `regua: fatura ${faturaId} cobrada, mas o aviso não saiu — ${(erro as Error).message}`,
     );
   }
 }

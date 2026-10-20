@@ -35,13 +35,13 @@ export async function POST(
     const formulario = await req.formData();
     const enviado = formulario.get("audio");
     if (!(enviado instanceof File)) {
-      return NextResponse.json({ erro: "Envie um arquivo de audio." }, { status: 400 });
+      return NextResponse.json({ erro: "Envie um arquivo de áudio." }, { status: 400 });
     }
     // Confere o tamanho ANTES de carregar na memoria.
     if (enviado.size > LIMITE_DE_BYTES) {
       return NextResponse.json(
         {
-          erro: `O audio tem ${Math.round(enviado.size / 1024 / 1024)} MB; o limite e ${LIMITE_DE_BYTES / 1024 / 1024} MB.`,
+          erro: `O áudio tem ${Math.round(enviado.size / 1024 / 1024)} MB; o limite é ${LIMITE_DE_BYTES / 1024 / 1024} MB.`,
         },
         { status: 413 },
       );
@@ -61,7 +61,7 @@ export async function POST(
     // inteira chega depois, por /gravacao, num arquivo so.
     const pasta = continua
       ? null
-      : await guardarGravacaoNaPasta(escritorioId, id, usuarioId, { tipo: enviado.type, dados }, "audio enviado");
+      : await guardarGravacaoNaPasta(escritorioId, id, usuarioId, { tipo: enviado.type, dados }, "áudio enviado");
     return NextResponse.json({ ...resultado, pasta });
   } catch (erro) {
     if (

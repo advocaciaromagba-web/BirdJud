@@ -29,13 +29,13 @@ export async function GET(
   } catch (erro) {
     if (erro instanceof SemSessao) return NextResponse.json({ erro: "Entre no sistema primeiro." }, { status: 401 });
     if (erro instanceof SemPermissao || erro instanceof ModuloNaoContratado) {
-      return NextResponse.json({ erro: "So o administrador, com o modulo Arquivos contratado." }, { status: 403 });
+      return NextResponse.json({ erro: "Só o administrador, com o módulo Arquivos contratado." }, { status: 403 });
     }
     throw erro;
   }
 
   const slug = contexto.marca.slug;
-  if (!slug) return NextResponse.json({ erro: "Abra pelo endereco do escritorio." }, { status: 400 });
+  if (!slug) return NextResponse.json({ erro: "Abra pelo endereço do escritório." }, { status: 400 });
   const voltar = (motivo: string) =>
     NextResponse.redirect(
       `${baseDoEscritorio(slug)}/integracoes?nuvem=erro&motivo=${encodeURIComponent(motivo)}`,
@@ -43,11 +43,11 @@ export async function GET(
 
   const nuvem = NUVENS[provedor];
   if (!nuvem.configurada()) {
-    return voltar(`A conexao com o ${nuvem.rotulo} ainda nao foi liberada pela plataforma.`);
+    return voltar(`A conexão com o ${nuvem.rotulo} ainda não foi liberada pela plataforma.`);
   }
   const ligada = await nuvemConectada(contexto.escritorioId);
   if (ligada && ligada.provedor !== provedor) {
-    return voltar(`Desconecte o ${NUVENS[ligada.provedor].rotulo} antes: os documentos ficam em uma nuvem so.`);
+    return voltar(`Desconecte o ${NUVENS[ligada.provedor].rotulo} antes: os documentos ficam em uma nuvem só.`);
   }
 
   const { estado, nonce } = assinarEstado({

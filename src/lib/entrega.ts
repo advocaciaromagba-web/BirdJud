@@ -41,13 +41,13 @@ export function categoriaDaFalha(canal: string, codigo: number | null | undefine
 export function motivoDaFalha(codigo: number | null | undefined, original?: string | null): string {
   switch (codigo) {
     case 131026:
-      return "O numero nao recebe WhatsApp (nao tem conta, o aplicativo esta desatualizado ou a pessoa nao aceitou os termos novos).";
+      return "O número não recebe WhatsApp (não tem conta, o aplicativo está desatualizado ou a pessoa não aceitou os termos novos).";
     case 131021:
-      return "O numero de destino e o proprio numero de envio.";
+      return "O número de destino é o próprio número de envio.";
     case 131050:
       return "A pessoa bloqueou mensagens de empresas no WhatsApp.";
     case 131049:
-      return "A Meta segurou a mensagem para nao sobrecarregar a pessoa com mensagens de empresas.";
+      return "A Meta segurou a mensagem para não sobrecarregar a pessoa com mensagens de empresas.";
     case 131048:
       return "A Meta limitou o envio por excesso de mensagens recentes.";
     case 130429:
@@ -55,34 +55,34 @@ export function motivoDaFalha(codigo: number | null | undefined, original?: stri
       return "Limite de envio da Meta atingido naquele momento.";
     case 131000:
     case 131016:
-      return "Instabilidade no servico do WhatsApp.";
+      return "Instabilidade no serviço do WhatsApp.";
     case 131052:
     case 131053:
-      return "O anexo nao pode ser transmitido pela Meta.";
+      return "O anexo não pode ser transmitido pela Meta.";
     case 131042:
     case 141006:
-      return "Pendencia de pagamento da conta de WhatsApp da plataforma.";
+      return "Pendência de pagamento da conta de WhatsApp da plataforma.";
     case 131047:
-      return "A janela de 24 horas com este numero estava fechada.";
+      return "A janela de 24 horas com este número estava fechada.";
     case 132001:
     case 132015:
     case 132016:
-      return "O modelo de mensagem nao esta disponivel na Meta (nao aprovado, pausado ou desativado).";
+      return "O modelo de mensagem não está disponível na Meta (não aprovado, pausado ou desativado).";
     case 190:
-      return "A conexao da plataforma com o WhatsApp expirou.";
+      return "A conexão da plataforma com o WhatsApp expirou.";
     case 0:
-      return "Sem resposta do servico do WhatsApp (rede).";
+      return "Sem resposta do serviço do WhatsApp (rede).";
   }
-  return original?.trim() || "A Meta nao informou o motivo.";
+  return original?.trim() || "A Meta não informou o motivo.";
 }
 
 /** O que a pessoa do escritorio faz agora. */
 export const O_QUE_FAZER: Record<Categoria, string> = {
-  TEMPORARIO: "O sistema tenta de novo sozinho. Se a segunda tentativa tambem falhar, avise o cliente por outro meio.",
-  NUMERO: "Confira o telefone no cadastro. Corrigido, use \"Reenviar\": sai para o numero novo. Ou ligue para a pessoa.",
-  RECUSOU: "Por WhatsApp nao chega. Avise por telefone, e-mail ou pessoalmente e marque como resolvido.",
-  PLATAFORMA: "Problema do lado da BirdJud, que ja foi avisada. Avise o cliente por outro meio ou reenvie mais tarde.",
-  EMAIL: "Confira o endereco de e-mail do cadastro e a conta de envio em Integracoes. Depois reenvie ou avise por outro meio.",
+  TEMPORARIO: "O sistema tenta de novo sozinho. Se a segunda tentativa também falhar, avise o cliente por outro meio.",
+  NUMERO: "Confira o telefone no cadastro. Corrigido, use \"Reenviar\": sai para o número novo. Ou ligue para a pessoa.",
+  RECUSOU: "Por WhatsApp não chega. Avise por telefone, e-mail ou pessoalmente e marque como resolvido.",
+  PLATAFORMA: "Problema do lado da BirdJud, que já foi avisada. Avise o cliente por outro meio ou reenvie mais tarde.",
+  EMAIL: "Confira o endereço de e-mail do cadastro e a conta de envio em Integrações. Depois reenvie ou avise por outro meio.",
   OUTRO: "Reenvie ou avise a pessoa por outro meio.",
 };
 
@@ -200,7 +200,7 @@ export const TRATAMENTOS = {
   REENVIADO: "Reenviada",
   REENVIO_AUTOMATICO: "Reenviada pelo sistema",
   CONTATO_DIRETO: "Avisado por outro meio",
-  DESCARTADO: "Nao precisa mais",
+  DESCARTADO: "Não precisa mais",
 } as const;
 export type Tratamento = keyof typeof TRATAMENTOS;
 
@@ -217,5 +217,5 @@ export function rotuloDaEntrega(a: {
   if (a.lidoEm) return "Lida";
   if (a.entregueEm) return "Entregue";
   // Sem id: mandada antes do retorno existir — nao ha como saber.
-  return a.idNaMeta ? "Sem confirmacao de entrega" : null;
+  return a.idNaMeta ? "Sem confirmação de entrega" : null;
 }

@@ -29,10 +29,10 @@ import { consumoDoMes } from "../src/lib/consumo";
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
-describe("instrucoes da IA", () => {
-  it("proibem inventar fundamentacao — a regra que mais importa aqui", () => {
+describe("instruções da IA", () => {
+  it("proibem inventar fundamentação — a regra que mais importa aqui", () => {
     for (const sistema of [SISTEMA_TRIAGEM, SISTEMA_MINUTA]) {
-      expect(sistema).toContain("NUNCA invente numero de lei");
+      expect(sistema).toContain("NUNCA invente número de lei");
       expect(sistema).toContain("RASCUNHO");
     }
   });
@@ -42,22 +42,22 @@ describe("instrucoes da IA", () => {
     // diz que DIA isso e, com feriado e dia util, e o sistema.
     expect(SISTEMA_TRIAGEM).toContain("VOCE NAO CALCULA DATA DE PRAZO");
     expect(SISTEMA_TRIAGEM).toContain("ponha null");
-    expect(SISTEMA_TRIAGEM).toContain("Quem transforma dias em data e o sistema");
+    expect(SISTEMA_TRIAGEM).toContain("Quem transforma dias em data é o sistema");
   });
 
-  it("a entrada da analise leva o contexto do processo junto do texto", () => {
+  it("a entrada da análise leva o contexto do processo junto do texto", () => {
     const entrada = entradaDaAnalise({
-      texto: "Intimacao para manifestar-se.",
+      texto: "Intimação para manifestar-se.",
       numeroProcesso: "00012345620268260100",
       tribunal: "TJSP",
-      orgao: "1a Vara Civel",
+      orgao: "1a Vara Cível",
     });
     expect(entrada).toContain("Processo: 00012345620268260100");
     expect(entrada).toContain("TJSP");
-    expect(entrada).toContain("Intimacao para manifestar-se.");
+    expect(entrada).toContain("Intimação para manifestar-se.");
   });
 
-  it("a entrada da minuta separa o que o juizo disse do que o advogado pediu", () => {
+  it("a entrada da minuta separa o que o juízo disse do que o advogado pediu", () => {
     const entrada = entradaDaMinuta({
       texto: "Manifeste-se sobre os embargos.",
       numeroProcesso: null,
@@ -66,15 +66,15 @@ describe("instrucoes da IA", () => {
       cliente: "Cliente Exemplo",
       instrucao: "Impugnar os embargos por intempestividade.",
     });
-    expect(entrada).toContain("Publicacao a que se responde:");
-    expect(entrada).toContain("Instrucao do advogado:");
+    expect(entrada).toContain("Publicação a que se responde:");
+    expect(entrada).toContain("Instrução do advogado:");
     expect(entrada).toContain("Cliente Exemplo");
     // Sem numero de processo, a linha simplesmente nao aparece.
     expect(entrada).not.toContain("Processo:");
   });
 });
 
-describe("unidade de cobranca", () => {
+describe("unidade de cobrança", () => {
   it("conta milhares de tokens, arredondando para cima", () => {
     // Um centavo por token seria centenas de vezes o custo do modelo; a
     // unidade da fatura e o milhar.
@@ -143,19 +143,19 @@ afterAll(async () => {
 
 beforeEach(() => {
   recebido = null;
-  responder = () => respostaDoModelo("RESUMO\nIntimacao para manifestacao.");
+  responder = () => respostaDoModelo("RESUMO\nIntimacao para manifestação.");
 });
 
 describe("chamada ao modelo", () => {
-  it("manda o modelo, o teto de saida e o esforco pedido", async () => {
-    await pedir(SISTEMA_TRIAGEM, "Publicacao qualquer", "low");
+  it("manda o modelo, o teto de saída e o esforco pedido", async () => {
+    await pedir(SISTEMA_TRIAGEM, "Publicação qualquer", "low");
     expect(recebido?.corpo.model).toBe("claude-opus-5");
     expect(recebido?.corpo.max_tokens).toBe(16000);
     expect(recebido?.corpo.output_config).toMatchObject({ effort: "low" });
   });
 
   it("liga o fallback de recusa", async () => {
-    await pedir(SISTEMA_TRIAGEM, "Publicacao qualquer");
+    await pedir(SISTEMA_TRIAGEM, "Publicação qualquer");
     // Texto de processo criminal ou de familia toca assunto pesado; sem o
     // fallback, o advogado veria o sistema simplesmente falhar.
     expect(recebido?.corpo.fallbacks).toBe("default");
@@ -164,8 +164,8 @@ describe("chamada ao modelo", () => {
     );
   });
 
-  it("marca o sistema para cache: ele nao muda entre chamadas", async () => {
-    await pedir(SISTEMA_TRIAGEM, "Publicacao qualquer");
+  it("marca o sistema para cache: ele não muda entre chamadas", async () => {
+    await pedir(SISTEMA_TRIAGEM, "Publicação qualquer");
     const sistema = recebido?.corpo.system as { cache_control?: unknown }[];
     expect(sistema[0]?.cache_control).toEqual({ type: "ephemeral" });
   });
@@ -195,7 +195,7 @@ describe("chamada ao modelo", () => {
     expect(resultado.modelo).toBe("claude-opus-4-8");
   });
 
-  it("recusa do modelo vira erro proprio, nao texto vazio", async () => {
+  it("recusa do modelo vira erro próprio, não texto vazio", async () => {
     responder = () => ({
       status: 200,
       json: {
@@ -225,7 +225,7 @@ describe("chamada ao modelo", () => {
 });
 
 describe("sem chave configurada", () => {
-  it("recusa a chamada com erro proprio, sem tocar na rede", async () => {
+  it("recusa a chamada com erro próprio, sem tocar na rede", async () => {
     const chave = process.env.ANTHROPIC_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
     recebido = null;
@@ -248,10 +248,10 @@ let escritorio = "";
 let usuarioId = "";
 const marca = Date.now();
 
-d("analise gravada e medida", () => {
+d("análise gravada e medida", () => {
   beforeAll(async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `ia-${marca}`, nome: "Escritorio da IA" },
+      data: { slug: `ia-${marca}`, nome: "Escritório da IA" },
     });
     escritorio = e.id;
     const usuario = await comEscritorio(escritorio, (db) =>
@@ -306,7 +306,7 @@ d("analise gravada e medida", () => {
     expect(ia?.quantidade).toBe(4); // 3500 tokens -> 4 milhares
   });
 
-  it("uma segunda analise soma ao consumo do mes", async () => {
+  it("uma segunda análise soma ao consumo do mês", async () => {
     responder = () =>
       respostaDoModelo("RESUMO\nOutra.", {
         usage: { input_tokens: 1000, output_tokens: 1000 },
@@ -317,7 +317,7 @@ d("analise gravada e medida", () => {
       usuarioId,
       tipo: "ANALISE_PUBLICACAO",
       sistema: SISTEMA_TRIAGEM,
-      entrada: "Outra publicacao",
+      entrada: "Outra publicação",
     });
 
     const consumo = await consumoDoMes(escritorio);
@@ -325,7 +325,7 @@ d("analise gravada e medida", () => {
     expect(ia?.quantidade).toBe(6); // 4 + 2
   });
 
-  it("a analise de um escritorio nao aparece no outro", async () => {
+  it("a análise de um escritório não aparece no outro", async () => {
     const outro = await prismaPlataforma().escritorio.create({
       data: { slug: `ia-b-${marca}`, nome: "Outro" },
     });
@@ -341,10 +341,10 @@ d("analise gravada e medida", () => {
   });
 });
 
-describe("instrucoes da entrevista", () => {
-  it("o roteiro e escrito para quem nao e advogado", async () => {
+describe("instruções da entrevista", () => {
+  it("o roteiro e escrito para quem não e advogado", async () => {
     const { SISTEMA_ROTEIRO } = await import("../src/lib/prompts-ia");
-    expect(SISTEMA_ROTEIRO).toContain("Quem responde nao e advogado");
+    expect(SISTEMA_ROTEIRO).toContain("Quem responde não e advogado");
     expect(SISTEMA_ROTEIRO).toContain("adimplemento");
     expect(SISTEMA_ROTEIRO).toContain("uma ideia por pergunta");
   });
@@ -353,37 +353,37 @@ describe("instrucoes da entrevista", () => {
    * As cinco regras que fazem este recurso existir sem ser perigoso. Cada
    * uma delas saiu de uma forma conhecida de a triagem dar errado.
    */
-  it("a analise da entrevista e proibida de completar o que nao foi dito", async () => {
+  it("a análise da entrevista e proibida de completar o que não foi dito", async () => {
     const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
-    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Trabalhe SO com o que esta no texto");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Trabalhe SÓ com o que está no texto");
     expect(SISTEMA_ANALISE_ENTREVISTA).toContain(
-      "Nao complete a historia com o que",
+      "Não complete a história com o que",
     );
   });
 
   it("nunca afirma que um prazo prescreveu — nos dois sentidos", async () => {
     const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
     expect(SISTEMA_ANALISE_ENTREVISTA).toContain(
-      "NUNCA afirme que um prazo prescreveu ou que nao prescreveu",
+      "NUNCA afirme que um prazo prescreveu ou que não prescreveu",
     );
     expect(SISTEMA_ANALISE_ENTREVISTA).toContain("A VERIFICAR");
   });
 
-  it("nao indica artigo de lei: enquadramento e do advogado", async () => {
+  it("não indica artigo de lei: enquadramento e do advogado", async () => {
     const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
     expect(SISTEMA_ANALISE_ENTREVISTA).toContain(
-      "Nao cite artigo de lei, sumula ou tese",
+      "Não cite artigo de lei, súmula ou tese",
     );
   });
 
-  it("avisa que a transcricao de audio erra, em vez de confiar nela", async () => {
+  it("avisa que a transcrição de áudio erra, em vez de confiar nela", async () => {
     const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
     expect(SISTEMA_ANALISE_ENTREVISTA).toContain("TERA erro");
-    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Nao adivinhe");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Não adivinhe");
   });
 
   it("lista vazia e resposta valida: inventar testemunha e o pior erro", async () => {
     const { SISTEMA_ANALISE_ENTREVISTA } = await import("../src/lib/prompts-ia");
-    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Lista vazia e resposta valida");
+    expect(SISTEMA_ANALISE_ENTREVISTA).toContain("Lista vazia é resposta válida");
   });
 });

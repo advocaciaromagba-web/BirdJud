@@ -19,7 +19,7 @@ type Chamada = {
   cabecalhos: Record<string, string | string[] | undefined>;
 };
 
-/** Sobe um servidor e devolve o endereco. */
+/** Sobe um servidor e devolve o endereço. */
 async function subir(servidor: Server): Promise<string> {
   await new Promise<void>((pronto) => servidor.listen(0, "127.0.0.1", pronto));
   const endereco = servidor.address();
@@ -33,7 +33,7 @@ function fechar(servidor: Server | null): Promise<void> {
   return new Promise((pronto) => servidor.close(() => pronto()));
 }
 
-describe("conferencia da consulta do rele", () => {
+describe("conferência da consulta do rele", () => {
   const completa = new URLSearchParams({
     numeroOab: "12345",
     ufOab: "BA",
@@ -46,7 +46,7 @@ describe("conferencia da consulta do rele", () => {
     expect("erro" in saida).toBe(false);
   });
 
-  it("recusa parametro que nao esta na lista", () => {
+  it("recusa parametro que não esta na lista", () => {
     const entrada = new URLSearchParams(completa);
     entrada.set("callback", "http://mim.example");
     const saida = conferirConsulta(entrada);
@@ -129,13 +129,13 @@ describe("rele rodando", () => {
   const consulta =
     "numeroOab=12345&ufOab=BA&dataDisponibilizacaoInicio=2026-09-01&dataDisponibilizacaoFim=2026-09-10";
 
-  it("sem Authorization responde 401 e nao chama o CNJ", async () => {
+  it("sem Authorization responde 401 e não chama o CNJ", async () => {
     const resposta = await fetch(`${enderecoDoRele}?${consulta}`);
     expect(resposta.status).toBe(401);
     expect(chamadas).toHaveLength(0);
   });
 
-  it("com token errado responde 401 e nao chama o CNJ", async () => {
+  it("com token errado responde 401 e não chama o CNJ", async () => {
     const resposta = await fetch(`${enderecoDoRele}?${consulta}`, {
       headers: { Authorization: "Bearer outro-token" },
     });
@@ -152,7 +152,7 @@ describe("rele rodando", () => {
     expect(chamadas).toHaveLength(0);
   });
 
-  it("so responde a GET", async () => {
+  it("só responde a GET", async () => {
     const resposta = await fetch(`${enderecoDoRele}?${consulta}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${TOKEN}` },
@@ -161,7 +161,7 @@ describe("rele rodando", () => {
     expect(chamadas).toHaveLength(0);
   });
 
-  it("nao repassa parametro estranho, mesmo com token bom", async () => {
+  it("não repassa parametro estranho, mesmo com token bom", async () => {
     const resposta = await fetch(
       `${enderecoDoRele}?${consulta}&url=http://interno`,
       {

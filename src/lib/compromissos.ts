@@ -53,7 +53,7 @@ export function faltaParaGravar(v: Vinculos): string | null {
   // Mandar os dois ao mesmo tempo e ambiguo: qual deles vale? Recusar aqui
   // evita criar cliente duplicado sem querer.
   if (v.clienteId?.trim() && v.clienteNovo?.nome?.trim()) {
-    return "Escolha um cliente da base ou cadastre um novo, nao os dois.";
+    return "Escolha um cliente da base ou cadastre um novo, não os dois.";
   }
 
   return null;

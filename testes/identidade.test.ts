@@ -25,7 +25,7 @@ describe("normalizacao da cor", () => {
 
   // O navegador nao distingue "cor" de "resto de CSS" numa propriedade
   // personalizada: sem esta recusa, o valor abaixo viraria regra de verdade.
-  it("recusa qualquer coisa que nao seja hexadecimal", () => {
+  it("recusa qualquer coisa que não seja hexadecimal", () => {
     for (const ruim of [
       "red",
       "rgb(0,0,0)",
@@ -41,26 +41,26 @@ describe("normalizacao da cor", () => {
     }
   });
 
-  it("exigirCor levanta com mensagem util", () => {
+  it("exigirCor levanta com mensagem útil", () => {
     expect(() => exigirCor("azul", "principal")).toThrow(CorInvalida);
     expect(() => exigirCor("azul", "principal")).toThrow(/principal/);
   });
 });
 
 describe("luminancia e contraste", () => {
-  it("branco e preto sao os extremos", () => {
+  it("branco e preto são os extremos", () => {
     expect(luminancia("#FFFFFF")).toBeCloseTo(1, 5);
     expect(luminancia("#000000")).toBeCloseTo(0, 5);
     expect(contraste("#FFFFFF", "#000000")).toBeCloseTo(21, 1);
   });
 
-  it("cor igual nao tem contraste", () => {
+  it("cor igual não tem contraste", () => {
     expect(contraste("#123456", "#123456")).toBeCloseTo(1, 5);
   });
 
   // O olho enxerga muito mais o verde que o azul. Usando a media dos canais,
   // estas duas dariam quase o mesmo valor — e nao dao.
-  it("pesa os canais como o olho, nao pela media", () => {
+  it("pesa os canais como o olho, não pela média", () => {
     expect(luminancia("#00FF00")).toBeGreaterThan(luminancia("#0000FF") * 5);
   });
 });
@@ -85,7 +85,7 @@ describe("texto sobre a cor da marca", () => {
 describe("paleta derivada", () => {
   const paleta = paletaDe("#0B1F3B", "#D4AF7C");
 
-  it("mantem as duas cores escolhidas", () => {
+  it("mantém as duas cores escolhidas", () => {
     expect(paleta.primaria).toBe("#0B1F3B");
     expect(paleta.secundaria).toBe("#D4AF7C");
   });
@@ -97,12 +97,12 @@ describe("paleta derivada", () => {
     expect(luminancia(paleta.primariaClara)).toBeGreaterThan(0.8);
   });
 
-  it("recusa a paleta inteira quando uma das cores nao e cor", () => {
+  it("recusa a paleta inteira quando uma das cores não e cor", () => {
     expect(() => paletaDe("#0B1F3B", "javascript:alert(1)")).toThrow(CorInvalida);
-    expect(() => paletaDe("nao e cor", "#D4AF7C")).toThrow(CorInvalida);
+    expect(() => paletaDe("não e cor", "#D4AF7C")).toThrow(CorInvalida);
   });
 
-  it("toda variavel gerada e uma cor hexadecimal", () => {
+  it("toda variável gerada e uma cor hexadecimal", () => {
     for (const valor of Object.values(variaveisDaPaleta(paleta))) {
       expect(valor).toMatch(/^#[0-9A-F]{6}$/);
     }
@@ -176,7 +176,7 @@ describe("o menu lateral escuro", () => {
     expect(vermelha).not.toBe(verde);
   });
 
-  it("as variaveis do menu chegam ao body", () => {
+  it("as variáveis do menu chegam ao body", () => {
     const vars = variaveisDaPaleta(paletaDe("#0F2B46", "#D4AF7C"));
     for (const chave of [
       "--menu-fundo",
@@ -193,7 +193,7 @@ describe("o menu lateral escuro", () => {
 });
 
 describe("letra na cor de destaque", () => {
-  it("qualquer destaque vira texto legivel (4,5:1) no cartao e na pagina, sem sair da familia", () => {
+  it("qualquer destaque vira texto legível (4,5:1) no cartão e na página, sem sair da família", () => {
     for (const cor of ["#D4AF7C", "#FFD700", "#E8E8E8", "#C9A227", "#7FDBFF", "#FFFFFF"]) {
       const texto = textoLegivelSobre(cor);
       expect(contraste(texto, "#FFFFFF")).toBeGreaterThanOrEqual(4.5);
@@ -203,7 +203,7 @@ describe("letra na cor de destaque", () => {
     expect(textoLegivelSobre("#1B4D3E")).toBe("#1B4D3E");
   });
 
-  it("a paleta leva a variavel que o sobretitulo usa", () => {
+  it("a paleta leva a variável que o sobretitulo usa", () => {
     const v = variaveisDaPaleta(paletaDe("#0B1F3B", "#D4AF7C"));
     expect(v["--marca-secundaria-texto"]).toBe(textoLegivelSobre("#D4AF7C"));
     expect(v["--marca-secundaria"]).toBe("#D4AF7C");

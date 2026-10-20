@@ -28,8 +28,8 @@ export type GrupoDoChecklist =
 export const ROTULO_DO_GRUPO: Record<GrupoDoChecklist, string> = {
   PESSOAIS: "Documentos pessoais",
   DO_CASO: "Documentos do seu caso",
-  AJUDAM: "Se voce tiver, ajuda muito",
-  GRATUIDADE: "Para o pedido de justica gratuita",
+  AJUDAM: "Se você tiver, ajuda muito",
+  GRATUIDADE: "Para o pedido de justiça gratuita",
   ACESSOS: "Acessos",
 };
 
@@ -44,32 +44,32 @@ export const ROTULO_DO_GRUPO: Record<GrupoDoChecklist, string> = {
 export const PESSOAIS: ItemDoChecklist[] = [
   {
     documento: "Documento de identidade com foto (CIN, RG ou CNH)",
-    paraQue: "Identificacao e qualificacao na peticao",
+    paraQue: "Identificação e qualificação na petição",
     essencial: true,
   },
   {
     documento: "CPF",
-    paraQue: "Qualificacao e cadastro no processo",
+    paraQue: "Qualificação e cadastro no processo",
     essencial: true,
   },
   {
-    documento: "Comprovante de endereco dos ultimos 3 meses",
-    paraQue: "Qualificacao e definicao do foro competente",
+    documento: "Comprovante de endereço dos últimos 3 meses",
+    paraQue: "Qualificação e definição do foro competente",
     essencial: true,
   },
   {
-    documento: "Certidao de casamento ou de nascimento",
-    paraQue: "Comprova o estado civil declarado na qualificacao",
+    documento: "Certidão de casamento ou de nascimento",
+    paraQue: "Comprova o estado civil declarado na qualificação",
     essencial: false,
   },
   {
-    documento: "Procuracao assinada",
-    paraQue: "Sem ela o escritorio nao pode atuar",
+    documento: "Procuração assinada",
+    paraQue: "Sem ela o escritório não pode atuar",
     essencial: true,
   },
   {
-    documento: "Contrato de honorarios assinado",
-    paraQue: "Formaliza a contratacao",
+    documento: "Contrato de honorários assinado",
+    paraQue: "Formaliza a contratação",
     essencial: true,
   },
 ];
@@ -83,43 +83,43 @@ export const PESSOAIS: ItemDoChecklist[] = [
  */
 export const GRATUIDADE: ItemDoChecklist[] = [
   {
-    documento: "Extratos bancarios dos ultimos 3 meses, de todas as contas",
-    paraQue: "E o documento mais cobrado pelos juizes para deferir a gratuidade",
+    documento: "Extratos bancários dos últimos 3 meses, de todas as contas",
+    paraQue: "É o documento mais cobrado pelos juízes para deferir a gratuidade",
     essencial: true,
   },
   {
-    documento: "Ultima declaracao de Imposto de Renda completa, com recibo",
+    documento: "Última declaração de Imposto de Renda completa, com recibo",
     paraQue: "Mostra renda, bens e a real capacidade financeira",
     essencial: true,
   },
   {
-    documento: "Comprovante de isencao do IR, para quem nao declara",
-    paraQue: "Substitui a declaracao — tira-se no site da Receita",
+    documento: "Comprovante de isenção do IR, para quem não declara",
+    paraQue: "Substitui a declaração — tira-se no site da Receita",
     essencial: false,
   },
   {
-    documento: "Holerites dos ultimos 3 meses",
-    paraQue: "Comprova a renda de quem tem vinculo",
+    documento: "Holerites dos últimos 3 meses",
+    paraQue: "Comprova a renda de quem tem vínculo",
     essencial: true,
   },
   {
-    documento: "CTPS: paginas de identificacao e ultimo contrato",
-    paraQue: "Comprova o vinculo, ou a falta dele",
+    documento: "CTPS: páginas de identificação e último contrato",
+    paraQue: "Comprova o vínculo, ou a falta dele",
     essencial: false,
   },
   {
-    documento: "Comprovante de beneficio (Bolsa Familia, BPC, seguro-desemprego)",
+    documento: "Comprovante de benefício (Bolsa Família, BPC, seguro-desemprego)",
     paraQue: "Reforca bastante o pedido quando existe",
     essencial: false,
   },
   {
     documento: "Comprovante do CadUnico, se estiver inscrito",
-    paraQue: "Prova forte de hipossuficiencia",
+    paraQue: "Prova forte de hipossuficiência",
     essencial: false,
   },
   {
-    documento: "Declaracao de hipossuficiencia assinada",
-    paraQue: "Continua necessaria, mas sozinha ja nao basta",
+    documento: "Declaração de hipossuficiência assinada",
+    paraQue: "Continua necessária, mas sozinha já não basta",
     essencial: true,
   },
 ];
@@ -127,14 +127,14 @@ export const GRATUIDADE: ItemDoChecklist[] = [
 /** Acessos digitais de que o escritorio precisa para trabalhar no caso. */
 export const ACESSOS: ItemDoChecklist[] = [
   {
-    documento: "Senha do GOV.BR, nivel prata ou ouro",
-    paraQue: "Acesso ao Meu INSS, e-CAC, processos e certidoes em nome do cliente",
+    documento: "Senha do GOV.BR, nível prata ou ouro",
+    paraQue: "Acesso ao Meu INSS, e-CAC, processos e certidões em nome do cliente",
     essencial: true,
   },
   {
-    documento: "Saber se o GOV.BR tem verificacao em duas etapas",
+    documento: "Saber se o GOV.BR tem verificação em duas etapas",
     paraQue:
-      "Se tiver, o codigo chega no celular do cliente e ele precisa estar por perto na hora",
+      "Se tiver, o código chega no celular do cliente e ele precisa estar por perto na hora",
     essencial: true,
   },
 ];
@@ -146,24 +146,24 @@ export type Checklist = {
 };
 
 const INSTRUCOES = [
-  "Voce monta listas de documentos para clientes de um escritorio de advocacia",
-  "brasileiro, logo depois da contratacao, quando ja se sabe o tipo de acao.",
+  "Você monta listas de documentos para clientes de um escritório de advocacia",
+  "brasileiro, logo depois da contratação, quando já se sabe o tipo de ação.",
   "",
-  "A lista vai ser entregue ao CLIENTE, entao:",
-  "1. Use o nome que a pessoa comum usa. 'Conta de luz ou de agua', nao",
-  "   'comprovante de residencia idoneo'. 'Extrato do banco', nao 'extrato de",
-  "   movimentacao financeira'.",
-  "2. Seja enxuto. Lista gigante faz o cliente nao trazer nada. No maximo 10",
+  "A lista vai ser entregue ao CLIENTE, então:",
+  "1. Use o nome que a pessoa comum usa. 'Conta de luz ou de água', não",
+  "   'comprovante de residência idôneo'. 'Extrato do banco', não 'extrato de",
+  "   movimentação financeira'.",
+  "2. Seja enxuto. Lista gigante faz o cliente não trazer nada. No máximo 10",
   "   itens em doCaso e 6 em ajudam.",
-  "3. NAO repita documento pessoal basico (identidade, CPF, comprovante de",
-  "   endereco, procuracao, contrato): ja entram automaticamente.",
-  "4. NAO repita documento de justica gratuita (extrato, imposto de renda,",
-  "   holerite): tambem ja entram automaticamente.",
-  "5. Em doCaso ponha o que e indispensavel para essa acao. Em ajudam ponha o",
+  "3. NAO repita documento pessoal básico (identidade, CPF, comprovante de",
+  "   endereço, procuração, contrato): já entram automaticamente.",
+  "4. NAO repita documento de justiça gratuita (extrato, imposto de renda,",
+  "   holerite): também já entram automaticamente.",
+  "5. Em doCaso ponha o que é indispensável para essa ação. Em ajudam ponha o",
   "   que ajuda mas nem sempre existe, e o que costuma ser esquecido.",
-  "6. Em observacoes, avise sobre prazo curto, documento que demora a sair ou",
-  "   que precisa ser pedido a um orgao. No maximo 4.",
-  "7. Nao cite numero de artigo de lei na lista do cliente.",
+  "6. Em observações, avise sobre prazo curto, documento que demora a sair ou",
+  "   que precisa ser pedido a um órgão. No máximo 4.",
+  "7. Não cite número de artigo de lei na lista do cliente.",
 ].join("\n");
 
 const ITEM_SCHEMA = {
@@ -260,8 +260,8 @@ export async function montarComIA(ctx: Contexto): Promise<{
   modelo: string;
 }> {
   const entrada = [
-    ctx.area ? `Area do direito: ${ctx.area}` : "",
-    `Tipo de acao: ${ctx.tipoAcao}`,
+    ctx.area ? `Área do direito: ${ctx.area}` : "",
+    `Tipo de ação: ${ctx.tipoAcao}`,
     ctx.descricao?.trim() ? `Sobre o caso: ${ctx.descricao.trim()}` : "",
   ]
     .filter(Boolean)
@@ -315,6 +315,6 @@ export function emTexto(
     for (const o of lista.observacoes) linhas.push(`- ${o}`);
   }
 
-  linhas.push("", "Qualquer duvida sobre algum documento, e so nos chamar.", nomeDoEscritorio);
+  linhas.push("", "Qualquer dúvida sobre algum documento, é só nos chamar.", nomeDoEscritorio);
   return linhas.join("\n");
 }

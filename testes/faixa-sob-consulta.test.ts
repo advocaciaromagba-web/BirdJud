@@ -13,7 +13,7 @@ import {
 import { contaDoPlano, PLANOS } from "../src/lib/planos";
 
 describe("faixa sob consulta", () => {
-  it("a vitrine comeca no advogado sozinho e vai ate 25", () => {
+  it("a vitrine começa no advogado sozinho e vai até 25", () => {
     expect(FAIXAS_PUBLICADAS).toEqual(["ATE_1", "ATE_3", "ATE_10", "ATE_25"]);
     expect(faixaPublicada(FAIXA_SOB_CONSULTA)).toBe(false);
   });
@@ -24,7 +24,7 @@ describe("faixa sob consulta", () => {
     }
   });
 
-  it("a faixa de consulta mantem preco de referencia, acima da ultima publicada", () => {
+  it("a faixa de consulta mantém preço de referência, acima da última publicada", () => {
     const ultima = FAIXAS_PUBLICADAS[FAIXAS_PUBLICADAS.length - 1];
     for (const plano of PLANOS) {
       expect(

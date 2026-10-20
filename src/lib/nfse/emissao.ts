@@ -45,14 +45,14 @@ export class SemCadastroFiscal extends NotaInvalida {
 
 export class SemCertificado extends NotaInvalida {
   constructor() {
-    super("O certificado e-CNPJ ainda nao foi cadastrado em Notas fiscais.", 428);
+    super("O certificado e-CNPJ ainda não foi cadastrado em Notas fiscais.", 428);
     this.name = "SemCertificado";
   }
 }
 
 export class SoOTitular extends NotaInvalida {
   constructor(titular: string) {
-    super(`So ${titular}, titular do certificado, assina, cancela ou consulta com ele.`, 403);
+    super(`Só ${titular}, titular do certificado, assina, cancela ou consulta com ele.`, 403);
     this.name = "SoOTitular";
   }
 }
@@ -126,17 +126,17 @@ export function pendenciasDoEmissor(
   cert: CertificadoGuardado | null,
   competencia?: Date,
 ): string[] {
-  if (!fiscal) return ["Preencher o cadastro fiscal do escritorio."];
+  if (!fiscal) return ["Preencher o cadastro fiscal do escritório."];
   const p: string[] = [];
   const cnpj = fiscal.cnpj.replace(/\D/g, "");
-  if (!cert) p.push("Cadastrar o certificado digital A1 e-CNPJ do escritorio.");
+  if (!cert) p.push("Cadastrar o certificado digital A1 e-CNPJ do escritório.");
   else if (cert.cnpj && cert.cnpj !== cnpj) {
-    p.push("O certificado cadastrado e de outro CNPJ — a API recusa (rejeicao E0718).");
+    p.push("O certificado cadastrado é de outro CNPJ — a API recusa (rejeição E0718).");
   } else if (cert.cnpj === null) {
-    p.push("O certificado cadastrado e e-CPF — a API so aceita o e-CNPJ do proprio escritorio (rejeicao E0718).");
+    p.push("O certificado cadastrado é e-CPF — a API só aceita o e-CNPJ do próprio escritório (rejeição E0718).");
   }
-  if (cert?.validoAte && new Date(cert.validoAte) < new Date()) p.push("O certificado digital esta vencido.");
-  if (!/^\d{7}$/.test(fiscal.codigoMunicipio)) p.push("Informar o codigo IBGE do municipio (7 digitos).");
+  if (cert?.validoAte && new Date(cert.validoAte) < new Date()) p.push("O certificado digital está vencido.");
+  if (!/^\d{7}$/.test(fiscal.codigoMunicipio)) p.push("Informar o código IBGE do município (7 dígitos).");
   p.push(...pendenciasDoIbsCbs(fiscal));
   if (competencia) {
     p.push(...pendenciasDoRegime(regimeVigente(fiscal, competencia), ""));
@@ -186,12 +186,12 @@ export async function tomadorDoCliente(cliente: Cliente): Promise<{ tomador: Tom
         bairro: e.bairro!.trim(),
       };
     } else {
-      avisos.push("Nao foi possivel confirmar o municipio pelo CEP do cliente — a nota sai sem o endereco do tomador.");
+      avisos.push("Não foi possível confirmar o município pelo CEP do cliente — a nota sai sem o endereço do tomador.");
     }
   }
   if (doc.length === 14 && !endereco) {
     throw new NotaInvalida(
-      "Tomador empresa (CNPJ) precisa de endereco completo com CEP valido na nota (regra E0235). Complete o cadastro do cliente.",
+      "Tomador empresa (CNPJ) precisa de endereço completo com CEP válido na nota (regra E0235). Complete o cadastro do cliente.",
     );
   }
   if (doc.length !== 11 && doc.length !== 14) {
@@ -240,15 +240,15 @@ export async function prepararNota(
   if (!fiscal) throw new SemCadastroFiscal();
 
   const cliente = await comEscritorio(escritorioId, (db) => db.cliente.findFirst({ where: { id: p.clienteId } }));
-  if (!cliente) throw new NotaInvalida("Cliente nao encontrado.");
-  if (!(p.valorCentavos > 0)) throw new NotaInvalida("Informe o valor do servico.");
+  if (!cliente) throw new NotaInvalida("Cliente não encontrado.");
+  if (!(p.valorCentavos > 0)) throw new NotaInvalida("Informe o valor do serviço.");
   const descricao = p.descricao.trim();
-  if (!descricao) throw new NotaInvalida("Descreva o servico prestado.");
-  if (descricao.length > 2000) throw new NotaInvalida("A descricao do servico passa de 2.000 caracteres.");
+  if (!descricao) throw new NotaInvalida("Descreva o serviço prestado.");
+  if (descricao.length > 2000) throw new NotaInvalida("A descrição do serviço passa de 2.000 caracteres.");
 
   const competencia =
     p.dataCompetencia && /^\d{4}-\d{2}-\d{2}$/.test(p.dataCompetencia) ? p.dataCompetencia : hojeEmSaoPaulo();
-  if (competencia > hojeEmSaoPaulo()) throw new NotaInvalida("A data de competencia nao pode ser futura (regra E0015).");
+  if (competencia > hojeEmSaoPaulo()) throw new NotaInvalida("A data de competência não pode ser futura (regra E0015).");
 
   const { tomador, avisos } = await tomadorDoCliente(cliente);
   const canais = (p.envioCliente ?? []).filter((c) => c === "EMAIL" || c === "WHATSAPP");
@@ -302,9 +302,9 @@ export async function assinarNota(
   const registro = await comEscritorio(escritorioId, (db) =>
     db.notaFiscal.findFirst({ where: { id: notaId }, include: { cliente: true } }),
   );
-  if (!registro) throw new NotaInvalida("Nota nao encontrada.", 404);
+  if (!registro) throw new NotaInvalida("Nota não encontrada.", 404);
   const { cliente, ...notaBase } = registro;
-  if (!ASSINAVEIS.has(notaBase.status)) throw new NotaInvalida("Esta nota nao esta aguardando assinatura.", 409);
+  if (!ASSINAVEIS.has(notaBase.status)) throw new NotaInvalida("Esta nota não está aguardando assinatura.", 409);
 
   const fiscal = await comEscritorio(escritorioId, (db) => db.fiscal.findFirst());
   if (!fiscal) throw new SemCadastroFiscal();
@@ -312,9 +312,9 @@ export async function assinarNota(
   const dataCompetencia = notaBase.dataCompetencia ?? notaBase.criadoEm;
   const pendencias = pendenciasDoEmissor(fiscal, guardado, dataCompetencia);
   if (pendencias.length > 0) throw new NotaInvalida(pendencias.join(" "), 428);
-  if (!cliente) throw new NotaInvalida("O cliente desta nota foi excluido — descarte a nota e prepare outra.");
+  if (!cliente) throw new NotaInvalida("O cliente desta nota foi excluído — descarte a nota e prepare outra.");
   if (cert.cnpj && cert.cnpj !== fiscal.cnpj.replace(/\D/g, "")) {
-    throw new NotaInvalida("O certificado aberto e de outro CNPJ — a API recusa (rejeicao E0718).");
+    throw new NotaInvalida("O certificado aberto é de outro CNPJ — a API recusa (rejeição E0718).");
   }
 
   // Assinada com a configuracao de agora: se o escritorio mudou de ambiente
@@ -328,7 +328,7 @@ export async function assinarNota(
   const ibsCbs = ibsCbsVigente(fiscal, dataCompetencia);
   if (ibsCbs && !tomador.endereco) {
     throw new NotaInvalida(
-      "A partir do IBS/CBS a nota precisa do endereco completo do cliente, com CEP valido — complete o cadastro antes de assinar.",
+      "A partir do IBS/CBS a nota precisa do endereço completo do cliente, com CEP válido — complete o cadastro antes de assinar.",
     );
   }
 
@@ -420,12 +420,12 @@ export async function assinarNota(
     console.error("[nfse] falha no envio da DPS", idDps, (e as Error)?.message ?? e);
     const recuperada = await recuperarPorDps(escritorioId, nota, cert).catch(() => null);
     if (recuperada) return { status: "EMITIDA", nota: recuperada, avisos };
-    const erros = [{ codigo: "CONEXAO", descricao: (e as Error)?.message ?? "Falha de conexao com a API nacional." }];
+    const erros = [{ codigo: "CONEXAO", descricao: (e as Error)?.message ?? "Falha de conexão com a API nacional." }];
     nota = await atualizar({ erros, erro: erros[0].descricao });
     return {
       status: "PROCESSANDO",
       nota,
-      avisos: [...avisos, 'A API nacional nao respondeu. Use "Verificar situacao" em alguns minutos — o sistema confere se a nota chegou a ser gerada.'],
+      avisos: [...avisos, 'A API nacional não respondeu. Use "Verificar situação" em alguns minutos — o sistema confere se a nota chegou a ser gerada.'],
     };
   }
 }
@@ -457,7 +457,7 @@ async function registrarEmitida(escritorioId: string, nota: NotaFiscal, chave: s
   });
   if (atualizada.ambiente === "PRODUCAO") {
     await registrarConsumo(escritorioId, "NFSE_EMITIDA", 1).catch((e) =>
-      console.error("[nfse] consumo nao registrado:", (e as Error).message),
+      console.error("[nfse] consumo não registrado:", (e as Error).message),
     );
   }
   return atualizada;
@@ -484,11 +484,11 @@ export async function verificarSituacao(
   cert: CertificadoCarregado,
 ): Promise<NotaFiscal> {
   const nota = await comEscritorio(escritorioId, (db) => db.notaFiscal.findFirst({ where: { id: notaId } }));
-  if (!nota) throw new NotaInvalida("Nota nao encontrada.", 404);
+  if (!nota) throw new NotaInvalida("Nota não encontrada.", 404);
   if ((nota.status !== "PROCESSANDO" && nota.status !== "INDETERMINADA") || !nota.idDps) return nota;
   const recuperada = await recuperarPorDps(escritorioId, nota, cert);
   if (recuperada) return recuperada;
-  const erros = [{ codigo: "NAO_GERADA", descricao: "A API nacional confirmou que nao gerou nota para esta DPS. Pode assinar de novo." }];
+  const erros = [{ codigo: "NAO_GERADA", descricao: "A API nacional confirmou que não gerou nota para esta DPS. Pode assinar de novo." }];
   return atualizarNota(escritorioId, nota.id, { status: "REJEITADA", erros, erro: erros[0].descricao });
 }
 
@@ -500,8 +500,8 @@ export async function cancelarNota(
   descricaoMotivo: string,
 ): Promise<NotaFiscal> {
   const nota = await comEscritorio(escritorioId, (db) => db.notaFiscal.findFirst({ where: { id: notaId } }));
-  if (!nota) throw new NotaInvalida("Nota nao encontrada.", 404);
-  if (nota.status !== "EMITIDA" || !nota.chaveAcesso) throw new NotaInvalida("So nota emitida pode ser cancelada.", 409);
+  if (!nota) throw new NotaInvalida("Nota não encontrada.", 404);
+  if (nota.status !== "EMITIDA" || !nota.chaveAcesso) throw new NotaInvalida("Só nota emitida pode ser cancelada.", 409);
   const texto = descricaoMotivo.trim();
   if (texto.length < 15) throw new NotaInvalida("Explique o motivo do cancelamento com pelo menos 15 caracteres.");
   const fiscal = await comEscritorio(escritorioId, (db) => db.fiscal.findFirst());
@@ -532,7 +532,7 @@ export async function descartarNota(escritorioId: string, notaId: string): Promi
   const r = await comEscritorio(escritorioId, (db) =>
     db.notaFiscal.deleteMany({ where: { id: notaId, status: { in: [...ASSINAVEIS] } } }),
   );
-  if (r.count === 0) throw new NotaInvalida("So nota que nao foi emitida pode ser descartada.", 409);
+  if (r.count === 0) throw new NotaInvalida("Só nota que não foi emitida pode ser descartada.", 409);
 }
 
 /** Assinatura em lote: abre o certificado uma vez, assina nota por nota. */

@@ -22,25 +22,25 @@ function tipos(lista: ReturnType<typeof pendenciasDoCliente>) {
 }
 
 describe("cliente completo", () => {
-  it("nao acusa nada", () => {
+  it("não acusa nada", () => {
     expect(pendenciasDoCliente(COMPLETO, COM_TUDO, UM_ARQUIVO)).toEqual([]);
   });
 });
 
-describe("a falta so pesa onde custa", () => {
-  it("sem CPF e sem cobranca contratada: apenas aviso", () => {
+describe("a falta só pesa onde custa", () => {
+  it("sem CPF e sem cobrança contratada: apenas aviso", () => {
     const p = pendenciasDoCliente({ ...COMPLETO, documento: null }, NUCLEO, UM_ARQUIVO);
     expect(tipos(p)).toEqual(["SEM_DOCUMENTO"]);
     expect(p[0]!.gravidade).toBe("AVISO");
   });
 
-  it("sem CPF e COM cobranca: impede, e diz o que impede", () => {
+  it("sem CPF e COM cobrança: impede, e diz o que impede", () => {
     const p = pendenciasDoCliente({ ...COMPLETO, documento: "" }, COM_COBRANCA, UM_ARQUIVO);
     expect(p[0]!.gravidade).toBe("IMPEDE");
-    expect(p[0]!.texto).toContain("nao da para emitir cobranca");
+    expect(p[0]!.texto).toContain("não dá para emitir cobrança");
   });
 
-  it("sem telefone so vira limitacao com WhatsApp contratado", () => {
+  it("sem telefone só vira limitação com WhatsApp contratado", () => {
     const sem = { ...COMPLETO, telefone: null };
     expect(pendenciasDoCliente(sem, NUCLEO, UM_ARQUIVO)[0]!.gravidade).toBe("AVISO");
     expect(pendenciasDoCliente(sem, COM_TUDO, UM_ARQUIVO)[0]!.gravidade).toBe("LIMITA");
@@ -55,7 +55,7 @@ describe("a falta so pesa onde custa", () => {
 describe("documento preenchido errado", () => {
   // Pior que faltar: parece preenchido. A recusa viria do provedor, com uma
   // mensagem que ninguem liga a este cadastro.
-  it("digito verificador que nao fecha e acusado", () => {
+  it("dígito verificador que não fecha e acusado", () => {
     const p = pendenciasDoCliente(
       { ...COMPLETO, documento: "111.222.333-44" },
       COM_COBRANCA,
@@ -65,20 +65,20 @@ describe("documento preenchido errado", () => {
     expect(p[0]!.gravidade).toBe("IMPEDE");
   });
 
-  it("CPF valido passa", () => {
+  it("CPF válido passa", () => {
     expect(
       pendenciasDoCliente({ ...COMPLETO, documento: "529.982.247-25" }, COM_TUDO, UM_ARQUIVO),
     ).toEqual([]);
   });
 
-  it("nao acusa falta E invalidez ao mesmo tempo", () => {
+  it("não acusa falta E invalidez ao mesmo tempo", () => {
     const p = pendenciasDoCliente({ ...COMPLETO, documento: "   " }, COM_TUDO, UM_ARQUIVO);
     expect(tipos(p)).toEqual(["SEM_DOCUMENTO"]);
   });
 });
 
 describe("documentos anexados", () => {
-  it("sem nenhum arquivo, avisa que nao ha o que conferir", () => {
+  it("sem nenhum arquivo, avisa que não há o que conferir", () => {
     const p = pendenciasDoCliente(COMPLETO, COM_TUDO, { arquivos: 0 });
     expect(tipos(p)).toEqual(["SEM_ARQUIVO"]);
     expect(p[0]!.gravidade).toBe("AVISO");
@@ -97,7 +97,7 @@ describe("ordem e contagem", () => {
     expect(quantasImpedem(p)).toBe(1);
   });
 
-  it("escritorio sem modulo nenhum nao ganha nada que impeca", () => {
+  it("escritório sem módulo nenhum não ganha nada que impeca", () => {
     const p = pendenciasDoCliente({ documento: null, email: null, telefone: null }, NUCLEO, {
       arquivos: 0,
     });
@@ -112,12 +112,12 @@ describe("documento essencial que a lista pediu", () => {
     telefone: "71 99999-0000",
   };
 
-  it("nao acusa quando nao ha lista", () => {
+  it("não acusa quando não há lista", () => {
     const p = pendenciasDoCliente(COMPLETO2, ["NUCLEO"], { arquivos: 1 });
     expect(p).toEqual([]);
   });
 
-  it("acusa o que falta, pelo numero", () => {
+  it("acusa o que falta, pelo número", () => {
     const p = pendenciasDoCliente(COMPLETO2, ["NUCLEO"], {
       arquivos: 1,
       essenciaisPendentes: 3,
@@ -127,7 +127,7 @@ describe("documento essencial que a lista pediu", () => {
     expect(p[0]!.texto).toContain("3 documentos essenciais");
   });
 
-  it("fala no singular quando e um so", () => {
+  it("fala no singular quando e um só", () => {
     const p = pendenciasDoCliente(COMPLETO2, ["NUCLEO"], {
       arquivos: 1,
       essenciaisPendentes: 1,

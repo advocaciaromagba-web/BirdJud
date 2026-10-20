@@ -43,7 +43,7 @@ export function RoteiroDePrimeirosPassos({
     });
     setOcupado(null);
     if (!r.ok) {
-      setErro((await r.json().catch(() => ({}))).erro ?? "Nao deu certo.");
+      setErro((await r.json().catch(() => ({}))).erro ?? "Não deu certo.");
       return;
     }
     router.refresh();
@@ -143,7 +143,7 @@ export function RoteiroDePrimeirosPassos({
                               onClick={() => decidir("pular", p.chave)}
                               className="botao-secundario"
                             >
-                              Nao vamos usar agora
+                              Não vamos usar agora
                             </button>
                           ) : null}
                           {p.situacao === "PULADO" ? (

@@ -115,7 +115,7 @@ export async function gerarAvisos(
   // O telefone do escritorio entra em TODA mensagem: este numero notifica e
   // nao recebe. Sem telefone cadastrado, a frase diz para procurar o
   // escritorio — melhor que um travessao no meio de "ligue para —".
-  const telefone = escritorio.telefoneAtendimento?.trim() || "o escritorio";
+  const telefone = escritorio.telefoneAtendimento?.trim() || "o escritório";
 
   const resumos = await gerarResumos(
     escritorioId,
@@ -430,7 +430,7 @@ export async function gerarResumoDoDia(
       parametros: [
         limparParametro(escritorio.nome),
         limparParametro(resumo.linha),
-        limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritorio"),
+        limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritório"),
       ],
     });
     if (criadoZap) criados += 1;
@@ -526,7 +526,7 @@ async function criarAviso(
       const enviados = Array.isArray(aviso.parametros) ? aviso.parametros.length : 0;
       if (esperado !== undefined && esperado !== enviados) {
         console.error(
-          `aviso ${aviso.tipo}: modelo ${aviso.modelo} espera ${esperado} parametro(s), vieram ${enviados}. Nao enviado.`,
+          `aviso ${aviso.tipo}: modelo ${aviso.modelo} espera ${esperado} parametro(s), vieram ${enviados}. Não enviado.`,
         );
         return false;
       }
@@ -799,7 +799,7 @@ async function daBanca(escritorioId: string) {
   });
   return {
     nome: e.nome,
-    telefone: e.telefoneAtendimento?.trim() || "o escritorio",
+    telefone: e.telefoneAtendimento?.trim() || "o escritório",
     endereco: `https://${e.slug}.${dominioDaPlataforma()}`,
   };
 }
@@ -1146,9 +1146,9 @@ export async function avisarTarefaDesignada(
   const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
   const quando = dataHoraBR.format(t.vencimento);
   const sobre = sobreATarefa(t);
-  const assunto = `Tarefa para voce: ${t.titulo}`;
+  const assunto = `Tarefa para você: ${t.titulo}`;
   const corpo = [
-    `No escritorio ${banca.nome}, a tarefa "${t.titulo}" ficou com voce.`,
+    `No escritório ${banca.nome}, a tarefa "${t.titulo}" ficou com você.`,
     `Entrega: ${quando}.`,
     t.prazoFatal ? `Prazo fatal: ${dataBR.format(t.prazoFatal)}.` : null,
     `Sobre: ${sobre}.`,
@@ -1276,7 +1276,7 @@ export async function gerarLembretesDeTarefas(escritorioId: string, agora = new 
       const quando = m.comHora ? dataHoraBR.format(m.quando) : dataBR.format(m.quando);
       const assunto = `Lembrete: ${t.titulo} (${rotulo}: ${quando})`;
       const corpo = [
-        `No escritorio ${banca.nome}: "${t.titulo}" tem ${rotulo}: ${quando}.`,
+        `No escritório ${banca.nome}: "${t.titulo}" tem ${rotulo}: ${quando}.`,
         `Sobre: ${sobreATarefa(t)}.`,
         "",
         `Abra em ${banca.endereco}/tarefas`,
@@ -1361,8 +1361,8 @@ export async function avisarNotaParaAssinar(
   const titulo = `Assinar NFS-e de ${valor} para ${nota.tomadorNome}${teste}`;
   const assunto = `NFS-e aguardando sua assinatura: ${valor} para ${nota.tomadorNome}${teste}`;
   const corpo = [
-    `No escritorio ${banca.nome}, uma nota fiscal de ${valor} para ${nota.tomadorNome} foi preparada${teste}.`,
-    "Ela so e emitida depois da sua assinatura com o certificado e-CNPJ (a senha e pedida na hora).",
+    `No escritório ${banca.nome}, uma nota fiscal de ${valor} para ${nota.tomadorNome} foi preparada${teste}.`,
+    "Ela só é emitida depois da sua assinatura com o certificado e-CNPJ (a senha é pedida na hora).",
     "",
     `Abra em ${banca.endereco}/notas`,
   ].join("\n");

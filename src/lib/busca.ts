@@ -127,7 +127,7 @@ export async function buscar(
     achados.push({
       tipo: "PUBLICACAO",
       id: publicacao.id,
-      titulo: publicacao.numeroProcesso ?? "Publicacao sem numero de processo",
+      titulo: publicacao.numeroProcesso ?? "Publicação sem número de processo",
       detalhe: recortar(publicacao.texto),
       destino: "/publicacoes",
     });

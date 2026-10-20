@@ -128,7 +128,7 @@ export function FormularioCadastro({
           className="campo"
         />
         <p className="ajuda">
-          Vai ficar assim: <code>seu-escritorio.{dominio}</code>
+          Vai ficar assim: <code>seu-escritório.{dominio}</code>
         </p>
       </div>
       <div>
@@ -204,7 +204,7 @@ export function FormularioCadastro({
         disabled={enviando}
         className="botao-principal justify-self-start"
       >
-        {enviando ? "Criando..." : `Comecar teste de ${dias} dias`}
+        {enviando ? "Criando..." : `Começar teste de ${dias} dias`}
       </button>
     </form>
   );

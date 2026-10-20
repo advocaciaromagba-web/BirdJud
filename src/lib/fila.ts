@@ -121,7 +121,7 @@ export async function destravar(minutos = 15): Promise<number> {
     where: { estado: "EXECUTANDO", iniciadoEm: { lt: limite } },
     data: {
       estado: "PENDENTE",
-      erro: "Retomado apos ficar preso em execucao.",
+      erro: "Retomado após ficar preso em execução.",
     },
   });
   return count;

@@ -5,8 +5,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buscarCep, cepComHifen, digitosDoCep, esquecerCeps, LER } from "../src/lib/cep";
 import { DadoInvalido, enderecoLimpo } from "../src/lib/dados-do-escritorio";
 
-describe("digitos e mascara", () => {
-  it("aceita CEP com ou sem hifen e recusa tamanho errado", () => {
+describe("dígitos e máscara", () => {
+  it("aceita CEP com ou sem hífen e recusa tamanho errado", () => {
     expect(digitosDoCep("01310-100")).toBe("01310100");
     expect(digitosDoCep(" 14840000 ")).toBe("14840000");
     expect(digitosDoCep("1310-100")).toBeNull();
@@ -33,7 +33,7 @@ describe("leitura das respostas", () => {
     expect(r).toMatchObject({ cidade: "Guariba", uf: "SP", logradouro: null, bairro: null, geral: true, fonte: "BRASILAPI" });
   });
 
-  it("OpenCEP e UF minuscula; sem cidade ou UF invalida nao serve", () => {
+  it("OpenCEP e UF minuscula; sem cidade ou UF inválida não serve", () => {
     expect(LER.OPENCEP("01310100", { logradouro: "Avenida Paulista", bairro: "Bela Vista", localidade: "São Paulo", uf: "sp" })?.uf).toBe("SP");
     expect(LER.OPENCEP("01310100", { logradouro: "x", localidade: "", uf: "SP" })).toBeNull();
     expect(LER.OPENCEP("01310100", { localidade: "X", uf: "SPA" })).toBeNull();
@@ -51,7 +51,7 @@ describe("busca em sequencia", () => {
     servidor = createServer((req, res) => {
       const [, servico, cep] = (req.url ?? "").split("/");
       pedidos.push(`${servico}/${cep}`);
-      const [status, corpo] = respostas[servico]?.[cep] ?? [404, { erro: "nao achou" }];
+      const [status, corpo] = respostas[servico]?.[cep] ?? [404, { erro: "não achou" }];
       res.writeHead(status, { "content-type": "application/json" });
       res.end(JSON.stringify(corpo));
     });
@@ -75,14 +75,14 @@ describe("busca em sequencia", () => {
     for (const s of Object.values(respostas)) for (const k of Object.keys(s)) delete s[k];
   });
 
-  it("ViaCEP achou com rua: nao pergunta aos outros", async () => {
+  it("ViaCEP achou com rua: não pergunta aos outros", async () => {
     respostas.viacep["01310100"] = [200, { logradouro: "Avenida Paulista", bairro: "Bela Vista", localidade: "São Paulo", uf: "SP" }];
     const r = await buscarCep("01310-100");
     expect(r).toMatchObject({ logradouro: "Avenida Paulista", fonte: "VIACEP", geral: false });
     expect(pedidos).toEqual(["viacep/01310100"]);
   });
 
-  it("CEP geral que o ViaCEP nao conhece: a BrasilAPI responde", async () => {
+  it("CEP geral que o ViaCEP não conhece: a BrasilAPI responde", async () => {
     respostas.viacep["14840000"] = [200, { erro: "true" }];
     respostas.brasil["14840000"] = [200, { city: "Guariba", state: "SP", street: null, neighborhood: null }];
     const r = await buscarCep("14840000");
@@ -91,42 +91,42 @@ describe("busca em sequencia", () => {
     expect(pedidos).toEqual(["viacep/14840000", "brasil/14840000", "open/14840000"]);
   });
 
-  it("servico fora do ar (500): passa para o proximo", async () => {
+  it("serviço fora do ar (500): passa para o próximo", async () => {
     respostas.viacep["01310100"] = [500, {}];
     respostas.brasil["01310100"] = [500, {}];
     respostas.open["01310100"] = [200, { logradouro: "Avenida Paulista", bairro: "Bela Vista", localidade: "São Paulo", uf: "SP" }];
     expect((await buscarCep("01310100"))?.fonte).toBe("OPENCEP");
   });
 
-  it("CEP que ninguem conhece: nada, e a resposta fica guardada", async () => {
+  it("CEP que ninguém conhece: nada, e a resposta fica guardada", async () => {
     expect(await buscarCep("99999999")).toBeNull();
     expect(pedidos).toHaveLength(3);
     expect(await buscarCep("99999-999")).toBeNull();
     expect(pedidos).toHaveLength(3);
   });
 
-  it("achado fica na memoria: a segunda consulta nao sai do servidor", async () => {
+  it("achado fica na memoria: a segunda consulta não sai do servidor", async () => {
     respostas.viacep["01310100"] = [200, { logradouro: "Avenida Paulista", bairro: "Bela Vista", localidade: "São Paulo", uf: "SP" }];
     await buscarCep("01310100");
     await buscarCep("01310100");
     expect(pedidos).toEqual(["viacep/01310100"]);
   });
 
-  it("todos fora do ar: nao guarda 'nao existe' e tenta de novo depois", async () => {
+  it("todos fora do ar: não guarda 'não existe' e tenta de novo depois", async () => {
     for (const s of ["viacep", "brasil", "open"]) respostas[s]["01310100"] = [503, {}];
     expect(await buscarCep("01310100")).toBeNull();
     respostas.viacep["01310100"] = [200, { logradouro: "Avenida Paulista", bairro: "Bela Vista", localidade: "São Paulo", uf: "SP" }];
     expect((await buscarCep("01310100"))?.logradouro).toBe("Avenida Paulista");
   });
 
-  it("entrada invalida nem consulta", async () => {
+  it("entrada inválida nem consulta", async () => {
     expect(await buscarCep("123")).toBeNull();
     expect(pedidos).toHaveLength(0);
   });
 });
 
-describe("endereco gravado", () => {
-  it("CEP so digitos, UF maiuscula e a rua com os dois nomes", () => {
+describe("endereço gravado", () => {
+  it("CEP só dígitos, UF maiuscula e a rua com os dois nomes", () => {
     expect(
       enderecoLimpo({ cep: "01310-100", logradouro: " Avenida Paulista ", numero: "1000", bairro: "Bela Vista", cidade: "São Paulo", uf: "sp", complemento: "" }),
     ).toEqual({ cep: "01310100", logradouro: "Avenida Paulista", rua: "Avenida Paulista", numero: "1000", bairro: "Bela Vista", cidade: "São Paulo", uf: "SP" });
@@ -137,8 +137,8 @@ describe("endereco gravado", () => {
     expect(enderecoLimpo({ cep: "", uf: " " })).toBeNull();
   });
 
-  it("recusa CEP incompleto e UF invalida", () => {
+  it("recusa CEP incompleto e UF inválida", () => {
     expect(() => enderecoLimpo({ cep: "1484" })).toThrow(DadoInvalido);
-    expect(() => enderecoLimpo({ uf: "Sao Paulo" })).toThrow(DadoInvalido);
+    expect(() => enderecoLimpo({ uf: "São Paulo" })).toThrow(DadoInvalido);
   });
 });

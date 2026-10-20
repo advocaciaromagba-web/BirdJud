@@ -29,7 +29,7 @@ export type Area = {
  * Equipe (nao "Usuarios").
  */
 const AREAS: Area[] = [
-  { href: "/", rotulo: "Inicio", icone: "painel" },
+  { href: "/", rotulo: "Início", icone: "painel" },
   { href: "/agenda", rotulo: "Agenda", icone: "agenda" },
   { href: "/tarefas", rotulo: "Tarefas", icone: "tarefas" },
   { href: "/processos", rotulo: "Processos", icone: "processos" },
@@ -37,13 +37,13 @@ const AREAS: Area[] = [
   { href: "/clientes", rotulo: "Clientes", icone: "clientes" },
   {
     href: "/publicacoes",
-    rotulo: "Publicacoes",
+    rotulo: "Publicações",
     icone: "publicacoes",
     modulo: "PUBLICACOES_DJEN",
   },
   {
     href: "/cobrancas",
-    rotulo: "Cobrancas",
+    rotulo: "Cobranças",
     icone: "cobrancas",
     modulo: "COBRANCAS",
   },
@@ -74,14 +74,14 @@ const AREAS: Area[] = [
   { href: "/conta", rotulo: "Minha conta", icone: "conta", rodape: true },
   {
     href: "/integracoes",
-    rotulo: "Integracoes",
+    rotulo: "Integrações",
     icone: "integracoes",
     soAdmin: true,
     rodape: true,
   },
   {
     href: "/administracao",
-    rotulo: "Configuracoes",
+    rotulo: "Configurações",
     icone: "configuracoes",
     soAdmin: true,
     rodape: true,
@@ -184,7 +184,7 @@ export function Estrutura({
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-10 hidden border-b border-slate-200/70 bg-white/75 backdrop-blur-md lg:block">
           {/* So a busca. O cargo e o Sair saiam daqui tambem, e repetidos
-              do cartao no pe do menu: duas saidas na mesma tela e uma a
+              do cartão no pe do menu: duas saídas na mesma tela e uma a
               mais para a pessoa conferir qual e a certa. */}
           <div className="flex items-center gap-4 px-6 py-2.5">
             <CampoDeBusca termoInicial={termoDeBusca} />

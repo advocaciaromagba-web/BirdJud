@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
       return NextResponse.json(
-        { erro: corpo.error.issues[0]?.message ?? "Dados invalidos." },
+        { erro: corpo.error.issues[0]?.message ?? "Dados inválidos." },
         { status: 400 },
       );
     }

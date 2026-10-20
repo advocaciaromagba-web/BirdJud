@@ -62,7 +62,7 @@ export const opcoesAuth: NextAuthOptions = {
       credentials: {
         email: { label: "E-mail", type: "email" },
         senha: { label: "Senha", type: "password" },
-        codigo: { label: "Codigo de 6 digitos", type: "text" },
+        codigo: { label: "Código de 6 dígitos", type: "text" },
       },
       async authorize(credenciais, req) {
         const email = credenciais?.email?.trim().toLowerCase();

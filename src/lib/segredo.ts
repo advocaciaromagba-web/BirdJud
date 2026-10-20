@@ -10,7 +10,7 @@ const TAMANHO_IV = 12;
 
 function chave(): Buffer {
   const bruta = process.env.SEGREDO_CHAVE;
-  if (!bruta) throw new Error("SEGREDO_CHAVE nao definida.");
+  if (!bruta) throw new Error("SEGREDO_CHAVE não definida.");
   const buf = Buffer.from(bruta, "base64");
   if (buf.length !== 32) {
     throw new Error("SEGREDO_CHAVE precisa ter 32 bytes em base64.");

@@ -43,8 +43,8 @@ const POR_PESSOA = 20;
 const JANELA = 60 * 60;
 
 const SISTEMA =
-  "Voce e um assistente de cadastro de um escritorio de advocacia. " +
-  "Voce nunca grava nada: sua saida e uma proposta que uma pessoa vai conferir.";
+  "Você é um assistente de cadastro de um escritório de advocacia. " +
+  "Você nunca grava nada: sua saída é uma proposta que uma pessoa vai conferir.";
 
 export async function POST(req: Request) {
   try {
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     const perfil = String(formulario.get("perfil") ?? "");
     if (!PERFIS.includes(perfil as Perfil)) {
       return NextResponse.json(
-        { erro: "Perfil de leitura invalido." },
+        { erro: "Perfil de leitura inválido." },
         { status: 400 },
       );
     }
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     }
     if (arquivos.length > MAXIMO_DE_ANEXOS) {
       return NextResponse.json(
-        { erro: `Envie no maximo ${MAXIMO_DE_ANEXOS} documentos por leitura.` },
+        { erro: `Envie no máximo ${MAXIMO_DE_ANEXOS} documentos por leitura.` },
         { status: 400 },
       );
     }

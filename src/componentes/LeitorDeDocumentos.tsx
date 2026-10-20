@@ -19,7 +19,7 @@ const ETIQUETA_DA_CONFIANCA: Record<Confianca, string> = {
 const TEXTO_DA_CONFIANCA: Record<Confianca, string> = {
   ALTA: "leitura clara",
   MEDIA: "confira",
-  BAIXA: "confira com atencao",
+  BAIXA: "confira com atenção",
 };
 
 /**
@@ -74,7 +74,7 @@ export function LeitorDeDocumentos({
 
     const json = await resposta.json().catch(() => ({}));
     if (!resposta.ok) {
-      setErro(json.erro ?? "Nao foi possivel ler os documentos.");
+      setErro(json.erro ?? "Não foi possível ler os documentos.");
       return;
     }
     setLeitura(json.leitura as Leitura);
@@ -129,7 +129,7 @@ export function LeitorDeDocumentos({
 
       {leitura && campos.length === 0 ? (
         <p className="aviso-atencao mt-3">
-          A IA nao encontrou nenhum dos campos deste cadastro nos documentos
+          A IA não encontrou nenhum dos campos deste cadastro nos documentos
           enviados.
         </p>
       ) : null}
@@ -190,7 +190,7 @@ export function LeitorDeDocumentos({
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button type="button" onClick={aplicar} className="botao-principal">
-              Preencher o formulario
+              Preencher o formulário
             </button>
             {aplicado ? (
               <span className="text-sm text-slate-600">

@@ -55,7 +55,7 @@ export async function implantarEscritorio(operador: { operadorId: string }, i: I
     valorCentavos: i.valorCentavos,
     implantadoPor: operador.operadorId,
   });
-  await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Implantacao: escritorio criado");
+  await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Implantação: escritório criado");
 
   await salvarDadosDoEscritorio(escritorio.id, i.dados);
   await incluirPessoa(escritorio.id, { ...i.administrador, papel: "ADMIN" });
@@ -65,7 +65,7 @@ export async function implantarEscritorio(operador: { operadorId: string }, i: I
 }
 
 export async function incluirNaEquipe(operadorId: string, escritorioId: string, p: NovaPessoa) {
-  await registrarAcessoSuporte(operadorId, escritorioId, `Implantacao: pessoa incluida (${p.papel})`);
+  await registrarAcessoSuporte(operadorId, escritorioId, `Implantação: pessoa incluida (${p.papel})`);
   const pessoa = await incluirPessoa(escritorioId, p);
   const oabMonitorada = await monitorarOabDoAdvogado(escritorioId, p.oab);
   return { pessoa, oabMonitorada };
@@ -91,7 +91,7 @@ export async function entregarEscritorio(
     where: { id: escritorioId },
     select: { nome: true, slug: true },
   });
-  await registrarAcessoSuporte(operador.operadorId, escritorioId, "Implantacao: entrega ao escritorio");
+  await registrarAcessoSuporte(operador.operadorId, escritorioId, "Implantação: entrega ao escritório");
 
   const aguardando = await comEscritorio(escritorioId, (db) =>
     db.usuario.findMany({

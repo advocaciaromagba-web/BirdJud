@@ -21,8 +21,8 @@ const POR_OPERADOR = 30;
 const JANELA = 60 * 60;
 
 const SISTEMA =
-  "Voce e um assistente de cadastro da plataforma BirdJud. " +
-  "Voce nunca grava nada: sua saida e uma proposta que uma pessoa vai conferir.";
+  "Você é um assistente de cadastro da plataforma BirdJud. " +
+  "Você nunca grava nada: sua saída é uma proposta que uma pessoa vai conferir.";
 
 /**
  * Leitura por IA no console: cartao CNPJ, contrato social ou ficha municipal
@@ -42,12 +42,12 @@ export async function POST(req: Request) {
 
     const formulario = await formularioLimitado(req, MAXIMO_DE_BYTES + 1024 * 1024);
     if (String(formulario.get("perfil") ?? "") !== "FISCAL") {
-      return NextResponse.json({ erro: "No console, so a leitura do cadastro fiscal." }, { status: 400 });
+      return NextResponse.json({ erro: "No console, só a leitura do cadastro fiscal." }, { status: 400 });
     }
     const arquivos = arquivosDoCampo(formulario, "arquivos");
     if (arquivos.length === 0) return NextResponse.json({ erro: "Envie ao menos um documento." }, { status: 400 });
     if (arquivos.length > MAXIMO_DE_ANEXOS) {
-      return NextResponse.json({ erro: `Envie no maximo ${MAXIMO_DE_ANEXOS} documentos por leitura.` }, { status: 400 });
+      return NextResponse.json({ erro: `Envie no máximo ${MAXIMO_DE_ANEXOS} documentos por leitura.` }, { status: 400 });
     }
     if (arquivos.reduce((t, a) => t + a.size, 0) > MAXIMO_DE_BYTES) {
       return NextResponse.json(

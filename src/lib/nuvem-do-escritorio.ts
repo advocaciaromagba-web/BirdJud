@@ -51,7 +51,7 @@ export class OutraNuvemConectada extends Error {
   readonly status = 409;
   constructor(atual: Provedor) {
     super(
-      `O escritorio ja tem o ${NUVENS[atual].rotulo} conectado. Desconecte-o antes de ligar outra nuvem: os documentos de cada cliente ficam em um lugar so.`,
+      `O escritório já tem o ${NUVENS[atual].rotulo} conectado. Desconecte-o antes de ligar outra nuvem: os documentos de cada cliente ficam em um lugar só.`,
     );
     this.name = "OutraNuvemConectada";
   }
@@ -273,7 +273,7 @@ async function pastaViva(escritorioId: string, s: Sessao, clienteId: string): Pr
       select: { id: true, nome: true, documento: true },
     }),
   }));
-  if (!cliente) throw new FalhaNaNuvem("Cliente nao encontrado.", 404);
+  if (!cliente) throw new FalhaNaNuvem("Cliente não encontrado.", 404);
 
   if (mapa) {
     const viva = await s.nuvem.pastaExiste(s.acesso, mapa.pastaId);
@@ -341,7 +341,7 @@ export async function testarNuvem(escritorioId: string): Promise<{ ok: boolean; 
   try {
     const s = await abrir(escritorioId);
     if (!s) {
-      return { ok: false, detalhe: "A conta nao esta respondendo: conecte de novo pela Microsoft ou pelo Google." };
+      return { ok: false, detalhe: "A conta não está respondendo: conecte de novo pela Microsoft ou pelo Google." };
     }
     const raiz = await s.nuvem.pastaExiste(s.acesso, s.dados.raizId);
     if (!raiz) {

@@ -22,9 +22,9 @@ export default async function PaginaArquivos() {
     if (erro instanceof ModuloNaoContratado) {
       return (
         <main className="mx-auto max-w-2xl p-10">
-          <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
+          <h1 className="text-2xl font-bold">Módulo não contratado</h1>
           <p className="mt-3 text-slate-600">
-            O modulo Nuvem nao faz parte do plano deste escritorio.
+            O módulo Nuvem não faz parte do plano deste escritório.
           </p>
         </main>
       );
@@ -88,7 +88,7 @@ export default async function PaginaArquivos() {
 
       {espaco.usadoMb > espaco.franquiaMb ? (
         <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
-          O espaco passou da franquia contratada. O que passa e cobrado como
+          O espaço passou da franquia contratada. O que passa é cobrado como
           excedente, e o envio para no teto de {espaco.tetoMb} MB.
         </div>
       ) : null}

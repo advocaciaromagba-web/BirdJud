@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirSessao();
     const corpo = novoProcesso.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     // clienteId vem do formulario: conferir que e deste escritorio antes de
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
     if (!processo) {
       return NextResponse.json(
-        { erro: "Cliente nao encontrado." },
+        { erro: "Cliente não encontrado." },
         { status: 400 },
       );
     }
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   } catch (erro) {
     if (ehDuplicado(erro)) {
       return NextResponse.json(
-        { erro: "Ja existe um processo com este numero neste escritorio." },
+        { erro: "Já existe um processo com este número neste escritório." },
         { status: 409 },
       );
     }

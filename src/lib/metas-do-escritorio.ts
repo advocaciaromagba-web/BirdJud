@@ -22,13 +22,13 @@ export async function definirMeta(
   valorCentavos: number,
 ): Promise<{ id: string }> {
   if (!Number.isInteger(ano) || ano < 2020 || ano > 2100) {
-    throw new MetaInvalida("Ano invalido.");
+    throw new MetaInvalida("Ano inválido.");
   }
   if (!Number.isInteger(valorCentavos) || valorCentavos <= 0) {
     throw new MetaInvalida("O valor da meta precisa ser maior que zero.");
   }
   if (valorCentavos > TETO_CENTAVOS) {
-    throw new MetaInvalida("Valor fora do razoavel: confira o que foi digitado.");
+    throw new MetaInvalida("Valor fora do razoável: confira o que foi digitado.");
   }
 
   const meta = await comEscritorio(escritorioId, (db) =>

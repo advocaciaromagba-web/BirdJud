@@ -25,7 +25,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { escritorioId, usuarioId, nomeUsuario } = await exigirSessao(undefined, "AGENDA");
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
-    if (!corpo.success) return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
 
     if (corpo.data.acao === "reenviar") {
       const r = await reenviar(escritorioId, id, { automatico: false, quem: nomeUsuario, quemId: usuarioId });

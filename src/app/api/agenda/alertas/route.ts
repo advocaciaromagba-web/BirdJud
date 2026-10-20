@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   try {
     const { escritorioId, usuarioId } = await exigirSessao();
     const corpo = preferencia.safeParse(await req.json());
-    if (!corpo.success) return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     await comEscritorio(escritorioId, (db) =>
       db.usuario.update({ where: { id: usuarioId }, data: { alertaSonoro: corpo.data.alertaSonoro } }),
     );

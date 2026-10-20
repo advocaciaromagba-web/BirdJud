@@ -21,7 +21,7 @@ export async function POST(
     const { tipo } = await params;
     if (!ehTipoDeIntegracao(tipo)) {
       return NextResponse.json(
-        { erro: "Integracao desconhecida." },
+        { erro: "Integração desconhecida." },
         { status: 400 },
       );
     }
@@ -31,7 +31,7 @@ export async function POST(
     // o WHATSAPP_META, que virou numero unico da plataforma.
     if (!conector) {
       return NextResponse.json(
-        { erro: "Esta integracao nao e mais configurada pelo escritorio." },
+        { erro: "Esta integração não é mais configurada pelo escritório." },
         { status: 404 },
       );
     }

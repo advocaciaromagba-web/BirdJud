@@ -72,7 +72,7 @@ export async function POST(
     const operador = await exigirOperador();
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Acao invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Ação inválida." }, { status: 400 });
     }
 
     const escritorio = await prismaPlataforma().escritorio.findUnique({
@@ -81,7 +81,7 @@ export async function POST(
     });
     if (!escritorio) {
       return NextResponse.json(
-        { erro: "Escritorio nao encontrado." },
+        { erro: "Escritório não encontrado." },
         { status: 404 },
       );
     }
@@ -96,7 +96,7 @@ export async function POST(
     await registrarAcessoSuporte(
       operador.operadorId,
       escritorio.id,
-      `Acao no painel: ${corpo.data.acao}`,
+      `Ação no painel: ${corpo.data.acao}`,
     );
 
     if (corpo.data.acao === "faixa") {
@@ -117,7 +117,7 @@ export async function POST(
       // provedor no dia da primeira fatura.
       if (!documentoValido(corpo.data.cnpj)) {
         return NextResponse.json(
-          { erro: "O CNPJ informado nao fecha o digito verificador." },
+          { erro: "O CNPJ informado não fecha o dígito verificador." },
           { status: 400 },
         );
       }
@@ -165,7 +165,7 @@ export async function POST(
         detalhe:
           `Plano ${PLANO[corpo.data.plano].rotulo} aplicado. ` +
           `Mensalidade pela tabela de hoje: ${(conta.totalCentavos / 100).toFixed(2)}. ` +
-          "O valor da assinatura nao foi alterado.",
+          "O valor da assinatura não foi alterado.",
       });
     }
 
@@ -190,9 +190,9 @@ export async function POST(
       await registrarAcessoSuporte(operador.operadorId, escritorio.id, `Encerrado: ${corpo.data.motivo}`);
       return NextResponse.json({
         detalhe:
-          `Escritorio encerrado. Os dados ficam ${PRAZO_DE_RETENCAO_DIAS} dias para exportacao e depois sao apagados.` +
-          (canceladas.count ? ` ${canceladas.count} fatura(s) nao emitida(s) cancelada(s).` : "") +
-          (emitidas ? ` Atencao: ${emitidas} fatura(s) ja emitida(s) no meio de pagamento continuam abertas — cancele no provedor.` : ""),
+          `Escritório encerrado. Os dados ficam ${PRAZO_DE_RETENCAO_DIAS} dias para exportação e depois são apagados.` +
+          (canceladas.count ? ` ${canceladas.count} fatura(s) não emitida(s) cancelada(s).` : "") +
+          (emitidas ? ` Atenção: ${emitidas} fatura(s) já emitida(s) no meio de pagamento continuam abertas — cancele no provedor.` : ""),
       });
     }
 
@@ -219,7 +219,7 @@ export async function POST(
       // 12 meses sai na proxima regua. Voltar ao mensal: o ano ja pago segue
       // valendo ate acabar (anualAte fica), e so depois volta a fatura mensal.
       const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
-      if (!assinatura) return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      if (!assinatura) return NextResponse.json({ erro: "Escritório sem assinatura." }, { status: 400 });
       if (corpo.data.ciclo === "MENSAL") {
         // O ano faturado conta como pago (a regua nao cobra mensal ate ele
         // acabar). Com a fatura anual ainda em aberto, voltar ao mensal
@@ -230,7 +230,7 @@ export async function POST(
         });
         if (abertas.some((f) => ehFaturaAnual(f.detalhe))) {
           return NextResponse.json(
-            { erro: "Ha fatura anual em aberto. Ela precisa ser paga ou cancelada (no Asaas e aqui) antes de voltar ao mensal." },
+            { erro: "Há fatura anual em aberto. Ela precisa ser paga ou cancelada (no Asaas e aqui) antes de voltar ao mensal." },
             { status: 409 },
           );
         }
@@ -243,14 +243,14 @@ export async function POST(
       return NextResponse.json({
         detalhe:
           corpo.data.ciclo === "ANUAL"
-            ? "Assinatura anual: a fatura de 12 meses, com 10% de desconto, sai na proxima regua."
+            ? "Assinatura anual: a fatura de 12 meses, com 10% de desconto, sai na próxima regua."
             : "Assinatura mensal.",
       });
     }
 
     if (corpo.data.acao === "valor") {
       const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
-      if (!assinatura) return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      if (!assinatura) return NextResponse.json({ erro: "Escritório sem assinatura." }, { status: 400 });
       await prismaPlataforma().assinatura.update({
         where: { escritorioId: escritorio.id },
         data: { valorCentavos: corpo.data.valorCentavos },
@@ -263,17 +263,17 @@ export async function POST(
       );
       return NextResponse.json({
         detalhe: corpo.data.valorCentavos
-          ? `Mensalidade fechada em R$ ${reais}. Vale a partir da proxima fatura.`
-          : "Mensalidade pela tabela. Vale a partir da proxima fatura.",
+          ? `Mensalidade fechada em R$ ${reais}. Vale a partir da próxima fatura.`
+          : "Mensalidade pela tabela. Vale a partir da próxima fatura.",
       });
     }
 
     if (corpo.data.acao === "encerrarTeste") {
       const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
-      if (!assinatura) return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+      if (!assinatura) return NextResponse.json({ erro: "Escritório sem assinatura." }, { status: 400 });
       const agora = new Date();
       if (assinatura.fimDoTeste <= agora) {
-        return NextResponse.json({ erro: "O periodo de teste ja acabou." }, { status: 409 });
+        return NextResponse.json({ erro: "O período de teste já acabou." }, { status: 409 });
       }
       await prismaPlataforma().assinatura.update({
         where: { escritorioId: escritorio.id },
@@ -281,7 +281,7 @@ export async function POST(
       });
       await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Teste encerrado antes do prazo");
       return NextResponse.json({
-        detalhe: "Teste encerrado. A primeira fatura sai na proxima regua — ou agora, em \"Passar a regua\".",
+        detalhe: "Teste encerrado. A primeira fatura sai na próxima regua — ou agora, em \"Passar a regua\".",
       });
     }
 
@@ -289,7 +289,7 @@ export async function POST(
       // Copia agora para a nuvem do escritorio o que ficou para tras (falha,
       // nuvem conectada depois). Sem nuvem conectada, o trabalho so confere.
       await enfileirar("ORGANIZAR_NUVEM", escritorio.id);
-      return NextResponse.json({ detalhe: "Copia para a nuvem na fila." });
+      return NextResponse.json({ detalhe: "Cópia para a nuvem na fila." });
     }
 
     if (corpo.data.acao === "reativar") {
@@ -298,18 +298,18 @@ export async function POST(
         select: { status: true, purgadoEm: true },
       });
       if (atual?.status !== "ENCERRADO" || atual.purgadoEm) {
-        return NextResponse.json({ erro: "So da para reativar encerrado que ainda nao foi apagado." }, { status: 400 });
+        return NextResponse.json({ erro: "Só dá para reativar encerrado que ainda não foi apagado." }, { status: 400 });
       }
       await reativarEscritorio(escritorio.id);
       await prismaPlataforma().assinatura.updateMany({ where: { escritorioId: escritorio.id }, data: { canceladaEm: null } });
       await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Reativado");
-      return NextResponse.json({ detalhe: "Escritorio reativado." });
+      return NextResponse.json({ detalhe: "Escritório reativado." });
     }
 
     if (corpo.data.acao === "cortesia") {
       const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
       if (!assinatura) {
-        return NextResponse.json({ erro: "Escritorio sem assinatura." }, { status: 400 });
+        return NextResponse.json({ erro: "Escritório sem assinatura." }, { status: 400 });
       }
       if (corpo.data.ligar && !corpo.data.motivo) {
         return NextResponse.json({ erro: "Diga o motivo da cortesia: fica registrado." }, { status: 400 });
@@ -329,8 +329,8 @@ export async function POST(
       const r = await aplicarRegua(escritorio.id);
       return NextResponse.json({
         detalhe: corpo.data.ligar
-          ? `Cortesia ligada: nenhuma fatura sera gerada. Status ${r.statusNovo}.`
-          : `Cortesia retirada: a regua volta a cobrar no proximo vencimento. Status ${r.statusNovo}.`,
+          ? `Cortesia ligada: nenhuma fatura será gerada. Status ${r.statusNovo}.`
+          : `Cortesia retirada: a regua volta a cobrar no próximo vencimento. Status ${r.statusNovo}.`,
       });
     }
 

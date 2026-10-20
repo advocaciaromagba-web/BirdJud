@@ -24,12 +24,12 @@ export default async function ImportarNaImplantacao({ params }: { params: Promis
     <main className="pagina">
       <NavegacaoDaPlataforma ativo={null} operador={operador.nome} />
       <Link href={`/plataforma/${id}/implantacao`} className="mt-4 inline-block text-sm text-slate-500">
-        ← implantacao de {escritorio.nome}
+        ← implantação de {escritorio.nome}
       </Link>
       <h1 className="mt-2">Importar clientes</h1>
       <p className="mt-2 leitura text-slate-600">
-        A planilha exportada do sistema anterior do escritorio. Mesmas regras da tela do escritorio: nada
-        entra antes da conferencia, e o lote pode ser desfeito.
+        A planilha exportada do sistema anterior do escritório. Mesmas regras da tela do escritório: nada
+        entra antes da conferência, e o lote pode ser desfeito.
       </p>
       <ImportadorDeClientes
         rota={`/api/plataforma/escritorios/${id}/importar`}

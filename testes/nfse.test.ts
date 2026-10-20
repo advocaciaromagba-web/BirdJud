@@ -87,7 +87,7 @@ const DADOS: DadosDps = {
 };
 
 describe("leiaute da DPS (Anexo I)", () => {
-  it("Simples ME/EPP: regApTribSN e pTotTribSN, sem aliquota", () => {
+  it("Simples ME/EPP: regApTribSN e pTotTribSN, sem alíquota", () => {
     const { xml, idDps } = montarDps(EMISSOR, DADOS);
     expect(idDps).toBe(`DPS35186022${CNPJ}00001${"42".padStart(15, "0")}`);
     expect(idDps).toHaveLength(45);
@@ -106,7 +106,7 @@ describe("leiaute da DPS (Anexo I)", () => {
     expect(xml).not.toContain("<IBSCBS>");
   });
 
-  it("nao optante informa tributos por esfera, nunca pTotTribSN nem regApTribSN", () => {
+  it("não optante informa tributos por esfera, nunca pTotTribSN nem regApTribSN", () => {
     const { xml } = montarDps(
       { ...EMISSOR, opSimpNac: 1, regApTribSN: null, pTotTribSN: null, pTotTribFed: 14.53, pTotTribEst: 0, pTotTribMun: 2 },
       DADOS,
@@ -121,11 +121,11 @@ describe("leiaute da DPS (Anexo I)", () => {
     expect(xml).toContain("<regApTribSN>2</regApTribSN><regEspTrib>6</regEspTrib>");
   });
 
-  it("sem inscricao municipal, a tag IM nao vai", () => {
+  it("sem inscrição municipal, a tag IM não vai", () => {
     expect(montarDps({ ...EMISSOR, inscricaoMunicipal: null }, DADOS).xml).not.toContain("<IM>");
   });
 
-  it("tomador empresa com endereco vai com municipio e CEP", () => {
+  it("tomador empresa com endereço vai com município e CEP", () => {
     const { xml } = montarDps(EMISSOR, {
       ...DADOS,
       tomador: {
@@ -140,7 +140,7 @@ describe("leiaute da DPS (Anexo I)", () => {
     expect(xml).toContain("<end><endNac><cMun>3550308</cMun><CEP>01310100</CEP></endNac><xLgr>Av. Paulista</xLgr><nro>1000</nro><xBairro>Bela Vista</xBairro></end>");
   });
 
-  it("IBS/CBS so entra quando vigente na competencia", () => {
+  it("IBS/CBS só entra quando vigente na competência", () => {
     const fiscal = {
       opSimpNac: 3, regApTribSN: 1, regEspTrib: 0, pTotTribSN: null, pTotTribFed: null, pTotTribEst: null, pTotTribMun: null,
       regApIBSCBSSN: null, cAtvSN: null, regimeFuturo: null, regimeFuturoDesde: null,
@@ -153,7 +153,7 @@ describe("leiaute da DPS (Anexo I)", () => {
     expect(xml).toContain("<IBSCBS><finNFSe>0</finNFSe><cIndOp>100301</cIndOp><indDest>0</indDest>");
   });
 
-  it("o regime vale pela COMPETENCIA: mudanca marcada vira sozinha", () => {
+  it("o regime vale pela COMPETENCIA: mudança marcada vira sozinha", () => {
     const fiscal = {
       opSimpNac: 1, regApTribSN: null, regEspTrib: 6, pTotTribSN: null, pTotTribFed: 14, pTotTribEst: 0, pTotTribMun: 2,
       regApIBSCBSSN: null, cAtvSN: null, ibsCbsDesde: null, cIndOp: null, cstIbsCbs: null, cClassTribIbsCbs: null,
@@ -196,7 +196,7 @@ describe("certificado e assinatura (provado de verdade)", () => {
     expect(cert.pfxTls.length).toBeGreaterThan(100);
   });
 
-  it("senha errada tem mensagem propria", () => {
+  it("senha errada tem mensagem própria", () => {
     expect(() => carregarDeBase64(PFX, "errada")).toThrow(/[Ss]enha/);
   });
 
@@ -312,16 +312,16 @@ d("preparar e assinar", () => {
   });
 
   const preparar = (extra: Partial<Parameters<typeof prepararNota>[1]> = {}) =>
-    prepararNota(alfa, { clienteId: clienteCpf, valorCentavos: 150_000, descricao: "Honorarios de setembro", criadoPorId: outraPessoa, ...extra });
+    prepararNota(alfa, { clienteId: clienteCpf, valorCentavos: 150_000, descricao: "Honorários de setembro", criadoPorId: outraPessoa, ...extra });
 
-  it("o emissor pronto nao tem pendencia", async () => {
+  it("o emissor pronto não tem pendência", async () => {
     const fiscal = await comEscritorio(alfa, (db) => db.fiscal.findFirst());
     expect(pendenciasDoEmissor(fiscal, { arquivo: PFX, cnpj: CNPJ })).toEqual([]);
     expect(pendenciasDoEmissor(fiscal, { arquivo: PFX, cnpj: "99999999000199" })[0]).toMatch(/outro CNPJ/);
     expect(pendenciasDoEmissor(fiscal, null)[0]).toMatch(/certificado/);
   });
 
-  it("preparar nao gasta numero nem fala com a Sefin", async () => {
+  it("preparar não gasta número nem fala com a Sefin", async () => {
     const r = await preparar();
     expect(r.nota.status).toBe("AGUARDANDO_ASSINATURA");
     expect(r.nota.numero).toBeNull();
@@ -329,12 +329,12 @@ d("preparar e assinar", () => {
     expect(recebidas).toHaveLength(0);
   });
 
-  it("competencia futura e empresa sem endereco sao recusadas ja no preparo", async () => {
+  it("competência futura e empresa sem endereço são recusadas já no preparo", async () => {
     await expect(preparar({ dataCompetencia: "2099-01-01" })).rejects.toThrow(/futura/);
     await expect(preparar({ clienteId: clienteEmpresaSemEndereco })).rejects.toThrow(/E0235/);
   });
 
-  it("so o titular abre o certificado, e com a senha certa", async () => {
+  it("só o titular abre o certificado, e com a senha certa", async () => {
     await expect(abrirCertificadoDoEscritorio(alfa, { usuarioId: outraPessoa, papel: "ADMIN" }, SENHA)).rejects.toBeInstanceOf(SoOTitular);
     await expect(abrirCertificadoDoEscritorio(alfa, TITULAR(), "errada")).rejects.toThrow(/[Ss]enha/);
   });
@@ -355,12 +355,12 @@ d("preparar e assinar", () => {
     expect(gravada.xmlRetorno).toContain("<nNFSe>7</nNFSe>");
   });
 
-  it("E0120: reenvia sozinha sem a inscricao municipal, com numero novo", async () => {
+  it("E0120: reenvia sozinha sem a inscrição municipal, com número novo", async () => {
     let chamadas = 0;
     responder = () => {
       chamadas += 1;
       return chamadas === 1
-        ? { status: 400, json: { erros: [{ codigo: "E0120", descricao: "IM nao cadastrada no CNC" }] } }
+        ? { status: 400, json: { erros: [{ codigo: "E0120", descricao: "IM não cadastrada no CNC" }] } }
         : aceita("8");
     };
     const { nota } = await preparar();
@@ -373,7 +373,7 @@ d("preparar e assinar", () => {
   });
 
   it("recusada fica com os erros e pode ser assinada de novo", async () => {
-    responder = () => ({ status: 400, json: { erros: [{ codigo: "E0160", descricao: "Regime nao confere" }] } });
+    responder = () => ({ status: 400, json: { erros: [{ codigo: "E0160", descricao: "Regime não confere" }] } });
     const { nota } = await preparar();
     const [r] = await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
     expect(r.status).toBe("REJEITADA");
@@ -384,7 +384,7 @@ d("preparar e assinar", () => {
     expect(denovo.status).toBe("EMITIDA");
   });
 
-  it("conexao que cai fica PROCESSANDO, e Verificar recupera pela DPS", async () => {
+  it("conexão que cai fica PROCESSANDO, e Verificar recupera pela DPS", async () => {
     responder = (metodo, caminho) => (caminho === "/nfse" ? { status: 0, derrubar: true } : { status: 404 });
     const { nota } = await preparar();
     const [r] = await assinarNotas(alfa, TITULAR(), [nota.id], SENHA);
@@ -414,7 +414,7 @@ d("preparar e assinar", () => {
     expect(cancelada.eventoXml).toBe("<evento/>");
   });
 
-  it("descartar so vale para nota que nao foi emitida", async () => {
+  it("descartar só vale para nota que não foi emitida", async () => {
     const { nota } = await preparar();
     await descartarNota(alfa, nota.id);
     const emitida = (await preparar()).nota;
@@ -429,7 +429,7 @@ d("preparar e assinar", () => {
     expect(cancelada.length).toBeGreaterThan(pdf.length - 2000);
   });
 
-  it("nota de um escritorio nao se ve do outro", async () => {
+  it("nota de um escritório não se ve do outro", async () => {
     const { nota } = await preparar();
     const doOutro = await comEscritorio(beta, (db) => db.notaFiscal.findFirst({ where: { id: nota.id } }));
     expect(doOutro).toBeNull();

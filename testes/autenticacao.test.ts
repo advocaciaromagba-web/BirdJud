@@ -24,7 +24,7 @@ describe("senhas", () => {
 });
 
 describe("segundo fator", () => {
-  it("aceita o codigo do momento e recusa um codigo qualquer", async () => {
+  it("aceita o código do momento e recusa um código qualquer", async () => {
     const segredo = gerarSegredo();
     const codigo = generateSync({ secret: segredo });
     await expect(conferirCodigo(codigo, segredo)).resolves.toBe(true);
@@ -32,48 +32,48 @@ describe("segundo fator", () => {
     await expect(conferirCodigo("abc", segredo)).resolves.toBe(false);
   });
 
-  it("o QR Code sai com o nome do escritorio, nao com o da plataforma", () => {
+  it("o QR Code sai com o nome do escritório, não com o da plataforma", () => {
     const uri = urlDeCadastro(
-      "Escritorio Alfa",
+      "Escritório Alfa",
       "advogado@alfa.adv.br",
       gerarSegredo(),
     );
-    expect(uri).toContain(encodeURIComponent("Escritorio Alfa"));
+    expect(uri).toContain(encodeURIComponent("Escritório Alfa"));
     expect(uri).not.toContain("BirdJud");
   });
 });
 
-describe("sessao amarrada ao endereco", () => {
+describe("sessão amarrada ao endereço", () => {
   const alfa = { id: "esc_alfa", status: "ATIVO" };
 
-  it("aceita a sessao do proprio escritorio", () => {
+  it("aceita a sessão do próprio escritório", () => {
     expect(motivoParaRecusar(alfa, { escritorioId: "esc_alfa" })).toBeNull();
   });
 
-  it("recusa cookie de outro escritorio no subdominio deste", () => {
+  it("recusa cookie de outro escritório no subdomínio deste", () => {
     expect(motivoParaRecusar(alfa, { escritorioId: "esc_beta" })).toBe(
-      "Sessao de outro escritorio.",
+      "Sessão de outro escritório.",
     );
   });
 
-  it("recusa endereco que nao corresponde a escritorio nenhum", () => {
+  it("recusa endereço que não corresponde a escritório nenhum", () => {
     expect(motivoParaRecusar(null, { escritorioId: "esc_alfa" })).toBe(
-      "Endereco sem escritorio.",
+      "Endereço sem escritório.",
     );
   });
 
-  it("recusa escritorio suspenso ou encerrado, mesmo com sessao valida", () => {
+  it("recusa escritório suspenso ou encerrado, mesmo com sessão valida", () => {
     for (const status of ["SUSPENSO", "ENCERRADO"]) {
       expect(
         motivoParaRecusar(
           { id: "esc_alfa", status },
           { escritorioId: "esc_alfa" },
         ),
-      ).toBe("Escritorio suspenso ou encerrado.");
+      ).toBe("Escritório suspenso ou encerrado.");
     }
   });
 
-  it("deixa entrar escritorio inadimplente (cobranca nao e bloqueio imediato)", () => {
+  it("deixa entrar escritório inadimplente (cobrança não e bloqueio imediato)", () => {
     expect(
       motivoParaRecusar(
         { id: "esc_alfa", status: "INADIMPLENTE" },
@@ -82,40 +82,40 @@ describe("sessao amarrada ao endereco", () => {
     ).toBeNull();
   });
 
-  it("recusa quando nao ha sessao", () => {
+  it("recusa quando não há sessão", () => {
     expect(motivoParaRecusar(alfa, null)).toBe(
-      "Sessao ausente ou invalida para este endereco.",
+      "Sessão ausente ou inválida para este endereço.",
     );
   });
 });
 
-describe("revogacao de sessao", () => {
+describe("revogação de sessão", () => {
   const emissao = new Date("2026-09-18T12:00:00Z").getTime();
 
-  it("sem revogacao, a sessao vale", () => {
+  it("sem revogação, a sessão vale", () => {
     expect(sessaoRevogada(emissao, null)).toBe(false);
   });
 
-  it("sessao emitida ANTES da revogacao cai", () => {
+  it("sessão emitida ANTES da revogação cai", () => {
     expect(sessaoRevogada(emissao, new Date("2026-09-18T12:00:01Z"))).toBe(
       true,
     );
   });
 
-  it("sessao emitida DEPOIS da revogacao continua valendo", () => {
+  it("sessão emitida DEPOIS da revogação continua valendo", () => {
     expect(sessaoRevogada(emissao, new Date("2026-09-18T11:59:59Z"))).toBe(
       false,
     );
   });
 
-  it("sessao sem marca de emissao e tratada como antiga", () => {
+  it("sessão sem marca de emissão e tratada como antiga", () => {
     // Sessao de antes desta versao do sistema: emitidaEm vem 0.
     expect(sessaoRevogada(0, new Date("2020-01-01T00:00:00Z"))).toBe(true);
   });
 });
 
 describe("subdominio", () => {
-  it("extrai o slug do escritorio", () => {
+  it("extrai o slug do escritório", () => {
     expect(slugDoHost("alfa.birdjud.com.br")).toBe("alfa");
     expect(slugDoHost("ALFA.BirdJud.com.br:3000")).toBe("alfa");
   });
@@ -133,7 +133,7 @@ describe("subdominio", () => {
     }
   });
 
-  it("nao aceita niveis extras no endereco", () => {
+  it("não aceita niveis extras no endereço", () => {
     expect(slugDoHost("alfa.beta.birdjud.com.br")).toBeNull();
   });
 });

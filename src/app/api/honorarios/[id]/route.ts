@@ -29,7 +29,7 @@ export async function POST(
     const { id } = await params;
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Acao invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Ação inválida." }, { status: 400 });
     }
 
     if (corpo.data.acao === "ENCERRAR") {

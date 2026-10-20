@@ -81,7 +81,7 @@ export class EspacoEsgotado extends Error {
   readonly status = 507;
   constructor(usadoMb: number, tetoMb: number) {
     super(
-      `O espaco do escritorio acabou: ${usadoMb} MB usados de um teto de ${tetoMb} MB. Apague o que nao serve mais ou fale com o suporte para aumentar o plano.`,
+      `O espaço do escritório acabou: ${usadoMb} MB usados de um teto de ${tetoMb} MB. Apague o que não serve mais ou fale com o suporte para aumentar o plano.`,
     );
     this.name = "EspacoEsgotado";
   }
@@ -185,7 +185,7 @@ export async function guardarArquivo(
   }
   if (!tipoConfere(pedido.tipo, nome)) {
     throw new ArquivoRecusado(
-      `Tipo de arquivo nao aceito (${pedido.tipo || "sem tipo"} / .${extensaoDe(nome)}).`,
+      `Tipo de arquivo não aceito (${pedido.tipo || "sem tipo"} / .${extensaoDe(nome)}).`,
     );
   }
 
@@ -198,10 +198,10 @@ export async function guardarArquivo(
   // escritorio. Conferir ambos antes de gravar os vinculos informados.
   await comEscritorio(escritorioId, async (db) => {
     if (pedido.clienteId && !(await db.cliente.findFirst({ where: { id: pedido.clienteId } }))) {
-      throw new ArquivoRecusado("Cliente nao encontrado neste escritorio.", 400);
+      throw new ArquivoRecusado("Cliente não encontrado neste escritório.", 400);
     }
     if (pedido.processoId && !(await db.processo.findFirst({ where: { id: pedido.processoId } }))) {
-      throw new ArquivoRecusado("Processo nao encontrado neste escritorio.", 400);
+      throw new ArquivoRecusado("Processo não encontrado neste escritório.", 400);
     }
   });
 
@@ -262,7 +262,7 @@ export async function registrarArquivoDoEnvio(
   }
   if (!tipoConfere(pedido.tipo, nome)) {
     await disco.descartarEnvio(escritorioId, envio);
-    throw new ArquivoRecusado(`Tipo de arquivo nao aceito (${pedido.tipo || "sem tipo"} / .${extensaoDe(nome)}).`);
+    throw new ArquivoRecusado(`Tipo de arquivo não aceito (${pedido.tipo || "sem tipo"} / .${extensaoDe(nome)}).`);
   }
   const espaco = await espacoDoEscritorio(escritorioId);
   if (espaco.usadoMb + emMb(tamanho) > espaco.tetoMb) {
@@ -271,10 +271,10 @@ export async function registrarArquivoDoEnvio(
   }
   await comEscritorio(escritorioId, async (db) => {
     if (pedido.clienteId && !(await db.cliente.findFirst({ where: { id: pedido.clienteId } }))) {
-      throw new ArquivoRecusado("Cliente nao encontrado neste escritorio.", 400);
+      throw new ArquivoRecusado("Cliente não encontrado neste escritório.", 400);
     }
     if (pedido.processoId && !(await db.processo.findFirst({ where: { id: pedido.processoId } }))) {
-      throw new ArquivoRecusado("Processo nao encontrado neste escritorio.", 400);
+      throw new ArquivoRecusado("Processo não encontrado neste escritório.", 400);
     }
   });
 
@@ -332,7 +332,7 @@ export async function abrirArquivo(
 export class ArquivoNaoEncontrado extends Error {
   readonly status = 404;
   constructor() {
-    super("Arquivo nao encontrado.");
+    super("Arquivo não encontrado.");
     this.name = "ArquivoNaoEncontrado";
   }
 }

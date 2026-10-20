@@ -44,7 +44,7 @@ export class SemNumeroDeWhatsapp extends Error {
   readonly status = 503;
   constructor() {
     super(
-      "O WhatsApp da plataforma nao esta configurado (WHATSAPP_NUMERO_ID e WHATSAPP_TOKEN).",
+      "O WhatsApp da plataforma não está configurado (WHATSAPP_NUMERO_ID e WHATSAPP_TOKEN).",
     );
     this.name = "SemNumeroDeWhatsapp";
   }
@@ -206,16 +206,16 @@ export async function enviarModelo(
  */
 export function explicar(codigo: number, mensagem: string): string {
   if (codigo === 132001) {
-    return "Modelo nao encontrado na conta da Meta: confira se ele foi criado e aprovado, com este nome e neste idioma.";
+    return "Modelo não encontrado na conta da Meta: confira se ele foi criado e aprovado, com este nome e neste idioma.";
   }
   if (codigo === 131047) {
-    return "A janela de 24 horas com este numero esta fechada — so modelo aprovado entra, e este nao passou.";
+    return "A janela de 24 horas com este número está fechada — só modelo aprovado entra, e este não passou.";
   }
   if (codigo === 131026) {
-    return "Este numero nao recebe no WhatsApp.";
+    return "Este número não recebe no WhatsApp.";
   }
   if (codigo === 190) {
-    return "Token do WhatsApp expirado ou revogado: reconecte em Integracoes.";
+    return "Token do WhatsApp expirado ou revogado: reconecte em Integrações.";
   }
   return mensagem;
 }

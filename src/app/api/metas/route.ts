@@ -20,7 +20,7 @@ export async function PUT(req: Request) {
     const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
 
     if (!corpo.data.valor?.trim()) {
@@ -30,7 +30,7 @@ export async function PUT(req: Request) {
 
     const valorCentavos = paraCentavos(corpo.data.valor);
     if (valorCentavos === null) {
-      return NextResponse.json({ erro: "Valor invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Valor inválido." }, { status: 400 });
     }
 
     const r = await definirMeta(escritorioId, corpo.data.ano, valorCentavos);

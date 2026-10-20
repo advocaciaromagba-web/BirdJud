@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirSessao();
     const corpo = novo.safeParse(await req.json().catch(() => null));
     if (!corpo.success || !dataValida(corpo.data.dia)) {
-      return NextResponse.json({ erro: "Dia invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Dia inválido." }, { status: 400 });
     }
 
     // Cadastrar o mesmo dia duas vezes nao e erro de quem cadastra: o indice
@@ -55,7 +55,7 @@ export async function DELETE(req: Request) {
     const { escritorioId } = await exigirSessao();
     const dia = new URL(req.url).searchParams.get("dia") ?? "";
     if (!dataValida(dia)) {
-      return NextResponse.json({ erro: "Dia invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Dia inválido." }, { status: 400 });
     }
     await comEscritorio(escritorioId, (db) =>
       db.diaSemExpediente.deleteMany({

@@ -39,8 +39,8 @@ const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 const DIA = 24 * 60 * 60 * 1000;
 
-describe("prazo de retencao (puro)", () => {
-  it("so purga depois do prazo, e so uma vez", () => {
+describe("prazo de retenção (puro)", () => {
+  it("só purga depois do prazo, e só uma vez", () => {
     const agora = new Date("2026-12-01T12:00:00Z");
     const recem = new Date("2026-11-30T12:00:00Z");
     const antigo = new Date(
@@ -55,7 +55,7 @@ describe("prazo de retencao (puro)", () => {
   });
 });
 
-describe("ip da requisicao", () => {
+describe("ip da requisição", () => {
   it("le o primeiro endereco do x-forwarded-for", () => {
     const req = new Request("http://local", {
       headers: { "x-forwarded-for": "203.0.113.9, 10.0.0.1" },
@@ -63,13 +63,13 @@ describe("ip da requisicao", () => {
     expect(ipDaRequisicao(req)).toBe("203.0.113.9");
   });
 
-  it("devolve null quando nao ha cabecalho", () => {
+  it("devolve null quando não há cabeçalho", () => {
     expect(ipDaRequisicao(new Request("http://local"))).toBeNull();
   });
 });
 
 d("limite de tentativas", () => {
-  it("libera ate o maximo e bloqueia depois, dentro da janela", async () => {
+  it("libera até o máximo e bloqueia depois, dentro da janela", async () => {
     await zerarLimites("ip:");
     for (let i = 0; i < 3; i += 1) {
       expect((await registrarTentativa("ip:1", 3, 60)).permitido).toBe(true);
@@ -79,7 +79,7 @@ d("limite de tentativas", () => {
     expect(bloqueado.esperarSegundos).toBeGreaterThan(0);
   });
 
-  it("chaves diferentes nao se atrapalham", async () => {
+  it("chaves diferentes não se atrapalham", async () => {
     await zerarLimites("ip:");
     expect((await registrarTentativa("ip:a", 1, 60)).permitido).toBe(true);
     expect((await registrarTentativa("ip:a", 1, 60)).permitido).toBe(false);
@@ -104,7 +104,7 @@ d("limite de tentativas", () => {
     expect(resultados.filter((r) => r.permitido)).toHaveLength(4);
   });
 
-  it("limpar remove so as janelas vencidas", async () => {
+  it("limpar remove só as janelas vencidas", async () => {
     await zerarLimites("ip:");
     await registrarTentativa("ip:vencida", 5, 1);
     await registrarTentativa("ip:viva", 5, 600);
@@ -125,12 +125,12 @@ let original = "";
 let restaurado = "";
 const marca = Date.now();
 
-d("backup e restauracao", () => {
+d("backup e restauração", () => {
   beforeAll(async () => {
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 7).toString("base64");
 
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `f5-${marca}`, nome: "Escritorio F5", faixa: "ATE_10" },
+      data: { slug: `f5-${marca}`, nome: "Escritório F5", faixa: "ATE_10" },
     });
     original = e.id;
 
@@ -156,7 +156,7 @@ d("backup e restauracao", () => {
       });
       await db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia F5",
+          titulo: "Audiência F5",
           inicio: new Date(Date.now() + DIA),
           processoId: processo.id,
         }),
@@ -192,7 +192,7 @@ d("backup e restauracao", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("o backup leva tudo do escritorio", async () => {
+  it("o backup leva tudo do escritório", async () => {
     const backup = await gerarBackup(original);
     expect(backup.formato).toBe(FORMATO_DO_BACKUP);
     expect(backup.tabelas.cliente).toHaveLength(1);
@@ -207,7 +207,7 @@ d("backup e restauracao", () => {
     expect(JSON.stringify(backup)).not.toContain("chave-secreta-do-asaas");
   });
 
-  it("restaura em um escritorio novo, registro a registro", async () => {
+  it("restaura em um escritório novo, registro a registro", async () => {
     const backup = await gerarBackup(original);
     const resultado = await restaurarBackup(backup, `f5r-${marca}`);
     restaurado = resultado.escritorioId;
@@ -238,14 +238,14 @@ d("backup e restauracao", () => {
     expect(dados.chave).toBe("chave-secreta-do-asaas");
   });
 
-  it("o escritorio restaurado nasce SUSPENSO", async () => {
+  it("o escritório restaurado nasce SUSPENSO", async () => {
     const e = await prismaPlataforma().escritorio.findUniqueOrThrow({
       where: { id: restaurado },
     });
     expect(e.status).toBe("SUSPENSO");
   });
 
-  it("o original continua intacto depois da restauracao", async () => {
+  it("o original continua intacto depois da restauração", async () => {
     const quantos = await comEscritorio(original, (db) => db.cliente.count());
     expect(quantos).toBe(1);
   });
@@ -263,7 +263,7 @@ d("aceite dos documentos", () => {
 
   beforeAll(async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `f5a-${marca}`, nome: "Escritorio do Aceite" },
+      data: { slug: `f5a-${marca}`, nome: "Escritório do Aceite" },
     });
     escritorio = e.id;
   });
@@ -276,13 +276,13 @@ d("aceite dos documentos", () => {
     }
   });
 
-  it("antes de aceitar, todos os documentos estao pendentes", async () => {
+  it("antes de aceitar, todos os documentos estão pendentes", async () => {
     await expect(documentosPendentes(escritorio)).resolves.toHaveLength(
       DOCUMENTOS.length,
     );
   });
 
-  it("grava um aceite por documento, com versao e rastro", async () => {
+  it("grava um aceite por documento, com versão e rastro", async () => {
     const quantos = await registrarAceite(escritorio, {
       nome: "Dra. Fulana",
       email: "Fulana@Exemplo.adv.br",
@@ -307,12 +307,12 @@ d("encerramento e purga", () => {
 
   beforeAll(async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `f5p-${marca}`, nome: "Escritorio que Encerra" },
+      data: { slug: `f5p-${marca}`, nome: "Escritório que Encerra" },
     });
     escritorio = e.id;
     await comEscritorio(escritorio, (db) =>
       db.cliente.create({
-        data: semEscritorio({ nome: "Cliente que sera apagado" }),
+        data: semEscritorio({ nome: "Cliente que será apagado" }),
       }),
     );
     // Fatura e aceite existem para a purga ter o que NAO apagar.
@@ -342,13 +342,13 @@ d("encerramento e purga", () => {
     }
   });
 
-  it("encerrar muda o status e comeca a contar o prazo", async () => {
+  it("encerrar muda o status e começa a contar o prazo", async () => {
     const e = await encerrarEscritorio(escritorio);
     expect(e.status).toBe("ENCERRADO");
     expect(e.encerradoEm).not.toBeNull();
   });
 
-  it("dentro do prazo, a purga nao toca nos dados", async () => {
+  it("dentro do prazo, a purga não toca nos dados", async () => {
     const resultado = await purgarEncerrados();
     expect(resultado.escritorios).not.toContain(`f5p-${marca}`);
 
@@ -385,7 +385,7 @@ d("encerramento e purga", () => {
     expect(casca.purgadoEm).not.toBeNull();
   });
 
-  it("fatura e aceite sobrevivem a purga — obrigacao propria da plataforma", async () => {
+  it("fatura e aceite sobrevivem a purga — obrigação própria da plataforma", async () => {
     // A purga ja rodou no caso anterior. Registro fiscal e prova de contrato
     // ficam; e o que o acordo de LGPD promete.
     await expect(
@@ -398,7 +398,7 @@ d("encerramento e purga", () => {
     ).resolves.toBe(DOCUMENTOS.length);
   });
 
-  it("os dados do escritorio, esses foram mesmo embora", async () => {
+  it("os dados do escritório, esses foram mesmo embora", async () => {
     const sobrou = await prismaPlataforma().$transaction([
       prismaPlataforma().cliente.count({ where: { escritorioId: escritorio } }),
       prismaPlataforma().usuario.count({ where: { escritorioId: escritorio } }),
@@ -412,7 +412,7 @@ d("encerramento e purga", () => {
     expect(sobrou).toEqual([0, 0, 0, 0]);
   });
 
-  it("nao purga duas vezes o mesmo escritorio", async () => {
+  it("não purga duas vezes o mesmo escritório", async () => {
     const resultado = await purgarEncerrados();
     expect(resultado.escritorios).not.toContain(`f5p-${marca}`);
   });

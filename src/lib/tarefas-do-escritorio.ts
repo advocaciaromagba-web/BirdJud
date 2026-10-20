@@ -11,7 +11,7 @@ import { prioridadeDe, situacaoDe } from "./tarefas";
 export class TarefaNaoEncontrada extends Error {
   readonly status = 404;
   constructor() {
-    super("Tarefa nao encontrada.");
+    super("Tarefa não encontrada.");
     this.name = "TarefaNaoEncontrada";
   }
 }

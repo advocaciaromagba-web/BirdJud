@@ -85,16 +85,16 @@ function asaasNormal() {
   };
 }
 
-describe("descricao da cobranca", () => {
+describe("descrição da cobrança", () => {
   // O extrato de quem paga mostra so a descricao. "BirdJud" doze vezes por
   // ano nao diz qual mes foi pago.
-  it("leva a competencia", () => {
+  it("leva a competência", () => {
     expect(descricaoDaFatura("2026-10")).toBe("BirdJud — assinatura 10/2026");
   });
 
   // A fatura anual cobra 12 meses: no boleto, "assinatura 10/2026" faria
   // parecer uma mensalidade de R$ 3.000.
-  it("anual diz que sao 12 meses", () => {
+  it("anual diz que são 12 meses", () => {
     expect(descricaoDaFatura("2026-10", true)).toBe("BirdJud — assinatura anual (12 meses) a partir de 10/2026");
   });
 
@@ -110,7 +110,7 @@ describe("chave da plataforma", () => {
     expect(temCobrancaDaPlataforma()).toBe(true);
   });
 
-  it("vazia nao conta como configurada", () => {
+  it("vazia não conta como configurada", () => {
     const antes = process.env.ASAAS_PLATAFORMA_CHAVE;
     process.env.ASAAS_PLATAFORMA_CHAVE = "   ";
     expect(temCobrancaDaPlataforma()).toBe(false);
@@ -145,28 +145,28 @@ describe("mensagem da fatura", () => {
     expect(m.texto.replace(/\u00a0/g, " ")).toContain("R$ 3.013,20");
   });
 
-  it("anual: o e-mail oferece o parcelamento, com o endereco da tela Plano", () => {
+  it("anual: o e-mail oferece o parcelamento, com o endereço da tela Plano", () => {
     const m = mensagemDaFatura({
       ...base, link: "https://asaas.test/i/pay_1", anual: true,
       enderecoDoPlano: "https://roma.birdjud.com.br/plano",
     });
-    expect(m.texto).toContain("a vista ou em ate 6x (com a tarifa do cartao)");
+    expect(m.texto).toContain("à vista ou em até 6x (com a tarifa do cartão)");
     expect(m.texto).toContain("https://roma.birdjud.com.br/plano");
     // Mensal: cartao so a vista.
     const mensal = mensagemDaFatura({ ...base, link: null, enderecoDoPlano: "https://x/plano" }).texto;
-    expect(mensal).toContain("No cartao (com a tarifa do cartao), na tela Plano: https://x/plano");
+    expect(mensal).toContain("No cartão (com a tarifa do cartão), na tela Plano: https://x/plano");
     expect(mensal).not.toContain("6x");
   });
 
   // Sem link o e-mail ainda sai, mas nao promete o que nao tem.
-  it("sem link, nao inventa botao de pagar", () => {
+  it("sem link, não inventa botão de pagar", () => {
     const m = mensagemDaFatura({ ...base, link: null });
     expect(m.texto).not.toContain("http");
-    expect(m.texto).toContain("sera enviado em seguida");
+    expect(m.texto).toContain("será enviado em seguida");
   });
 });
 
-seTemBanco("emissao contra o banco", () => {
+seTemBanco("emissão contra o banco", () => {
   const ids: string[] = [];
 
   afterEach(async () => {
@@ -201,7 +201,7 @@ seTemBanco("emissao contra o banco", () => {
     return { escritorio, fatura };
   }
 
-  it("emite, guarda o id e o link, e manda a nossa referencia", async () => {
+  it("emite, guarda o id e o link, e manda a nossa referência", async () => {
     responder = asaasNormal();
     const { fatura } = await escritorioComFatura({ cnpj: "11.222.333/0001-81" });
 
@@ -252,7 +252,7 @@ seTemBanco("emissao contra o banco", () => {
 
   // A regua roda pelo cron E pode ser passada a mao por um operador no mesmo
   // dia. Cobrar duas vezes o mesmo mes e o erro que aparece como dinheiro.
-  it("emitir de novo nao cria segunda cobranca", async () => {
+  it("emitir de novo não cria segunda cobrança", async () => {
     responder = asaasNormal();
     const { fatura } = await escritorioComFatura({ cnpj: "11.222.333/0001-81" });
 
@@ -265,7 +265,7 @@ seTemBanco("emissao contra o banco", () => {
     expect(depois).toBe(antes);
   });
 
-  it("o assinante e criado uma vez so, e reaproveitado", async () => {
+  it("o assinante e criado uma vez só, e reaproveitado", async () => {
     responder = asaasNormal();
     const { escritorio } = await escritorioComFatura({
       cnpj: "11.222.333/0001-81",
@@ -281,7 +281,7 @@ seTemBanco("emissao contra o banco", () => {
     expect(depois).toBe(antes);
   });
 
-  it("fatura ja paga nao e cobrada", async () => {
+  it("fatura já paga não e cobrada", async () => {
     responder = asaasNormal();
     const { fatura } = await escritorioComFatura({ cnpj: "11.222.333/0001-81" });
     await prismaPlataforma().fatura.update({
@@ -299,7 +299,7 @@ seTemBanco("emissao contra o banco", () => {
     );
   });
 
-  it("Asaas fora do ar levanta, e nao grava id pela metade", async () => {
+  it("Asaas fora do ar levanta, e não grava id pela metade", async () => {
     const { fatura } = await escritorioComFatura({ cnpj: "11.222.333/0001-81" });
     responder = () => ({ status: 500, json: {} });
 
@@ -325,7 +325,7 @@ seTemBanco("emissao contra o banco", () => {
 
 // Anual parcelado no cartao. O risco aqui e dinheiro duas vezes: a cobranca a
 // vista e a parcelada vivas ao mesmo tempo, e o escritorio pagando as duas.
-seTemBanco("parcelar a fatura anual no cartao", () => {
+seTemBanco("parcelar a fatura anual no cartão", () => {
   const ids: string[] = [];
   let statusNoAsaas = "PENDING";
   let n = 0;
@@ -374,7 +374,7 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     for (const id of ids.splice(0)) await prismaPlataforma().escritorio.delete({ where: { id } }).catch(() => {});
   });
 
-  it("cancela o boleto e cria o parcelamento em 6x no cartao", async () => {
+  it("cancela o boleto e cria o parcelamento em 6x no cartão", async () => {
     responder = asaasComParcelas();
     const { escritorio, fatura } = await faturaEmitida();
     const avista = fatura.idExterno!;
@@ -410,12 +410,12 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     expect(guardada.valorCentavos).toBe(334_248);
     const itens = guardada.detalhe as { descricao: string; valorCentavos: number }[];
     expect(itens[itens.length - 1]).toEqual({
-      descricao: "Tarifa do cartao parcelado em 6x e antecipacao (repassadas)",
+      descricao: "Tarifa do cartão parcelado em 6x e antecipação (repassadas)",
       valorCentavos: 32_928,
     });
   });
 
-  it("cartao a vista: value, sem parcelamento, com a tarifa", async () => {
+  it("cartão a vista: value, sem parcelamento, com a tarifa", async () => {
     responder = asaasComParcelas();
     const { escritorio, fatura } = await faturaEmitida([{ descricao: "Plano Completo", valorCentavos: 27_900 }]);
     await prismaPlataforma().fatura.update({ where: { id: fatura.id }, data: { valorCentavos: 27_900 } });
@@ -441,7 +441,7 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     expect(chamadas.length).toBe(antes);
   });
 
-  it("pedir de novo nao cria segundo parcelamento", async () => {
+  it("pedir de novo não cria segundo parcelamento", async () => {
     responder = asaasComParcelas();
     const { escritorio, fatura } = await faturaEmitida();
     const primeiro = await pagarFaturaNoCartao(escritorio.id, fatura.id, 6);
@@ -451,32 +451,32 @@ seTemBanco("parcelar a fatura anual no cartao", () => {
     expect(chamadas.length).toBe(antes);
   });
 
-  it("a vista ja paga no Asaas: recusa e nao cancela nada", async () => {
+  it("a vista já paga no Asaas: recusa e não cancela nada", async () => {
     responder = asaasComParcelas();
     const { escritorio, fatura } = await faturaEmitida();
     statusNoAsaas = "RECEIVED";
     const antes = chamadas.length;
-    await expect(pagarFaturaNoCartao(escritorio.id, fatura.id, 6)).rejects.toThrow(/ja foi paga/);
+    await expect(pagarFaturaNoCartao(escritorio.id, fatura.id, 6)).rejects.toThrow(/já foi paga/);
     expect(chamadas.slice(antes).some((c) => c.metodo === "DELETE")).toBe(false);
   });
 
-  it("mensalidade nao parcela (so a vista)", async () => {
+  it("mensalidade não parcela (só a vista)", async () => {
     responder = asaasComParcelas();
     const { escritorio, fatura } = await faturaEmitida([{ descricao: "Plano Completo", valorCentavos: 27_900 }]);
-    await expect(pagarFaturaNoCartao(escritorio.id, fatura.id, 2)).rejects.toThrow(/so vai ao cartao a vista/);
+    await expect(pagarFaturaNoCartao(escritorio.id, fatura.id, 2)).rejects.toThrow(/só vai ao cartão a vista/);
   });
 
-  it("fatura de outro escritorio: nao encontrada", async () => {
+  it("fatura de outro escritório: não encontrada", async () => {
     responder = asaasComParcelas();
     const { fatura } = await faturaEmitida();
     const { escritorio: outro } = await faturaEmitida();
-    await expect(pagarFaturaNoCartao(outro.id, fatura.id, 6)).rejects.toThrow(/nao encontrada/);
+    await expect(pagarFaturaNoCartao(outro.id, fatura.id, 6)).rejects.toThrow(/não encontrada/);
   });
 
   // Cancelou a a vista e o Asaas caiu antes do parcelamento: a fatura fica
   // sem cobranca (a regua emite a a vista de novo), nunca apontando para uma
   // cobranca que ja nao existe.
-  it("Asaas cai depois de cancelar: a fatura fica sem cobranca, pronta para reemitir", async () => {
+  it("Asaas cai depois de cancelar: a fatura fica sem cobrança, pronta para reemitir", async () => {
     const normal = asaasComParcelas();
     responder = normal;
     const { escritorio, fatura } = await faturaEmitida();

@@ -71,12 +71,12 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirSessao("COBRANCAS");
     const corpo = novaCobranca.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const valorCentavos = paraCentavos(corpo.data.valor);
     if (valorCentavos === null || valorCentavos <= 0) {
-      return NextResponse.json({ erro: "Valor invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Valor inválido." }, { status: 400 });
     }
 
     // Meio-dia UTC para o vencimento nao escorregar de dia por fuso.
@@ -112,7 +112,7 @@ export async function PATCH(req: Request) {
     const { escritorioId } = await exigirSessao("COBRANCAS");
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Acao invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Ação inválida." }, { status: 400 });
     }
 
     if (corpo.data.acao === "CANCELAR") {

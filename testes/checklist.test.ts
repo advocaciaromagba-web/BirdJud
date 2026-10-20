@@ -15,7 +15,7 @@ import {
   montar,
 } from "../src/lib/checklist";
 
-const CASO = { tipoAcao: "Acao de cobranca", pedeGratuidade: false };
+const CASO = { tipoAcao: "Ação de cobrança", pedeGratuidade: false };
 
 const grupos = (l: ReturnType<typeof montar>) =>
   l.itens.reduce<Record<string, number>>((c, i) => {
@@ -23,7 +23,7 @@ const grupos = (l: ReturnType<typeof montar>) =>
     return c;
   }, {});
 
-describe("a base nao depende da IA", () => {
+describe("a base não depende da IA", () => {
   it("sem nada da IA, a lista ainda sai completa", () => {
     const l = montar(CASO);
     expect(grupos(l)).toEqual({
@@ -34,9 +34,9 @@ describe("a base nao depende da IA", () => {
 
   it("com a IA devolvendo lixo, a base continua intacta", () => {
     const l = montar(CASO, {
-      doCaso: "nao sou lista" as never,
+      doCaso: "não sou lista" as never,
       ajudam: [{}, { documento: "   " }] as never,
-      observacoes: "tambem nao" as never,
+      observacoes: "também não" as never,
     });
     expect(grupos(l).PESSOAIS).toBe(PESSOAIS.length);
     expect(grupos(l).DO_CASO).toBeUndefined();
@@ -44,7 +44,7 @@ describe("a base nao depende da IA", () => {
   });
 
   // O ponto que vale repetir: o sistema nunca exige RG, e a base diz isso.
-  it("a identidade aceita CIN, RG ou CNH — nao exige RG", () => {
+  it("a identidade aceita CIN, RG ou CNH — não exige RG", () => {
     const identidade = PESSOAIS[0]!.documento;
     expect(identidade).toContain("CIN");
     expect(identidade).toContain("CNH");
@@ -52,8 +52,8 @@ describe("a base nao depende da IA", () => {
   });
 });
 
-describe("justica gratuita entra so quando pedida", () => {
-  it("nao pedindo, nao aparece", () => {
+describe("justiça gratuita entra só quando pedida", () => {
+  it("não pedindo, não aparece", () => {
     expect(grupos(montar(CASO)).GRATUIDADE).toBeUndefined();
   });
 
@@ -64,16 +64,16 @@ describe("justica gratuita entra so quando pedida", () => {
 
   // A declaracao sozinha ja nao basta (CPC 99 § 2º): a lista tem de pedir a
   // prova, senao o pedido volta indeferido.
-  it("pede extrato e imposto de renda, nao so a declaracao", () => {
+  it("pede extrato e imposto de renda, não só a declaração", () => {
     const textos = GRATUIDADE.map((i) => i.documento.toLowerCase()).join(" | ");
     expect(textos).toContain("extrato");
     expect(textos).toContain("imposto de renda");
-    expect(textos).toContain("declaracao de hipossuficiencia");
+    expect(textos).toContain("declaração de hipossuficiência");
   });
 });
 
 describe("o que vem da IA e podado", () => {
-  it("corta no limite e nao deixa item sem nome", () => {
+  it("corta no limite e não deixa item sem nome", () => {
     const muitos = Array.from({ length: 30 }, (_, i) => ({
       documento: `Doc ${i}`,
       paraQue: "x",
@@ -83,14 +83,14 @@ describe("o que vem da IA e podado", () => {
     expect(limpar([{ documento: "" }, { documento: "Vale" }], 10)).toHaveLength(1);
   });
 
-  it("no maximo 4 observacoes, sem vazias", () => {
+  it("no máximo 4 observações, sem vazias", () => {
     const l = montar(CASO, {
       observacoes: ["a", "", "   ", "b", "c", "d", "e"],
     });
     expect(l.observacoes).toEqual(["a", "b", "c", "d"]);
   });
 
-  it("aceita o que a IA mandou de util", () => {
+  it("aceita o que a IA mandou de útil", () => {
     const l = montar(CASO, {
       doCaso: [{ documento: "Contrato", paraQue: "prova a divida", essencial: true }],
     });
@@ -99,24 +99,24 @@ describe("o que vem da IA e podado", () => {
 });
 
 describe("o texto para o cliente", () => {
-  it("assina com o nome DO ESCRITORIO, nao um nome fixo", () => {
-    const t = emTexto(montar(CASO), "Jose Cicero dos Santos", "Advocacia Pereira");
+  it("assina com o nome DO ESCRITORIO, não um nome fixo", () => {
+    const t = emTexto(montar(CASO), "José Cicero dos Santos", "Advocacia Pereira");
     expect(t).toContain("Advocacia Pereira");
     expect(t).not.toContain("Advocacia Roma");
   });
 
   it("chama o cliente pelo primeiro nome", () => {
-    expect(emTexto(montar(CASO), "Jose Cicero dos Santos", "X")).toContain("Ola, Jose!");
+    expect(emTexto(montar(CASO), "José Cicero dos Santos", "X")).toContain("Ola, José!");
   });
 
-  it("nao quebra com nome vazio", () => {
+  it("não quebra com nome vazio", () => {
     expect(emTexto(montar(CASO), "   ", "X")).toContain("Ola!");
   });
 
-  it("traz os titulos dos grupos que tem item", () => {
+  it("traz os títulos dos grupos que tem item", () => {
     const t = emTexto(montar({ ...CASO, pedeGratuidade: true }), "Ana", "X");
     expect(t).toContain("DOCUMENTOS PESSOAIS");
-    expect(t).toContain("PARA O PEDIDO DE JUSTICA GRATUITA");
+    expect(t).toContain("PARA O PEDIDO DE JUSTIÇA GRATUITA");
     expect(t).toContain("ACESSOS");
     expect(t).not.toContain("DOCUMENTOS DO SEU CASO"); // nao houve item da IA
   });

@@ -23,7 +23,7 @@ export const COOKIE = "birdjud_adm";
 export class SemDestravar extends Error {
   readonly status = 403;
   constructor(
-    motivo = "Esta area pede a senha de administracao do escritorio.",
+    motivo = "Esta área pede a senha de administração do escritório.",
   ) {
     super(motivo);
     this.name = "SemDestravar";
@@ -34,7 +34,7 @@ export class SemSenhaDeAdministracao extends Error {
   readonly status = 409;
   constructor() {
     super(
-      "Este escritorio ainda nao definiu a senha de administracao. Defina-a para continuar.",
+      "Este escritório ainda não definiu a senha de administração. Defina-a para continuar.",
     );
     this.name = "SemSenhaDeAdministracao";
   }
@@ -94,12 +94,12 @@ export function conferirDestravamento(
   const recebida = Buffer.from(assinatura);
   // Assinatura primeiro, e em tempo constante: so depois de saber que o
   // conteudo e nosso vale a pena olhar o conteudo.
-  if (esperada.length !== recebida.length) return "assinatura invalida";
-  if (!timingSafeEqual(esperada, recebida)) return "assinatura invalida";
+  if (esperada.length !== recebida.length) return "assinatura inválida";
+  if (!timingSafeEqual(esperada, recebida)) return "assinatura inválida";
 
-  if (escritorioId !== esperado.escritorioId) return "destravamento de outro escritorio";
+  if (escritorioId !== esperado.escritorioId) return "destravamento de outro escritório";
   if (usuarioId !== esperado.usuarioId) return "destravamento de outra pessoa";
-  if (marca !== esperado.marca) return "a senha de administracao mudou";
+  if (marca !== esperado.marca) return "a senha de administração mudou";
 
   const vence = Number(expiraEm);
   if (!Number.isFinite(vence)) return "destravamento malformado";
@@ -125,10 +125,10 @@ export const MINIMO_DE_CARACTERES = 12;
 
 export function senhaAceitavel(senha: string): string | null {
   if (senha.length < MINIMO_DE_CARACTERES) {
-    return `A senha de administracao precisa ter ao menos ${MINIMO_DE_CARACTERES} caracteres.`;
+    return `A senha de administração precisa ter ao menos ${MINIMO_DE_CARACTERES} caracteres.`;
   }
   if (!/[a-zA-Z]/.test(senha) || !/[0-9]/.test(senha)) {
-    return "A senha de administracao precisa misturar letras e numeros.";
+    return "A senha de administração precisa misturar letras e números.";
   }
   return null;
 }

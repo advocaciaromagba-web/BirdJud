@@ -20,7 +20,7 @@ const AGORA = new Date("2026-10-08T12:00:00");
 const em = (iso: string) => new Date(iso);
 
 describe("atrasada", () => {
-  it("passou da hora e nao foi concluida", () => {
+  it("passou da hora e não foi concluída", () => {
     expect(
       estaAtrasada(
         { vencimento: em("2026-10-07T09:00:00"), prioridade: "MEDIA", situacao: "PENDENTE" },
@@ -29,7 +29,7 @@ describe("atrasada", () => {
     ).toBe(true);
   });
 
-  it("concluida nunca esta atrasada, por mais velha que seja", () => {
+  it("concluída nunca esta atrasada, por mais velha que seja", () => {
     expect(
       estaAtrasada(
         { vencimento: em("2026-01-01T09:00:00"), prioridade: "ALTA", situacao: "CONCLUIDA" },
@@ -38,7 +38,7 @@ describe("atrasada", () => {
     ).toBe(false);
   });
 
-  it("vence hoje mais tarde ainda nao esta atrasada", () => {
+  it("vence hoje mais tarde ainda não esta atrasada", () => {
     expect(
       estaAtrasada(
         { vencimento: em("2026-10-08T17:00:00"), prioridade: "BAIXA", situacao: "PENDENTE" },
@@ -49,7 +49,7 @@ describe("atrasada", () => {
 });
 
 describe("vence hoje", () => {
-  it("conta o dia, nao o instante", () => {
+  it("conta o dia, não o instante", () => {
     expect(venceHoje(em("2026-10-08T08:00:00"), AGORA)).toBe(true);
     expect(venceHoje(em("2026-10-08T23:59:00"), AGORA)).toBe(true);
     expect(venceHoje(em("2026-10-09T00:01:00"), AGORA)).toBe(false);
@@ -103,13 +103,13 @@ describe("ordem da lista de ativas", () => {
     expect(lista.map((x) => x.titulo)).toEqual(["urgente", "media", "baixa"]);
   });
 
-  it("nao mexe na lista recebida", () => {
+  it("não mexe na lista recebida", () => {
     const original = [t("b", "2026-10-20T09:00:00"), t("a", "2026-10-09T09:00:00")];
     ordenarAtivas(original, AGORA);
     expect(original[0].titulo).toBe("b");
   });
 
-  it("prioridade desconhecida nao joga a tarefa para o fim do mundo", () => {
+  it("prioridade desconhecida não joga a tarefa para o fim do mundo", () => {
     const lista = ordenarAtivas(
       [
         t("torta", "2026-10-09T09:00:00", "GRAVISSIMA"),
@@ -129,7 +129,7 @@ describe("busca", () => {
     nomeDoCliente: "Mônica Gonçalves",
   };
 
-  it("acha pelo titulo, ignorando acento e caixa", () => {
+  it("acha pelo título, ignorando acento e caixa", () => {
     expect(combina(tarefa, "DOCUMENTOS")).toBe(true);
     expect(combina({ ...tarefa, titulo: "Certidão" }, "certidao")).toBe(true);
   });
@@ -138,7 +138,7 @@ describe("busca", () => {
     expect(combina(tarefa, "monica")).toBe(true);
   });
 
-  it("acha pelo numero do processo", () => {
+  it("acha pelo número do processo", () => {
     expect(combina(tarefa, "1002327")).toBe(true);
   });
 
@@ -147,13 +147,13 @@ describe("busca", () => {
     expect(combina(tarefa, "documentos joao")).toBe(false);
   });
 
-  it("termo vazio nao filtra nada", () => {
+  it("termo vazio não filtra nada", () => {
     expect(combina(tarefa, "   ")).toBe(true);
   });
 });
 
 describe("normalizacao do que vem de fora", () => {
-  it("prioridade e situacao fora da lista caem no padrao", () => {
+  it("prioridade e situação fora da lista caem no padrão", () => {
     expect(prioridadeDe("URGENTE")).toBe("URGENTE");
     expect(prioridadeDe("gravissima")).toBe("MEDIA");
     expect(prioridadeDe(null)).toBe("MEDIA");

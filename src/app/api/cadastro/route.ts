@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   try {
     if (slugDoHost(req.headers.get("host"))) {
       return NextResponse.json(
-        { erro: "O cadastro e feito no endereco da plataforma." },
+        { erro: "O cadastro é feito no endereço da plataforma." },
         { status: 400 },
       );
     }
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     const corpo = cadastro.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json(
-        { erro: corpo.error.issues[0]?.message ?? "Dados invalidos." },
+        { erro: corpo.error.issues[0]?.message ?? "Dados inválidos." },
         { status: 400 },
       );
     }
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     if (corpo.data.versaoAceita !== VERSAO_DOS_DOCUMENTOS) {
       return NextResponse.json(
         {
-          erro: "Os documentos foram atualizados. Recarregue a pagina e leia a versao nova.",
+          erro: "Os documentos foram atualizados. Recarregue a página e leia a versão nova.",
         },
         { status: 409 },
       );
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
     }
     if (ehDuplicado(erro)) {
       return NextResponse.json(
-        { erro: "Este endereco ja esta em uso." },
+        { erro: "Este endereço já está em uso." },
         { status: 409 },
       );
     }

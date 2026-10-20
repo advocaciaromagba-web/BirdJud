@@ -43,7 +43,7 @@ async function chamar(
   return { status: resposta.status, json: await resposta.json() };
 }
 
-describe("webhook: o que nao e nosso", () => {
+describe("webhook: o que não e nosso", () => {
   it("pagamento de outro sistema da conta sai com 200", async () => {
     // Este e o caso que travava a fila.
     for (const outro of ["laudojud", "anjosdasuasaude", "chamaja"]) {
@@ -60,7 +60,7 @@ describe("webhook: o que nao e nosso", () => {
     }
   });
 
-  it("evento sem referencia sai com 200, nao com 400", async () => {
+  it("evento sem referência sai com 200, não com 400", async () => {
     // Reenviar nao faz a referencia aparecer: recusar so trava a fila.
     const r = await chamar({
       event: "PAYMENT_CONFIRMED",
@@ -70,13 +70,13 @@ describe("webhook: o que nao e nosso", () => {
     expect(r.json.semReferencia).toBe(true);
   });
 
-  it("evento que nao e de baixa continua reconhecido", async () => {
+  it("evento que não e de baixa continua reconhecido", async () => {
     const r = await chamar({ event: "PAYMENT_CREATED", payment: { id: "p" } });
     expect(r.status).toBe(200);
     expect(r.json.ignorado).toBe("PAYMENT_CREATED");
   });
 
-  it("referencia nossa de cliente, nao de fatura, nao da baixa em nada", async () => {
+  it("referência nossa de cliente, não de fatura, não da baixa em nada", async () => {
     const r = await chamar({
       event: "PAYMENT_RECEIVED",
       payment: { id: "p", externalReference: referencia("escritorio", "x") },
@@ -98,7 +98,7 @@ describe("webhook: a porta continua fechada", () => {
   });
 
   // Token alheio nao entra: a conta e compartilhada, o token do webhook nao.
-  it("corpo que nao e evento, 400", async () => {
+  it("corpo que não e evento, 400", async () => {
     const r = await chamar({ sem: "evento" });
     expect(r.status).toBe(400);
   });
@@ -178,7 +178,7 @@ seTemBanco("webhook: a baixa, contra o banco", () => {
     );
   });
 
-  it("referencia sem marca ainda acha a fatura (cobranca antiga)", async () => {
+  it("referência sem marca ainda acha a fatura (cobrança antiga)", async () => {
     // Compatibilidade: cobranca emitida antes da marca existir leva so o id.
     const { f } = await fatura();
     const r = await chamar({
@@ -196,7 +196,7 @@ seTemBanco("webhook: a baixa, contra o banco", () => {
   // Anual parcelado no cartao: cada parcela e uma cobranca. Se a parcela
   // chegar sem a nossa referencia, o id do parcelamento acha a fatura; a
   // primeira que chegar da a baixa e as outras 11 nao reabrem nada.
-  it("parcela sem referencia acha a fatura pelo parcelamento", async () => {
+  it("parcela sem referência acha a fatura pelo parcelamento", async () => {
     const { f } = await fatura();
     const ins = `ins_hook_${Date.now()}`;
     await prismaPlataforma().fatura.update({ where: { id: f.id }, data: { parcelamentoId: ins, parcelas: 12 } });
@@ -219,7 +219,7 @@ seTemBanco("webhook: a baixa, contra o banco", () => {
     expect(igual.idExterno).toBe(`pay_parcela1_${ins}`);
   });
 
-  it("fatura inexistente sai com 200, nao com 404", async () => {
+  it("fatura inexistente sai com 200, não com 404", async () => {
     const r = await chamar({
       event: "PAYMENT_RECEIVED",
       payment: {
@@ -231,7 +231,7 @@ seTemBanco("webhook: a baixa, contra o banco", () => {
     expect(r.json.naoEnossa).toBe(true);
   });
 
-  it("reenvio da fatura ja paga nao reabre nada", async () => {
+  it("reenvio da fatura já paga não reabre nada", async () => {
     const { f } = await fatura();
     const evento = {
       event: "PAYMENT_RECEIVED",

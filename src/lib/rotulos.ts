@@ -6,13 +6,13 @@ import type { Modulo } from "./catalogo";
 
 export const ROTULO_DO_MODULO: Record<Modulo, string> = {
   NUCLEO: "Sistema (clientes, processos, agenda)",
-  PUBLICACOES_DJEN: "Publicacoes do DJEN",
-  NUVEM: "Arquivos do escritorio",
+  PUBLICACOES_DJEN: "Publicações do DJEN",
+  NUVEM: "Arquivos do escritório",
   EMAIL: "Aviso por e-mail",
   COBRANCAS: "Cobrancas",
   FINANCEIRO: "Financeiro",
-  NFSE: "Nota fiscal de servico",
-  IA: "Inteligencia artificial",
+  NFSE: "Nota fiscal de serviço",
+  IA: "Inteligência artificial",
   WHATSAPP: "Aviso por WhatsApp",
-  ASSINATURA: "Assinatura eletronica",
+  ASSINATURA: "Assinatura eletrônica",
 };

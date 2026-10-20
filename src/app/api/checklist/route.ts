@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirSessao();
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const cliente = await comEscritorio(escritorioId, (db) =>
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       }),
     );
     if (!cliente) {
-      return NextResponse.json({ erro: "Cliente nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Cliente não encontrado." }, { status: 404 });
     }
 
     const ctx = {
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         console.error("checklist: IA falhou", erro);
         lista = montar(ctx);
         avisoDaIA =
-          "A parte especifica da acao nao pode ser montada agora. A lista basica esta completa.";
+          "A parte específica da ação não pode ser montada agora. A lista básica está completa.";
       }
     } else {
       lista = montar(ctx);

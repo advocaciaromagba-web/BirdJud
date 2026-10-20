@@ -21,7 +21,7 @@ import {
   transcrever,
 } from "../src/lib/transcricao-audio";
 
-describe("conferencia do arquivo, antes de gastar", () => {
+describe("conferência do arquivo, antes de gastar", () => {
   it("recusa o que passa do limite, dizendo o tamanho", () => {
     expect(() =>
       conferirAudio({ tipo: "audio/mpeg", tamanho: LIMITE_DE_BYTES + 1 }),
@@ -40,7 +40,7 @@ describe("conferencia do arquivo, antes de gastar", () => {
     );
   });
 
-  it("recusa formato que a API nao aceita", () => {
+  it("recusa formato que a API não aceita", () => {
     expect(() =>
       conferirAudio({ tipo: "application/pdf", tamanho: 1024 * 1024 }),
     ).toThrow(AudioRecusado);
@@ -59,19 +59,19 @@ describe("conferencia do arquivo, antes de gastar", () => {
   });
 });
 
-describe("erro do fornecedor virando frase util", () => {
-  it("chave recusada nao culpa o escritorio, que nao tem chave nenhuma", () => {
+describe("erro do fornecedor virando frase útil", () => {
+  it("chave recusada não culpa o escritório, que não tem chave nenhuma", () => {
     const frase = explicarFalha(401, "Unauthorized");
     expect(frase).toContain("plataforma");
     expect(frase).toContain("suporte");
     expect(frase).not.toContain("401");
   });
 
-  it("limite de uso diz para tentar de novo, e oferece a saida local", () => {
-    expect(explicarFalha(429, "")).toContain("transcricao ao vivo");
+  it("limite de uso diz para tentar de novo, e oferece a saída local", () => {
+    expect(explicarFalha(429, "")).toContain("transcrição ao vivo");
   });
 
-  it("fora do ar nao vira texto cru de API", () => {
+  it("fora do ar não vira texto cru de API", () => {
     expect(explicarFalha(503, "<html>bad gateway</html>")).toContain(
       "fora do ar",
     );
@@ -129,18 +129,18 @@ describe("a chamada em si", () => {
     dados: Buffer.alloc(200 * 1024, 7),
   };
 
-  it("sem chave da plataforma, nao chama e oferece a saida local", async () => {
+  it("sem chave da plataforma, não chama e oferece a saída local", async () => {
     await expect(transcrever(audio, undefined)).rejects.toBeInstanceOf(
       SemChaveDeTranscricao,
     );
     try {
       await transcrever(audio, undefined);
     } catch (erro) {
-      expect((erro as Error).message).toContain("roda no proprio computador");
+      expect((erro as Error).message).toContain("roda no próprio computador");
     }
   });
 
-  it("transcreve, apara o texto e devolve a duracao", async () => {
+  it("transcreve, apara o texto e devolve a duração", async () => {
     const r = await transcrever(audio, "chave-de-teste");
     expect(r.texto).toBe("Boa tarde, doutor.");
     expect(r.segundos).toBe(95);
@@ -148,7 +148,7 @@ describe("a chamada em si", () => {
     expect(recebido.tamanho).toBeGreaterThan(200 * 1024);
   });
 
-  it("arquivo ruim nem chega a sair da maquina", async () => {
+  it("arquivo ruim nem chega a sair da máquina", async () => {
     recebido = { tamanho: 0 };
     await expect(
       transcrever(
@@ -159,7 +159,7 @@ describe("a chamada em si", () => {
     expect(recebido.tamanho).toBe(0);
   });
 
-  it("texto vazio e falha, nao sucesso silencioso", async () => {
+  it("texto vazio e falha, não sucesso silencioso", async () => {
     resposta = { status: 200, corpo: { text: "   " } };
     await expect(transcrever(audio, "chave-de-teste")).rejects.toBeInstanceOf(
       TranscricaoFalhou,
@@ -171,7 +171,7 @@ describe("a chamada em si", () => {
     }
   });
 
-  it("sem duracao informada, nao inventa numero", async () => {
+  it("sem duração informada, não inventa número", async () => {
     resposta = { status: 200, corpo: { text: "ok" } };
     const r = await transcrever(audio, "chave-de-teste");
     expect(r.segundos).toBeNull();

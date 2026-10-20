@@ -10,8 +10,8 @@ export default async function EsqueciSenhaDoConsole() {
   if (marca?.id) {
     return (
       <main className="pagina-estreita">
-        <h1>Endereco de escritorio</h1>
-        <p className="chamada">O console da plataforma fica no endereco da plataforma.</p>
+        <h1>Endereço de escritório</h1>
+        <p className="chamada">O console da plataforma fica no endereço da plataforma.</p>
       </main>
     );
   }
@@ -31,11 +31,11 @@ export default async function EsqueciSenhaDoConsole() {
               <FormularioEsqueciSenha
                 rota="/api/plataforma/senha/esqueci"
                 entrada="/plataforma/login"
-                ajuda="O e-mail com que voce entra no console da plataforma."
+                ajuda="O e-mail com que você entra no console da plataforma."
               />
             </>
           ) : (
-            <p className="aviso-atencao mt-4">A recuperacao por e-mail nao esta configurada nesta instalacao.</p>
+            <p className="aviso-atencao mt-4">A recuperação por e-mail não está configurada nesta instalação.</p>
           )}
         </div>
       </div>

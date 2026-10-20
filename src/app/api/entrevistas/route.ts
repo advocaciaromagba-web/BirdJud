@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ entrevista });
   } catch (erro) {
     if (erro instanceof EntrevistaNaoEncontrada) {
-      return NextResponse.json({ erro: "Cliente nao encontrado neste escritorio." }, { status: 404 });
+      return NextResponse.json({ erro: "Cliente não encontrado neste escritório." }, { status: 404 });
     }
     if (erro instanceof ProcessoNaoCadastrado) {
       return NextResponse.json({ erro: erro.message }, { status: erro.status });

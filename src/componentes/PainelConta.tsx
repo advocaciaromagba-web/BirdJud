@@ -104,7 +104,7 @@ function Avisos({
     setRecado(
       ok
         ? { texto: "Preferencias guardadas.", erro: false }
-        : { texto: json.erro ?? "Nao foi possivel guardar.", erro: true },
+        : { texto: json.erro ?? "Não foi possível guardar.", erro: true },
     );
     router.refresh();
   }
@@ -121,7 +121,7 @@ function Avisos({
       <h2 className="font-semibold">Avisos</h2>
       <p className="mt-1 text-sm text-slate-600">
         Enviados pelo e-mail{temModuloWhatsapp ? " e pelo WhatsApp" : ""} do
-        proprio escritorio, uma vez por dia.
+        próprio escritório, uma vez por dia.
       </p>
       <div className="mt-3 grid gap-2 text-sm">
         <label className="flex items-center gap-2">
@@ -133,7 +133,7 @@ function Avisos({
             }
             className="accent-[var(--marca-primaria)]"
           />
-          Resumo das publicacoes nao lidas
+          Resumo das publicações não lidas
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -168,7 +168,7 @@ function Avisos({
                 }
                 className="accent-[var(--marca-primaria)]"
               />
-              Receber tambem no WhatsApp
+              Receber também no WhatsApp
             </label>
           </>
         ) : null}
@@ -194,7 +194,7 @@ function AlertaSonoro({ ligado }: { ligado: boolean }) {
       setRecado({ texto: novo ? "Som ligado." : "Som desligado. O aviso na tela continua.", erro: false });
     } else {
       setSom(!novo);
-      setRecado({ texto: "Nao foi possivel guardar.", erro: true });
+      setRecado({ texto: "Não foi possível guardar.", erro: true });
     }
   }
 
@@ -202,8 +202,8 @@ function AlertaSonoro({ ligado }: { ligado: boolean }) {
     const tocou = await tocarAlerta();
     setRecado(
       tocou
-        ? { texto: "Se nao ouviu, confira o volume do computador.", erro: false }
-        : { texto: "O navegador nao deixou tocar. Clique em qualquer lugar da pagina e tente de novo.", erro: true },
+        ? { texto: "Se não ouviu, confira o volume do computador.", erro: false }
+        : { texto: "O navegador não deixou tocar. Clique em qualquer lugar da página e tente de novo.", erro: true },
     );
   }
 
@@ -211,8 +211,8 @@ function AlertaSonoro({ ligado }: { ligado: boolean }) {
     <section className="cartao-aperto">
       <h2 className="font-semibold">Alerta sonoro da agenda</h2>
       <p className="mt-1 text-sm text-slate-600">
-        Quando falta 1 hora e quando faltam 15 minutos para audiencia, pericia
-        ou atendimento de que voce e o responsavel (ou que e de todos), esta
+        Quando falta 1 hora e quando faltam 15 minutos para audiência, perícia
+        ou atendimento de que você é o responsável (ou que é de todos), esta
         tela toca e mostra um aviso. Funciona com o sistema aberto no
         navegador, mesmo em outra aba.
       </p>
@@ -249,7 +249,7 @@ function TrocarSenha() {
 
     if (nova !== String(dados.get("confirmacao") ?? "")) {
       setRecado({
-        texto: "A confirmacao nao confere com a nova senha.",
+        texto: "A confirmação não confere com a nova senha.",
         erro: true,
       });
       return;
@@ -266,7 +266,7 @@ function TrocarSenha() {
       form.reset();
       setRecado({
         texto:
-          "Senha trocada. Todas as sessoes foram encerradas — entrando de novo...",
+          "Senha trocada. Todas as sessões foram encerradas — entrando de novo...",
         erro: false,
       });
       // A troca derruba tambem esta sessao: sem isso, a tela ficaria dando 401
@@ -274,7 +274,7 @@ function TrocarSenha() {
       setTimeout(() => signOut({ callbackUrl: "/login" }), 2_000);
     } else {
       setRecado({
-        texto: json.erro ?? "Nao foi possivel trocar a senha.",
+        texto: json.erro ?? "Não foi possível trocar a senha.",
         erro: true,
       });
     }
@@ -294,7 +294,7 @@ function TrocarSenha() {
           />
         </label>
         <label className="grid gap-1 text-sm">
-          Nova senha (minimo 10 caracteres)
+          Nova senha (mínimo 10 caracteres)
           <CampoDeSenha
             name="novaSenha"
             required
@@ -344,7 +344,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
     const json = await resposta.json().catch(() => ({}));
     if (!resposta.ok) {
       setRecado({
-        texto: json.erro ?? "Nao foi possivel comecar.",
+        texto: json.erro ?? "Não foi possível começar.",
         erro: true,
       });
       return;
@@ -365,7 +365,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
       setRecado({ texto: "Segundo fator ativado.", erro: false });
       router.refresh();
     } else {
-      setRecado({ texto: json.erro ?? "Codigo invalido.", erro: true });
+      setRecado({ texto: json.erro ?? "Código inválido.", erro: true });
     }
   }
 
@@ -383,7 +383,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
       router.refresh();
     } else {
       setRecado({
-        texto: json.erro ?? "Nao foi possivel desativar.",
+        texto: json.erro ?? "Não foi possível desativar.",
         erro: true,
       });
     }
@@ -399,14 +399,14 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
       {ativo ? (
         <form onSubmit={desativar} className="mt-3 grid gap-3">
           <p className="text-sm text-slate-600">
-            Para desligar, confirme com a senha e um codigo do aplicativo.
+            Para desligar, confirme com a senha e um código do aplicativo.
           </p>
           <label className="grid gap-1 text-sm">
             Senha
             <CampoDeSenha name="senha" required className="campo" />
           </label>
           <label className="grid gap-1 text-sm">
-            Codigo de 6 digitos
+            Código de 6 dígitos
             <input
               name="codigo"
               inputMode="numeric"
@@ -425,7 +425,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
       ) : preparo ? (
         <form onSubmit={ativar} className="mt-3 grid gap-3">
           <p className="text-sm text-slate-600">
-            Leia o codigo no aplicativo autenticador e digite os 6 digitos para
+            Leia o código no aplicativo autenticador e digite os 6 dígitos para
             confirmar.
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -435,10 +435,10 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
             className="h-44 w-44"
           />
           <p className="text-xs text-slate-500">
-            Nao consegue ler? Use o codigo: <code>{preparo.segredo}</code>
+            Não consegue ler? Use o código: <code>{preparo.segredo}</code>
           </p>
           <label className="grid gap-1 text-sm">
-            Codigo de 6 digitos
+            Código de 6 dígitos
             <input
               name="codigo"
               inputMode="numeric"
@@ -454,7 +454,7 @@ function DoisFatores({ ativo }: { ativo: boolean }) {
       ) : (
         <div className="mt-3 grid gap-3">
           <p className="text-sm text-slate-600">
-            Uma segunda confirmacao no login, por aplicativo autenticador.
+            Uma segunda confirmação no login, por aplicativo autenticador.
           </p>
           <Aviso texto={recado?.texto ?? null} erro={recado?.erro ?? false} />
           <button

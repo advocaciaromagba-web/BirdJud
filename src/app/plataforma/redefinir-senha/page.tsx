@@ -15,8 +15,8 @@ export default async function RedefinirSenhaDoConsole({
   if (marca?.id) {
     return (
       <main className="pagina-estreita">
-        <h1>Endereco de escritorio</h1>
-        <p className="chamada">O console da plataforma fica no endereco da plataforma.</p>
+        <h1>Endereço de escritório</h1>
+        <p className="chamada">O console da plataforma fica no endereço da plataforma.</p>
       </main>
     );
   }
@@ -32,14 +32,14 @@ export default async function RedefinirSenhaDoConsole({
               {/* O token so e conferido ao trocar, na rota: dizer "link
                   invalido" antes entregaria a quem tenta adivinhar. */}
               <p className="chamada esquerda mt-3">
-                Escolha uma senha nova, com pelo menos 12 caracteres. Ao trocar, as sessoes abertas do console sao
+                Escolha uma senha nova, com pelo menos 12 caracteres. Ao trocar, as sessões abertas do console são
                 encerradas.
               </p>
               <FormularioRedefinirSenha token={token} rota="/api/plataforma/senha/redefinir" entrada="/plataforma/login" minimo={12} />
             </>
           ) : (
             <p className="aviso-atencao mt-4">
-              Link incompleto. Abra o link do e-mail inteiro, ou peca outro em{" "}
+              Link incompleto. Abra o link do e-mail inteiro, ou peça outro em{" "}
               <Link href="/plataforma/esqueci-senha" className="underline">esqueci a senha</Link>.
             </p>
           )}

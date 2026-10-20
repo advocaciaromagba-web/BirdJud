@@ -35,7 +35,7 @@ export async function modulosAtivos(escritorioId: string): Promise<Modulo[]> {
 export class ModuloNaoContratado extends Error {
   readonly status = 403;
   constructor(modulo: Modulo) {
-    super(`Modulo ${modulo} nao contratado por este escritorio.`);
+    super(`Módulo ${modulo} não contratado por este escritório.`);
     this.name = "ModuloNaoContratado";
   }
 }

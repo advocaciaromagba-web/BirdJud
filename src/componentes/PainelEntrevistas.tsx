@@ -127,7 +127,7 @@ export function PainelEntrevistas({
     try {
       const r = await fetch(`/api/entrevistas/${id}/perguntas-whatsapp`, { method: "POST" });
       const dados = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(dados.erro ?? "Nao consegui mandar pelo WhatsApp.");
+      if (!r.ok) throw new Error(dados.erro ?? "Não consegui mandar pelo WhatsApp.");
       setEnviadoPorZap((z) => ({ ...z, [id]: `Enviado pelo WhatsApp para ${dados.telefone}.` }));
     } catch (falha) {
       setErro((falha as Error).message);
@@ -144,14 +144,14 @@ export function PainelEntrevistas({
       corpo.append("procuracao", arquivo);
       const r = await fetch(`/api/entrevistas/${id}/procuracao`, { method: "POST", body: corpo });
       const dados = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(dados.erro ?? "Nao consegui ler a procuracao.");
+      if (!r.ok) throw new Error(dados.erro ?? "Não consegui ler a procuração.");
       setTipos((t) => ({ ...t, [id]: dados.tipoAcao ?? t[id] ?? "" }));
       setLidoDaProcuracao((l) => ({
         ...l,
         [id]: [
-          dados.tipoAcao ? `Tipo de acao na procuracao: ${dados.tipoAcao}.` : null,
+          dados.tipoAcao ? `Tipo de ação na procuração: ${dados.tipoAcao}.` : null,
           dados.outorgante ? `Outorgante: ${dados.outorgante}.` : null,
-          dados.observacao ?? null,
+          dados.observação ?? null,
         ]
           .filter(Boolean)
           .join(" "),
@@ -193,7 +193,7 @@ export function PainelEntrevistas({
     });
     if (!r.ok) {
       const dados = await r.json().catch(() => ({}));
-      throw new Error(dados.erro ?? "Nao deu certo. Tente de novo.");
+      throw new Error(dados.erro ?? "Não deu certo. Tente de novo.");
     }
     return r.json();
   }
@@ -265,7 +265,7 @@ export function PainelEntrevistas({
               >
                 <option value="TRIAGEM">Triagem (primeiro atendimento)</option>
                 <option value="TESTEMUNHA">Oitiva de testemunha</option>
-                <option value="COLETA">Coleta de informacoes para documento</option>
+                <option value="COLETA">Coleta de informações para documento</option>
               </select>
             </label>
             <label className="grid gap-1 text-sm">
@@ -281,7 +281,7 @@ export function PainelEntrevistas({
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
               <span className="text-slate-600">
-                {tipoNovo === "TRIAGEM" ? "Cliente (quem sera ouvido)" : "Cliente (de quem e o caso)"}
+                {tipoNovo === "TRIAGEM" ? "Cliente (quem será ouvido)" : "Cliente (de quem é o caso)"}
               </span>
               <select
                 value={clienteNovo}
@@ -294,7 +294,7 @@ export function PainelEntrevistas({
                 }}
                 className="rounded-lg border border-slate-300 px-3 py-2"
               >
-                <option value="">Pessoa ainda nao cadastrada</option>
+                <option value="">Pessoa ainda não cadastrada</option>
                 {clientes.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nome}
@@ -302,13 +302,13 @@ export function PainelEntrevistas({
                 ))}
               </select>
               <span className="text-xs text-slate-500">
-                A gravacao e o PDF da transcricao vao para a pasta deste cliente.
+                A gravação e o PDF da transcrição vão para a pasta deste cliente.
               </span>
             </label>
             {tipoNovo !== "TRIAGEM" || !clienteNovo ? (
               <label className="grid gap-1 text-sm">
                 <span className="text-slate-600">
-                  {tipoNovo === "TESTEMUNHA" ? "Nome da testemunha" : "Nome de quem sera ouvido"}
+                  {tipoNovo === "TESTEMUNHA" ? "Nome da testemunha" : "Nome de quem será ouvido"}
                 </span>
                 <input
                   value={nome}
@@ -342,7 +342,7 @@ export function PainelEntrevistas({
               required
               minLength={10}
               rows={2}
-              placeholder="Foi mandado embora sem receber as verbas e quer entrar na justica"
+              placeholder="Foi mandado embora sem receber as verbas e quer entrar na justiça"
               className="rounded-lg border border-slate-300 px-3 py-2"
             />
           </label>
@@ -378,7 +378,7 @@ export function PainelEntrevistas({
       {entrevistas.length === 0 && !criando ? (
         <p className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
           Nenhuma entrevista ainda. Abra uma antes da conversa: o sistema
-          sugere o roteiro de perguntas, voce anota o que foi dito, e depois
+          sugere o roteiro de perguntas, você anota o que foi dito, e depois
           organiza em fatos, documentos e pontos a verificar.
         </p>
       ) : null}
@@ -411,7 +411,7 @@ export function PainelEntrevistas({
                   </span>
                   {e.numeroProcesso ? `Processo ${e.numeroProcesso} · ` : ""}
                   {e.criadaEmBR} · {e.rotuloDaSituacao}
-                  {e.temCliente ? " · ja e cliente" : ""}
+                  {e.temCliente ? " · já é cliente" : ""}
                   {e.encerrada ? " · encerrada" : ""}
                 </p>
               </div>
@@ -435,8 +435,8 @@ export function PainelEntrevistas({
                     <input
                       value={tipos[e.id] ?? e.tipoAcao}
                       onChange={(ev) => setTipos((t) => ({ ...t, [e.id]: ev.target.value }))}
-                      placeholder="Tipo de acao (ex.: despejo por falta de pagamento)"
-                      aria-label="Tipo de acao"
+                      placeholder="Tipo de ação (ex.: despejo por falta de pagamento)"
+                      aria-label="Tipo de ação"
                       className="min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1 text-xs"
                     />
                     <button
@@ -455,7 +455,7 @@ export function PainelEntrevistas({
                   {temIA && e.tipo === "TRIAGEM" ? (
                     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
                       <label className="botao-secundario cursor-pointer text-xs">
-                        {ocupado === `${e.id}:procuracao` ? "Lendo a procuracao..." : "Gerar perguntas lendo a procuracao"}
+                        {ocupado === `${e.id}:procuracao` ? "Lendo a procuração..." : "Gerar perguntas lendo a procuração"}
                         <input
                           type="file"
                           accept="application/pdf,image/jpeg,image/png,image/webp"
@@ -469,7 +469,7 @@ export function PainelEntrevistas({
                         />
                       </label>
                       <span className="text-slate-600">
-                        PDF ou foto da procuracao: o sistema le o tipo de acao e sugere as perguntas da triagem.
+                        PDF ou foto da procuração: o sistema lê o tipo de ação e sugere as perguntas da triagem.
                       </span>
                     </div>
                   ) : null}
@@ -493,7 +493,7 @@ export function PainelEntrevistas({
                         ? "Perguntas abertas e neutras para a testemunha: o que viu, quando, onde e como conhece as partes."
                         : e.tipo === "COLETA"
                           ? "Perguntas para reunir o que o documento precisa: fatos, datas, valores e o que comprova cada um."
-                          : "Apoio para nao sair da sala sem a data, o documento e a testemunha. Voce pergunta o que quiser, na ordem que a conversa pedir."}
+                          : "Apoio para não sair da sala sem a data, o documento e a testemunha. Você pergunta o que quiser, na ordem que a conversa pedir."}
                     </p>
                   )}
                   {e.roteiro.length > 0 ? (
@@ -520,14 +520,14 @@ export function PainelEntrevistas({
                         <span className="text-xs text-emerald-800">{enviadoPorZap[e.id]}</span>
                       ) : null}
                       <span className="text-xs text-slate-500">
-                        Para o cliente responder gravando em casa e mandar o audio: ele entra aqui por
+                        Para o cliente responder gravando em casa e mandar o áudio: ele entra aqui por
                         &quot;Importar audio gravado&quot; e e transcrito.
                       </span>
                     </div>
                   ) : null}
                   {e.numeroProcesso ? (
                     <p className="text-xs text-slate-500">
-                      As perguntas levam em conta o tipo de acao e o processo {e.numeroProcesso}: classe, partes e ultimo andamento.
+                      As perguntas levam em conta o tipo de ação e o processo {e.numeroProcesso}: classe, partes e último andamento.
                     </p>
                   ) : null}
                 </section>
@@ -546,7 +546,7 @@ export function PainelEntrevistas({
                       <GravadorOpenAI
                         entrevistaId={e.id}
                         podeGravar={!mudou || Boolean(gravandoIA[e.id])}
-                        motivoBloqueio="Salve a anotacao antes de gravar: a transcricao entra no texto salvo."
+                        motivoBloqueio="Salve a anotação antes de gravar: a transcrição entra no texto salvo."
                         onTexto={(novo) => setRascunho((r) => ({ ...r, [e.id]: novo }))}
                         onGravando={(sim) => {
                           setGravandoIA((g) => ({ ...g, [e.id]: sim }));
@@ -576,7 +576,7 @@ export function PainelEntrevistas({
                       />
                       <details className="rounded-lg border border-slate-200 p-3">
                         <summary className="cursor-pointer text-xs font-semibold text-slate-600">
-                          Preferir transcrever pelo navegador, sem enviar o audio para a OpenAI
+                          Preferir transcrever pelo navegador, sem enviar o áudio para a OpenAI
                         </summary>
                         <div className="mt-3">
                           <GravadorDeFala
@@ -601,18 +601,18 @@ export function PainelEntrevistas({
                       setRascunho((r) => ({ ...r, [e.id]: ev.target.value }))
                     }
                     rows={10}
-                    placeholder="Anote durante a conversa, com as palavras da pessoa — ou use a transcricao acima."
+                    placeholder="Anote durante a conversa, com as palavras da pessoa — ou use a transcrição acima."
                     className="w-full rounded-lg border border-slate-300 p-3 text-sm leading-6"
                   />
                   <label className="grid gap-1 text-sm">
                     <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Anotacoes do advogado (a parte da fala)
+                      Anotações do advogado (a parte da fala)
                     </span>
                     <textarea
                       value={anotacoes}
                       onChange={(ev) => setNotas((n) => ({ ...n, [e.id]: ev.target.value }))}
                       rows={4}
-                      placeholder="Impressoes, estrategia, o que conferir — nao entra como fala do cliente."
+                      placeholder="Impressoes, estratégia, o que conferir — não entra como fala do cliente."
                       className="w-full rounded-lg border border-slate-300 p-3 text-sm leading-6"
                     />
                   </label>
@@ -629,7 +629,7 @@ export function PainelEntrevistas({
                       disabled={ocupado === `${e.id}:anotacao` || !mudou}
                       className="botao-secundario text-xs"
                     >
-                      {ocupado === `${e.id}:anotacao` ? "Salvando..." : "Salvar anotacao"}
+                      {ocupado === `${e.id}:anotacao` ? "Salvando..." : "Salvar anotação"}
                     </button>
                     {temIA ? (
                       <button
@@ -640,7 +640,7 @@ export function PainelEntrevistas({
                       >
                         {ocupado === `${e.id}:organizar`
                           ? "Organizando..."
-                          : "Organizar em topicos"}
+                          : "Organizar em tópicos"}
                       </button>
                     ) : null}
                     {curta ? (
@@ -650,7 +650,7 @@ export function PainelEntrevistas({
                       </span>
                     ) : mudou ? (
                       <span className="text-xs text-slate-500">
-                        Salve a anotacao antes de organizar.
+                        Salve a anotação antes de organizar.
                       </span>
                     ) : null}
                   </div>
@@ -664,7 +664,7 @@ export function PainelEntrevistas({
                     </p>
                     {typeof e.analise.area === "string" ? (
                       <p className="text-sm text-slate-700">
-                        <span className="font-medium">Area:</span>{" "}
+                        <span className="font-medium">Área:</span>{" "}
                         {e.analise.area}
                       </p>
                     ) : null}
@@ -689,7 +689,7 @@ export function PainelEntrevistas({
                       itens={e.analise.pontosDeAtencao}
                     />
                     <Lista
-                      titulo="Perguntar na proxima"
+                      titulo="Perguntar na próxima"
                       itens={e.analise.perguntasEmAberto}
                     />
                     {typeof e.analise.valorEnvolvido === "string" ? (
@@ -699,7 +699,7 @@ export function PainelEntrevistas({
                       </p>
                     ) : null}
                     <p className="text-xs text-slate-500">
-                      Apoio de triagem. Nao e parecer, nao indica artigo de lei
+                      Apoio de triagem. Não é parecer, não indica artigo de lei
                       e nunca afirma que um prazo prescreveu — o que depende
                       disso aparece em &quot;a verificar&quot;.
                     </p>
@@ -738,7 +738,7 @@ export function PainelEntrevistas({
                           if (pasta) {
                             anotarPasta(
                               e.id,
-                              pasta.guardado ? `PDF da transcricao guardado na pasta do cliente: ${pasta.nome}.` : (pasta.motivo ?? null),
+                              pasta.guardado ? `PDF da transcrição guardado na pasta do cliente: ${pasta.nome}.` : (pasta.motivo ?? null),
                             );
                           }
                           router.refresh();
@@ -754,14 +754,14 @@ export function PainelEntrevistas({
                       {e.encerrada ? "Reabrir entrevista" : "Encerrar entrevista"}
                     </button>
                     <a href={`/api/entrevistas/${e.id}/pdf`} target="_blank" rel="noreferrer" className="botao-secundario text-xs">
-                      PDF da transcricao
+                      PDF da transcrição
                     </a>
                     <button
                       type="button"
                       onClick={() => {
                         if (
                           confirm(
-                            `Excluir a entrevista de ${e.nome}? A transcricao, as anotacoes e a organizacao somem de vez. Se quiser guardar, gere o PDF antes.`,
+                            `Excluir a entrevista de ${e.nome}? A transcrição, as anotações e a organização somem de vez. Se quiser guardar, gere o PDF antes.`,
                           )
                         )
                           void acao(e.id, "", "DELETE");
@@ -776,7 +776,7 @@ export function PainelEntrevistas({
                   {naPasta[e.id] ? <p className="text-xs text-emerald-800">{naPasta[e.id]}</p> : null}
                   {!e.clienteId ? (
                     <p className="text-xs text-amber-800">
-                      Sem cliente ligado: a gravacao e o PDF nao vao para pasta nenhuma. Ligue ao cliente ao lado.
+                      Sem cliente ligado: a gravação e o PDF não vão para pasta nenhuma. Ligue ao cliente ao lado.
                     </p>
                   ) : null}
 
@@ -787,13 +787,13 @@ export function PainelEntrevistas({
                   {e.tipo !== "TRIAGEM" ? null : podeMinuta && e.encerrada && e.analise && e.temCliente ? (
                     <div className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Texto para a peticao inicial
+                        Texto para a petição inicial
                       </p>
                       <textarea
                         value={observacoes[e.id] ?? ""}
                         onChange={(ev) => setObservacoes((o) => ({ ...o, [e.id]: ev.target.value }))}
                         rows={2}
-                        placeholder="Orientacoes suas para a peca (opcional): tese, pedido, tom."
+                        placeholder="Orientacoes suas para a peça (opcional): tese, pedido, tom."
                         className="w-full rounded-lg border border-slate-300 p-2 text-sm"
                       />
                       <div className="flex flex-wrap gap-2">
@@ -831,7 +831,7 @@ export function PainelEntrevistas({
                               {copiado === e.id ? "Copiado" : "Copiar"}
                             </button>
                             <span className="ml-2 text-xs text-slate-500">
-                              Cole no seu assistente de redacao. Lacuna vem marcada com [PREENCHER] — nada e inventado.
+                              Cole no seu assistente de redação. Lacuna vem marcada com [PREENCHER] — nada é inventado.
                             </span>
                           </div>
                         </>
@@ -839,7 +839,7 @@ export function PainelEntrevistas({
                     </div>
                   ) : podeMinuta && e.analise ? (
                     <p className="text-xs text-slate-500">
-                      Para montar o texto da peticao inicial: {[!e.temCliente ? "ligue ao cliente" : null, !e.encerrada ? "encerre a entrevista" : null].filter(Boolean).join(" e ")}.
+                      Para montar o texto da petição inicial: {[!e.temCliente ? "ligue ao cliente" : null, !e.encerrada ? "encerre a entrevista" : null].filter(Boolean).join(" e ")}.
                     </p>
                   ) : null}
                 </section>

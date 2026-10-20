@@ -14,28 +14,28 @@ afterEach(() => {
   else process.env.DOMINIO_PLATAFORMA = original;
 });
 
-describe("dominio da plataforma", () => {
-  it("variavel vazia cai no padrao", () => {
+describe("domínio da plataforma", () => {
+  it("variável vazia cai no padrão", () => {
     process.env.DOMINIO_PLATAFORMA = "";
     expect(dominioDaPlataforma()).toBe(DOMINIO_PADRAO);
   });
 
-  it("variavel so com espacos tambem cai no padrao", () => {
+  it("variável só com espacos também cai no padrão", () => {
     process.env.DOMINIO_PLATAFORMA = "   ";
     expect(dominioDaPlataforma()).toBe(DOMINIO_PADRAO);
   });
 
-  it("variavel ausente cai no padrao", () => {
+  it("variável ausente cai no padrão", () => {
     delete process.env.DOMINIO_PLATAFORMA;
     expect(dominioDaPlataforma()).toBe(DOMINIO_PADRAO);
   });
 
-  it("valor definido manda, sem espaco em volta", () => {
+  it("valor definido manda, sem espaço em volta", () => {
     process.env.DOMINIO_PLATAFORMA = "  outro.com.br  ";
     expect(dominioDaPlataforma()).toBe("outro.com.br");
   });
 
-  it("o resolvedor de subdominio tambem nao se perde com valor vazio", () => {
+  it("o resolvedor de subdomínio também não se perde com valor vazio", () => {
     process.env.DOMINIO_PLATAFORMA = "";
     expect(slugDoHost("escritorio.birdjud.com.br")).toBe("escritorio");
     expect(slugDoHost("app.birdjud.com.br")).toBeNull();

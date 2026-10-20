@@ -120,7 +120,7 @@ export async function depoisDaFalha(escritorioId: string, avisoId: string, agora
 
   if (categoriaDaFalha(aviso.canal, aviso.erroCodigo) === "PLATAFORMA") {
     console.error(
-      `ALERTA_PLATAFORMA whatsapp: aviso ${aviso.id} do escritorio ${escritorioId} falhou com ${aviso.erroCodigo} — ${aviso.erro}`,
+      `ALERTA_PLATAFORMA whatsapp: aviso ${aviso.id} do escritório ${escritorioId} falhou com ${aviso.erroCodigo} — ${aviso.erro}`,
     );
   }
 
@@ -190,7 +190,7 @@ async function alertarQuemEnviou(escritorioId: string, aviso: AvisoComCompromiss
 
     const canal = aviso.canal === "WHATSAPP" ? "WhatsApp" : "e-mail";
     const corpo = [
-      `A mensagem que voce enviou para ${destinatario} nao chegou.`,
+      `A mensagem que você enviou para ${destinatario} não chegou.`,
       "",
       `O que era: ${rotuloDoAviso(aviso.tipo)} — ${aviso.assunto}`,
       `Por onde: ${canal}, para ${aviso.destino}`,
@@ -220,7 +220,7 @@ async function alertarQuemEnviou(escritorioId: string, aviso: AvisoComCompromiss
       const base = {
         usuarioId: pessoa.id,
         tipo: TIPO_DO_ALERTA,
-        assunto: `Mensagem nao entregue: ${destinatario}`,
+        assunto: `Mensagem não entregue: ${destinatario}`,
         corpo,
         compromissoId: aviso.compromissoId,
       };
@@ -239,7 +239,7 @@ async function alertarQuemEnviou(escritorioId: string, aviso: AvisoComCompromiss
           limparParametro(`${rotuloDoAviso(aviso.tipo)}, por ${canal}`),
           limparParametro(destinatario),
           limparParametro(motivo),
-          limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritorio"),
+          limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritório"),
         ],
       });
     }
@@ -348,22 +348,22 @@ export async function reenviar(
   opcoes: { automatico: boolean; quem: string; quemId?: string | null },
 ): Promise<{ novoId: string; destino: string; mudouDestino: boolean }> {
   const original = await comEscritorio(escritorioId, (db) => db.aviso.findFirst({ where: { id: avisoId } }));
-  if (!original) throw new NaoDaParaReenviar("Mensagem nao encontrada.");
-  if (original.tratadoEm) throw new NaoDaParaReenviar("Esta mensagem ja foi tratada.");
+  if (!original) throw new NaoDaParaReenviar("Mensagem não encontrada.");
+  if (original.tratadoEm) throw new NaoDaParaReenviar("Esta mensagem já foi tratada.");
   if (original.estado !== "FALHOU" && original.estado !== "ENVIADO") {
-    throw new NaoDaParaReenviar("So da para reenviar mensagem que falhou ou que nao teve entrega confirmada.");
+    throw new NaoDaParaReenviar("Só dá para reenviar mensagem que falhou ou que não teve entrega confirmada.");
   }
   if (original.tipo === "DOCUMENTO") {
-    throw new NaoDaParaReenviar("Documento se manda de novo pela ficha do cliente: o PDF e gerado na hora.");
+    throw new NaoDaParaReenviar("Documento se manda de novo pela ficha do cliente: o PDF é gerado na hora.");
   }
-  if (original.tipo === TIPO_DO_ALERTA) throw new NaoDaParaReenviar("Alerta interno nao se reenvia.");
+  if (original.tipo === TIPO_DO_ALERTA) throw new NaoDaParaReenviar("Alerta interno não se reenvia.");
   if (original.canal === "WHATSAPP") {
     // Mensagem montada errada pelo sistema (#132000) falharia de novo igual.
     const esperado = Object.values(MODELOS).find((m) => m.nome === original.modelo)?.parametros.length;
     const tinha = Array.isArray(original.parametros) ? original.parametros.length : 0;
     if (esperado !== undefined && esperado !== tinha) {
       throw new NaoDaParaReenviar(
-        "Esta mensagem saiu montada errada pelo sistema e falharia de novo. Ja foi corrigido: as proximas saem certas. Marque esta como resolvida.",
+        "Esta mensagem saiu montada errada pelo sistema e falharia de novo. Já foi corrigido: as próximas saem certas. Marque esta como resolvida.",
       );
     }
   }
@@ -376,7 +376,7 @@ export async function reenviar(
     if (original.canal === "WHATSAPP") {
       const bloqueado = await db.bloqueioDeWhatsapp.findFirst({ where: { telefone: novoDestino }, select: { id: true } });
       if (bloqueado) {
-        throw new NaoDaParaReenviar("A pessoa pediu para nao receber mais mensagens deste escritorio no WhatsApp.");
+        throw new NaoDaParaReenviar("A pessoa pediu para não receber mais mensagens deste escritório no WhatsApp.");
       }
     }
     const chave = opcoes.automatico
@@ -407,7 +407,7 @@ export async function reenviar(
       });
     } catch (erro) {
       if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") {
-        throw new NaoDaParaReenviar("O reenvio desta mensagem ja foi feito.");
+        throw new NaoDaParaReenviar("O reenvio desta mensagem já foi feito.");
       }
       throw erro;
     }
@@ -441,7 +441,7 @@ export async function marcarResolvida(
       data: { tratamento, tratadoEm: new Date(), tratadoPor: quem, observacao: observacao?.trim().slice(0, 500) || null },
     }),
   );
-  if (r.count === 0) throw new NaoDaParaReenviar("Mensagem nao encontrada ou ja tratada.");
+  if (r.count === 0) throw new NaoDaParaReenviar("Mensagem não encontrada ou já tratada.");
 }
 
 // ---------------------------------------------------------------------------
@@ -486,12 +486,12 @@ function chaveDoPar(chave: string): string {
 }
 
 function situacaoDoPar(p: { estado: string; canal: string; entregueEm: Date | null; lidoEm: Date | null }): string {
-  if (p.estado === "FALHOU") return "tambem falhou";
+  if (p.estado === "FALHOU") return "também falhou";
   if (p.estado === "PENDENTE") return "na fila";
   if (p.estado === "CANCELADO") return "cancelado";
   if (p.lidoEm) return "lido";
   if (p.entregueEm) return "entregue";
-  return p.canal === "EMAIL" ? "enviado" : "enviado, sem confirmacao";
+  return p.canal === "EMAIL" ? "enviado" : "enviado, sem confirmação";
 }
 
 const quandoBR = (d: Date) => dataHoraBR.format(d);
@@ -617,7 +617,7 @@ export async function mensagensDoEscritorio(escritorioId: string, agora = new Da
           ? (a.erro ?? motivoDaFalha(a.erroCodigo))
           : a.tratadoEm
             ? null
-            : `Aceita pela Meta ha mais de ${HORAS_SEM_CONFIRMACAO} horas e sem confirmacao de que chegou ao celular (desligado, sem internet ou sem o aplicativo).`,
+            : `Aceita pela Meta há mais de ${HORAS_SEM_CONFIRMACAO} horas e sem confirmação de que chegou ao celular (desligado, sem internet ou sem o aplicativo).`,
       categoria,
       oQueFazer: categoria ? O_QUE_FAZER[categoria] : a.tratadoEm ? null : "Reenvie, ou ligue para confirmar que a pessoa recebeu.",
       reenvioAutomaticoEm: reenvio ? quandoBR(reenvio) : null,

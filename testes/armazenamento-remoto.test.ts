@@ -55,8 +55,8 @@ afterAll(async () => {
   await new Promise<void>((ok) => servidor.close(() => ok()));
 });
 
-describe("arquivos pela aplicacao", () => {
-  it("grava, le, confere e apaga no disco da aplicacao", async () => {
+describe("arquivos pela aplicação", () => {
+  it("grava, le, confere e apaga no disco da aplicação", async () => {
     const r = await gravar("escA", "arq1", Buffer.from("conteudo do pdf"));
     expect(r.tamanhoBytes).toBe(15);
     expect(existsSync(join(raiz, "escA", "arq1"))).toBe(true);
@@ -67,7 +67,7 @@ describe("arquivos pela aplicacao", () => {
     await expect(ler("escA", "arq1")).rejects.toThrow(/ENOENT/);
   });
 
-  it("a purga apaga a pasta inteira do escritorio", async () => {
+  it("a purga apaga a pasta inteira do escritório", async () => {
     await gravar("escB", "x1", Buffer.from("a"));
     await gravar("escB", "x2", Buffer.from("b"));
     await apagarTudoDoEscritorio("escB");
@@ -78,7 +78,7 @@ describe("arquivos pela aplicacao", () => {
     expect(await conferirViaAplicacao()).toMatch(/ok/);
   });
 
-  it("segredo errado: o endereco nao existe", async () => {
+  it("segredo errado: o endereço não existe", async () => {
     await gravar("escC", "y1", Buffer.from("sigiloso"));
     const r = await fetch(`${base}/api/interno/arquivos?e=escC&a=y1`, {
       headers: { "x-segredo-arquivos": "outro-segredo-qualquer-mesmo" },
@@ -87,19 +87,19 @@ describe("arquivos pela aplicacao", () => {
     expect(await r.text()).toBe("");
   });
 
-  it("vindo por host que nao e o interno (o dominio publico): 404", async () => {
+  it("vindo por host que não e o interno (o domínio público): 404", async () => {
     await gravar("escD", "z1", Buffer.from("sigiloso"));
     process.env.RAILWAY_PRIVATE_DOMAIN = "aplicacao.railway.internal";
     await expect(ler("escD", "z1")).rejects.toThrow(/404/);
   });
 
-  it("sem segredo configurado na aplicacao, nada passa", async () => {
+  it("sem segredo configurado na aplicação, nada passa", async () => {
     const pedido = new Request(`${base}/api/interno/arquivos?e=escA&a=arq1`, { headers: { "x-segredo-arquivos": "" } });
     delete process.env.ARQUIVOS_SEGREDO;
     expect((await rota.GET(pedido)).status).toBe(404);
   });
 
-  it("caminho com ../ nao passa nem pelo cliente", async () => {
-    await expect(ler("../etc", "passwd")).rejects.toThrow(/invalido/);
+  it("caminho com ../ não passa nem pelo cliente", async () => {
+    await expect(ler("../etc", "passwd")).rejects.toThrow(/inválido/);
   });
 });

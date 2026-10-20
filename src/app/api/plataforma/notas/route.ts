@@ -26,12 +26,12 @@ const acao = z.discriminatedUnion("acao", [
 
 const descrever = (n: { status: string; numeroNaPrefeitura: string | null; erro: string | null }) =>
   n.status === "EMITIDA"
-    ? `Nota ${n.numeroNaPrefeitura ?? ""} emitida e enviada ao escritorio.`
+    ? `Nota ${n.numeroNaPrefeitura ?? ""} emitida e enviada ao escritório.`
     : n.status === "REJEITADA"
       ? `A Sefin recusou: ${n.erro ?? "sem detalhe"}`
       : n.status === "CANCELADA"
-        ? "Nota cancelada. O escritorio foi avisado."
-        : "A Sefin nao respondeu. Use \"Verificar\" em alguns minutos.";
+        ? "Nota cancelada. O escritório foi avisado."
+        : "A Sefin não respondeu. Use \"Verificar\" em alguns minutos.";
 
 /** Nota da mensalidade pelo console: emitir, conferir, reenviar e cancelar. */
 export async function POST(req: Request) {
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const operador = await exigirOperador();
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Acao invalida." }, { status: 400 });
+      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Ação inválida." }, { status: 400 });
     }
     const d = corpo.data;
     let escritorioId: string | null = null;
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     const atual = await prismaPlataforma().notaDaPlataforma.findUnique({ where: { id: d.id }, select: { escritorioId: true } });
-    if (!atual) return NextResponse.json({ erro: "Nota nao encontrada." }, { status: 404 });
+    if (!atual) return NextResponse.json({ erro: "Nota não encontrada." }, { status: 404 });
     escritorioId = atual.escritorioId;
 
     if (d.acao === "verificar") {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       const ok = await mandarNotaPorEmail(d.id);
       await registrarAcessoSuporte(operador.operadorId, escritorioId, "Nota da mensalidade reenviada por e-mail");
       return NextResponse.json(
-        ok ? { detalhe: "Nota reenviada ao e-mail do escritorio." } : { erro: "Nao foi possivel reenviar: sem e-mail do escritorio ou remetente da plataforma." },
+        ok ? { detalhe: "Nota reenviada ao e-mail do escritório." } : { erro: "Não foi possível reenviar: sem e-mail do escritório ou remetente da plataforma." },
         { status: ok ? 200 : 409 },
       );
     }

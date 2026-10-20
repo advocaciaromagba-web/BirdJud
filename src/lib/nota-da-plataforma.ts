@@ -68,12 +68,12 @@ export function pendenciasDaPlataforma(
   competencia = new Date(),
 ): string[] {
   const p: string[] = [];
-  if (!fiscal) return ["Cadastrar o emissor (Blackbird) no console: razao social, CNPJ, municipio e regime."];
+  if (!fiscal) return ["Cadastrar o emissor (Blackbird) no console: razão social, CNPJ, município e regime."];
   if (!cert) p.push("Configurar NFSE_PLATAFORMA_PFX e NFSE_PLATAFORMA_SENHA (e-CNPJ da Blackbird) no Railway.");
   if (cert && cert.cnpj !== fiscal.cnpj.replace(/\D/g, "")) {
-    p.push("O certificado configurado e de outro CNPJ — a Sefin recusa (E0718).");
+    p.push("O certificado configurado é de outro CNPJ — a Sefin recusa (E0718).");
   }
-  if (cert && cert.validoAte < competencia) p.push("O certificado da Blackbird esta vencido.");
+  if (cert && cert.validoAte < competencia) p.push("O certificado da Blackbird está vencido.");
   p.push(...pendenciasDoRegime(regimeVigente(fiscal, competencia), ""));
   p.push(...pendenciasDoIbsCbs(fiscal));
   return p;
@@ -85,7 +85,7 @@ export function pendenciasDaPlataforma(
 
 function segredo(): string {
   const s = process.env.SEGREDO_CHAVE?.trim();
-  if (!s) throw new Error("SEGREDO_CHAVE ausente: sem ela nao ha link assinado da nota.");
+  if (!s) throw new Error("SEGREDO_CHAVE ausente: sem ela não há link assinado da nota.");
   return s;
 }
 
@@ -150,9 +150,9 @@ export async function emitirNotaDaFatura(
       },
     },
   });
-  if (!fatura) throw new NotaInvalida("Fatura nao encontrada.", 404);
-  if (fatura.valorCentavos <= 0) throw new NotaInvalida("Fatura sem valor nao gera nota.");
-  if (fatura.status === "CANCELADA") throw new NotaInvalida("Fatura cancelada nao gera nota.");
+  if (!fatura) throw new NotaInvalida("Fatura não encontrada.", 404);
+  if (fatura.valorCentavos <= 0) throw new NotaInvalida("Fatura sem valor não gera nota.");
+  if (fatura.status === "CANCELADA") throw new NotaInvalida("Fatura cancelada não gera nota.");
 
   const existente = await prismaPlataforma().notaDaPlataforma.findUnique({ where: { faturaId } });
   if (existente && (existente.status === "EMITIDA" || existente.status === "PROCESSANDO")) return existente;
@@ -178,7 +178,7 @@ export async function emitirNotaDaFatura(
     endereco: sede,
   } as never);
   if (!tomador.documento) {
-    throw new NotaInvalida("O escritorio nao tem CNPJ cadastrado: a nota precisa identificar o tomador.");
+    throw new NotaInvalida("O escritório não tem CNPJ cadastrado: a nota precisa identificar o tomador.");
   }
 
   const anual = ehFaturaAnual(fatura.detalhe);
@@ -194,7 +194,7 @@ export async function emitirNotaDaFatura(
   const regime = regimeVigente(fiscal!, competencia);
   const ibsCbs = ibsCbsVigente(fiscal!, competencia);
   if (ibsCbs && !tomador.endereco) {
-    throw new NotaInvalida("Com IBS/CBS a nota precisa do endereco completo do escritorio, com CEP valido.");
+    throw new NotaInvalida("Com IBS/CBS a nota precisa do endereço completo do escritório, com CEP válido.");
   }
 
   const base = {
@@ -280,7 +280,7 @@ export async function emitirNotaDaFatura(
     console.error("[nota-plataforma] falha no envio da DPS", idDps, (e as Error)?.message ?? e);
     const recuperada = await recuperarPorDps(nota, cert!).catch(() => null);
     if (recuperada) return recuperada;
-    const erros: ErroApi[] = [{ codigo: "CONEXAO", descricao: (e as Error)?.message ?? "Falha de conexao com a API nacional." }];
+    const erros: ErroApi[] = [{ codigo: "CONEXAO", descricao: (e as Error)?.message ?? "Falha de conexão com a API nacional." }];
     return atualizar(nota.id, { erros: erros as Prisma.InputJsonValue, erro: erros[0].descricao });
   }
 }
@@ -318,13 +318,13 @@ async function recuperarPorDps(nota: NotaDaPlataforma, cert: CertificadoCarregad
 /** Nota que ficou "processando" (queda de conexao): confere na Sefin. */
 export async function verificarNotaDaPlataforma(id: string): Promise<NotaDaPlataforma> {
   const nota = await prismaPlataforma().notaDaPlataforma.findUnique({ where: { id } });
-  if (!nota) throw new NotaInvalida("Nota nao encontrada.", 404);
+  if (!nota) throw new NotaInvalida("Nota não encontrada.", 404);
   if (nota.status !== "PROCESSANDO" || !nota.idDps) return nota;
   const cert = certificadoDaPlataforma();
-  if (!cert) throw new NotaInvalida("Certificado da Blackbird nao configurado.", 428);
+  if (!cert) throw new NotaInvalida("Certificado da Blackbird não configurado.", 428);
   const recuperada = await recuperarPorDps(nota, cert);
   if (recuperada) return recuperada;
-  const erros = [{ codigo: "NAO_GERADA", descricao: "A API nacional confirmou que nao gerou nota para esta DPS. Pode emitir de novo." }];
+  const erros = [{ codigo: "NAO_GERADA", descricao: "A API nacional confirmou que não gerou nota para esta DPS. Pode emitir de novo." }];
   return atualizar(nota.id, { status: "REJEITADA", erros, erro: erros[0].descricao });
 }
 
@@ -338,13 +338,13 @@ export async function cancelarNotaDaPlataforma(
   justificativa: string,
 ): Promise<NotaDaPlataforma> {
   const nota = await prismaPlataforma().notaDaPlataforma.findUnique({ where: { id } });
-  if (!nota) throw new NotaInvalida("Nota nao encontrada.", 404);
-  if (nota.status !== "EMITIDA" || !nota.chaveAcesso) throw new NotaInvalida("So nota emitida pode ser cancelada.", 409);
+  if (!nota) throw new NotaInvalida("Nota não encontrada.", 404);
+  if (nota.status !== "EMITIDA" || !nota.chaveAcesso) throw new NotaInvalida("Só nota emitida pode ser cancelada.", 409);
   const texto = justificativa.trim();
   if (texto.length < 15) throw new NotaInvalida("Explique o motivo do cancelamento com pelo menos 15 caracteres.");
   const fiscal = await fiscalDaPlataforma();
   const cert = certificadoDaPlataforma();
-  if (!fiscal || !cert) throw new NotaInvalida("Emissor ou certificado da Blackbird nao configurado.", 428);
+  if (!fiscal || !cert) throw new NotaInvalida("Emissor ou certificado da Blackbird não configurado.", 428);
 
   const ambiente = nota.ambiente as Ambiente;
   const pedido = montarPedidoCancelamento({
@@ -388,18 +388,18 @@ export async function mandarNotaPorEmail(id: string): Promise<boolean> {
     texto: [
       `${nota.tomadorNome},`,
       "",
-      "A nota fiscal de servico da sua assinatura do BirdJud foi emitida.",
+      "A nota fiscal de serviço da sua assinatura do BirdJud foi emitida.",
       "",
       `Numero: ${numero}`,
       `Valor: ${reais(nota.valorCentavos)}`,
       `Servico: ${nota.descricao}`,
       ...(nota.chaveAcesso ? [`Chave de acesso: ${nota.chaveAcesso}`] : []),
-      ...(nota.ambiente !== "PRODUCAO" ? ["", "ATENCAO: nota de TESTE (producao restrita), sem valor fiscal."] : []),
+      ...(nota.ambiente !== "PRODUCAO" ? ["", "ATENCAO: nota de TESTE (produção restrita), sem valor fiscal."] : []),
       "",
       `PDF (DANFSe): ${pdf}`,
       `XML: ${xml}`,
       "",
-      "A nota tambem pode ser consultada no Portal Nacional da NFS-e pela chave de acesso.",
+      "A nota também pode ser consultada no Portal Nacional da NFS-e pela chave de acesso.",
       "",
       "BirdJud, by Blackbird",
     ].join("\n"),

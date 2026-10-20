@@ -48,7 +48,7 @@ export async function rodada(
   try {
     deploys = await deps.deploys();
   } catch (falha) {
-    anotar(`nao consegui ler os deploys: ${(falha as Error).message}`);
+    anotar(`não consegui ler os deploys: ${(falha as Error).message}`);
     return { saude, ultimaVolta: estado.ultimaVolta };
   }
 

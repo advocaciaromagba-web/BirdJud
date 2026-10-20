@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const marca = await escritorioDoEndereco();
     if (!marca?.id) {
       return NextResponse.json(
-        { erro: "Cada escritorio redefine a senha pelo proprio endereco." },
+        { erro: "Cada escritório redefine a senha pelo próprio endereço." },
         { status: 400 },
       );
     }
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     const corpo = pedido.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json(
-        { erro: corpo.error.issues[0]?.message ?? "Dados invalidos." },
+        { erro: corpo.error.issues[0]?.message ?? "Dados inválidos." },
         { status: 400 },
       );
     }

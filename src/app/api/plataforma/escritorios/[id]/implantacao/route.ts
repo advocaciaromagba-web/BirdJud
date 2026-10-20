@@ -65,22 +65,22 @@ export async function POST(
       where: { id },
       select: { id: true, nome: true, slug: true },
     });
-    if (!escritorio) return NextResponse.json({ erro: "Escritorio nao encontrado." }, { status: 404 });
+    if (!escritorio) return NextResponse.json({ erro: "Escritório não encontrado." }, { status: 404 });
 
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Acao invalida." }, { status: 400 });
+      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Ação inválida." }, { status: 400 });
     }
     const a = corpo.data;
     const anotar = (motivo: string) => registrarAcessoSuporte(operador.operadorId, id, `Implantacao: ${motivo}`);
 
     switch (a.acao) {
       case "dados": {
-        await anotar("dados do escritorio");
+        await anotar("dados do escritório");
         const { acao: _, ...dados } = a;
         const limpos = Object.fromEntries(Object.entries(dados).filter(([, v]) => v !== undefined));
         await salvarDadosDoEscritorio(id, limpos);
-        return NextResponse.json({ detalhe: "Dados do escritorio gravados." });
+        return NextResponse.json({ detalhe: "Dados do escritório gravados." });
       }
       case "pessoa": {
         const { acao: _, ...pessoa } = a;
@@ -94,10 +94,10 @@ export async function POST(
       case "oab": {
         await anotar("OAB monitorada");
         await adicionarOab(id, { numero: a.numero, uf: a.uf, nomeAdvogado: a.nomeAdvogado });
-        return NextResponse.json({ detalhe: "OAB cadastrada. A primeira captura e na madrugada seguinte." });
+        return NextResponse.json({ detalhe: "OAB cadastrada. A primeira captura é na madrugada seguinte." });
       }
       case "integracao": {
-        if (!ehTipoDeIntegracao(a.tipo)) return NextResponse.json({ erro: "Integracao desconhecida." }, { status: 400 });
+        if (!ehTipoDeIntegracao(a.tipo)) return NextResponse.json({ erro: "Integração desconhecida." }, { status: 400 });
         await anotar(`integracao ${a.tipo}`);
         const r = await conectarPorFormulario(id, a.tipo, a.dados);
         return NextResponse.json({ ok: r.ok, detalhe: r.detalhe });
@@ -122,7 +122,7 @@ export async function POST(
         const pessoa = await comEscritorio(id, (db) =>
           db.usuario.findFirst({ where: { id: a.usuarioId }, select: { id: true, email: true } }),
         );
-        if (!pessoa) return NextResponse.json({ erro: "Pessoa nao encontrada." }, { status: 404 });
+        if (!pessoa) return NextResponse.json({ erro: "Pessoa não encontrada." }, { status: 404 });
         await anotar(`acesso destravado (${pessoa.email}): bloqueio e duas etapas retirados, link de senha nova`);
         await comEscritorio(id, (db) =>
           db.usuario.update({
@@ -156,7 +156,7 @@ export async function POST(
       return NextResponse.json({ erro: erro.message }, { status: erro.status });
     }
     if (ehDuplicado(erro)) {
-      return NextResponse.json({ erro: "Ja existe: e-mail de usuario ou OAB repetidos." }, { status: 409 });
+      return NextResponse.json({ erro: "Já existe: e-mail de usuário ou OAB repetidos." }, { status: 409 });
     }
     console.error(erro);
     return NextResponse.json({ erro: "Erro interno." }, { status: 500 });

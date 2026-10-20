@@ -15,7 +15,7 @@ export function RecadoDoCep({ estado }: { estado: EstadoDoCep }) {
         : "text-amber-800";
   return (
     <p className={`mt-1 text-xs ${classe}`} role="status" aria-live="polite">
-      {estado.tipo === "buscando" ? "Buscando o endereco..." : estado.texto}
+      {estado.tipo === "buscando" ? "Buscando o endereço..." : estado.texto}
     </p>
   );
 }

@@ -64,7 +64,7 @@ export function ListaPublicacoes({
   if (publicacoes.length === 0) {
     return (
       <p className="mt-6 text-slate-600">
-        Nenhuma publicacao em aberto. As capturas rodam de madrugada, por OAB
+        Nenhuma publicação em aberto. As capturas rodam de madrugada, por OAB
         monitorada.
       </p>
     );
@@ -182,7 +182,7 @@ function Cartao({
     const json = await resposta.json().catch(() => ({}));
     setOcupado(false);
     if (!resposta.ok) {
-      setErro(json.erro ?? "Nao consegui triar.");
+      setErro(json.erro ?? "Não consegui triar.");
       return;
     }
     router.refresh();
@@ -205,13 +205,13 @@ function Cartao({
     const json = await resposta.json().catch(() => ({}));
     setOcupado(false);
     if (!resposta.ok) {
-      setErro(json.erro ?? "Nao consegui gravar.");
+      setErro(json.erro ?? "Não consegui gravar.");
       return;
     }
     if (acao === "ACEITAR") {
       setAviso(
         json.aceite?.tarefaId
-          ? "Tarefa criada, com a entrega e o prazo fatal. Esta em Tarefas."
+          ? "Tarefa criada, com a entrega e o prazo fatal. Está em Tarefas."
           : "Na agenda.",
       );
     }
@@ -243,12 +243,12 @@ function Cartao({
         ) : null}
         {publicacao.repeticao === "REPETIDA" ? (
           <span className="rounded bg-slate-200 px-2 py-0.5 font-semibold text-slate-700">
-            repeticao de outra ja na lista
+            repetição de outra já na lista
           </span>
         ) : null}
         {publicacao.repeticao === "PARECE_REPETIDA" ? (
           <span className="rounded bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
-            parece repeticao — confira antes de descartar
+            parece repetição — confira antes de descartar
           </span>
         ) : null}
         {publicacao.lida ? (
@@ -263,10 +263,10 @@ function Cartao({
       </div>
 
       <p className="mt-2 font-semibold">
-        {publicacao.numeroFormatado ?? "Sem numero de processo"}
+        {publicacao.numeroFormatado ?? "Sem número de processo"}
         {publicacao.numeroFormatado && !publicacao.temProcesso ? (
           <span className="ml-2 text-xs font-normal text-amber-700">
-            {publicacao.segredo ? "segredo de justica — cadastre o processo a mao" : "processo nao cadastrado"}
+            {publicacao.segredo ? "segredo de justiça — cadastre o processo a mão" : "processo não cadastrado"}
           </span>
         ) : null}
       </p>
@@ -281,10 +281,10 @@ function Cartao({
 
       {/*
         O TEXTO E O QUE IMPORTA NESTA TELA, e por isso ele tem tratamento de
-        texto para ler, e nao de rodape: fundo proprio, linha solta e largura
-        inteira do cartao. Fechado mostra seis linhas — o bastante para saber
-        do que se trata sem abrir —, e o cartao inteiro abre no clique, porque
-        um botao escondido entre outros cinco e um botao que ninguem acha.
+        texto para ler, e não de rodapé: fundo próprio, linha solta e largura
+        inteira do cartão. Fechado mostra seis linhas — o bastante para saber
+        do que se trata sem abrir —, e o cartão inteiro abre no clique, porque
+        um botão escondido entre outros cinco e um botão que ninguém acha.
       */}
       <button
         type="button"
@@ -300,16 +300,16 @@ function Cartao({
           {publicacao.texto}
         </span>
         <span className="mt-1 block text-xs font-semibold text-marca">
-          {aberta ? "clique para recolher" : "clique para ler a publicacao inteira"}
+          {aberta ? "clique para recolher" : "clique para ler a publicação inteira"}
         </span>
       </button>
 
       {t && !t.recusada ? (
         /*
           A SUGESTAO DA IA TEM COR PROPRIA (violeta), diferente do texto da
-          publicacao e dos botoes do escritorio. Quem olha precisa saber, sem
-          ler, que aquilo foi a maquina que sugeriu — e que prazo e assunto
-          se conferem nos autos antes de lancar.
+          publicação e dos botões do escritório. Quem olha precisa saber, sem
+          ler, que aquilo foi a máquina que sugeriu — e que prazo e assunto
+          se conferem nos autos antes de lançar.
         */
         <div
           className={`mt-3 rounded-md border-2 p-3 ${
@@ -322,7 +322,7 @@ function Cartao({
                 Sugestao da IA
               </span>
               <span className="font-semibold">
-                Precisa de conferencia: confira o prazo e o assunto nos autos antes de lancar.
+                Precisa de conferência: confira o prazo e o assunto nos autos antes de lançar.
               </span>
             </p>
           ) : null}
@@ -356,9 +356,9 @@ function Cartao({
               </span>
               <span className="text-slate-600">
                 {" "}
-                — ultimo dia, calculado pelo sistema a partir da publicacao.
-                A entrega sugerida vem tres dias uteis antes, e o responsavel
-                e avisado 4 dias uteis antes, na vespera e no dia.
+                — último dia, calculado pelo sistema a partir da publicação.
+                A entrega sugerida vem três dias úteis antes, e o responsável
+                é avisado 4 dias úteis antes, na véspera e no dia.
               </span>
             </p>
           ) : null}
@@ -371,7 +371,7 @@ function Cartao({
 
           {t.aceita ? (
             <p className="mt-2 text-sm font-semibold text-emerald-800">
-              {t.aceitaComoTarefa ? "Ja esta em Tarefas." : "Ja esta na agenda."}
+              {t.aceitaComoTarefa ? "Já está em Tarefas." : "Já está na agenda."}
             </p>
           ) : (
             <>
@@ -390,7 +390,7 @@ function Cartao({
                 </div>
                 <div>
                   <label className="rotulo" htmlFor={`titulo-${t.id}`}>
-                    Titulo
+                    Título
                   </label>
                   <input
                     id={`titulo-${t.id}`}
@@ -402,7 +402,7 @@ function Cartao({
                 </div>
                 <div>
                   <label className="rotulo" htmlFor={`resp-${t.id}`}>
-                    Responsavel
+                    Responsável
                   </label>
                   <select
                     id={`resp-${t.id}`}
@@ -411,7 +411,7 @@ function Cartao({
                     onChange={(e) => setResponsavelId(e.target.value)}
                   >
                     <option value="">
-                      {ehTarefa ? "Fica comigo" : "Sem responsavel"}
+                      {ehTarefa ? "Fica comigo" : "Sem responsável"}
                     </option>
                     {equipe.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -429,7 +429,7 @@ function Cartao({
                   onClick={() => decidir("ACEITAR")}
                   className="botao-principal disabled:opacity-50"
                 >
-                  {ocupado ? "..." : ehTarefa ? "Conferi — criar tarefa" : "Conferi — lancar na agenda"}
+                  {ocupado ? "..." : ehTarefa ? "Conferi — criar tarefa" : "Conferi — lançar na agenda"}
                 </button>
                 <button
                   type="button"
@@ -437,7 +437,7 @@ function Cartao({
                   onClick={() => decidir("RECUSAR")}
                   className="botao-discreto disabled:opacity-50"
                 >
-                  nao e nada disso
+                  não é nada disso
                 </button>
                 <button
                   type="button"
@@ -465,8 +465,8 @@ function Cartao({
       {!t ? (
         <p className="mt-3 text-xs text-slate-500">
           {lendo
-            ? "Lendo a publicacao..."
-            : "Ainda sem leitura. A publicacao e lida na captura; esta e de antes disso."}
+            ? "Lendo a publicação..."
+            : "Ainda sem leitura. A publicação é lida na captura; esta é de antes disso."}
         </p>
       ) : null}
 
@@ -499,7 +499,7 @@ function Cartao({
             rel="noreferrer"
             className="rounded border border-slate-300 px-3 py-2 text-marca"
           >
-            Abrir no diario
+            Abrir no diário
           </a>
         ) : null}
       </div>
@@ -537,7 +537,7 @@ function CadastrarProcesso({
     });
     const json = await r.json().catch(() => ({}));
     setOcupado(false);
-    if (!r.ok) return setErro(json.erro ?? "Nao consegui cadastrar o processo.");
+    if (!r.ok) return setErro(json.erro ?? "Não consegui cadastrar o processo.");
     router.refresh();
   }
 

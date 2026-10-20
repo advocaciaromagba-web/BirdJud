@@ -12,7 +12,7 @@ const percentual = z
     if (!v?.trim()) return null;
     const n = Number(v.trim().replace(",", "."));
     if (!Number.isFinite(n) || n < 0 || n > 100) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Percentual invalido." });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Percentual inválido." });
       return z.NEVER;
     }
     return new Prisma.Decimal(n.toFixed(2));
@@ -27,7 +27,7 @@ export const cadastroFiscal = z.object({
   razaoSocial: z.string().min(2).max(200),
   cnpj: z.string().min(14).max(20),
   inscricaoMunicipal: z.string().max(30).nullish(),
-  codigoMunicipio: z.string().regex(/^\d{7}$/, "Codigo IBGE com 7 digitos."),
+  codigoMunicipio: z.string().regex(/^\d{7}$/, "Código IBGE com 7 dígitos."),
   telefone: z.string().max(30).nullish(),
   email: z.string().max(200).nullish(),
   opSimpNac: z.union([z.literal(1), z.literal(2), z.literal(3)]),
@@ -55,7 +55,7 @@ export const cadastroFiscal = z.object({
   cClassTribIbsCbs: z.string().max(10).nullish(),
   regApIBSCBSSN: z.number().int().min(1).max(3).nullish(),
   cAtvSN: z.number().int().nullish(),
-  codigoTributacao: z.string().regex(/^\d{6}$/, "Codigo de tributacao nacional com 6 digitos."),
+  codigoTributacao: z.string().regex(/^\d{6}$/, "Código de tributação nacional com 6 dígitos."),
   codigoNbs: z.string().max(12).nullish(),
   descricaoPadrao: z.string().max(2000).nullish(),
   serie: z.string().regex(/^\d{1,5}$/).optional(),

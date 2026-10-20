@@ -7,7 +7,7 @@ import { certificadoDaPlataforma, pendenciasDaPlataforma } from "@/lib/nota-da-p
 
 export const dynamic = "force-dynamic";
 
-const PADRAO_DA_DESCRICAO = "Licenca de uso do sistema BirdJud (software como servico)";
+const PADRAO_DA_DESCRICAO = "Licença de uso do sistema BirdJud (software como serviço)";
 
 const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("CADASTRO"), dados: cadastroFiscal }),
@@ -24,7 +24,7 @@ export async function PATCH(req: Request) {
     await exigirOperador();
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Cadastro invalido." }, { status: 400 });
+      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Cadastro inválido." }, { status: 400 });
     }
     if (corpo.data.acao === "AUTOMATICA") {
       const existente = await prismaPlataforma().fiscalDaPlataforma.findUnique({ where: { id: "PLATAFORMA" } });
@@ -35,7 +35,7 @@ export async function PATCH(req: Request) {
         try {
           pendencias = pendenciasDaPlataforma(existente, certificadoDaPlataforma());
         } catch (e) {
-          pendencias = [`O certificado das variaveis nao abriu: ${(e as Error).message}`];
+          pendencias = [`O certificado das variáveis não abriu: ${(e as Error).message}`];
         }
         if (pendencias.length) return NextResponse.json({ erro: pendencias.join(" ") }, { status: 428 });
       }
@@ -46,8 +46,8 @@ export async function PATCH(req: Request) {
       return NextResponse.json({
         ok: true,
         detalhe: corpo.data.ligar
-          ? "Emissao automatica ligada: cada fatura paga gera a nota e manda ao escritorio."
-          : "Emissao automatica desligada: a nota so sai pelo console.",
+          ? "Emissão automática ligada: cada fatura paga gera a nota e manda ao escritório."
+          : "Emissão automática desligada: a nota só sai pelo console.",
       });
     }
     const dados = dadosDoCadastroFiscal(corpo.data.dados);

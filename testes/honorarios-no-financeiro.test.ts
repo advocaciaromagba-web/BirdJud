@@ -22,7 +22,7 @@ import {
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
-d("honorarios no financeiro", () => {
+d("honorários no financeiro", () => {
   let escritorio = "";
   let clienteId = "";
 
@@ -43,7 +43,7 @@ d("honorarios no financeiro", () => {
 
   beforeAll(async () => {
     const e = await prismaPlataforma().escritorio.create({
-      data: { slug: `honfin-${Date.now()}`, nome: "Banca dos Honorarios" },
+      data: { slug: `honfin-${Date.now()}`, nome: "Banca dos Honorários" },
     });
     escritorio = e.id;
     clienteId = await comEscritorio(escritorio, async (db) => {
@@ -83,13 +83,13 @@ d("honorarios no financeiro", () => {
     expect(await linhas(id)).toHaveLength(3);
   });
 
-  it("a cobranca paga da baixa na parcela prevista, sem criar outra receita", async () => {
+  it("a cobrança paga da baixa na parcela prevista, sem criar outra receita", async () => {
     const { id } = await salvarContrato(escritorio, contrato(2));
     const cobranca = await comEscritorio(escritorio, (db) =>
       db.cobranca.create({
         data: semEscritorio({
           clienteId,
-          descricao: "Honorarios — parcela 1/2",
+          descricao: "Honorários — parcela 1/2",
           valorCentavos: 150_000,
           vencimento: new Date("2026-11-10T12:00:00Z"),
           forma: "PIX",
@@ -111,7 +111,7 @@ d("honorarios no financeiro", () => {
     expect(l[1].pagoEm).toBeNull();
   });
 
-  it("a conferencia do extrato acha a parcela pelo nome e valor e da baixa nela", async () => {
+  it("a conferência do extrato acha a parcela pelo nome e valor e da baixa nela", async () => {
     const { id } = await salvarContrato(escritorio, { ...contrato(1), valorCentavos: 87_350 });
     const entrada = await comEscritorio(escritorio, (db) =>
       db.entradaDeExtrato.create({
@@ -144,7 +144,7 @@ d("honorarios no financeiro", () => {
     ).toBe(1);
   });
 
-  it("valor diferente da parcela nao da baixa", async () => {
+  it("valor diferente da parcela não da baixa", async () => {
     const { id } = await salvarContrato(escritorio, { ...contrato(1), valorCentavos: 55_500 });
     const [parcela] = await linhas(id);
     const entrada = await comEscritorio(escritorio, (db) =>
@@ -164,7 +164,7 @@ d("honorarios no financeiro", () => {
     ).rejects.toBeInstanceOf(ValorDiferenteDaParcela);
   });
 
-  it("editar mexe so no a receber; encerrar tira o que nao foi recebido nem cobrado", async () => {
+  it("editar mexe só no a receber; encerrar tira o que não foi recebido nem cobrado", async () => {
     const { id } = await salvarContrato(escritorio, contrato(3));
     // Parcela 1 recebida por fora.
     await comEscritorio(escritorio, (db) =>
@@ -187,7 +187,7 @@ d("honorarios no financeiro", () => {
     expect(l[0].pagoEm).not.toBeNull();
   });
 
-  it("percentual de exito nao entra no financeiro", async () => {
+  it("percentual de êxito não entra no financeiro", async () => {
     const { id } = await salvarContrato(escritorio, {
       clienteId,
       tipo: "PERCENTUAL",

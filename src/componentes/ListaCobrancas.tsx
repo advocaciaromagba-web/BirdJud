@@ -43,7 +43,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
     const json = await resposta.json().catch(() => ({}));
     setOcupado(false);
     if (!resposta.ok) {
-      setAviso(json.erro ?? "Nao foi possivel falar com o Asaas.");
+      setAviso(json.erro ?? "Não foi possível falar com o Asaas.");
       return;
     }
     setAviso(sucesso(json));
@@ -73,7 +73,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
       </div>
 
       {cobrancas.length === 0 ? (
-        <p className="mt-6 text-slate-600">Nenhuma cobranca emitida ainda.</p>
+        <p className="mt-6 text-slate-600">Nenhuma cobrança emitida ainda.</p>
       ) : (
         <ul className="lista mt-4">
           {cobrancas.map((cobranca) => (
@@ -95,10 +95,10 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
                   : `vence em ${cobranca.vencimento}`}
               </span>
               <span className="w-full text-sm">
-                {cobranca.status === "PENDENTE" ? "Emissao pendente: confira esta cobranca no Asaas antes de emitir outra. " : null}
+                {cobranca.status === "PENDENTE" ? "Emissão pendente: confira esta cobrança no Asaas antes de emitir outra. " : null}
                 {cobranca.status === "PENDENTE" ? (
                   <button type="button" disabled={ocupado}
-                    onClick={() => chamar({ acao: "CONCILIAR", id: cobranca.id }, () => "Cobranca conciliada.")}
+                    onClick={() => chamar({ acao: "CONCILIAR", id: cobranca.id }, () => "Cobrança conciliada.")}
                     className="text-marca underline disabled:opacity-50">Conferir no Asaas</button>
                 ) : null}
                 {cobranca.linkPagamento ? (
@@ -119,7 +119,7 @@ export function ListaCobrancas({ cobrancas }: { cobrancas: CobrancaNaTela[] }) {
                     onClick={() =>
                       chamar(
                         { acao: "CANCELAR", id: cobranca.id },
-                        () => "Cobranca cancelada.",
+                        () => "Cobrança cancelada.",
                       )
                     }
                     className="-my-1 ml-3 py-2 text-slate-500 hover:text-rose-700 disabled:opacity-50"

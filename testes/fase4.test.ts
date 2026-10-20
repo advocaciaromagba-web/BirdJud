@@ -38,7 +38,7 @@ describe("regra da regua (pura)", () => {
     expect(statusPelaRegua("ATIVO", null)).toBe("ATIVO");
   });
 
-  it("atraso pequeno ainda nao pune", () => {
+  it("atraso pequeno ainda não pune", () => {
     expect(statusPelaRegua("ATIVO", 1)).toBe("ATIVO");
     expect(statusPelaRegua("ATIVO", REGUA.inadimplente - 1)).toBe("ATIVO");
   });
@@ -49,7 +49,7 @@ describe("regra da regua (pura)", () => {
     expect(statusPelaRegua("ATIVO", 90)).toBe("SUSPENSO");
   });
 
-  it("ENCERRADO e decisao humana: a regua nao mexe", () => {
+  it("ENCERRADO e decisão humana: a regua não mexe", () => {
     expect(statusPelaRegua("ENCERRADO", null)).toBe("ENCERRADO");
     expect(statusPelaRegua("ENCERRADO", 90)).toBe("ENCERRADO");
   });
@@ -59,17 +59,17 @@ describe("regra da regua (pura)", () => {
     expect(statusPelaRegua("TESTE", 1, true)).toBe("ATIVO");
   });
 
-  it("enquanto o teste corre, o escritorio continua em TESTE", () => {
+  it("enquanto o teste corre, o escritório continua em TESTE", () => {
     expect(statusPelaRegua("TESTE", null, false)).toBe("TESTE");
   });
 
-  it("teste acabado nao salva quem ja esta em atraso longo", () => {
+  it("teste acabado não salva quem já esta em atraso longo", () => {
     expect(statusPelaRegua("TESTE", REGUA.suspenso, true)).toBe("SUSPENSO");
   });
 });
 
 describe("vencimento e atraso", () => {
-  it("respeita mes curto", () => {
+  it("respeita mês curto", () => {
     expect(vencimentoDe("2026-02", 31).toISOString().slice(0, 10)).toBe(
       "2026-02-28",
     );
@@ -91,13 +91,13 @@ describe("vencimento e atraso", () => {
 
   // Emitida 21h16 em Brasilia (00h16 UTC do dia seguinte): o vencimento e o
   // dia de Brasilia, ao meio-dia UTC, para o Asaas e a tela dizerem o mesmo.
-  it("emissao a noite nao empurra o vencimento um dia", () => {
+  it("emissão a noite não empurra o vencimento um dia", () => {
     const emissao = new Date("2026-10-16T00:16:00Z"); // 15/10, 21h16 em Brasilia
     const v = vencimentoComPrazo("2026-10", 10, emissao);
     expect(v.toISOString()).toBe(`2026-10-${String(15 + PRAZO_MINIMO_DIAS).padStart(2, "0")}T12:00:00.000Z`);
   });
 
-  it("quando ha folga, mantem o dia combinado", () => {
+  it("quando há folga, mantém o dia combinado", () => {
     const emissao = new Date("2026-10-01T12:00:00Z");
     expect(
       vencimentoComPrazo("2026-10", 10, emissao).toISOString().slice(0, 10),
@@ -112,13 +112,13 @@ describe("vencimento e atraso", () => {
 });
 
 describe("preco", () => {
-  it("soma faixa e modulos contratados", () => {
+  it("soma faixa e módulos contratados", () => {
     const itens = mensalidade("ATE_10", ["WHATSAPP", "EMAIL"]);
     expect(itens[0]?.valorCentavos).toBe(PRECO_DA_FAIXA.ATE_10);
     expect(itens).toHaveLength(3);
   });
 
-  it("cobra so o que passou da franquia", () => {
+  it("cobra só o que passou da franquia", () => {
     const itens = excedentes([
       { metrica: "WHATSAPP_MSG", excedente: 10 },
       { metrica: "REGISTROS", excedente: 500 },
@@ -136,7 +136,7 @@ d("ciclo comercial", () => {
     const e = await prismaPlataforma().escritorio.create({
       data: {
         slug: `f4-${Date.now()}`,
-        nome: "Escritorio F4",
+        nome: "Escritório F4",
         status: "TESTE",
         faixa: "ATE_3",
       },
@@ -164,14 +164,14 @@ d("ciclo comercial", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("durante o teste nao gera fatura", async () => {
+  it("durante o teste não gera fatura", async () => {
     await criarAssinatura(escritorio, PRECO_DA_FAIXA.ATE_3, 14);
     const resultado = await aplicarRegua(escritorio);
     expect(resultado.faturaGerada).toBeNull();
     expect(resultado.statusNovo).toBe("TESTE");
   });
 
-  it("acabado o teste, gera a fatura do mes e ativa o escritorio", async () => {
+  it("acabado o teste, gera a fatura do mês e ativa o escritório", async () => {
     await prismaPlataforma().assinatura.update({
       where: { escritorioId: escritorio },
       data: { fimDoTeste: new Date(Date.now() - DIA) },
@@ -191,7 +191,7 @@ d("ciclo comercial", () => {
     expect(fatura.status).toBe("ABERTA");
   });
 
-  it("nao duplica a fatura da mesma competencia", async () => {
+  it("não duplica a fatura da mesma competência", async () => {
     await aplicarRegua(escritorio);
     await aplicarRegua(escritorio);
     const quantas = await prismaPlataforma().fatura.count({
@@ -220,7 +220,7 @@ d("ciclo comercial", () => {
     expect((await aplicarRegua(escritorio)).statusNovo).toBe("SUSPENSO");
   });
 
-  it("o pagamento devolve o escritorio ao ar", async () => {
+  it("o pagamento devolve o escritório ao ar", async () => {
     const fatura = await prismaPlataforma().fatura.findFirstOrThrow({
       where: { escritorioId: escritorio, status: "ABERTA" },
     });
@@ -235,9 +235,9 @@ d("ciclo comercial", () => {
     expect(paga.pagoEm).not.toBeNull();
   });
 
-  it("a exportacao traz os dados e nao traz segredo", async () => {
+  it("a exportação traz os dados e não traz segredo", async () => {
     const dados = await exportarEscritorio(escritorio);
-    expect(dados.escritorio).toMatchObject({ nome: "Escritorio F4" });
+    expect(dados.escritorio).toMatchObject({ nome: "Escritório F4" });
     expect(dados.usuarios).toHaveLength(1);
     expect(dados.faturas).toHaveLength(1);
 

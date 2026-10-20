@@ -51,7 +51,7 @@ describe("telefone e parametro, antes de falar com a Meta", () => {
     expect(paraE164BR("(71) 3333-4444")).toBe("557133334444");
   });
 
-  it("numero que nao da para ter certeza vira null, nao chute", () => {
+  it("número que não da para ter certeza vira null, não chute", () => {
     expect(paraE164BR("99999-8888")).toBeNull(); // sem DDD
     expect(paraE164BR("999")).toBeNull();
     expect(paraE164BR("")).toBeNull();
@@ -61,8 +61,8 @@ describe("telefone e parametro, antes de falar com a Meta", () => {
 
   it("parametro de modelo sai em uma linha e nunca vazio", () => {
     // A Meta recusa a mensagem inteira quando o parametro tem quebra de linha.
-    expect(limparParametro("Audiencia\nde instrucao")).toBe(
-      "Audiencia de instrucao",
+    expect(limparParametro("Audiência\nde instrução")).toBe(
+      "Audiência de instrução",
     );
     expect(limparParametro("  dois   espacos  ")).toBe("dois espacos");
     expect(limparParametro(null)).toBe("—");
@@ -70,7 +70,7 @@ describe("telefone e parametro, antes de falar com a Meta", () => {
     expect(limparParametro("x".repeat(300)).length).toBe(200);
   });
 
-  it("cada tipo de aviso tem modelo, e o texto casa com os parametros", () => {
+  it("cada tipo de aviso tem modelo, e o texto casa com os parâmetros", () => {
     for (const [tipo, modelo] of Object.entries(MODELOS)) {
       expect(modeloDoTipo(tipo)).toBe(modelo);
       const usados = [...modelo.texto.matchAll(/\{\{(\d+)\}\}/g)].map((m) =>
@@ -83,10 +83,10 @@ describe("telefone e parametro, antes de falar com a Meta", () => {
     }
   });
 
-  it("traduz os erros da Meta que o escritorio resolve sozinho", () => {
+  it("traduz os erros da Meta que o escritório resolve sozinho", () => {
     expect(explicar(132001, "x")).toMatch(/aprovado/);
     expect(explicar(131047, "x")).toMatch(/24 horas/);
-    expect(explicar(131026, "x")).toMatch(/nao recebe/);
+    expect(explicar(131026, "x")).toMatch(/não recebe/);
     expect(explicar(190, "x")).toMatch(/Reconecte|reconecte/);
     // Codigo desconhecido passa a mensagem da Meta, sem inventar explicacao.
     expect(explicar(999999, "mensagem original")).toBe("mensagem original");
@@ -181,7 +181,7 @@ d("avisos pelo WhatsApp", () => {
     await comEscritorio(semModulo, async (db) => {
       await db.usuario.create({
         data: semEscritorio({
-          nome: "Sem modulo",
+          nome: "Sem módulo",
           email: `zap-sem-${marca}@teste.br`,
           senhaHash: "x",
           papel: "ADMIN",
@@ -192,7 +192,7 @@ d("avisos pelo WhatsApp", () => {
       await db.publicacao.create({
         data: semEscritorio({
           idExterno: `zap-pub-b-${marca}`,
-          texto: "Intimacao qualquer",
+          texto: "Intimação qualquer",
           dataDisponibilizacao: new Date(),
         }),
       });
@@ -261,11 +261,11 @@ d("avisos pelo WhatsApp", () => {
     expect(zap?.destino).toBe("5571999998888");
     expect(zap?.modelo).toBe("birdjud_resumo_publicacoes");
     // O quarto e o telefone do rodape: sem ele a Meta recusa com #132000.
-    expect(zap?.parametros).toEqual(["Alfa Zap", "1", "1", "o escritorio"]);
+    expect(zap?.parametros).toEqual(["Alfa Zap", "1", "1", "o escritório"]);
   });
 
 
-  it("sem o modulo contratado, nao ha aviso de WhatsApp — mesmo com o usuario querendo", async () => {
+  it("sem o módulo contratado, não há aviso de WhatsApp — mesmo com o usuário querendo", async () => {
     await gerarAvisos(semModulo);
     const zap = await comEscritorio(semModulo, (db) =>
       db.aviso.count({ where: { canal: "WHATSAPP" } }),
@@ -301,7 +301,7 @@ d("avisos pelo WhatsApp", () => {
     expect(chamadas).toHaveLength(0);
   });
 
-  it("erro definitivo para na primeira, sem gastar tres tentativas", async () => {
+  it("erro definitivo para na primeira, sem gastar três tentativas", async () => {
     await gerarAvisos(alfa);
     responder = () => ({
       status: 400,
@@ -337,7 +337,7 @@ d("avisos pelo WhatsApp", () => {
     expect(zap?.tentativas).toBe(1);
   });
 
-  it("plataforma sem numero deixa os avisos de pe, sem gastar tentativa", async () => {
+  it("plataforma sem número deixa os avisos de pe, sem gastar tentativa", async () => {
     // Nao e algo que o escritorio resolva: o numero e um so, e e nosso. Os
     // pendentes esperam o dia em que a plataforma configurar.
     const numeroId = process.env.WHATSAPP_NUMERO_ID;
@@ -345,7 +345,7 @@ d("avisos pelo WhatsApp", () => {
     delete process.env.WHATSAPP_NUMERO_ID;
     delete process.env.WHATSAPP_TOKEN;
     const semNumero = await prismaPlataforma().escritorio.create({
-      data: { slug: `zap-c-${marca}`, nome: "Sem numero" },
+      data: { slug: `zap-c-${marca}`, nome: "Sem número" },
     });
     try {
       await comEscritorio(semNumero.id, async (db) => {
@@ -394,7 +394,7 @@ d("avisos pelo WhatsApp", () => {
     }
   });
 
-  it("quem nao quer WhatsApp continua so no e-mail", async () => {
+  it("quem não quer WhatsApp continua só no e-mail", async () => {
     await comEscritorio(alfa, (db) =>
       db.usuario.update({
         where: { id: usuarioAlfa },
@@ -420,7 +420,7 @@ d("avisos pelo WhatsApp", () => {
     }
   });
 
-  it("telefone ilegivel nao vira aviso de WhatsApp", async () => {
+  it("telefone ilegível não vira aviso de WhatsApp", async () => {
     await comEscritorio(alfa, (db) =>
       db.usuario.update({
         where: { id: usuarioAlfa },
@@ -445,7 +445,7 @@ d("avisos pelo WhatsApp", () => {
     }
   });
 
-  it("falha de rede nao e definitiva", async () => {
+  it("falha de rede não e definitiva", async () => {
     await expect(
       enviarModelo({
         para: "5571999998888",
@@ -486,7 +486,7 @@ describe("a assinatura do webhook da Meta", () => {
     expect(assinaturaConfere(corpo, assinar(corpo, "outro"), SEGREDO)).toBe(false);
   });
 
-  it("recusa quando nao vem assinatura nenhuma", () => {
+  it("recusa quando não vem assinatura nenhuma", () => {
     // Sem isso, qualquer um confirmaria a audiencia de qualquer cliente.
     expect(assinaturaConfere(corpo, null, SEGREDO)).toBe(false);
     expect(assinaturaConfere(corpo, "", SEGREDO)).toBe(false);
@@ -497,7 +497,7 @@ describe("a assinatura do webhook da Meta", () => {
     expect(assinaturaConfere(corpo, so, SEGREDO)).toBe(false);
   });
 
-  it("um espaco a mais no corpo ja derruba a conta", () => {
+  it("um espaço a mais no corpo já derruba a conta", () => {
     // E por isso que a rota le o corpo CRU: JSON.parse + JSON.stringify muda
     // espaco e ordem, e a assinatura deixaria de fechar.
     expect(assinaturaConfere(`${corpo} `, assinar(corpo), SEGREDO)).toBe(false);

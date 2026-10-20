@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const { escritorioId, usuarioId } = await exigirSessao();
     const corpo = corpoEsperado.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const resultado = await comEscritorio(escritorioId, async (db) => {
@@ -37,13 +37,13 @@ export async function POST(req: Request) {
 
     if (resultado === "nao-ativo") {
       return NextResponse.json(
-        { erro: "O segundo fator nao esta ativo." },
+        { erro: "O segundo fator não está ativo." },
         { status: 400 },
       );
     }
     if (resultado === "recusado") {
       return NextResponse.json(
-        { erro: "Senha ou codigo invalido." },
+        { erro: "Senha ou código inválido." },
         { status: 400 },
       );
     }

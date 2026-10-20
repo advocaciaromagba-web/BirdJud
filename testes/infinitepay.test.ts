@@ -25,7 +25,7 @@ describe("separar os campos", () => {
 
   // "SILVA, JOAO" e comum. Um split ingenuo partiria a linha no meio e
   // jogaria o valor para a coluna errada.
-  it("virgula dentro de aspas nao separa", () => {
+  it("vírgula dentro de aspas não separa", () => {
     expect(separarCampos('2026-10-01,"SILVA, JOAO","+R$ 10,00"')).toEqual([
       "2026-10-01",
       "SILVA, JOAO",
@@ -37,7 +37,7 @@ describe("separar os campos", () => {
     expect(separarCampos('a,"diz ""oi""",b')).toEqual(["a", 'diz "oi"', "b"]);
   });
 
-  it("ponto e virgula tambem separa", () => {
+  it("ponto e vírgula também separa", () => {
     expect(separarCampos("a;b;c")).toEqual(["a", "b", "c"]);
   });
 });
@@ -52,13 +52,13 @@ describe("valor em centavos", () => {
 
   // 1.1 * 100 da 110.00000000000001 em ponto flutuante. Dinheiro nao passa
   // por ponto flutuante nem na leitura.
-  it("nao arredonda errado", () => {
+  it("não arredonda errado", () => {
     expect(valorEmCentavos("1,10")).toBe(110);
     expect(valorEmCentavos("29,99")).toBe(2999);
     expect(valorEmCentavos("1.000.000,01")).toBe(100000001);
   });
 
-  it("o que nao e valor nao vira zero", () => {
+  it("o que não e valor não vira zero", () => {
     expect(valorEmCentavos("")).toBeNull();
     expect(valorEmCentavos("—")).toBeNull();
     expect(valorEmCentavos("pendente")).toBeNull();
@@ -75,7 +75,7 @@ describe("tipo da linha", () => {
   });
 
   // Tipo novo nao pode virar automatico: o provedor acrescenta sem avisar.
-  it("tipo desconhecido sobe com o nome que veio, e nao e automatico", () => {
+  it("tipo desconhecido sobe com o nome que veio, e não e automático", () => {
     const tipo = tipoDaLinha("Coisa Nova", "Sei la");
     expect(tipo).toBe("COISA_NOVA_SEI_LA");
     expect(regraDoTipo(tipo).automatico).toBe(false);
@@ -83,12 +83,12 @@ describe("tipo da linha", () => {
 
   // Pelo extrato nao da para saber se e despesa do escritorio, repasse entre
   // socios ou dinheiro de cliente indo para onde devia.
-  it("dinheiro saindo nunca e automatico", () => {
+  it("dinheiro saindo nunca e automático", () => {
     expect(regraDoTipo("PIX_ENVIADO").automatico).toBe(false);
     expect(regraDoTipo("BOLETO_PAGO").automatico).toBe(false);
   });
 
-  it("dinheiro entrando e automatico", () => {
+  it("dinheiro entrando e automático", () => {
     expect(regraDoTipo("PIX_RECEBIDO")).toMatchObject({ destino: "RECEITA", automatico: true });
     expect(regraDoTipo("DEPOSITO_VENDAS")).toMatchObject({ destino: "RECEITA", automatico: true });
   });
@@ -160,13 +160,13 @@ describe("ler o CSV", () => {
     expect(r.linhas).toEqual([]);
   });
 
-  it("arquivo vazio nao e extrato", () => {
+  it("arquivo vazio não e extrato", () => {
     expect(lerCsvDaInfinitePay("").erro).toContain("vazio");
     expect(lerCsvDaInfinitePay("   \n  ").erro).toContain("vazio");
   });
 
   // Metade de um lancamento no financeiro e pior que lancamento nenhum.
-  it("linha que nao deu para entender e recusada, nao chutada", () => {
+  it("linha que não deu para entender e recusada, não chutada", () => {
     const csv = [
       CABECALHO,
       '2026-10-01,10:30,Pix,ANA,Recebido,"+R$ 10,00"',
@@ -176,15 +176,15 @@ describe("ler o CSV", () => {
     const r = lerCsvDaInfinitePay(csv);
     expect(r.linhas).toHaveLength(1);
     expect(r.recusadas).toEqual([
-      { linha: 3, motivo: "nao entendi a data" },
-      { linha: 4, motivo: "nao entendi o valor" },
+      { linha: 3, motivo: "não entendi a data" },
+      { linha: 4, motivo: "não entendi o valor" },
     ]);
   });
 });
 
 describe("handle", () => {
   // Gente cola "$joao", "@joao" e a URL inteira do perfil.
-  it("aceita do jeito que a informacao chega", () => {
+  it("aceita do jeito que a informação chega", () => {
     expect(limparHandle("joaosilva")).toBe("joaosilva");
     expect(limparHandle("$joaosilva")).toBe("joaosilva");
     expect(limparHandle("@joaosilva")).toBe("joaosilva");
@@ -193,7 +193,7 @@ describe("handle", () => {
     expect(limparHandle("infinitepay.io/joao.silva_1")).toBe("joao.silva_1");
   });
 
-  it("recusa o que nao e handle", () => {
+  it("recusa o que não e handle", () => {
     expect(limparHandle("")).toBeNull();
     expect(limparHandle("a")).toBeNull();
     expect(limparHandle("joao silva")).toBeNull();
@@ -208,7 +208,7 @@ describe("telefone", () => {
     expect(telefoneParaInfinitePay("1133334444")).toBe("+551133334444");
   });
 
-  it("telefone curto demais nao vai", () => {
+  it("telefone curto demais não vai", () => {
     expect(telefoneParaInfinitePay(null)).toBeUndefined();
     expect(telefoneParaInfinitePay("999")).toBeUndefined();
   });

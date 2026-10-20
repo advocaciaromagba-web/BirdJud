@@ -80,7 +80,7 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   if (!autorizado(req)) return NAO_EXISTE();
   const p = ids(req);
-  if (!p) return NextResponse.json({ erro: "Falta o escritorio." }, { status: 400 });
+  if (!p) return NextResponse.json({ erro: "Falta o escritório." }, { status: 400 });
   if (p.a) await apagarDoDisco(p.e, p.a);
   else await apagarTudoDoDisco(p.e);
   return new NextResponse(null, { status: 204 });

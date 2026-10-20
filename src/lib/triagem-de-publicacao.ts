@@ -167,7 +167,7 @@ export function tituloPadrao(
         ? "Pericia"
         : especie === "AGENDAMENTO"
           ? "Compromisso do processo"
-          : "Manifestacao nos autos";
+          : "Manifestação nos autos";
   return numeroFormatado ? `${base} — ${numeroFormatado}` : base;
 }
 

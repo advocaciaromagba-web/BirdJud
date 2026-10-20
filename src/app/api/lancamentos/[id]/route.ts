@@ -16,7 +16,7 @@ export async function PATCH(
     const { id } = await params;
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
 
     const alterados = await comEscritorio(escritorioId, (db) =>
@@ -27,7 +27,7 @@ export async function PATCH(
     );
     if (alterados.count === 0) {
       return NextResponse.json(
-        { erro: "Lancamento nao encontrado." },
+        { erro: "Lançamento não encontrado." },
         { status: 404 },
       );
     }
@@ -49,7 +49,7 @@ export async function DELETE(
     );
     if (apagados.count === 0) {
       return NextResponse.json(
-        { erro: "Lancamento nao encontrado." },
+        { erro: "Lançamento não encontrado." },
         { status: 404 },
       );
     }

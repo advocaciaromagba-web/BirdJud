@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 const ESPECIES = [
-  { chave: "CONTRATO", rotulo: "Contrato de honorarios" },
-  { chave: "PROCURACAO", rotulo: "Procuracao" },
-  { chave: "DECLARACAO", rotulo: "Declaracao de hipossuficiencia" },
-  { chave: "RECIBO", rotulo: "Recibo de pagamento de honorarios" },
+  { chave: "CONTRATO", rotulo: "Contrato de honorários" },
+  { chave: "PROCURACAO", rotulo: "Procuração" },
+  { chave: "DECLARACAO", rotulo: "Declaração de hipossuficiência" },
+  { chave: "RECIBO", rotulo: "Recibo de pagamento de honorários" },
 ];
 
 const FORMATOS = [
@@ -18,7 +18,7 @@ const FORMATOS = [
   {
     chave: "DOCX",
     rotulo: "Word (.docx)",
-    sobre: "para editar antes, no papel timbrado do escritorio",
+    sobre: "para editar antes, no papel timbrado do escritório",
   },
 ];
 
@@ -63,9 +63,9 @@ const ASSINA_POR_PADRAO: Record<string, "CLIENTE" | "ESCRITORIO" | "AMBOS"> = {
 };
 
 const QUEM_ASSINA = [
-  { chave: "CLIENTE", rotulo: "so o cliente" },
-  { chave: "ESCRITORIO", rotulo: "so o escritorio" },
-  { chave: "AMBOS", rotulo: "cliente e escritorio" },
+  { chave: "CLIENTE", rotulo: "só o cliente" },
+  { chave: "ESCRITORIO", rotulo: "só o escritório" },
+  { chave: "AMBOS", rotulo: "cliente e escritório" },
 ];
 
 const SITUACAO: Record<string, { rotulo: string; cor: string }> = {
@@ -195,7 +195,7 @@ export function PecasDoCliente({
     });
     if (!resposta.ok) {
       const det = await resposta.json().catch(() => null);
-      throw new Error(det?.erro ?? "nao consegui montar.");
+      throw new Error(det?.erro ?? "não consegui montar.");
     }
     return resposta;
   }
@@ -251,7 +251,7 @@ export function PecasDoCliente({
       setConferidas(achadas);
     } catch (falha) {
       for (const c of achadas) URL.revokeObjectURL(c.url);
-      setErro(falha instanceof Error ? falha.message : "nao consegui montar.");
+      setErro(falha instanceof Error ? falha.message : "não consegui montar.");
     } finally {
       setOcupado(false);
     }
@@ -275,7 +275,7 @@ export function PecasDoCliente({
         }
       }
     } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : "nao consegui montar.");
+      setErro(falha instanceof Error ? falha.message : "não consegui montar.");
     } finally {
       setOcupado(false);
     }
@@ -290,7 +290,7 @@ export function PecasDoCliente({
       baixarBlob(url, nomeDe(resposta, c.chave, "DOCX"));
       URL.revokeObjectURL(url);
     } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : "nao consegui montar.");
+      setErro(falha instanceof Error ? falha.message : "não consegui montar.");
     } finally {
       setOcupado(false);
     }
@@ -303,7 +303,7 @@ export function PecasDoCliente({
     const janela = window.open(c.url, "_blank");
     if (!janela) {
       setErro(
-        "O navegador bloqueou a janela de impressao. Use 'Abrir' e imprima pela aba.",
+        "O navegador bloqueou a janela de impressão. Use 'Abrir' e imprima pela aba.",
       );
       return;
     }
@@ -332,19 +332,19 @@ export function PecasDoCliente({
         // mandar de novo manda outro e-mail e custa outro documento.
         const outra = window.confirm(
           `${det.erro}\nO envio anterior esta ${
-            SITUACAO[det.situacao]?.rotulo ?? det.situacao
+            SITUACAO[det.situação]?.rotulo ?? det.situação
           }.\n\nMandar assim mesmo? Sai outro e-mail para o cliente, e o provedor cobra outro documento.`,
         );
         if (outra) await mandarAssinar(c, true);
         return;
       }
       if (!resposta.ok) {
-        setErro(`${c.rotulo}: ${det?.erro ?? "nao consegui mandar para assinatura."}`);
+        setErro(`${c.rotulo}: ${det?.erro ?? "não consegui mandar para assinatura."}`);
         return;
       }
       setEnviados((atual) => [det.envio as EnvioNaTela, ...atual]);
     } catch {
-      setErro("Nao consegui falar com o servidor.");
+      setErro("Não consegui falar com o servidor.");
     } finally {
       setEnviando(null);
     }
@@ -374,12 +374,12 @@ export function PecasDoCliente({
       });
       const det = await resposta.json().catch(() => null);
       if (!resposta.ok) {
-        setErro(`${c.rotulo}: ${det?.erro ?? "nao consegui mandar."}`);
+        setErro(`${c.rotulo}: ${det?.erro ?? "não consegui mandar."}`);
         return;
       }
       setAviso(`${c.rotulo} enviada para ${det.mandado.telefone} no WhatsApp.`);
     } catch {
-      setErro("Nao consegui falar com o servidor.");
+      setErro("Não consegui falar com o servidor.");
     } finally {
       setEnviando(null);
     }
@@ -393,7 +393,7 @@ export function PecasDoCliente({
       const resposta = await fetch(`/api/assinaturas/${id}/conferir`, { method: "POST" });
       const det = await resposta.json().catch(() => null);
       if (!resposta.ok) {
-        setErro(det?.erro ?? "nao consegui conferir.");
+        setErro(det?.erro ?? "não consegui conferir.");
         return;
       }
       setEnviados((atual) =>
@@ -410,8 +410,8 @@ export function PecasDoCliente({
     <section className="cartao mt-6">
       <h2 className="font-semibold">Gerar documentos</h2>
       <p className="mt-1 text-sm text-slate-600">
-        Marque o que precisa. Sai no modelo do escritorio, com os dados deste
-        cliente e do contrato de honorarios dele. Confira na tela antes de
+        Marque o que precisa. Sai no modelo do escritório, com os dados deste
+        cliente e do contrato de honorários dele. Confira na tela antes de
         baixar, imprimir ou mandar para assinatura.
       </p>
 
@@ -453,10 +453,10 @@ export function PecasDoCliente({
           ))}
         </ul>
         <p className="mt-2 text-xs text-slate-500">
-          O .docx e o arquivo do escritorio, inteiro: timbre, fonte e formatacao
-          como estao no modelo. O PDF e o mesmo texto, com os mesmos valores,
-          desenhado pelo BirdJud em A4 — imagem do timbre e formatacao propria
-          do Word nao atravessam. Para um PDF identico ao papel do escritorio,
+          O .docx é o arquivo do escritório, inteiro: timbre, fonte e formatação
+          como estão no modelo. O PDF e o mesmo texto, com os mesmos valores,
+          desenhado pelo BirdJud em A4 — imagem do timbre e formatação própria
+          do Word não atravessam. Para um PDF idêntico ao papel do escritório,
           baixe o .docx e exporte do Word.
         </p>
       </div>
@@ -465,11 +465,11 @@ export function PecasDoCliente({
         <div className="mt-3 rounded border border-slate-200 p-3">
           <p className="text-sm font-medium">Quem assina</p>
           <p className="mt-1 text-xs text-slate-600">
-            Sem marcar ninguem, saem todos — que e o certo na maioria das
-            bancas. Marque quando a peca for so de alguns: uma procuracao
-            outorgando poderes a dez advogados quando dois vao atuar da poder a
+            Sem marcar ninguém, saem todos — que é o certo na maioria das
+            bancas. Marque quando a peça for só de alguns: uma procuração
+            outorgando poderes a dez advogados quando dois vão atuar da poder a
             mais gente do que o cliente quis. A escolha fica guardada neste
-            cliente para a proxima vez.
+            cliente para a próxima vez.
           </p>
           <ul className="mt-2 grid gap-1 sm:grid-cols-2">
             {advogados.map((a) => (
@@ -509,9 +509,9 @@ export function PecasDoCliente({
       {quer("RECIBO") ? (
         <div className="mt-3 grid gap-3 rounded border border-slate-200 p-3 sm:grid-cols-2">
           <p className="text-xs text-slate-600 sm:col-span-2">
-            Em branco, o recibo sai da ultima cobranca paga deste cliente. Dinheiro
-            que entrou por fora do sistema precisa ser digitado: inventar o numero
-            de um recibo seria dar quitacao de um valor que ninguem conferiu.
+            Em branco, o recibo sai da última cobrança paga deste cliente. Dinheiro
+            que entrou por fora do sistema precisa ser digitado: inventar o número
+            de um recibo seria dar quitação de um valor que ninguém conferiu.
           </p>
           <div>
             <label className="rotulo" htmlFor="rec-valor">
@@ -545,7 +545,7 @@ export function PecasDoCliente({
               id="rec-ref"
               className="campo"
               maxLength={200}
-              placeholder="honorarios da acao trabalhista"
+              placeholder="honorários da ação trabalhista"
               value={recibo.referenteA}
               onChange={(e) => setRecibo({ ...recibo, referenteA: e.target.value })}
             />
@@ -571,12 +571,12 @@ export function PecasDoCliente({
                 href={`/notas?${new URLSearchParams({
                   clienteId,
                   valor: recibo.valor,
-                  descricao: recibo.referenteA ? `Honorarios advocaticios — ${recibo.referenteA}` : "",
+                  descricao: recibo.referenteA ? `Honorários advocatícios — ${recibo.referenteA}` : "",
                 }).toString()}`}
               >
                 Preparar a nota fiscal deste recibo
               </a>
-              <span className="text-slate-500"> — ela so e emitida depois que o titular do certificado assina.</span>
+              <span className="text-slate-500"> — ela só é emitida depois que o titular do certificado assina.</span>
             </p>
           ) : null}
         </div>
@@ -603,7 +603,7 @@ export function PecasDoCliente({
         </button>
         {conferidas.length > 0 ? (
           <button type="button" className="botao-discreto" onClick={esquecerConferidas}>
-            fechar conferencia
+            fechar conferência
           </button>
         ) : null}
       </div>
@@ -616,19 +616,19 @@ export function PecasDoCliente({
           <p className="text-sm font-medium">{c.rotulo}</p>
           <p className="text-xs text-slate-500">
             {c.doEscritorio
-              ? "Modelo do escritorio."
-              : "Modelo que ja vem no sistema — pode ser trocado em Modelos."}
+              ? "Modelo do escritório."
+              : "Modelo que já vem no sistema — pode ser trocado em Modelos."}
             {c.paginas ? ` ${c.paginas} pagina${c.paginas === "1" ? "" : "s"}.` : ""}
           </p>
 
           {c.semValor.length > 0 ? (
             <p className="mt-1 text-xs text-amber-700">
-              Sem valor no cadastro, e por isso marcado na peca: {c.semValor.join(", ")}.
+              Sem valor no cadastro, e por isso marcado na peça: {c.semValor.join(", ")}.
             </p>
           ) : null}
           {c.desconhecidos.length > 0 ? (
             <p className="mt-1 text-xs text-amber-700">
-              O modelo pede campos que o sistema nao conhece:{" "}
+              O modelo pede campos que o sistema não conhece:{" "}
               {c.desconhecidos.map((d) => `{{${d}}}`).join(", ")}.
             </p>
           ) : null}
@@ -679,7 +679,7 @@ export function PecasDoCliente({
                 title={
                   telefoneDoCliente
                     ? `Manda o PDF para ${telefoneDoCliente}`
-                    : "O cliente esta sem telefone no cadastro"
+                    : "O cliente está sem telefone no cadastro"
                 }
                 onClick={() => mandarNoWhatsapp(c)}
               >
@@ -699,8 +699,8 @@ export function PecasDoCliente({
           {whatsappLigado ? (
             <p className="mt-1 text-xs text-slate-500">
               {telefoneDoCliente
-                ? `Vai para ${telefoneDoCliente}, o telefone do cadastro — nao ha onde digitar outro, de proposito.`
-                : "Sem telefone no cadastro, nao da para mandar: mandar documento de um cliente para o numero de outro nao se desfaz."}
+                ? `Vai para ${telefoneDoCliente}, o telefone do cadastro — não há onde digitar outro, de propósito.`
+                : "Sem telefone no cadastro, não dá para mandar: mandar documento de um cliente para o número de outro não se desfaz."}
             </p>
           ) : null}
 
@@ -708,9 +708,9 @@ export function PecasDoCliente({
             <div className="mt-3 rounded border border-slate-200 p-3">
               <p className="text-sm font-medium">Mandar para assinatura</p>
               <p className="mt-1 text-xs text-slate-600">
-                Sai pelo Autentique, com o plano do escritorio. O e-mail para
-                quem assina sai na hora e nao da para desfazer — e cada
-                documento e cobrado do escritorio. Vai este PDF, o mesmo que
+                Sai pelo Autentique, com o plano do escritório. O e-mail para
+                quem assina sai na hora e não dá para desfazer — e cada
+                documento é cobrado do escritório. Vai este PDF, o mesmo que
                 esta ai em cima.
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -739,7 +739,7 @@ export function PecasDoCliente({
                 </button>
               </div>
               <p className="mt-2 text-xs text-slate-500">
-                O padrao de cada peca ja vem escolhido: a procuracao e a
+                O padrão de cada peça já vem escolhido: a procuração e a
                 declaracao sao atos do cliente e so ele assina; o recibo e do
                 escritorio, que e quem da quitacao; o contrato e dos dois.
               </p>
@@ -785,7 +785,7 @@ export function PecasDoCliente({
                         ) : a.assinadoEm ? (
                           <span className="text-emerald-700">assinou</span>
                         ) : (
-                          <span className="text-slate-500">ainda nao assinou</span>
+                          <span className="text-slate-500">ainda não assinou</span>
                         )}
                         {a.link && !a.assinadoEm && !a.recusadoEm ? (
                           <a

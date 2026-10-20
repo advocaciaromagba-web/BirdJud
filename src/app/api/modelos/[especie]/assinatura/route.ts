@@ -36,12 +36,12 @@ export async function POST(
     const { escritorioId, usuarioId } = await exigirSessao("ASSINATURA");
     const { especie } = await params;
     if (!ehEspecie(especie)) {
-      return NextResponse.json({ erro: "Especie invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
     }
 
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
     const { clienteId, contratoId, processoId } = corpo.data;
 
@@ -49,7 +49,7 @@ export async function POST(
       db.cliente.findFirst({ where: { id: clienteId } }),
     );
     if (!cliente) {
-      return NextResponse.json({ erro: "Cliente nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Cliente não encontrado." }, { status: 404 });
     }
 
     const [representantes, contrato, processo, escritorio, advogados] = await Promise.all([
@@ -106,7 +106,7 @@ export async function POST(
     ]);
 
     if (!escritorio) {
-      return NextResponse.json({ erro: "Escritorio nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Escritório não encontrado." }, { status: 404 });
     }
 
     const escolhidos =

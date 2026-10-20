@@ -27,7 +27,7 @@ export class EnvioRepetido extends Error {
     readonly envioId: string,
     readonly situacao: string,
   ) {
-    super("Esta peca ja foi mandada para assinatura deste cliente.");
+    super("Esta peça já foi mandada para assinatura deste cliente.");
     this.name = "EnvioRepetido";
   }
 }
@@ -166,7 +166,7 @@ export async function conferirEnvio(
   const envio = await comEscritorio(escritorioId, (db) =>
     db.envioParaAssinatura.findFirst({ where: { id: envioId } }),
   );
-  if (!envio) throw new AutentiqueRecusou("Envio nao encontrado.");
+  if (!envio) throw new AutentiqueRecusou("Envio não encontrado.");
 
   const { token } = await obterIntegracao<{ token: string }>(escritorioId, "AUTENTIQUE");
   const documento = await consultarDocumento(token, envio.idNoProvedor);

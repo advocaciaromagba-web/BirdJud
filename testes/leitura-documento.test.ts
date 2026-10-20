@@ -20,26 +20,26 @@ import {
 } from "../src/lib/leitura-documento";
 
 describe("CPF e CNPJ", () => {
-  it("confere o digito verificador", () => {
+  it("confere o dígito verificador", () => {
     expect(cpfValido("529.982.247-25")).toBe(true);
     expect(cpfValido("529.982.247-26")).toBe(false);
     expect(cnpjValido("11.222.333/0001-81")).toBe(true);
     expect(cnpjValido("11.222.333/0001-82")).toBe(false);
   });
 
-  it("numero repetido nao passa, mesmo fechando a conta", () => {
+  it("número repetido não passa, mesmo fechando a conta", () => {
     expect(cpfValido("111.111.111-11")).toBe(false);
     expect(cnpjValido("11.111.111/1111-11")).toBe(false);
   });
 
-  it("poe a mascara que o escritorio le", () => {
+  it("poe a máscara que o escritório le", () => {
     expect(formatarDocumento("52998224725")).toBe("529.982.247-25");
     expect(formatarDocumento("11222333000181")).toBe("11.222.333/0001-81");
   });
 });
 
 describe("leitura de documento", () => {
-  it("aceita so os campos do perfil", () => {
+  it("aceita só os campos do perfil", () => {
     const leitura = interpretar(
       "CLIENTE",
       JSON.stringify({
@@ -56,7 +56,7 @@ describe("leitura de documento", () => {
     expect(leitura.campos.nome.origem).toBe("RG");
   });
 
-  it("CPF que nao fecha o digito desce para BAIXA e ganha observacao", () => {
+  it("CPF que não fecha o dígito desce para BAIXA e ganha observação", () => {
     const leitura = interpretar(
       "CLIENTE",
       JSON.stringify({
@@ -66,10 +66,10 @@ describe("leitura de documento", () => {
     );
 
     expect(leitura.campos.documento.confianca).toBe("BAIXA");
-    expect(leitura.observacoes.join(" ")).toContain("digito verificador");
+    expect(leitura.observacoes.join(" ")).toContain("dígito verificador");
   });
 
-  it("CPF certo volta com mascara e mantem a confianca", () => {
+  it("CPF certo volta com máscara e mantém a confiança", () => {
     const leitura = interpretar(
       "CLIENTE",
       JSON.stringify({
@@ -82,7 +82,7 @@ describe("leitura de documento", () => {
     expect(leitura.campos.documento.confianca).toBe("ALTA");
   });
 
-  it("numero de processo vira digitos; fora do padrao do CNJ, desce para BAIXA", () => {
+  it("número de processo vira dígitos; fora do padrão do CNJ, desce para BAIXA", () => {
     const bom = interpretar(
       "PROCESSO",
       JSON.stringify({
@@ -104,7 +104,7 @@ describe("leitura de documento", () => {
     expect(ruim.observacoes.join(" ")).toContain("CNJ");
   });
 
-  it("campo sem confianca declarada nao entra como certo", () => {
+  it("campo sem confiança declarada não entra como certo", () => {
     const leitura = interpretar(
       "CLIENTE",
       JSON.stringify({ campos: { nome: { valor: "Joao" } } }),
@@ -112,7 +112,7 @@ describe("leitura de documento", () => {
     expect(leitura.campos.nome.confianca).toBe("MEDIA");
   });
 
-  it("le mesmo com cerca de codigo em volta", () => {
+  it("le mesmo com cerca de código em volta", () => {
     const leitura = interpretar(
       "CLIENTE",
       '```json\n{"campos":{"nome":{"valor":"Ana","confianca":"ALTA"}}}\n```',
@@ -120,13 +120,13 @@ describe("leitura de documento", () => {
     expect(leitura.campos.nome.valor).toBe("Ana");
   });
 
-  it("resposta que nao e JSON vira erro, nao cadastro vazio", () => {
+  it("resposta que não e JSON vira erro, não cadastro vazio", () => {
     expect(() =>
-      interpretar("CLIENTE", "nao consegui ler os documentos"),
+      interpretar("CLIENTE", "não consegui ler os documentos"),
     ).toThrow(LeituraIlegivel);
   });
 
-  it("valor vazio nao vira campo", () => {
+  it("valor vazio não vira campo", () => {
     const leitura = interpretar(
       "CLIENTE",
       JSON.stringify({ campos: { nome: { valor: "   ", confianca: "ALTA" } } }),
@@ -134,10 +134,10 @@ describe("leitura de documento", () => {
     expect(leitura.campos).toEqual({});
   });
 
-  it("a instrucao lista os campos do perfil e proibe inventar", () => {
+  it("a instrução lista os campos do perfil e proibe inventar", () => {
     const instrucao = montarInstrucao("CLIENTE");
     expect(instrucao).toContain('"documento"');
-    expect(instrucao).toContain("Nao invente");
+    expect(instrucao).toContain("Não invente");
     expect(instrucao).not.toContain('"tribunal"');
     expect(rotuloDoCampo("PROCESSO", "vara")).toBe("Vara");
   });
@@ -148,7 +148,7 @@ describe("leitura de documento", () => {
 // inconveniente. Por isso data que nao da para entender e recusada, nunca
 // adivinhada.
 describe("leitura para a agenda", () => {
-  it("aceita os formatos que aparecem em intimacao brasileira", () => {
+  it("aceita os formatos que aparecem em intimação brasileira", () => {
     expect(normalizarDataHora("2026-11-03T14:30")).toBe("2026-11-03T14:30");
     expect(normalizarDataHora("2026-11-03 14:30")).toBe("2026-11-03T14:30");
     expect(normalizarDataHora("03/11/2026 14:30")).toBe("2026-11-03T14:30");
@@ -162,7 +162,7 @@ describe("leitura para a agenda", () => {
 
   // O Date "corrige" 31/11 para 01/12 em silencio, e a audiencia mudaria de
   // mes sem ninguem ver.
-  it("recusa data que nao existe em vez de deslizar para o mes seguinte", () => {
+  it("recusa data que não existe em vez de deslizar para o mês seguinte", () => {
     expect(normalizarDataHora("31/11/2026 10:00")).toBeNull();
     expect(normalizarDataHora("30/02/2026 10:00")).toBeNull();
     expect(normalizarDataHora("2026-02-30T10:00")).toBeNull();
@@ -174,12 +174,12 @@ describe("leitura para a agenda", () => {
     expect(normalizarDataHora("")).toBeNull();
   });
 
-  it("a leitura rebaixa e explica quando a data nao serve", () => {
+  it("a leitura rebaixa e explica quando a data não serve", () => {
     const leitura = interpretar(
       "AGENDA",
       JSON.stringify({
         campos: {
-          titulo: { valor: "Audiencia de instrucao", confianca: "ALTA" },
+          titulo: { valor: "Audiência de instrução", confianca: "ALTA" },
           inicio: { valor: "em quinze dias", confianca: "ALTA" },
           local: { valor: "Forum Ruy Barbosa, sala 3", confianca: "ALTA" },
         },
@@ -188,16 +188,16 @@ describe("leitura para a agenda", () => {
     );
     // Campo que a tela nao conseguiria usar nao entra preenchido com lixo.
     expect(leitura.campos.inicio).toBeUndefined();
-    expect(leitura.campos.titulo.valor).toBe("Audiencia de instrucao");
-    expect(leitura.observacoes.join(" ")).toContain("nao pode ser entendida");
+    expect(leitura.campos.titulo.valor).toBe("Audiência de instrução");
+    expect(leitura.observacoes.join(" ")).toContain("não pode ser entendida");
   });
 
-  it("aceita a data boa e mantem o resto", () => {
+  it("aceita a data boa e mantém o resto", () => {
     const leitura = interpretar(
       "AGENDA",
       JSON.stringify({
         campos: {
-          titulo: { valor: "Audiencia una", confianca: "ALTA" },
+          titulo: { valor: "Audiência una", confianca: "ALTA" },
           inicio: { valor: "03/11/2026 as 14:30", confianca: "ALTA" },
           local: { valor: "Forum", confianca: "MEDIA" },
           // Campo que o perfil nao conhece continua sendo descartado.
@@ -221,7 +221,7 @@ describe("leitura de conta de consumo", () => {
       JSON.stringify({
         campos: {
           fornecedor: { valor: "EMBASA", confianca: "ALTA" },
-          descricao: { valor: "Conta de agua - setembro", confianca: "ALTA" },
+          descricao: { valor: "Conta de água - setembro", confianca: "ALTA" },
           valor: { valor: "189,47", confianca: "ALTA" },
           vencimento: { valor: "10/10/2026", confianca: "ALTA" },
           categoria: { valor: "AGUA", confianca: "ALTA" },
@@ -235,7 +235,7 @@ describe("leitura de conta de consumo", () => {
     expect(leitura.campos.categoria.valor).toBe("AGUA");
   });
 
-  it("aceita o rotulo em minuscula e com espaco, e normaliza", () => {
+  it("aceita o rotulo em minuscula e com espaço, e normaliza", () => {
     const leitura = interpretar(
       "CONTA",
       JSON.stringify({
@@ -247,7 +247,7 @@ describe("leitura de conta de consumo", () => {
   });
 
   // Categoria inventada quebra o grafico e o comparativo entre meses.
-  it("descarta categoria que nao existe no catalogo, e explica", () => {
+  it("descarta categoria que não existe no catálogo, e explica", () => {
     const leitura = interpretar(
       "CONTA",
       JSON.stringify({
@@ -256,10 +256,10 @@ describe("leitura de conta de consumo", () => {
       }),
     );
     expect(leitura.campos.categoria).toBeUndefined();
-    expect(leitura.observacoes.join(" ")).toContain("nao existe no catalogo");
+    expect(leitura.observacoes.join(" ")).toContain("não existe no catálogo");
   });
 
-  it("descarta valor que nao vira dinheiro, e explica", () => {
+  it("descarta valor que não vira dinheiro, e explica", () => {
     const leitura = interpretar(
       "CONTA",
       JSON.stringify({
@@ -286,17 +286,17 @@ describe("leitura de conta de consumo", () => {
     expect(leitura.campos.vencimento).toBeUndefined();
   });
 
-  it("a instrucao lista as categorias validas", () => {
+  it("a instrução lista as categorias válidas", () => {
     const instrucao = montarInstrucao("CONTA");
     expect(instrucao).toContain("ENERGIA");
     expect(instrucao).toContain("TOTAL A PAGAR");
   });
 });
 
-describe("cliente por documento de identidade e comprovante de endereco", () => {
+describe("cliente por documento de identidade e comprovante de endereço", () => {
   const campo = (valor: string, confianca = "ALTA") => ({ valor, confianca });
 
-  it("preenche qualificacao e endereco, normalizando cada um", () => {
+  it("preenche qualificação e endereço, normalizando cada um", () => {
     const leitura = interpretar(
       "CLIENTE",
       JSON.stringify({
@@ -330,13 +330,13 @@ describe("cliente por documento de identidade e comprovante de endereco", () => 
     expect(leitura.observacoes).toContain("Conta de energia em nome do marido.");
   });
 
-  it("CEP, UF e nascimento que nao servem ficam de fora, explicados", () => {
+  it("CEP, UF e nascimento que não servem ficam de fora, explicados", () => {
     const leitura = interpretar(
       "CLIENTE",
       JSON.stringify({
         campos: {
           cep: campo("1484-000"),
-          uf: campo("Sao Paulo"),
+          uf: campo("São Paulo"),
           nascimento: campo("mil novecentos e oitenta"),
         },
         observacoes: [],
@@ -348,15 +348,15 @@ describe("cliente por documento de identidade e comprovante de endereco", () => 
     expect(leitura.observacoes.join(" ")).toMatch(/nascimento/);
   });
 
-  it("a instrucao separa identidade de comprovante e nao usa o telefone da conta", () => {
+  it("a instrução separa identidade de comprovante e não usa o telefone da conta", () => {
     const instrucao = montarInstrucao("CLIENTE");
     expect(instrucao).toMatch(/comprovante/);
     expect(instrucao).toMatch(/nome de outra pessoa/);
-    expect(instrucao).toMatch(/nao use/);
-    expect(instrucao).not.toMatch(/conta com valores de varios meses/);
+    expect(instrucao).toMatch(/não use/);
+    expect(instrucao).not.toMatch(/conta com valores de vários meses/);
   });
 
-  it("no processo, numero continua sendo o numero unico do CNJ", () => {
+  it("no processo, número continua sendo o número único do CNJ", () => {
     const leitura = interpretar(
       "PROCESSO",
       JSON.stringify({ campos: { numero: campo("120") }, observacoes: [] }),
@@ -365,7 +365,7 @@ describe("cliente por documento de identidade e comprovante de endereco", () => 
   });
 });
 
-describe("cadastro fiscal da empresa da plataforma, com o endereco da sede", () => {
+describe("cadastro fiscal da empresa da plataforma, com o endereço da sede", () => {
   // Cartao CNPJ da Blackbird: o console e a implantacao preenchem tambem a
   // sede (a nota da mensalidade exige o endereco do tomador com CNPJ).
   const resposta = JSON.stringify({
@@ -384,13 +384,13 @@ describe("cadastro fiscal da empresa da plataforma, com o endereco da sede", () 
     observacoes: [],
   });
 
-  it("a instrucao pede a sede e diz de quem e o cadastro", () => {
+  it("a instrução pede a sede e diz de quem e o cadastro", () => {
     const instrucao = montarInstrucao("FISCAL");
     expect(instrucao).toContain('"logradouro"');
     expect(instrucao).toContain("empresa da plataforma");
   });
 
-  it("le endereco, telefone e e-mail, e o IBGE sai do CEP", () => {
+  it("le endereço, telefone e e-mail, e o IBGE sai do CEP", () => {
     const lida = completarCadastroFiscal(interpretar("FISCAL", resposta), "3518206");
     expect(lida.campos.cep.valor).toBe("14842-042");
     expect(lida.campos.logradouro.valor).toBe("R Rui Barbosa");
@@ -402,7 +402,7 @@ describe("cadastro fiscal da empresa da plataforma, com o endereco da sede", () 
   });
 });
 
-describe("cadastro fiscal por cartao CNPJ e contrato social", () => {
+describe("cadastro fiscal por cartão CNPJ e contrato social", () => {
   const resposta = JSON.stringify({
     campos: {
       razaoSocial: { valor: "Roma Sociedade de Advogados", confianca: "ALTA" },
@@ -417,14 +417,14 @@ describe("cadastro fiscal por cartao CNPJ e contrato social", () => {
     observacoes: [],
   });
 
-  it("a instrucao nao pede o que o sistema deriva", () => {
+  it("a instrução não pede o que o sistema deriva", () => {
     const instrucao = montarInstrucao("FISCAL");
     expect(instrucao).toContain('"cnae"');
     expect(instrucao).not.toContain('"codigoMunicipio"');
     expect(instrucao).not.toContain('"codigoTributacao"');
   });
 
-  it("IBGE sai do CEP e o codigo do servico do CNAE", () => {
+  it("IBGE sai do CEP e o código do serviço do CNAE", () => {
     const lida = interpretar("FISCAL", resposta);
     expect(lida.campos.codigoTributacao).toBeUndefined();
     expect(lida.campos.codigoMunicipio).toBeUndefined();
@@ -435,10 +435,10 @@ describe("cadastro fiscal por cartao CNPJ e contrato social", () => {
     expect(completa.campos.codigoMunicipio.valor).toBe("3518602");
     expect(completa.campos.codigoTributacao.valor).toBe("171401");
     expect(completa.campos.codigoTributacao.confianca).toBe("MEDIA");
-    expect(completa.observacoes.join(" ")).toContain("aliquota");
+    expect(completa.observacoes.join(" ")).toContain("alíquota");
   });
 
-  it("CNAE que nao e de advocacia fica sem codigo, e sem IBGE avisa", () => {
+  it("CNAE que não e de advocacia fica sem código, e sem IBGE avisa", () => {
     const lida = interpretar(
       "FISCAL",
       JSON.stringify({ campos: { cnae: { valor: "8211-3/00" }, cep: { valor: "14840-000" } }, observacoes: [] }),

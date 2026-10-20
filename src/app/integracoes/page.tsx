@@ -26,9 +26,9 @@ export default async function PaginaIntegracoes({
     if (erro instanceof SemPermissao) {
       return (
         <main className="mx-auto max-w-2xl p-10">
-          <h1 className="text-2xl font-bold">Area restrita</h1>
+          <h1 className="text-2xl font-bold">Área restrita</h1>
           <p className="mt-3 text-slate-600">
-            So administradores do escritorio conectam integracoes.
+            Só administradores do escritório conectam integrações.
           </p>
         </main>
       );
@@ -95,17 +95,17 @@ export default async function PaginaIntegracoes({
       titulo="Integracoes"
     >
       <p className="mt-1 text-sm text-slate-500">
-        Cada escritorio conecta as proprias contas. As credenciais ficam
+        Cada escritório conecta as próprias contas. As credenciais ficam
         cifradas e nunca aparecem de volta na tela.
       </p>
       {retorno.nuvem === "conectada" ? (
         <p className="aviso-ok mt-4">
-          Nuvem conectada. A pasta BirdJud / Clientes ja foi criada, e as pastas
-          dos clientes estao sendo criadas agora.
+          Nuvem conectada. A pasta BirdJud / Clientes já foi criada, e as pastas
+          dos clientes estão sendo criadas agora.
         </p>
       ) : retorno.nuvem === "erro" ? (
         <p className="aviso-erro mt-4">
-          {retorno.motivo?.slice(0, 200) || "Nao foi possivel conectar a nuvem."}
+          {retorno.motivo?.slice(0, 200) || "Não foi possível conectar a nuvem."}
         </p>
       ) : null}
       <PainelIntegracoes integracoes={integracoes} />

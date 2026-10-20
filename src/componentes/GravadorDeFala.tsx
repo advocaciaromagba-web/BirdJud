@@ -146,7 +146,7 @@ export function GravadorDeFala({
       await instalador.call(F, { langs: [IDIOMA] });
       await conferir();
     } catch {
-      setErro("Nao deu para baixar o portugues agora. Tente de novo.");
+      setErro("Não deu para baixar o português agora. Tente de novo.");
     } finally {
       setInstalando(false);
     }
@@ -184,10 +184,10 @@ export function GravadorDeFala({
       const nome = (e as { name?: string })?.name;
       setErro(
         nome === "NotAllowedError"
-          ? "O navegador bloqueou o microfone. Clique no cadeado ao lado do endereco e autorize o microfone."
+          ? "O navegador bloqueou o microfone. Clique no cadeado ao lado do endereço e autorize o microfone."
           : nome === "NotFoundError"
             ? "Nenhum microfone foi encontrado neste computador."
-            : `Nao foi possivel acessar o microfone (${nome ?? "erro desconhecido"}).`,
+            : `Não foi possível acessar o microfone (${nome ?? "erro desconhecido"}).`,
       );
     }
   }
@@ -288,7 +288,7 @@ export function GravadorDeFala({
       setOuvindo(true);
       onOrigem?.(local ? "LOCAL" : "NUVEM");
     } catch {
-      setErro("Nao deu para comecar a ouvir. Confira o microfone.");
+      setErro("Não deu para começar a ouvir. Confira o microfone.");
     }
   }
 
@@ -322,22 +322,22 @@ export function GravadorDeFala({
             disabled={instalando}
             className="botao-secundario text-xs"
           >
-            {instalando ? "Baixando o portugues..." : "Baixar o portugues"}
+            {instalando ? "Baixando o português..." : "Baixar o português"}
           </button>
         </div>
       ) : null}
 
       {podeNuvem && !aceitouNuvem ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-          <p className="font-semibold">Atencao ao sigilo profissional</p>
+          <p className="font-semibold">Atenção ao sigilo profissional</p>
           <p className="mt-1">
-            Este navegador nao transcreve sem ajuda externa. Se voce ativar, o audio da conversa vai para o servico de
+            Este navegador não transcreve sem ajuda externa. Se você ativar, o áudio da conversa vai para o serviço de
             reconhecimento de voz do navegador para virar texto. Para muitos atendimentos isso e aceitavel; para
-            conversas sensiveis, talvez nao. A alternativa sem envio nenhum e digitar no campo abaixo.
+            conversas sensíveis, talvez não. A alternativa sem envio nenhum é digitar no campo abaixo.
           </p>
           <label className="mt-2 flex items-start gap-2">
             <input type="checkbox" className="mt-0.5" checked={aceitouNuvem} onChange={(e) => setAceitouNuvem(e.target.checked)} />
-            <span>Estou ciente e autorizo a transcricao por servico externo nesta entrevista.</span>
+            <span>Estou ciente e autorizo a transcrição por serviço externo nesta entrevista.</span>
           </label>
         </div>
       ) : null}
@@ -349,7 +349,7 @@ export function GravadorDeFala({
         </button>
         {testandoMic ? (
           <>
-            <div className="h-2.5 min-w-[8rem] flex-1 overflow-hidden rounded-full bg-slate-200" aria-label="Nivel do microfone">
+            <div className="h-2.5 min-w-[8rem] flex-1 overflow-hidden rounded-full bg-slate-200" aria-label="Nível do microfone">
               <div className={`h-full ${nivel > 8 ? "bg-emerald-500" : "bg-slate-400"}`} style={{ width: `${nivel}%` }} />
             </div>
             <span className="text-xs text-slate-500">{nivel > 8 ? "captando" : "silencio"}</span>
@@ -358,8 +358,8 @@ export function GravadorDeFala({
       </div>
       {testandoMic ? (
         <p className="text-xs text-slate-500">
-          Fale agora. Se a barra nao se mexer, o problema e o microfone ou a permissao do navegador — nao o
-          reconhecimento.{jaCaptou ? " O microfone esta funcionando." : ""}
+          Fale agora. Se a barra não se mexer, o problema é o microfone ou a permissão do navegador — não o
+          reconhecimento.{jaCaptou ? " O microfone está funcionando." : ""}
           {microfones.length ? ` Microfones: ${microfones.join(" · ")}.` : ""}
         </p>
       ) : null}
@@ -405,7 +405,7 @@ export function GravadorDeFala({
       {ouvindo && semFalaHa >= SEGUNDOS_ATE_AVISAR_SILENCIO ? (
         <p className="text-xs text-amber-800">
           Faz {semFalaHa}s que nada e ouvido. Confira se o microfone certo
-          esta selecionado — e o jeito mais comum de perder uma entrevista
+          está selecionado — é o jeito mais comum de perder uma entrevista
           inteira.
         </p>
       ) : null}

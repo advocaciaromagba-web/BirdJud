@@ -19,6 +19,6 @@ export async function cutucarNuvem(escritorioId: string): Promise<void> {
     if (jaNaFila) return;
     await enfileirar("ORGANIZAR_NUVEM", escritorioId);
   } catch (erro) {
-    console.log(`nuvem ${escritorioId}: rotina nao agendada ${(erro as Error).message}`.slice(0, 300));
+    console.log(`nuvem ${escritorioId}: rotina não agendada ${(erro as Error).message}`.slice(0, 300));
   }
 }

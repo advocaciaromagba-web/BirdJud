@@ -41,13 +41,13 @@ import { lerArquivo } from "../src/lib/arquivos";
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
-/** Texto longo o bastante para valer uma organizacao. */
+/** Texto longo o bastante para valer uma organização. */
 const RELATO = [
   "O cliente trabalhou cinco anos na fazenda sem registro em carteira.",
   "Saiu em marco de 2026, depois de uma discussao com o gerente.",
-  "Nao recebeu aviso previo nem as ferias que tinha a receber.",
+  "Não recebeu aviso prévio nem as ferias que tinha a receber.",
   "Disse que o colega do setor viu tudo e aceita testemunhar.",
-  "Tem recibos de pagamento feitos a mao, guardados numa pasta em casa.",
+  "Tem recibos de pagamento feitos a mão, guardados numa pasta em casa.",
 ].join(" ");
 
 d("entrevista de triagem", () => {
@@ -56,7 +56,7 @@ d("entrevista de triagem", () => {
   let saida: Record<string, unknown> = {};
   let chamadas = 0;
   let quebrado = false;
-  /** O que foi mandado a IA na ultima chamada. */
+  /** O que foi mandado a IA na última chamada. */
   let ultimoCorpo = "";
 
   beforeAll(async () => {
@@ -118,7 +118,7 @@ d("entrevista de triagem", () => {
     saida = { perguntas: ["Quando foi dispensado?", "Tem recibo?"] };
   });
 
-  /** Quanto ja foi medido desta metrica para este escritorio no mes. */
+  /** Quanto já foi medido desta métrica para este escritório no mês. */
   async function medidoDe(metrica: string): Promise<number> {
     const linhas = await comEscritorio(escritorio, (db) =>
       db.consumoMensal.findMany({ where: { metrica } }),
@@ -136,7 +136,7 @@ d("entrevista de triagem", () => {
     });
   }
 
-  it("nasce sem cliente: quem procura o escritorio pode nao contratar", async () => {
+  it("nasce sem cliente: quem procura o escritório pode não contratar", async () => {
     const e = await nova();
     expect(e.clienteId).toBeNull();
     expect(e.situacao).toBe("RASCUNHO");
@@ -151,7 +151,7 @@ d("entrevista de triagem", () => {
     expect(await medido()).toBeGreaterThan(antes);
   });
 
-  it("IA fora do ar nao deixa a entrevista sem roteiro", async () => {
+  it("IA fora do ar não deixa a entrevista sem roteiro", async () => {
     const e = await nova();
     quebrado = true;
     const { perguntas, comIA } = await gerarRoteiro(escritorio, e.id, "u");
@@ -163,7 +163,7 @@ d("entrevista de triagem", () => {
     expect(guardada?.situacao).toBe("ROTEIRO");
   });
 
-  it("pedir o roteiro de novo substitui, nao empilha", async () => {
+  it("pedir o roteiro de novo substitui, não empilha", async () => {
     const e = await nova();
     await gerarRoteiro(escritorio, e.id, "u");
     saida = { perguntas: ["Outra pergunta?"] };
@@ -171,7 +171,7 @@ d("entrevista de triagem", () => {
     expect(perguntas).toEqual(["Outra pergunta?"]);
   });
 
-  it("anotacao curta nao vira chamada paga", async () => {
+  it("anotação curta não vira chamada paga", async () => {
     const e = await nova();
     await anotar(escritorio, e.id, "Foi demitido.");
     chamadas = 0;
@@ -181,7 +181,7 @@ d("entrevista de triagem", () => {
     expect(chamadas).toBe(0);
   });
 
-  it("organiza a anotacao e guarda o texto original junto", async () => {
+  it("organiza a anotação e guarda o texto original junto", async () => {
     const e = await nova();
     await anotar(escritorio, e.id, RELATO);
     saida = {
@@ -189,10 +189,10 @@ d("entrevista de triagem", () => {
       resumo: "Trabalhou sem registro e saiu sem receber.",
       fatos: ["Trabalhou cinco anos sem registro."],
       pretensoes: ["Receber as verbas"],
-      documentosCitados: ["recibos feitos a mao"],
+      documentosCitados: ["recibos feitos a mão"],
       documentosQueFaltam: ["CTPS"],
       testemunhas: ["colega do setor"],
-      pontosDeAtencao: ["Conferir se ha risco de prescricao"],
+      pontosDeAtencao: ["Conferir se há risco de prescrição"],
       perguntasEmAberto: ["Qual era o salario?"],
       urgencia: "ALTA",
       valorEnvolvido: null,
@@ -211,7 +211,7 @@ d("entrevista de triagem", () => {
     expect(guardada?.transcricao).toBe(RELATO);
   });
 
-  it("urgencia fora da lista vira MEDIA, em vez de ir crua para a coluna", async () => {
+  it("urgência fora da lista vira MEDIA, em vez de ir crua para a coluna", async () => {
     const e = await nova();
     await anotar(escritorio, e.id, RELATO);
     saida = {
@@ -231,7 +231,7 @@ d("entrevista de triagem", () => {
     expect(analise.urgencia).toBe("MEDIA");
   });
 
-  it("reescrever a anotacao apaga a analise: ela descrevia outro texto", async () => {
+  it("reescrever a anotação apaga a análise: ela descrevia outro texto", async () => {
     const e = await nova();
     await anotar(escritorio, e.id, RELATO);
     saida = {
@@ -258,7 +258,7 @@ d("entrevista de triagem", () => {
     expect(guardada?.situacao).toBe("ANOTADA");
   });
 
-  it("o audio transcrito ACRESCENTA a anotacao, nao substitui", async () => {
+  it("o áudio transcrito ACRESCENTA a anotação, não substitui", async () => {
     // Quem envia o audio da segunda metade da reuniao nao quer perder a
     // primeira. Apagar o campo antes e reversivel; perder o que ja estava
     // escrito, nao.
@@ -269,7 +269,7 @@ d("entrevista de triagem", () => {
       req.on("data", () => {});
       req.on("end", () => {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ text: "Parte vinda do audio.", duration: 130 }));
+        res.end(JSON.stringify({ text: "Parte vinda do áudio.", duration: 130 }));
       });
     });
     await new Promise<void>((ok) => audio.listen(0, "127.0.0.1", ok));
@@ -284,8 +284,8 @@ d("entrevista de triagem", () => {
         dados: Buffer.alloc(200 * 1024, 3),
       });
       expect(r.texto).toContain(RELATO);
-      expect(r.texto).toContain("Parte vinda do audio.");
-      expect(r.acrescentado).toBe("Parte vinda do audio.");
+      expect(r.texto).toContain("Parte vinda do áudio.");
+      expect(r.acrescentado).toBe("Parte vinda do áudio.");
 
       // 130 segundos arredondam para 3 minutos.
       expect(await medidoDe("TRANSCRICAO_MIN")).toBe(antes + 3);
@@ -295,7 +295,7 @@ d("entrevista de triagem", () => {
     }
   });
 
-  it("gravacao na tela: trechos pela OpenAI, como ela responde de verdade", async () => {
+  it("gravação na tela: trechos pela OpenAI, como ela responde de verdade", async () => {
     // Como a API real do gpt-4o-transcribe: verbose_json e recusado (400) e a
     // resposta traz so o texto. Antes, toda transcricao de audio falhava aqui.
     const respostas = ["Bom dia, doutor.", "", "Fui demitido em marco."];
@@ -335,7 +335,7 @@ d("entrevista de triagem", () => {
     }
   });
 
-  it("oitiva de testemunha: roteiro proprio, com o processo; sem peticao inicial; exclui de vez", async () => {
+  it("oitiva de testemunha: roteiro próprio, com o processo; sem petição inicial; exclui de vez", async () => {
     await comEscritorio(escritorio, (db) =>
       db.processo.create({
         data: semEscritorio({
@@ -343,7 +343,7 @@ d("entrevista de triagem", () => {
           classe: "RECLAMACAO TRABALHISTA",
           partes: [{ nome: "JOAO DA SILVA", polo: "A" }, { nome: "FAZENDA BOA VISTA LTDA", polo: "P" }],
           ultimoAndamentoTipo: "Despacho",
-          ultimoAndamentoTexto: "Designo audiencia de instrucao.",
+          ultimoAndamentoTexto: "Designo audiência de instrução.",
         }),
       }),
     );
@@ -363,13 +363,13 @@ d("entrevista de triagem", () => {
     expect(e.tipo).toBe("TESTEMUNHA");
     expect(e.processoId).not.toBeNull();
 
-    await gerarRoteiro(escritorio, e.id, "x", "reclamacao trabalhista");
+    await gerarRoteiro(escritorio, e.id, "x", "reclamação trabalhista");
     // O pedido a IA leva o roteiro de testemunha e o contexto do processo.
     expect(ultimoCorpo).toContain("TESTEMUNHA");
     expect(ultimoCorpo).toContain("Oitiva de testemunha");
     expect(ultimoCorpo).toContain("RECLAMACAO TRABALHISTA");
     expect(ultimoCorpo).toContain("FAZENDA BOA VISTA LTDA");
-    expect(ultimoCorpo).toContain("Designo audiencia de instrucao.");
+    expect(ultimoCorpo).toContain("Designo audiência de instrução.");
 
     // Texto da peticao inicial e so da triagem.
     await expect(gerarMinuta(escritorio, e.id, "x")).rejects.toBeInstanceOf(EntrevistaIncompleta);
@@ -379,26 +379,26 @@ d("entrevista de triagem", () => {
     await expect(excluirEntrevista(escritorio, e.id)).rejects.toBeInstanceOf(EntrevistaNaoEncontrada);
   });
 
-  it("procuracao: le o tipo de acao, gera as perguntas e o PDF para o cliente", async () => {
+  it("procuração: le o tipo de ação, gera as perguntas e o PDF para o cliente", async () => {
     const e = await nova();
     // Sem perguntas ainda, nao ha PDF.
     await expect(pdfDasPerguntas(escritorio, e.id)).rejects.toBeInstanceOf(SemPerguntas);
 
     saida = {
-      tipoAcao: "reclamacao trabalhista por rescisao indireta",
+      tipoAcao: "reclamação trabalhista por rescisão indireta",
       outorgante: "JOAO DA SILVA",
       observacao: null,
-      perguntas: ["Quando voce comecou a trabalhar la?", "Voce tinha carteira assinada?", "Quanto voce recebia por mes?"],
+      perguntas: ["Quando você começou a trabalhar lá?", "Você tinha carteira assinada?", "Quanto você recebia por mês?"],
     };
-    const procuracao = { nome: "procuracao.pdf", tipo: "application/pdf", dados: Buffer.from("%PDF-1.4 procuracao de teste") };
+    const procuracao = { nome: "procuracao.pdf", tipo: "application/pdf", dados: Buffer.from("%PDF-1.4 procuração de teste") };
     const r = await roteiroDaProcuracao(escritorio, e.id, procuracao);
-    expect(r.tipoAcao).toBe("reclamacao trabalhista por rescisao indireta");
+    expect(r.tipoAcao).toBe("reclamação trabalhista por rescisão indireta");
     expect(r.perguntas).toHaveLength(3);
     // A procuracao foi junto, como documento, para a IA ler.
     expect(ultimoCorpo).toContain('"type":"document"');
 
     const gravada = await comEscritorio(escritorio, (db) => db.entrevista.findFirstOrThrow({ where: { id: e.id } }));
-    expect(gravada.tipoAcao).toBe("reclamacao trabalhista por rescisao indireta");
+    expect(gravada.tipoAcao).toBe("reclamação trabalhista por rescisão indireta");
     expect(gravada.roteiro).toEqual(r.perguntas);
 
     const { pdf, nome } = await pdfDasPerguntas(escritorio, e.id);
@@ -406,15 +406,15 @@ d("entrevista de triagem", () => {
     expect(nome).toMatch(/^Perguntas - /);
   });
 
-  it("resposta da leitura: aceita cerca de codigo; sem JSON e erro; sem perguntas vale o basico", () => {
-    const lido = lerRespostaDaProcuracao('```json\n{"tipoAcao": null, "observacao": "Procuracao so ad judicia, sem a acao.", "perguntas": ["O que aconteceu?"]}\n```');
+  it("resposta da leitura: aceita cerca de código; sem JSON e erro; sem perguntas vale o básico", () => {
+    const lido = lerRespostaDaProcuracao('```json\n{"tipoAcao": null, "observacao": "Procuração só ad judicia, sem a ação.", "perguntas": ["O que aconteceu?"]}\n```');
     expect(lido.tipoAcao).toBeNull();
     expect(lido.observacao).toMatch(/ad judicia/);
-    expect(() => lerRespostaDaProcuracao("nao consegui ler")).toThrow(ProcuracaoIlegivel);
+    expect(() => lerRespostaDaProcuracao("não consegui ler")).toThrow(ProcuracaoIlegivel);
     expect(lerRespostaDaProcuracao('{"perguntas": []}').perguntas).toEqual([...ROTEIRO_BASICO]);
   });
 
-  it("a gravacao e o PDF vao para a pasta do cliente escolhido; sem cliente, nao", async () => {
+  it("a gravação e o PDF vão para a pasta do cliente escolhido; sem cliente, não", async () => {
     const usuario = await comEscritorio(escritorio, (db) =>
       db.usuario.create({ data: semEscritorio({ nome: "Dra. Pasta", email: `pasta-${Date.now()}@e.test`, senhaHash: "x", papel: "ADMIN" }) }),
     );
@@ -426,7 +426,7 @@ d("entrevista de triagem", () => {
       criarEntrevista(escritorio, { nome: "X", assunto: "Assunto qualquer longo", usuarioId: usuario.id, clienteId: "nao-e-daqui" }),
     ).rejects.toBeInstanceOf(EntrevistaNaoEncontrada);
 
-    const sem = await criarEntrevista(escritorio, { nome: "Sem Cliente", assunto: "Ainda nao e cliente do escritorio", usuarioId: usuario.id });
+    const sem = await criarEntrevista(escritorio, { nome: "Sem Cliente", assunto: "Ainda não e cliente do escritório", usuarioId: usuario.id });
     const r0 = await guardarGravacaoNaPasta(escritorio, sem.id, usuario.id, { tipo: "audio/webm", dados: Buffer.alloc(8 * 1024, 7) });
     expect(r0.guardado).toBe(false);
 
@@ -446,26 +446,26 @@ d("entrevista de triagem", () => {
       db.arquivo.findMany({ where: { clienteId: cliente.id }, select: { nome: true, tipo: true } }),
     );
     expect(naPasta.map((a) => a.tipo).sort()).toEqual(["application/pdf", "audio/webm"]);
-    expect(naPasta.find((a) => a.tipo === "audio/webm")?.nome).toMatch(/^Entrevista .* - Cliente da Pasta - gravacao .*\.webm$/);
+    expect(naPasta.find((a) => a.tipo === "audio/webm")?.nome).toMatch(/^Entrevista .* - Cliente da Pasta - gravação .*\.webm$/);
   });
 
-  it("gravacao longa chega em partes e vai inteira para a pasta; sem cliente, o envio e apagado", async () => {
+  it("gravação longa chega em partes e vai inteira para a pasta; sem cliente, o envio e apagado", async () => {
     const usuario = await comEscritorio(escritorio, (db) =>
       db.usuario.create({ data: semEscritorio({ nome: "Dra. Longa", email: `longa-${Date.now()}@e.test`, senhaHash: "x", papel: "ADMIN" }) }),
     );
     const cliente = await comEscritorio(escritorio, (db) =>
-      db.cliente.create({ data: semEscritorio({ nome: "Cliente da Gravacao Longa" }) }),
+      db.cliente.create({ data: semEscritorio({ nome: "Cliente da Gravação Longa" }) }),
     );
     const parte = (n: number) => Buffer.alloc(64 * 1024, n);
 
-    const sem = await criarEntrevista(escritorio, { nome: "Sem Cliente", assunto: "Ainda nao e cliente do escritorio", usuarioId: usuario.id });
+    const sem = await criarEntrevista(escritorio, { nome: "Sem Cliente", assunto: "Ainda não e cliente do escritório", usuarioId: usuario.id });
     await anexarAoEnvio(escritorio, "envio_sem_cliente_01", 0, parte(1), 10 * 1024 * 1024);
     const r0 = await guardarGravacaoDoEnvio(escritorio, sem.id, usuario.id, "audio/webm", "envio_sem_cliente_01");
     expect(r0.guardado).toBe(false);
     expect(await tamanhoDoEnvio(escritorio, "envio_sem_cliente_01")).toBe(0);
 
     const e = await criarEntrevista(escritorio, {
-      nome: "Cliente da Gravacao Longa",
+      nome: "Cliente da Gravação Longa",
       assunto: "Acidente de trabalho e estabilidade",
       usuarioId: usuario.id,
       clienteId: cliente.id,
@@ -493,7 +493,7 @@ d("entrevista de triagem", () => {
     expect(ligada.clienteId).toBe(cliente.id);
   });
 
-  it("a lista nao traz as arquivadas", async () => {
+  it("a lista não traz as arquivadas", async () => {
     const e = await nova("Assunto que foi arquivado");
     await comEscritorio(escritorio, (db) =>
       db.entrevista.update({

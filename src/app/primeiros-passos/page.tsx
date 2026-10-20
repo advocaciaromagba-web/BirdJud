@@ -28,9 +28,9 @@ export default async function PaginaPrimeirosPassos() {
     return (
       <Estrutura {...estrutura}>
         <p className="mt-4 leitura text-slate-600">
-          A configuracao do escritorio e feita pelo administrador. Se algo
+          A configuração do escritório é feita pelo administrador. Se algo
           estiver faltando para o seu trabalho, fale com quem administra o
-          sistema no escritorio.
+          sistema no escritório.
         </p>
       </Estrutura>
     );
@@ -41,14 +41,14 @@ export default async function PaginaPrimeirosPassos() {
   return (
     <Estrutura
       {...estrutura}
-      chamada="O caminho para o escritorio funcionar sozinho. Cada passo se marca quando estiver feito de verdade."
+      chamada="O caminho para o escritório funcionar sozinho. Cada passo se marca quando estiver feito de verdade."
     >
       <section className="cartao mt-2">
         {roteiro.completo ? (
           <>
-            <h2 className="text-lg font-bold">Configuracao concluida</h2>
+            <h2 className="text-lg font-bold">Configuração concluída</h2>
             <p className="mt-1 text-slate-600">
-              O que o plano do escritorio pede esta feito ou foi deixado para
+              O que o plano do escritório pede esta feito ou foi deixado para
               depois. Os passos continuam abaixo para revisar quando quiser.
             </p>
           </>
@@ -56,12 +56,12 @@ export default async function PaginaPrimeirosPassos() {
           <>
             <h2 className="text-lg font-bold">
               {roteiro.essenciaisFeitos
-                ? "O essencial esta pronto. Agora, as conexoes."
-                : "Comece pelo essencial: tres passos, menos de dez minutos."}
+                ? "O essencial está pronto. Agora, as conexões."
+                : "Comece pelo essencial: três passos, menos de dez minutos."}
             </h2>
             <p className="mt-1 text-slate-600">
-              Nao precisa ser tudo hoje. O roteiro guarda onde voce parou, e o
-              que nao fizer sentido para o escritorio pode ser deixado para
+              Não precisa ser tudo hoje. O roteiro guarda onde você parou, e o
+              que não fizer sentido para o escritório pode ser deixado para
               depois.
             </p>
           </>

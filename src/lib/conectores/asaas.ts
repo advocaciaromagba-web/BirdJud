@@ -13,8 +13,8 @@ function baseAsaas(): string {
 
 export const conectorAsaas: Conector = {
   tipo: "ASAAS",
-  rotulo: "Asaas (cobrancas)",
-  descricao: "Boletos, Pix e cartao na conta Asaas do escritorio.",
+  rotulo: "Asaas (cobranças)",
+  descricao: "Boletos, Pix e cartão na conta Asaas do escritório.",
   modulo: "COBRANCAS",
   campos: [
     {
@@ -22,7 +22,7 @@ export const conectorAsaas: Conector = {
       rotulo: "Chave de API",
       tipo: "password",
       obrigatorio: true,
-      ajuda: "Asaas > Configuracoes > Integracoes > Chave de API",
+      ajuda: "Asaas > Configurações > Integrações > Chave de API",
     },
   ],
   resumo: (dados) => `Chave ${mascarar(dados.chave)}`,

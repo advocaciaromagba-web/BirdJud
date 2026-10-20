@@ -15,7 +15,7 @@ export async function DELETE(
     const { tipo } = await params;
     if (!ehTipoDeIntegracao(tipo)) {
       return NextResponse.json(
-        { erro: "Integracao desconhecida." },
+        { erro: "Integração desconhecida." },
         { status: 400 },
       );
     }

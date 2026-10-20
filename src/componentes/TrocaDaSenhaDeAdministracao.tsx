@@ -24,7 +24,7 @@ export function TrocaDaSenhaDeAdministracao({
     setErro(null);
     setAviso(null);
     if (nova !== confirma) {
-      setErro("As duas senhas nao sao iguais.");
+      setErro("As duas senhas não são iguais.");
       return;
     }
     setEnviando(true);
@@ -36,7 +36,7 @@ export function TrocaDaSenhaDeAdministracao({
       });
       const corpo = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        setErro(corpo.erro ?? "Nao foi possivel trocar a senha.");
+        setErro(corpo.erro ?? "Não foi possível trocar a senha.");
         return;
       }
       setAtual("");
@@ -52,13 +52,13 @@ export function TrocaDaSenhaDeAdministracao({
   return (
     <section className="cartao">
       <p className="sobretitulo">Acesso</p>
-      <h2 className="mt-1 text-lg font-bold">Senha de administracao</h2>
+      <h2 className="mt-1 text-lg font-bold">Senha de administração</h2>
       <p className="mt-2 leitura text-slate-600">
-        E a segunda senha, que guarda o financeiro e esta area. Trocar derruba
-        todas as sessoes destravadas, inclusive a sua — e isso e de proposito:
-        a hora de trocar e quando alguem deixa o escritorio.
+        E a segunda senha, que guarda o financeiro e esta área. Trocar derruba
+        todas as sessões destravadas, inclusive a sua — e isso é de propósito:
+        a hora de trocar é quando alguém deixa o escritório.
         {definidaEm && (
-          <> Definida pela ultima vez em {new Date(definidaEm).toLocaleDateString("pt-BR")}.</>
+          <> Definida pela última vez em {new Date(definidaEm).toLocaleDateString("pt-BR")}.</>
         )}
       </p>
 

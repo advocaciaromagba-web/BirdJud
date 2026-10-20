@@ -31,11 +31,11 @@ export function PortaDeAdministracao({
   if (tranca === "sem-permissao") {
     return (
       <div className="cartao mx-auto max-w-lg">
-        <h1 className="text-xl font-bold">Area do administrador</h1>
+        <h1 className="text-xl font-bold">Área do administrador</h1>
         <p className="mt-3 leitura text-slate-600">
-          {area} e area do administrador do escritorio. Seu usuario nao tem esse
-          papel. Peca a quem administra o escritorio para liberar, ou para
-          executar a acao por voce.
+          {area} e área do administrador do escritório. Seu usuário não tem esse
+          papel. Peça a quem administra o escritório para liberar, ou para
+          executar a ação por você.
         </p>
       </div>
     );
@@ -48,7 +48,7 @@ export function PortaDeAdministracao({
     setErro(null);
 
     if (definindo && senha !== confirma) {
-      setErro("As duas senhas nao sao iguais.");
+      setErro("As duas senhas não são iguais.");
       return;
     }
 
@@ -65,7 +65,7 @@ export function PortaDeAdministracao({
       });
       const dados = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        setErro(dados.erro ?? "Nao foi possivel continuar.");
+        setErro(dados.erro ?? "Não foi possível continuar.");
         return;
       }
       setSenha("");
@@ -80,24 +80,24 @@ export function PortaDeAdministracao({
 
   return (
     <div className="cartao mx-auto max-w-lg">
-      <p className="sobretitulo">Area protegida</p>
+      <p className="sobretitulo">Área protegida</p>
       <h1 className="mt-1 text-xl font-bold">
-        {definindo ? "Defina a senha de administracao" : area}
+        {definindo ? "Defina a senha de administração" : area}
       </h1>
 
       <p className="mt-3 leitura text-slate-600">
         {definindo ? (
           <>
-            Esta e a segunda senha do escritorio. Ela guarda o financeiro e as
-            acoes que nao tem volta — apagar usuario, cadastrar certificado,
-            assinar nota. Nao e a senha com que voce entra no sistema, e nao
+            Esta é a segunda senha do escritório. Ela guarda o financeiro e as
+            ações que não tem volta — apagar usuário, cadastrar certificado,
+            assinar nota. Não é a senha com que você entra no sistema, e não
             deve ser igual a ela.
           </>
         ) : (
           <>
-            {area} pede a senha de administracao do escritorio. Depois de
+            {area} pede a senha de administração do escritório. Depois de
             digitada, ela vale por {minutos} minutos e precisa ser digitada de
-            novo — assim um computador deixado aberto nao entrega o financeiro.
+            novo — assim um computador deixado aberto não entrega o financeiro.
           </>
         )}
       </p>
@@ -105,7 +105,7 @@ export function PortaDeAdministracao({
       <form onSubmit={enviar} className="mt-5 space-y-4">
         <div>
           <label className="rotulo" htmlFor="senha-adm">
-            {definindo ? "Nova senha de administracao" : "Senha de administracao"}
+            {definindo ? "Nova senha de administração" : "Senha de administração"}
           </label>
           <CampoDeSenha
             id="senha-adm"
@@ -117,7 +117,7 @@ export function PortaDeAdministracao({
           />
           {definindo && (
             <p className="mt-1 text-sm text-slate-500">
-              Ao menos 12 caracteres, misturando letras e numeros.
+              Ao menos 12 caracteres, misturando letras e números.
             </p>
           )}
         </div>

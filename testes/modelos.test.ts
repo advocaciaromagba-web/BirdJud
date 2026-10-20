@@ -20,7 +20,7 @@ import {
   qualificacaoDoEscritorio,
 } from "../src/lib/qualificacao";
 
-/** Um paragrafo de .docx, com o texto repartido como o Word reparte. */
+/** Um parágrafo de .docx, com o texto repartido como o Word reparte. */
 function paragrafo(...pedacos: string[]): string {
   return `<w:p>${pedacos.map((t) => `<w:r><w:t xml:space="preserve">${t}</w:t></w:r>`).join("")}</w:p>`;
 }
@@ -28,15 +28,15 @@ const doc = (...ps: string[]) =>
   `<?xml version="1.0"?><w:document><w:body>${ps.join("")}</w:body></w:document>`;
 
 const VALORES = {
-  "cliente.nome": "Jose Cicero dos Santos",
-  "escritorio.nome": "Escritorio Modelo",
+  "cliente.nome": "José Cicero dos Santos",
+  "escritorio.nome": "Escritório Modelo",
   "honorarios.valor": "R$ 3.000,00",
 };
 
-describe("campo inteiro em um pedaco so", () => {
+describe("campo inteiro em um pedaco só", () => {
   it("troca pelo valor", () => {
     const r = preencher(doc(paragrafo("Outorgante: {{cliente.nome}}.")), VALORES);
-    expect(textoDoDocumento(r.xml)).toBe("Outorgante: Jose Cicero dos Santos.");
+    expect(textoDoDocumento(r.xml)).toBe("Outorgante: José Cicero dos Santos.");
   });
 });
 
@@ -49,46 +49,46 @@ describe("campo repartido pelo Word", () => {
       doc(paragrafo("Outorgante: {{cli", "ente.", "nome}}", ".")),
       VALORES,
     );
-    expect(textoDoDocumento(r.xml)).toBe("Outorgante: Jose Cicero dos Santos.");
+    expect(textoDoDocumento(r.xml)).toBe("Outorgante: José Cicero dos Santos.");
   });
 
   it("acha mesmo com as chaves separadas", () => {
     const r = preencher(doc(paragrafo("{", "{cliente.nome", "}", "}")), VALORES);
-    expect(textoDoDocumento(r.xml)).toBe("Jose Cicero dos Santos");
+    expect(textoDoDocumento(r.xml)).toBe("José Cicero dos Santos");
   });
 
-  it("conferir o modelo tambem enxerga o campo quebrado", () => {
+  it("conferir o modelo também enxerga o campo quebrado", () => {
     const { usados } = camposDoModelo(doc(paragrafo("{{cli", "ente.nome}}")));
     expect(usados).toEqual(["cliente.nome"]);
   });
 });
 
-describe("dois campos no mesmo paragrafo", () => {
+describe("dois campos no mesmo parágrafo", () => {
   it("troca os dois", () => {
     const r = preencher(
       doc(paragrafo("{{escritorio.nome}} cobra {{honorarios.valor}}.")),
       VALORES,
     );
-    expect(textoDoDocumento(r.xml)).toBe("Escritorio Modelo cobra R$ 3.000,00.");
+    expect(textoDoDocumento(r.xml)).toBe("Escritório Modelo cobra R$ 3.000,00.");
   });
 });
 
 describe("campo sem valor", () => {
   // Em branco seria o pior resultado: a peca sai com um buraco no lugar do
   // valor e ninguem ve. Marcado, salta aos olhos de quem conferir.
-  it("fica visivel, nao em branco", () => {
+  it("fica visivel, não em branco", () => {
     const r = preencher(doc(paragrafo("Valor: {{honorarios.valor}}.")), {});
     expect(textoDoDocumento(r.xml)).toBe(`Valor: ${SEM_VALOR}.`);
     expect(r.semValor).toEqual(["honorarios.valor"]);
   });
 
-  it("valor so de espaco conta como sem valor", () => {
+  it("valor só de espaço conta como sem valor", () => {
     const r = preencher(doc(paragrafo("{{cliente.nome}}")), { "cliente.nome": "   " });
     expect(r.semValor).toEqual(["cliente.nome"]);
   });
 });
 
-describe("campo que o sistema nao conhece", () => {
+describe("campo que o sistema não conhece", () => {
   // Campo digitado errado tem de aparecer na peca, nao sumir: sumindo, o
   // escritorio nunca descobre que escreveu {{cliente.nomee}}.
   it("fica escrito como esta, e e denunciado", () => {
@@ -101,21 +101,21 @@ describe("campo que o sistema nao conhece", () => {
   });
 });
 
-describe("paragrafos diferentes", () => {
+describe("parágrafos diferentes", () => {
   // Um "{{" perdido no fim de um paragrafo nao pode casar com um "}}" de
   // outro e comer tudo que estiver entre os dois.
-  it("nao atravessam", () => {
+  it("não atravessam", () => {
     const r = preencher(
       doc(paragrafo("abre {{cliente"), paragrafo("texto do meio"), paragrafo(".nome}} fecha")),
       VALORES,
     );
     const texto = textoDoDocumento(r.xml);
     expect(texto).toContain("texto do meio");
-    expect(texto).not.toContain("Jose Cicero");
+    expect(texto).not.toContain("José Cicero");
   });
 });
 
-describe("XML nao quebra", () => {
+describe("XML não quebra", () => {
   it("escapa o que o valor traz", () => {
     const r = preencher(doc(paragrafo("{{cliente.nome}}")), {
       "cliente.nome": 'Ana & Cia <"Silva">',
@@ -124,10 +124,10 @@ describe("XML nao quebra", () => {
     expect(textoDoDocumento(r.xml)).toBe('Ana & Cia <"Silva">');
   });
 
-  it("le valor que ja vinha escapado no modelo", () => {
+  it("le valor que já vinha escapado no modelo", () => {
     const xml = doc(`<w:p><w:r><w:t>M&amp;A: {{cliente.nome}}</w:t></w:r></w:p>`);
     expect(textoDoDocumento(preencher(xml, VALORES).xml)).toBe(
-      "M&A: Jose Cicero dos Santos",
+      "M&A: José Cicero dos Santos",
     );
   });
 });
@@ -141,34 +141,34 @@ describe("modelo sem campo nenhum", () => {
   });
 });
 
-describe("catalogo de campos", () => {
-  it("nao tem chave repetida e toda chave e conhecida", () => {
+describe("catálogo de campos", () => {
+  it("não tem chave repetida e toda chave e conhecida", () => {
     expect(new Set(CAMPOS.map((c) => c.chave)).size).toBe(CAMPOS.length);
     for (const c of CAMPOS) expect(CHAVES_CONHECIDAS.has(c.chave)).toBe(true);
   });
 
-  it("toda chave e minuscula e sem espaco", () => {
+  it("toda chave e minuscula e sem espaço", () => {
     for (const c of CAMPOS) expect(c.chave).toMatch(/^[a-z0-9_]+(\.[a-z0-9_]+)*$/);
   });
 });
 
-describe("cabecalho e rodape", () => {
+describe("cabeçalho e rodapé", () => {
   // O timbre mora no cabecalho. Preencher so o corpo deixaria {{...}} impresso
   // no alto de toda folha que o escritorio mandar para o cliente.
-  it("sao tratados como o corpo", () => {
+  it("são tratados como o corpo", () => {
     const cabecalho = doc(paragrafo("{{escritorio.nome}} — {{escritorio.cidade}}"));
     const r = preencher(cabecalho, {
       "escritorio.nome": "Advocacia Modelo",
-      "escritorio.cidade": "Sao Paulo",
+      "escritorio.cidade": "São Paulo",
     });
-    expect(textoDoDocumento(r.xml)).toBe("Advocacia Modelo — Sao Paulo");
+    expect(textoDoDocumento(r.xml)).toBe("Advocacia Modelo — São Paulo");
   });
 });
 
-describe("qualificacao na peca", () => {
+describe("qualificação na peça", () => {
   // "Ana Paula Martins, brasileira, casada, advogado, inscrito na OAB" e um
   // erro que salta aos olhos de quem assina.
-  it("concorda com o genero que a propria pessoa cadastrou", () => {
+  it("concorda com o gênero que a própria pessoa cadastrou", () => {
     const dela = qualificacaoDoAdvogado({
       nome: "Ana", oab: "SP 1", cpf: "52998224725", nacionalidade: "brasileira", estadoCivil: "casada",
     });
@@ -188,7 +188,7 @@ describe("qualificacao na peca", () => {
     expect(qualificacaoDoAdvogado({ nome: "Alguem", oab: "SP 3" })).toContain("advogado, inscrito");
   });
 
-  it("o que nao foi preenchido nao aparece", () => {
+  it("o que não foi preenchido não aparece", () => {
     const q = qualificacaoDoAdvogado({ nome: "Alguem", oab: "SP 3" });
     expect(q).not.toContain("RG");
     expect(q).not.toContain("CPF");
@@ -204,7 +204,7 @@ describe("qualificacao na peca", () => {
     expect(q).toContain("representada por Ana");
   });
 
-  it("o escritorio sai com CNPJ, registro na OAB e sede", () => {
+  it("o escritório sai com CNPJ, registro na OAB e sede", () => {
     const q = qualificacaoDoEscritorio({
       nome: "Marca", razaoSocial: "Alfa Sociedade Unipessoal de Advocacia",
       cnpj: "11222333000181", registroOab: "99999",
@@ -217,7 +217,7 @@ describe("qualificacao na peca", () => {
   });
 
   // Inventar a comarca de alguem e pior que a peca sair com um campo a menos.
-  it("sem cidade, o fecho leva so a data", () => {
+  it("sem cidade, o fecho leva só a data", () => {
     expect(cidadeEData(null, new Date("2026-10-07T12:00:00Z"))).toBe("7 de outubro de 2026");
     expect(cidadeEData("Guariba", new Date("2026-10-07T12:00:00Z"))).toBe(
       "Guariba, 7 de outubro de 2026",
@@ -225,7 +225,7 @@ describe("qualificacao na peca", () => {
   });
 });
 
-describe("quem assina a peca", () => {
+describe("quem assina a peça", () => {
   const TODOS = [{ id: "a" }, { id: "b" }, { id: "c" }];
 
   // Em banca de um ou dois a resposta e sempre "todos", e ninguem deveria
@@ -236,27 +236,27 @@ describe("quem assina a peca", () => {
     expect(advogadosDaPeca(TODOS, undefined)).toHaveLength(3);
   });
 
-  it("escolhidos saem na ordem do escritorio, so eles", () => {
+  it("escolhidos saem na ordem do escritório, só eles", () => {
     expect(advogadosDaPeca(TODOS, ["c", "a"]).map((x) => x.id)).toEqual(["a", "c"]);
   });
 
   // Uma procuracao sem outorgado nao e um documento incompleto: e um
   // documento que nao serve para nada.
-  it("escolha que nao casa com ninguem cai em todos, nao em nenhum", () => {
+  it("escolha que não casa com ninguém cai em todos, não em nenhum", () => {
     expect(advogadosDaPeca(TODOS, ["desligado"])).toHaveLength(3);
   });
 
-  it("escritorio sem advogado nenhum continua sem", () => {
+  it("escritório sem advogado nenhum continua sem", () => {
     expect(advogadosDaPeca([], ["a"])).toEqual([]);
   });
 });
 
-describe("a numeracao do contrato que ja vem no sistema", () => {
+describe("a numeracao do contrato que já vem no sistema", () => {
   const linhas = MODELO_PADRAO.CONTRATO.map((l) => l.texto);
   const CLAUSULA = /^CLAUSULA (\d+)ª — /;
   const ITEM = /^(\d+)\.(\d+)\. /;
 
-  it("as clausulas vao de 1 a N, sem pular e sem repetir", () => {
+  it("as cláusulas vão de 1 a N, sem pular e sem repetir", () => {
     // Renumerar clausula a mao e exatamente o que sai errado calado: um
     // contrato com duas "CLAUSULA 3ª" so e descoberto por quem le o papel.
     const numeros = linhas
@@ -267,7 +267,7 @@ describe("a numeracao do contrato que ja vem no sistema", () => {
     expect(numeros).toEqual(numeros.map((_, i) => i + 1));
   });
 
-  it("cada item esta sob a clausula do proprio numero, em sequencia", () => {
+  it("cada item esta sob a cláusula do próprio número, em sequencia", () => {
     let clausula = 0;
     let esperado = 1;
     for (const t of linhas) {
@@ -295,7 +295,7 @@ describe("a numeracao do contrato que ja vem no sistema", () => {
     for (const c of citados) expect(existentes).toContain(c);
   });
 
-  it("a clausula da natureza alimentar cita a lei que a criou", () => {
+  it("a cláusula da natureza alimentar cita a lei que a criou", () => {
     // A Lei 15.472/2026 alterou os artigos 22 e 24 do Estatuto da Advocacia.
     // Citar o dispositivo e o que poupa a discussao sobre a classificacao do
     // credito na hora da cobranca.
@@ -305,10 +305,10 @@ describe("a numeracao do contrato que ja vem no sistema", () => {
     expect(texto).toContain("artigo 22, § 9º, da Lei nº 8.906/94");
     expect(texto).toContain("artigo 24 da Lei nº 8.906/94");
     expect(texto).toContain("natureza alimentar");
-    expect(texto).toContain("credito privilegiado");
+    expect(texto).toContain("crédito privilegiado");
   });
 
-  it("continua citando o artigo do CPC que esta em vigor, e nao o revogado", () => {
+  it("continua citando o artigo do CPC que esta em vigor, e não o revogado", () => {
     const texto = linhas.join("\n");
     expect(texto).toContain("artigo 784, inciso III");
     // O 585, II e do CPC de 1973. Modelo de escritorio ainda carrega esse erro.

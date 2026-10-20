@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirSessao();
     const corpo = novo.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const { id, calculo } = await registrarPrazo(escritorioId, corpo.data);

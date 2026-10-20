@@ -63,14 +63,14 @@ export function conflitoDeCliente(
 export function mensagemDoConflito(c: Conflito): string {
   if (c.motivo === "DOCUMENTO") {
     return (
-      `Ja existe um cliente com este CPF/CNPJ: "${c.existente.nome}". ` +
-      "Documento igual e a mesma pessoa — edite o cadastro que ja existe em vez de criar outro."
+      `Já existe um cliente com este CPF/CNPJ: "${c.existente.nome}". ` +
+      "Documento igual é a mesma pessoa — edite o cadastro que já existe em vez de criar outro."
     );
   }
   return (
-    `Ja existe um cliente com este nome: "${c.existente.nome}"` +
+    `Já existe um cliente com este nome: "${c.existente.nome}"` +
     (c.existente.documento ? ` (${c.existente.documento})` : " (sem CPF/CNPJ no cadastro)") +
-    ". Se for a mesma pessoa, edite o cadastro que ja existe. Se for outra pessoa com o " +
+    ". Se for a mesma pessoa, edite o cadastro que já existe. Se for outra pessoa com o " +
     "mesmo nome, confirme para cadastrar assim mesmo."
   );
 }

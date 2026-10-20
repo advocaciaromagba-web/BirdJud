@@ -19,8 +19,8 @@ import {
 const MB = 1024 * 1024;
 const GB5 = 5000 * MB;
 
-describe("saude do espaco", () => {
-  it("abaixo de 70% esta tudo bem e nao conta nada", () => {
+describe("saúde do espaço", () => {
+  it("abaixo de 70% esta tudo bem e não conta nada", () => {
     expect(
       avaliarEspaco({
         arquivos: { usadoBytes: 100 * MB, limiteBytes: GB5 },
@@ -41,7 +41,7 @@ describe("saude do espaco", () => {
     ).toEqual({ ok: false, acima: { banco: 98 } });
   });
 
-  it("statfs do volume vale; do host inteiro, nao", () => {
+  it("statfs do volume vale; do host inteiro, não", () => {
     // Volume de 5 GB com 1 GB usado.
     const volume = medidaDoVolume({ blocks: (GB5 / 4096), bfree: (4000 * MB) / 4096, bsize: 4096 }, GB5);
     expect(volume && percentual(volume)).toBe(20);
@@ -51,7 +51,7 @@ describe("saude do espaco", () => {
 });
 
 const temBanco = Boolean(process.env.DATABASE_URL);
-(temBanco ? describe : describe.skip)("saude do espaco, medida de verdade", () => {
+(temBanco ? describe : describe.skip)("saúde do espaço, medida de verdade", () => {
   it("mede o banco e os arquivos", async () => {
     const banco = await medirBanco();
     expect(banco.usadoBytes).toBeGreaterThan(0);

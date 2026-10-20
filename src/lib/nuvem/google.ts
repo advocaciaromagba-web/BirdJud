@@ -57,7 +57,7 @@ async function token(corpo: Record<string, string>): Promise<Record<string, unkn
 }
 
 function falha(r: Response, oQue: string): FalhaNaNuvem {
-  return new FalhaNaNuvem(`Google Drive: nao foi possivel ${oQue} (${r.status}).`, r.status);
+  return new FalhaNaNuvem(`Google Drive: não foi possível ${oQue} (${r.status}).`, r.status);
 }
 
 /** Aspas simples e barra invertida escapadas, como a busca do Drive pede. */
@@ -144,14 +144,14 @@ export const googleDrive: Nuvem = {
     const json = await token({ grant_type: "authorization_code", code: codigo, redirect_uri: retorno });
     const renovacao = json.refresh_token as string | undefined;
     if (!renovacao) {
-      throw new FalhaNaNuvem("O Google nao devolveu acesso permanente. Tente conectar de novo.", 400);
+      throw new FalhaNaNuvem("O Google não devolveu acesso permanente. Tente conectar de novo.", 400);
     }
     const escopo = String(json.scope ?? "");
     if (!escopo.includes("drive.file")) {
       // A tela do Google deixa desmarcar a permissao do Drive. Conectar assim
       // daria uma conta ligada que nao consegue criar uma pasta.
       throw new FalhaNaNuvem(
-        "A permissao para o Google Drive ficou desmarcada. Conecte de novo e deixe a caixa do Drive marcada.",
+        "A permissão para o Google Drive ficou desmarcada. Conecte de novo e deixe a caixa do Drive marcada.",
         400,
       );
     }
@@ -203,7 +203,7 @@ export const googleDrive: Nuvem = {
     });
     if (!inicio.ok) throw falha(inicio, `iniciar o envio de "${nome}"`);
     const destino = inicio.headers.get("location");
-    if (!destino) throw new FalhaNaNuvem("Google Drive nao devolveu o endereco de envio.", 502);
+    if (!destino) throw new FalhaNaNuvem("Google Drive não devolveu o endereço de envio.", 502);
 
     // Em partes de 8 MB (multiplo de 256 KB, como o Drive exige): a gravacao
     // de uma entrevista longa nao cabe no tempo limite de um pedido so. As
@@ -224,7 +224,7 @@ export const googleDrive: Nuvem = {
       if (!r.ok) throw falha(r, `enviar "${nome}"`);
       return { id: String(((await r.json()) as { id: string }).id) };
     }
-    throw new FalhaNaNuvem(`Google Drive nao confirmou o envio de "${nome}".`, 502);
+    throw new FalhaNaNuvem(`Google Drive não confirmou o envio de "${nome}".`, 502);
   },
 
   listar(acesso, pastaId) {

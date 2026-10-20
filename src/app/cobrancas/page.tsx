@@ -18,9 +18,9 @@ export default async function PaginaCobrancas() {
     if (erro instanceof ModuloNaoContratado) {
       return (
         <main className="mx-auto max-w-2xl p-10">
-          <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
+          <h1 className="text-2xl font-bold">Módulo não contratado</h1>
           <p className="mt-3 text-slate-600">
-            O modulo Cobrancas nao faz parte do plano deste escritorio.
+            O módulo Cobranças não faz parte do plano deste escritório.
           </p>
         </main>
       );
@@ -82,7 +82,7 @@ export default async function PaginaCobrancas() {
       titulo="Cobrancas"
     >
       <p className="mt-1 text-sm text-slate-500">
-        {emReais(emAberto)} em aberto · cobranca na conta Asaas do proprio
+        {emReais(emAberto)} em aberto · cobrança na conta Asaas do próprio
         escritorio
         {/* Sem o modulo Financeiro nao ha aba onde a conferencia more. */}
         {!modulos.includes("FINANCEIRO") && contexto.acesso.CONCILIACAO ? (
@@ -97,21 +97,21 @@ export default async function PaginaCobrancas() {
 
       {dados.contaConectada === 0 ? (
         <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
-          A conta Asaas ainda nao esta conectada. Cadastre a chave de API em
-          Integracoes: sem ela nao da para emitir cobranca.
+          A conta Asaas ainda não está conectada. Cadastre a chave de API em
+          Integracoes: sem ela não dá para emitir cobrança.
         </div>
       ) : null}
 
       {dados.clientes.length > 0 ? (
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-semibold text-marca">
-            Nova cobranca
+            Nova cobrança
           </summary>
           <p className="mt-2 text-sm text-slate-500">
             O Asaas exige CPF/CNPJ do cliente. Cliente sem documento cadastrado
-            e recusado com essa mensagem.
+            é recusado com essa mensagem.
             {temInfinitePay
-              ? " Na InfinitePay sai um link com Pix e cartao, e quem escolhe e o cliente no checkout — a forma abaixo so vale para o Asaas."
+              ? " Na InfinitePay sai um link com Pix e cartão, e quem escolhe é o cliente no checkout — a forma abaixo só vale para o Asaas."
               : ""}
           </p>
           <FormularioCriar
@@ -137,16 +137,16 @@ export default async function PaginaCobrancas() {
                       tipo: "select" as const,
                       obrigatorio: true,
                       opcoes: [
-                        { valor: "ASAAS", rotulo: "Asaas — boleto, Pix ou cartao" },
+                        { valor: "ASAAS", rotulo: "Asaas — boleto, Pix ou cartão" },
                         {
                           valor: "INFINITEPAY",
-                          rotulo: "InfinitePay — link com Pix ou cartao",
+                          rotulo: "InfinitePay — link com Pix ou cartão",
                         },
                       ],
                     },
                   ]
                 : []),
-              { nome: "descricao", rotulo: "Descricao", obrigatorio: true },
+              { nome: "descricao", rotulo: "Descrição", obrigatorio: true },
               { nome: "valor", rotulo: "Valor (R$)", obrigatorio: true },
               {
                 nome: "vencimento",
@@ -163,16 +163,16 @@ export default async function PaginaCobrancas() {
                   { valor: "QUALQUER", rotulo: "Cliente escolhe" },
                   { valor: "BOLETO", rotulo: "Boleto" },
                   { valor: "PIX", rotulo: "Pix" },
-                  { valor: "CARTAO", rotulo: "Cartao" },
+                  { valor: "CARTAO", rotulo: "Cartão" },
                 ],
               },
             ]}
-            textoBotao="Emitir cobranca"
+            textoBotao="Emitir cobrança"
           />
         </details>
       ) : (
         <div className="mt-4 rounded border border-slate-300 p-4 text-sm text-slate-600">
-          Cadastre um cliente antes de emitir cobranca.
+          Cadastre um cliente antes de emitir cobrança.
         </div>
       )}
 

@@ -29,7 +29,7 @@ export function enderecoLimpo(e: Record<string, string | null | undefined>): Rec
   const saida: Record<string, string> = {};
   const cep = t("cep").replace(/\D/g, "");
   if (cep) {
-    if (cep.length !== 8) throw new DadoInvalido("CEP invalido: sao 8 digitos.");
+    if (cep.length !== 8) throw new DadoInvalido("CEP inválido: são 8 dígitos.");
     saida.cep = cep;
   }
   const rua = t("logradouro") || t("rua");
@@ -40,7 +40,7 @@ export function enderecoLimpo(e: Record<string, string | null | undefined>): Rec
   for (const k of ["numero", "complemento", "bairro", "cidade"]) if (t(k)) saida[k] = t(k);
   const uf = t("uf").toUpperCase();
   if (uf) {
-    if (!/^[A-Z]{2}$/.test(uf)) throw new DadoInvalido("UF invalida: use a sigla, como SP.");
+    if (!/^[A-Z]{2}$/.test(uf)) throw new DadoInvalido("UF inválida: use a sigla, como SP.");
     saida.uf = uf;
   }
   return Object.keys(saida).length ? saida : null;
@@ -63,7 +63,7 @@ export async function salvarDadosDoEscritorio(escritorioId: string, d: DadosDoEs
   if (d.cnpj !== undefined) {
     const bruto = d.cnpj?.trim();
     if (bruto && !documentoValido(bruto)) {
-      throw new DadoInvalido("O CNPJ informado nao fecha o digito verificador.");
+      throw new DadoInvalido("O CNPJ informado não fecha o dígito verificador.");
     }
     data.cnpj = bruto ? formatarDocumento(bruto) : null;
   }

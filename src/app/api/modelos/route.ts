@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     const especie = String(formulario?.get("especie") ?? "");
     if (!ehEspecie(especie)) {
-      return NextResponse.json({ erro: "Especie invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
     }
 
     const enviado = formulario?.get("arquivo");

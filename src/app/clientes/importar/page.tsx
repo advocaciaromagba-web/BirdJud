@@ -23,7 +23,7 @@ export default async function ImportarClientes() {
     return (
       <Estrutura {...estrutura}>
         <p className="mt-4 leitura text-slate-600">
-          Importar clientes em massa e com o administrador do escritorio.
+          Importar clientes em massa é com o administrador do escritório.
         </p>
       </Estrutura>
     );

@@ -22,21 +22,21 @@ describe("dias do ano", () => {
     expect(diasDoAno(2000)).toBe(366);
   });
 
-  it("o primeiro dia do ano ja conta como vivido", () => {
+  it("o primeiro dia do ano já conta como vivido", () => {
     expect(diasVividos(2026, "2026-01-01")).toBe(1);
     expect(diasVividos(2026, "2026-12-31")).toBe(365);
   });
 
-  it("nao passa do ano nem fica negativo", () => {
+  it("não passa do ano nem fica negativo", () => {
     expect(diasVividos(2026, "2027-06-01")).toBe(365);
     expect(diasVividos(2026, "2025-06-01")).toBe(0);
   });
 });
 
 describe("ritmo", () => {
-  // Em 6 de outubro o ano nao esta em 9/12: esta em 279/365. Contar por mes
+  // Em 6 de outubro o ano não esta em 9/12: esta em 279/365. Contar por mes
   // fechado daria ao escritorio um mes inteiro de folga que ele nao tem.
-  it("conta por dia corrido, nao por mes fechado", () => {
+  it("conta por dia corrido, não por mês fechado", () => {
     const r = ritmoDaMeta(META, 0, 2026, "2026-10-06")!;
     expect(r.fracaoDoAno).toBeCloseTo(279 / 365, 6);
     // 9/12 daria R$ 450.000; 279/365 da mais que isso.
@@ -63,7 +63,7 @@ describe("ritmo", () => {
 
   // Honorario nao entra em parcela diaria. Sem margem, o painel diria
   // "ATRASADO" quase toda semana e viraria alarme que ninguem olha.
-  it("a margem existe para o painel nao virar alarme", () => {
+  it("a margem existe para o painel não virar alarme", () => {
     const esperado = ritmoDaMeta(META, 0, 2026, "2026-07-02")!.esperadoCentavos;
     const quaseNoPonto = ritmoDaMeta(META, esperado - 1000, 2026, "2026-07-02")!;
     expect(quaseNoPonto.situacao).toBe("NO_RITMO");
@@ -76,7 +76,7 @@ describe("ritmo", () => {
     expect(r.porMesRestanteCentavos).toBe(0);
   });
 
-  it("diz quanto por mes falta para fechar", () => {
+  it("diz quanto por mês falta para fechar", () => {
     const r = ritmoDaMeta(META, 300_000_00, 2026, "2026-07-02")!;
     expect(r.faltaCentavos).toBe(300_000_00);
     // Sobram ~183 dias, ou ~6 meses: perto de R$ 50.000 por mes.
@@ -84,7 +84,7 @@ describe("ritmo", () => {
     expect(r.porMesRestanteCentavos!).toBeLessThan(55_000_00);
   });
 
-  it("no ultimo dia do ano nao ha mes que sobre", () => {
+  it("no último dia do ano não há mês que sobre", () => {
     const r = ritmoDaMeta(META, 100_000_00, 2026, "2026-12-31")!;
     expect(r.porMesRestanteCentavos).toBeNull();
   });
@@ -96,7 +96,7 @@ describe("ritmo", () => {
     expect(r.projecaoCentavos).toBeLessThan(610_000_00);
   });
 
-  it("sem meta, nao ha ritmo para mostrar", () => {
+  it("sem meta, não há ritmo para mostrar", () => {
     expect(ritmoDaMeta(0, 100_000_00, 2026, "2026-07-02")).toBeNull();
     expect(ritmoDaMeta(-1, 100_000_00, 2026, "2026-07-02")).toBeNull();
     expect(ritmoDaMeta(Number.NaN, 1, 2026, "2026-07-02")).toBeNull();
@@ -104,7 +104,7 @@ describe("ritmo", () => {
 
   // Antes de o ano comecar nao se projeta nada: dividir por zero dia vivido
   // daria um numero sem sentido na cara de quem olha.
-  it("ano que ainda nao comecou nao projeta", () => {
+  it("ano que ainda não começou não projeta", () => {
     const r = ritmoDaMeta(META, 0, 2027, "2026-10-06")!;
     expect(r.fracaoDoAno).toBe(0);
     expect(r.projecaoCentavos).toBe(0);
@@ -114,7 +114,7 @@ describe("ritmo", () => {
 });
 
 describe("anos na tela", () => {
-  it("o passado, o corrente e o proximo", () => {
+  it("o passado, o corrente e o próximo", () => {
     expect(anosOferecidos(2026)).toEqual([2025, 2026, 2027]);
   });
 });

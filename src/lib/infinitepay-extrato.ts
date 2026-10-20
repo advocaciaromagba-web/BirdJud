@@ -138,7 +138,7 @@ export function lerCsvDaInfinitePay(conteudo: string): LeituraDoCsv {
   // casar — e o arquivo pareceria "de outro sistema" sem ser.
   const texto = conteudo.replace(/^﻿/, "");
   const linhas = texto.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  if (linhas.length === 0) return { ...vazio, erro: "O arquivo esta vazio." };
+  if (linhas.length === 0) return { ...vazio, erro: "O arquivo está vazio." };
 
   const cabecalho = separarCampos(linhas[0]);
   const faltando = COLUNAS.filter((c) => !cabecalho.includes(c));
@@ -146,7 +146,7 @@ export function lerCsvDaInfinitePay(conteudo: string): LeituraDoCsv {
     return {
       ...vazio,
       erro:
-        "Este arquivo nao parece o extrato da InfinitePay — faltam as colunas: " +
+        "Este arquivo não parece o extrato da InfinitePay — faltam as colunas: " +
         `${faltando.join(", ")}.`,
     };
   }
@@ -176,7 +176,7 @@ export function lerCsvDaInfinitePay(conteudo: string): LeituraDoCsv {
     if (campos.length !== cabecalho.length) {
       resultado.recusadas.push({
         linha: i + 1,
-        motivo: `a linha tem ${campos.length} campos e o cabecalho tem ${cabecalho.length}`,
+        motivo: `a linha tem ${campos.length} campos e o cabeçalho tem ${cabecalho.length}`,
       });
       continue;
     }
@@ -189,7 +189,7 @@ export function lerCsvDaInfinitePay(conteudo: string): LeituraDoCsv {
       // financeiro e pior que lancamento nenhum.
       resultado.recusadas.push({
         linha: i + 1,
-        motivo: !data ? "nao entendi a data" : "nao entendi o valor",
+        motivo: !data ? "não entendi a data" : "não entendi o valor",
       });
       continue;
     }

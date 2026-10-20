@@ -33,7 +33,7 @@ export function PartesDoProcesso({
     });
     const json = await r.json().catch(() => ({}));
     setOcupado(null);
-    if (!r.ok) return setErro(json.erro ?? "Nao consegui cadastrar.");
+    if (!r.ok) return setErro(json.erro ?? "Não consegui cadastrar.");
     router.refresh();
   }
 

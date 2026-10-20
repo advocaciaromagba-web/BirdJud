@@ -42,7 +42,7 @@ export function AreasDoUsuario({
     setOcupado(null);
     if (!resposta.ok) {
       const d = await resposta.json().catch(() => null);
-      setErro(d?.erro ?? "Nao consegui gravar.");
+      setErro(d?.erro ?? "Não consegui gravar.");
       return;
     }
     router.refresh();
@@ -51,7 +51,7 @@ export function AreasDoUsuario({
   if (ehAdmin) {
     return (
       <p className="mt-1 text-xs text-slate-500">
-        Administrador ve todas as areas. Quem administra precisa poder consertar
+        Administrador vê todas as áreas. Quem administra precisa poder consertar
         o que quebrou em qualquer uma delas.
       </p>
     );
@@ -69,7 +69,7 @@ export function AreasDoUsuario({
         <div className="mt-2 rounded border border-slate-200 bg-slate-50 p-3">
           {ehVoce ? (
             <p className="text-xs text-amber-700">
-              Ninguem muda a propria permissao — senao este painel viraria o
+              Ninguém muda a própria permissão — senão este painel viraria o
               caminho para contornar este painel.
             </p>
           ) : null}
@@ -90,8 +90,8 @@ export function AreasDoUsuario({
             ))}
           </ul>
           <p className="mt-2 text-xs text-slate-500">
-            Fechar uma area tira ela do menu E barra o endereco. {nome} vai ver
-            uma tela dizendo qual area e quem libera.
+            Fechar uma área tira ela do menu E barra o endereço. {nome} vai ver
+            uma tela dizendo qual área e quem libera.
           </p>
           {erro ? <p className="aviso-erro mt-2">{erro}</p> : null}
         </div>

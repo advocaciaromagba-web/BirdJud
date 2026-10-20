@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirAdministracao();
     const corpo = cores.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     // As regras de cor e de CNPJ moram em dados-do-escritorio.ts.

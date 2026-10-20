@@ -22,10 +22,10 @@ export function lerCertificado(pfxBase64: string, senha: string): Leitura {
     forge.pki.oids.certBag
   ];
   const certificado = sacos?.[0]?.cert;
-  if (!certificado) throw new Error("O arquivo nao contem certificado.");
+  if (!certificado) throw new Error("O arquivo não contém certificado.");
 
   const titular =
-    certificado.subject.getField("CN")?.value ?? "titular nao identificado";
+    certificado.subject.getField("CN")?.value ?? "titular não identificado";
 
   return {
     titular,
@@ -55,7 +55,7 @@ export function avaliarValidade(
     };
   }
   if (leitura.de > agora) {
-    return { ok: false, detalhe: "Certificado ainda nao esta valido." };
+    return { ok: false, detalhe: "Certificado ainda não está válido." };
   }
 
   const diasRestantes = Math.floor(
@@ -63,18 +63,18 @@ export function avaliarValidade(
   );
   const aviso =
     diasRestantes <= AVISO_DIAS
-      ? ` Atencao: vence em ${diasRestantes} dia(s).`
+      ? ` Atenção: vence em ${diasRestantes} dia(s).`
       : "";
   return {
     ok: true,
-    detalhe: `${leitura.titular}, valido ate ${data(leitura.ate)}.${aviso}`,
+    detalhe: `${leitura.titular}, válido até ${data(leitura.ate)}.${aviso}`,
   };
 }
 
 export const conectorCertificado: Conector = {
   tipo: "NFSE_CERT",
   rotulo: "Certificado e-CNPJ (NFS-e)",
-  descricao: "Assinatura das notas fiscais com o certificado A1 do escritorio.",
+  descricao: "Assinatura das notas fiscais com o certificado A1 do escritório.",
   modulo: "NFSE",
   campos: [
     {
@@ -101,7 +101,7 @@ export const conectorCertificado: Conector = {
       const leitura = lerCertificado(dados.arquivo, dados.senha);
       return `${leitura.titular} · vence em ${leitura.ate.toLocaleDateString("pt-BR")}`;
     } catch {
-      return "Certificado nao pode ser lido.";
+      return "Certificado não pode ser lido.";
     }
   },
 
@@ -122,7 +122,7 @@ export const conectorCertificado: Conector = {
         ok: false,
         detalhe: /password/i.test(mensagem)
           ? "Senha do certificado incorreta."
-          : `Arquivo invalido: ${mensagem}`,
+          : `Arquivo inválido: ${mensagem}`,
       };
     }
 

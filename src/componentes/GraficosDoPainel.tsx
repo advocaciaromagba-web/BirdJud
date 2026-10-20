@@ -195,7 +195,7 @@ export function Colunas({
         <table className="tabela mt-2">
           <thead>
             <tr>
-              <th>Mes</th>
+              <th>Mês</th>
               {series.map((s) => (
                 <th key={s.rotulo} className="text-right">{s.rotulo}</th>
               ))}

@@ -29,7 +29,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
     if (erro instanceof FalhaNoAsaas) {
       return NextResponse.json(
-        { erro: `O meio de pagamento nao respondeu: ${erro.message} Tente de novo em alguns minutos.` },
+        { erro: `O meio de pagamento não respondeu: ${erro.message} Tente de novo em alguns minutos.` },
         { status: 502 },
       );
     }

@@ -21,7 +21,7 @@ export async function PATCH(
     const { id } = await params;
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const r = await comEscritorio(escritorioId, (db) =>
@@ -36,7 +36,7 @@ export async function PATCH(
       }),
     );
     if (r.count === 0) {
-      return NextResponse.json({ erro: "Item nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Item não encontrado." }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
   } catch (erro) {

@@ -24,7 +24,7 @@ import {
 
 export class SemSessao extends Error {
   readonly status = 401;
-  constructor(motivo = "Sessao ausente ou invalida para este endereco.") {
+  constructor(motivo = "Sessão ausente ou inválida para este endereço.") {
     super(motivo);
     this.name = "SemSessao";
   }
@@ -67,9 +67,9 @@ export async function exigirSessao(
   area?: string,
 ): Promise<ContextoRota> {
   const marca = await escritorioDoEndereco();
-  if (!marca?.id) throw new SemSessao("Endereco sem escritorio.");
+  if (!marca?.id) throw new SemSessao("Endereço sem escritório.");
   if (!marca.status || !STATUS_QUE_ENTRAM.has(marca.status)) {
-    throw new SemSessao("Escritorio suspenso ou encerrado.");
+    throw new SemSessao("Escritório suspenso ou encerrado.");
   }
 
   const sessao = await getServerSession(opcoesAuth);
@@ -77,7 +77,7 @@ export async function exigirSessao(
 
   // Cookie de um escritorio nao vale no subdominio de outro.
   if (sessao.escritorioId !== marca.id) {
-    throw new SemSessao("Sessao de outro escritorio.");
+    throw new SemSessao("Sessão de outro escritório.");
   }
 
   // O usuario ainda existe, esta ativo, e a sessao foi emitida depois da
@@ -88,9 +88,9 @@ export async function exigirSessao(
       select: { nome: true, ativo: true, sessoesValidasApos: true },
     }),
   );
-  if (!usuario?.ativo) throw new SemSessao("Usuario inativo ou removido.");
+  if (!usuario?.ativo) throw new SemSessao("Usuário inativo ou removido.");
   if (sessaoRevogada(sessao.emitidaEm, usuario.sessoesValidasApos)) {
-    throw new SemSessao("Sessao encerrada. Entre novamente.");
+    throw new SemSessao("Sessão encerrada. Entre novamente.");
   }
 
   if (modulo) await exigirModulo(marca.id, modulo);
@@ -110,7 +110,7 @@ export async function exigirSessao(
 
   if (area && acesso[area] !== true) {
     const nome = areaPorChave(area)?.nome ?? area;
-    throw new SemPermissao(`Seu acesso a ${nome} esta fechado neste escritorio.`);
+    throw new SemPermissao(`Seu acesso a ${nome} está fechado neste escritório.`);
   }
 
   return {
@@ -148,13 +148,13 @@ export function motivoParaRecusar(
   escritorioDoEndereco: { id: string; status: string } | null,
   sessao: { escritorioId: string } | null,
 ): string | null {
-  if (!escritorioDoEndereco) return "Endereco sem escritorio.";
+  if (!escritorioDoEndereco) return "Endereço sem escritório.";
   if (!STATUS_QUE_ENTRAM.has(escritorioDoEndereco.status)) {
-    return "Escritorio suspenso ou encerrado.";
+    return "Escritório suspenso ou encerrado.";
   }
-  if (!sessao) return "Sessao ausente ou invalida para este endereco.";
+  if (!sessao) return "Sessão ausente ou inválida para este endereço.";
   if (sessao.escritorioId !== escritorioDoEndereco.id)
-    return "Sessao de outro escritorio.";
+    return "Sessão de outro escritório.";
   return null;
 }
 
@@ -196,7 +196,7 @@ export async function exigirAdministracao(
     },
     segredoDoDestravamento(),
   );
-  if (motivo) throw new SemDestravar(`Area protegida: ${motivo}.`);
+  if (motivo) throw new SemDestravar(`Área protegida: ${motivo}.`);
 
   return contexto;
 }

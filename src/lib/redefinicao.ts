@@ -92,7 +92,7 @@ export async function criarPedido(
 export class TokenInvalido extends Error {
   readonly status = 400;
   constructor() {
-    super("Este link nao vale mais. Peca outro na tela de entrada.");
+    super("Este link não vale mais. Peça outro na tela de entrada.");
     this.name = "TokenInvalido";
   }
 }
@@ -190,14 +190,14 @@ export function mensagemDeConvite(opcoes: {
   return {
     assunto: `Seu acesso ao sistema de ${opcoes.nomeDoEscritorio}`,
     texto: [
-      `${opcoes.nomeDeQuemConvidou} criou um acesso para voce no sistema de ${opcoes.nomeDoEscritorio}.`,
+      `${opcoes.nomeDeQuemConvidou} criou um acesso para você no sistema de ${opcoes.nomeDoEscritorio}.`,
       "",
-      "Para escolher sua senha e entrar pela primeira vez, abra o endereco abaixo:",
+      "Para escolher sua senha e entrar pela primeira vez, abra o endereço abaixo:",
       opcoes.link,
       "",
-      `O link vale por ${dias} dia(s) e so pode ser usado uma vez. Depois disso, peca outro a quem administra o sistema do escritorio.`,
+      `O link vale por ${dias} dia(s) e só pode ser usado uma vez. Depois disso, peça outro a quem administra o sistema do escritório.`,
       "",
-      "Se voce nao esperava este convite, ignore esta mensagem e avise o escritorio.",
+      "Se você não esperava este convite, ignore esta mensagem e avise o escritório.",
       "",
       "BirdJud · by Blackbird",
     ].join("\n"),
@@ -213,14 +213,14 @@ export function mensagemDeRedefinicao(opcoes: {
   return {
     assunto: `Redefinir a senha — ${opcoes.nomeDoEscritorio}`,
     texto: [
-      `Alguem pediu para redefinir a senha de acesso ao sistema de ${opcoes.nomeDoEscritorio}.`,
+      `Alguém pediu para redefinir a senha de acesso ao sistema de ${opcoes.nomeDoEscritorio}.`,
       "",
-      "Para escolher uma senha nova, abra o endereco abaixo:",
+      "Para escolher uma senha nova, abra o endereço abaixo:",
       opcoes.link,
       "",
-      `O link vale por ${opcoes.validadeMinutos} minutos e so pode ser usado uma vez.`,
+      `O link vale por ${opcoes.validadeMinutos} minutos e só pode ser usado uma vez.`,
       "",
-      "Se nao foi voce quem pediu, ignore esta mensagem: nada muda enquanto o link nao for usado. Sua senha atual continua valendo.",
+      "Se não foi você quem pediu, ignore esta mensagem: nada muda enquanto o link não for usado. Sua senha atual continua valendo.",
       "",
       "BirdJud · by Blackbird",
     ].join("\n"),

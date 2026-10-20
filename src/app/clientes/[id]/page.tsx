@@ -202,7 +202,7 @@ export default async function FichaCliente({
       acesso={contexto.acesso}
       modulos={modulos}
       titulo={cliente.nome}
-      chamada={`${cliente.processos.length} processo(s) · ${cliente.arquivos.length} documento(s) · ${cliente._count.cobrancas} cobranca(s)`}
+      chamada={`${cliente.processos.length} processo(s) · ${cliente.arquivos.length} documento(s) · ${cliente._count.cobrancas} cobrança(s)`}
     >
       <Link href="/clientes" className="text-sm text-slate-500">
         ← todos os clientes
@@ -212,7 +212,7 @@ export default async function FichaCliente({
         <section className="cartao">
           <h2 className="font-semibold">Cadastro</h2>
           <p className="mt-1 text-sm text-slate-600">
-            So o nome e obrigatorio. O que for preenchido entra na qualificacao
+            Só o nome é obrigatório. O que for preenchido entra na qualificação
             da procuracao e do contrato; o que ficar vazio simplesmente nao
             aparece no papel.
           </p>
@@ -220,12 +220,12 @@ export default async function FichaCliente({
             <FichaDoCliente
               id={cliente.id}
               campos={[
-                { nome: "nome", rotulo: "Nome / razao social", valor: cliente.nome, obrigatorio: true, largo: true },
+                { nome: "nome", rotulo: "Nome / razão social", valor: cliente.nome, obrigatorio: true, largo: true },
                 {
                   nome: "documento",
                   rotulo: "CPF / CNPJ",
                   valor: cliente.documento ?? "",
-                  ajuda: "Conferido pelo digito verificador ao salvar a ficha.",
+                  ajuda: "Conferido pelo dígito verificador ao salvar a ficha.",
                 },
                 ...(pessoaJuridica
                   ? []
@@ -248,28 +248,28 @@ export default async function FichaCliente({
                         rotulo: "Nacionalidade",
                         valor: cliente.nacionalidade ?? "",
                         placeholder: "brasileira",
-                        grupo: "Qualificacao (vai na procuracao e no contrato)",
-                        ajuda: "Escreva como a pessoa e: brasileira, brasileiro. E isso que poe a peca no feminino.",
+                        grupo: "Qualificação (vai na procuração e no contrato)",
+                        ajuda: "Escreva como a pessoa é: brasileira, brasileiro. É isso que põe a peça no feminino.",
                       },
                       { nome: "estadoCivil", rotulo: "Estado civil", valor: cliente.estadoCivil ?? "", placeholder: "casada" },
-                      { nome: "profissao", rotulo: "Profissao", valor: cliente.profissao ?? "", placeholder: "professora", largo: true },
+                      { nome: "profissao", rotulo: "Profissão", valor: cliente.profissao ?? "", placeholder: "professora", largo: true },
                     ]),
                 {
                   nome: "endereco.cep",
                   rotulo: "CEP",
                   valor: enderecoNaFicha.cep ? enderecoNaFicha.cep.replace(/^(\d{5})(\d{3})$/, "$1-$2") : "",
                   placeholder: "Comece pelo CEP: o resto vem sozinho",
-                  grupo: pessoaJuridica ? "Endereco da empresa" : "Endereco",
+                  grupo: pessoaJuridica ? "Endereço da empresa" : "Endereco",
                 },
                 { nome: "endereco.logradouro", rotulo: "Rua / avenida", valor: enderecoNaFicha.logradouro ?? "" },
-                { nome: "endereco.numero", rotulo: "Numero", valor: enderecoNaFicha.numero ?? "" },
+                { nome: "endereco.numero", rotulo: "Número", valor: enderecoNaFicha.numero ?? "" },
                 { nome: "endereco.complemento", rotulo: "Complemento", valor: enderecoNaFicha.complemento ?? "" },
                 { nome: "endereco.bairro", rotulo: "Bairro", valor: enderecoNaFicha.bairro ?? "" },
                 { nome: "endereco.cidade", rotulo: "Cidade", valor: enderecoNaFicha.cidade ?? "" },
                 { nome: "endereco.uf", rotulo: "UF", valor: enderecoNaFicha.uf ?? "", placeholder: "SP" },
                 {
                   nome: "observacoes",
-                  rotulo: "Observacoes",
+                  rotulo: "Observações",
                   valor: cliente.observacoes ?? "",
                   tipo: "textarea",
                   grupo: "Observacoes",
@@ -281,10 +281,10 @@ export default async function FichaCliente({
 
         <aside className="grid gap-6">
           <section className="cartao">
-            <h2 className="font-semibold">Pendencias do cadastro</h2>
+            <h2 className="font-semibold">Pendências do cadastro</h2>
             {pendencias.length === 0 ? (
               <p className="mt-2 text-sm text-slate-600">
-                Cadastro completo para o que este escritorio usa.
+                Cadastro completo para o que este escritório usa.
               </p>
             ) : (
               <ul className="mt-3 grid gap-2">
@@ -319,8 +319,8 @@ export default async function FichaCliente({
       </div>
 
       {/*
-        So para pessoa juridica: pedir representante legal de pessoa fisica e
-        pedir que alguem invente um dado.
+        Só para pessoa jurídica: pedir representante legal de pessoa física e
+        pedir que alguém invente um dado.
       */}
       {ehPessoaJuridica(cliente.documento) ? (
         <div className="mt-6">
@@ -394,7 +394,7 @@ export default async function FichaCliente({
         {cliente.arquivos.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">
             Nenhum documento anexado. Para anexar, use a aba Arquivos e escolha
-            este cliente no vinculo.
+            este cliente no vínculo.
           </p>
         ) : (
           <ul className="lista mt-3">

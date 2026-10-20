@@ -18,7 +18,7 @@ const CPF_A = "529.982.247-25";
 const CPF_B = "111.444.777-35";
 
 describe("quando a tela pede representante", () => {
-  it("so para pessoa juridica", () => {
+  it("só para pessoa jurídica", () => {
     expect(ehPessoaJuridica("11.222.333/0001-81")).toBe(true);
     expect(ehPessoaJuridica(CPF_A)).toBe(false);
     expect(ehPessoaJuridica(null)).toBe(false);
@@ -52,7 +52,7 @@ describe("linha em branco e linha comecada", () => {
     ).toThrow(RepresentanteInvalido);
   });
 
-  it("o numero na mensagem conta so as linhas que valem", () => {
+  it("o número na mensagem conta só as linhas que valem", () => {
     expect(() =>
       prepararRepresentantes([
         { nome: "Ana Souza", cpf: CPF_A },
@@ -64,15 +64,15 @@ describe("linha em branco e linha comecada", () => {
 });
 
 describe("o CPF e conferido", () => {
-  it("digito que nao fecha e recusado", () => {
+  it("dígito que não fecha e recusado", () => {
     expect(() =>
       prepararRepresentantes([{ nome: "Ana", cpf: "111.222.333-44" }]),
-    ).toThrow(/digito verificador/);
+    ).toThrow(/dígito verificador/);
   });
 
   // Duas linhas com o mesmo CPF costuma ser a mesma pessoa digitada duas
   // vezes — e ela assinaria duas vezes a mesma procuracao.
-  it("o mesmo CPF nao entra duas vezes, nem com mascara diferente", () => {
+  it("o mesmo CPF não entra duas vezes, nem com máscara diferente", () => {
     expect(() =>
       prepararRepresentantes([
         { nome: "Ana", cpf: CPF_A },
@@ -90,7 +90,7 @@ describe("o CPF e conferido", () => {
   });
 });
 
-describe("o e-mail, quando ha", () => {
+describe("o e-mail, quando há", () => {
   // E por ele que a assinatura eletronica chega.
   it("torto e recusado", () => {
     expect(() =>
@@ -98,13 +98,13 @@ describe("o e-mail, quando ha", () => {
     ).toThrow(/e-mail do 1º/);
   });
 
-  it("ausente nao atrapalha", () => {
+  it("ausente não atrapalha", () => {
     expect(prepararRepresentantes([{ nome: "Ana", cpf: CPF_A }])[0]!.email).toBeNull();
   });
 });
 
-describe("o endereco", () => {
-  it("por padrao e o da empresa", () => {
+describe("o endereço", () => {
+  it("por padrão e o da empresa", () => {
     const r = prepararRepresentantes([{ nome: "Ana", cpf: CPF_A }]);
     expect(r[0]!.mesmoEnderecoDaEmpresa).toBe(true);
     expect(r[0]!.endereco).toBeNull();
@@ -112,7 +112,7 @@ describe("o endereco", () => {
 
   // Guardar endereco proprio de quem usa o da empresa deixaria um endereco
   // antigo pendurado, pronto para sair na peca depois da mudanca de sede.
-  it("endereco proprio so e guardado quando a pessoa diz que e outro", () => {
+  it("endereço próprio só e guardado quando a pessoa diz que e outro", () => {
     const comum = { nome: "Ana", cpf: CPF_A, endereco: { rua: "Rua X", cidade: "Salvador" } };
     expect(prepararRepresentantes([comum])[0]!.endereco).toBeNull();
     const proprio = prepararRepresentantes([
@@ -133,7 +133,7 @@ describe("o endereco", () => {
     expect(r[0]!.endereco?.uf).toBe("BA");
   });
 
-  it("endereco escrito em linha nao deixa virgula sobrando", () => {
+  it("endereço escrito em linha não deixa vírgula sobrando", () => {
     expect(
       enderecoEmLinha({ rua: "Rua X", numero: "10", cidade: "Salvador", uf: "BA" }),
     ).toBe("Rua X, 10, Salvador, BA");
@@ -142,7 +142,7 @@ describe("o endereco", () => {
   });
 });
 
-describe("a qualificacao que entra na peca", () => {
+describe("a qualificação que entra na peça", () => {
   it("monta com o que foi preenchido", () => {
     const r = prepararRepresentantes([
       {
@@ -163,7 +163,7 @@ describe("a qualificacao que entra na peca", () => {
   });
 
   // Nada de "estado civil: nao informado" numa peticao, e nada de inventar.
-  it("o que nao foi preenchido simplesmente nao aparece", () => {
+  it("o que não foi preenchido simplesmente não aparece", () => {
     const r = prepararRepresentantes([{ nome: "Ana Souza", cpf: CPF_A }])[0]!;
     const texto = qualificacao(r);
     expect(texto).toBe("Ana Souza, inscrito no CPF sob o nº 529.982.247-25");
@@ -172,7 +172,7 @@ describe("a qualificacao que entra na peca", () => {
     expect(texto).not.toContain("undefined");
   });
 
-  it("usa o endereco proprio quando ha um", () => {
+  it("usa o endereço próprio quando há um", () => {
     const r = prepararRepresentantes([
       {
         nome: "Ana",
@@ -185,7 +185,7 @@ describe("a qualificacao que entra na peca", () => {
   });
 });
 
-describe("CPF na qualificacao", () => {
+describe("CPF na qualificação", () => {
   // Quem digitou so numeros nao pode ver "52998224725" impresso na procuracao.
   it("sai pontuado mesmo quando foi digitado sem pontos", () => {
     const texto = qualificacao({

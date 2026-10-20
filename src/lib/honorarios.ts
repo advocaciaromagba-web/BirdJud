@@ -95,20 +95,20 @@ export function dividir(totalCentavos: number, quantidade: number): number[] {
 export function planoDoContrato(contrato: Contrato): Plano {
   const recusa = (motivo: string): Plano => ({ emiteSozinho: false, motivo, parcelas: [] });
 
-  if (!contrato.ativo) return recusa("O contrato esta encerrado.");
+  if (!contrato.ativo) return recusa("O contrato está encerrado.");
   if (contrato.tipo === "PERCENTUAL") {
-    return recusa("Honorario so por exito nao tem parcela fixa: a cobranca sai quando a acao terminar.");
+    return recusa("Honorário só por êxito não tem parcela fixa: a cobrança sai quando a ação terminar.");
   }
 
   const total = contrato.valorCentavos ?? 0;
-  if (total <= 0) return recusa("O contrato esta sem valor.");
+  if (total <= 0) return recusa("O contrato está sem valor.");
 
   const entrada = contrato.entradaCentavos ?? 0;
-  if (entrada < 0) return recusa("A entrada nao pode ser negativa.");
-  if (entrada > total) return recusa("A entrada e maior que o valor do contrato.");
+  if (entrada < 0) return recusa("A entrada não pode ser negativa.");
+  if (entrada > total) return recusa("A entrada é maior que o valor do contrato.");
 
   const quantidade = Math.round(contrato.parcelas);
-  if (!Number.isFinite(quantidade) || quantidade < 1) return recusa("O contrato nao diz em quantas parcelas.");
+  if (!Number.isFinite(quantidade) || quantidade < 1) return recusa("O contrato não diz em quantas parcelas.");
   if (quantidade > MAXIMO_DE_PARCELAS) {
     return recusa(`Mais de ${MAXIMO_DE_PARCELAS} parcelas: confira o contrato.`);
   }
@@ -120,15 +120,15 @@ export function planoDoContrato(contrato: Contrato): Plano {
   const vezes = aParcelar > 0 ? quantidade : 0;
   if (vezes > aParcelar) {
     // 10 parcelas de R$ 0,50 ate existem; 200 parcelas de R$ 1,00 total nao.
-    return recusa("Sao mais parcelas que centavos: o valor ou a quantidade esta errada.");
+    return recusa("São mais parcelas que centavos: o valor ou a quantidade está errada.");
   }
 
   const primeiro = contrato.primeiroVencimento;
   if (!primeiro || !DIA.test(primeiro)) return recusa("Falta a data do primeiro vencimento.");
 
   const base = contrato.descricao?.trim()
-    ? `Honorarios advocaticios — ${contrato.descricao.trim()}`
-    : "Honorarios advocaticios";
+    ? `Honorários advocatícios — ${contrato.descricao.trim()}`
+    : "Honorários advocatícios";
   const rotulo = contrato.tipo === "MISTO" ? `${base} (parte fixa)` : base;
 
   const parcelas: Parcela[] = [];
@@ -180,14 +180,14 @@ export function comoSeContrata(contrato: Contrato): string {
   const total = contrato.valorCentavos ?? 0;
   const entrada = contrato.entradaCentavos ?? 0;
   const vezes = Math.max(1, Math.round(contrato.parcelas));
-  const exito = contrato.percentualBp ? `${percentualEmTexto(contrato.percentualBp)} de exito` : null;
+  const exito = contrato.percentualBp ? `${percentualEmTexto(contrato.percentualBp)} de êxito` : null;
 
   if (total <= 0) return exito ?? "sem valor definido";
 
   let fixo: string;
   if (entrada > 0 && entrada < total) fixo = `entrada mais ${vezes}x`;
   else if (vezes > 1) fixo = `${vezes}x`;
-  else fixo = "a vista";
+  else fixo = "à vista";
 
   return exito ? `${fixo} + ${exito}` : fixo;
 }
@@ -233,7 +233,7 @@ export function impedimentos(cliente: { nome: string; documento: string | null }
   const faltas: string[] = [];
   if (!cliente.nome?.trim()) faltas.push("cliente sem nome");
   const doc = (cliente.documento ?? "").replace(/\D/g, "");
-  if (doc.length !== 11 && doc.length !== 14) faltas.push("cliente sem CPF ou CNPJ valido");
+  if (doc.length !== 11 && doc.length !== 14) faltas.push("cliente sem CPF ou CNPJ válido");
   return faltas;
 }
 

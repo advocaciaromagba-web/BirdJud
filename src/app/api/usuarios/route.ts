@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     const corpo = novoUsuario.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json(
-        { erro: corpo.error.issues[0]?.message ?? "Dados invalidos." },
+        { erro: corpo.error.issues[0]?.message ?? "Dados inválidos." },
         { status: 400 },
       );
     }
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     if (convidar && !temRemetenteDaPlataforma()) {
       return NextResponse.json(
         {
-          erro: "Sem remetente de e-mail configurado na plataforma, e preciso definir uma senha aqui e passa-la para a pessoa.",
+          erro: "Sem remetente de e-mail configurado na plataforma, é preciso definir uma senha aqui e passá-lá para a pessoa.",
         },
         { status: 503 },
       );
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
         {
           usuario,
           aviso:
-            "Usuario criado, mas o convite nao pode ser enviado. Peca para a pessoa usar 'Esqueci minha senha'.",
+            "Usuário criado, mas o convite não pode ser enviado. Peça para a pessoa usar 'Esqueci minha senha'.",
         },
         { status: 201 },
       );
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     }
     if (ehDuplicado(erro)) {
       return NextResponse.json(
-        { erro: "Ja existe um usuario com este e-mail neste escritorio." },
+        { erro: "Já existe um usuário com este e-mail neste escritório." },
         { status: 409 },
       );
     }

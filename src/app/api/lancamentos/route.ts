@@ -51,12 +51,12 @@ export async function POST(req: Request) {
     const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const corpo = novoLancamento.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const valorCentavos = paraCentavos(corpo.data.valor);
     if (valorCentavos === null || valorCentavos === 0) {
-      return NextResponse.json({ erro: "Valor invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Valor inválido." }, { status: 400 });
     }
 
     const { categoria, tipo } = corpo.data;
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     // comparativo com o mes anterior.
     if (categoria && !categoriaCombina(tipo, categoria)) {
       return NextResponse.json(
-        { erro: "Esta categoria nao combina com o tipo do lancamento." },
+        { erro: "Esta categoria não combina com o tipo do lançamento." },
         { status: 400 },
       );
     }
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       const normalizada = normalizarData(corpo.data.vencimento);
       if (!normalizada) {
         return NextResponse.json(
-          { erro: "Data de vencimento invalida." },
+          { erro: "Data de vencimento inválida." },
           { status: 400 },
         );
       }

@@ -10,10 +10,10 @@ import { limparHandle } from "../infinitepay";
 
 export const conectorInfinitePay: Conector = {
   tipo: "INFINITEPAY",
-  rotulo: "InfinitePay (cobrancas)",
+  rotulo: "InfinitePay (cobranças)",
   descricao:
-    "Link de pagamento com Pix e cartao na conta InfinitePay do escritorio. " +
-    "Segunda opcao, ao lado do Asaas.",
+    "Link de pagamento com Pix e cartão na conta InfinitePay do escritório. " +
+    "Segunda opção, ao lado do Asaas.",
   modulo: "COBRANCAS",
   campos: [
     {
@@ -28,7 +28,7 @@ export const conectorInfinitePay: Conector = {
   ],
   resumo: (dados) => {
     const handle = limparHandle(String(dados.handle ?? ""));
-    return handle ? `InfiniteTag @${handle}` : "InfiniteTag invalida";
+    return handle ? `InfiniteTag @${handle}` : "InfiniteTag inválida";
   },
 
   async testar(dados) {
@@ -43,15 +43,15 @@ export const conectorInfinitePay: Conector = {
       if (!handle) {
         return {
           ok: false,
-          detalhe: "Nao parece uma InfiniteTag. Confira no app, em Perfil.",
+          detalhe: "Não parece uma InfiniteTag. Confira no app, em Perfil.",
         };
       }
       return {
         ok: true,
         detalhe:
-          `InfiniteTag @${handle} gravada. A InfinitePay nao oferece um jeito de ` +
-          "conferir a tag sem criar cobranca, entao a primeira cobranca e que vai dizer " +
-          "se esta certa — emita uma de valor baixo para si mesmo antes de usar com cliente.",
+          `InfiniteTag @${handle} gravada. A InfinitePay não oferece um jeito de ` +
+          "conferir a tag sem criar cobrança, então a primeira cobrança é que vai dizer " +
+          "se está certa — emita uma de valor baixo para si mesmo antes de usar com cliente.",
       };
     } catch (erro) {
       return { ok: false, detalhe: descreverFalha(erro) };

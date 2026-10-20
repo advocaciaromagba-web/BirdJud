@@ -22,8 +22,8 @@ export default async function PaginaNotas({
     if (erro instanceof ModuloNaoContratado) {
       return (
         <main className="mx-auto max-w-2xl p-10">
-          <h1 className="text-2xl font-bold">Modulo nao contratado</h1>
-          <p className="mt-3 text-slate-600">O modulo de notas fiscais nao faz parte do plano deste escritorio.</p>
+          <h1 className="text-2xl font-bold">Módulo não contratado</h1>
+          <p className="mt-3 text-slate-600">O módulo de notas fiscais não faz parte do plano deste escritório.</p>
         </main>
       );
     }
@@ -90,7 +90,7 @@ export default async function PaginaNotas({
       <section className="cartao mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="font-semibold">{f?.razaoSocial ?? "Escritorio emissor"}</p>
+            <p className="font-semibold">{f?.razaoSocial ?? "Escritório emissor"}</p>
             <p className="text-xs text-slate-500">
               {cert
                 ? `Certificado: ${cert.titular ?? "cadastrado"}${cert.validoAte ? `, valido ate ${dataBR.format(new Date(cert.validoAte))}` : ""} · assina: ${titularNome}`
@@ -108,7 +108,7 @@ export default async function PaginaNotas({
             <span
               className={`rounded px-2 py-0.5 text-xs font-semibold ${pendencias.length === 0 ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"}`}
             >
-              {pendencias.length === 0 ? "Pronto para emitir" : "Configuracao pendente"}
+              {pendencias.length === 0 ? "Pronto para emitir" : "Configuração pendente"}
             </span>
           </div>
         </div>
@@ -121,11 +121,11 @@ export default async function PaginaNotas({
         ) : null}
         {contexto.papel === "ADMIN" ? (
           <p className="mt-2 text-sm text-slate-600">
-            O certificado e-CNPJ e enviado em{" "}
+            O certificado e-CNPJ é enviado em{" "}
             <Link href="/administracao" className="text-marca underline">
-              Configuracoes
+              Configurações
             </Link>
-            . Quem envia vira o titular: so essa pessoa assina as notas, digitando a senha a cada assinatura (ela nao
+            . Quem envia vira o titular: só essa pessoa assina as notas, digitando a senha a cada assinatura (ela não
             fica guardada).
           </p>
         ) : null}

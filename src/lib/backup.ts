@@ -76,7 +76,7 @@ export async function restaurarBackup(
   slugNovo: string,
 ): Promise<ResultadoDaRestauracao> {
   if (backup.formato !== FORMATO_DO_BACKUP) {
-    throw new Error(`Formato de backup nao suportado: ${backup.formato}`);
+    throw new Error(`Formato de backup não suportado: ${backup.formato}`);
   }
 
   const db = prismaPlataforma();
@@ -85,7 +85,7 @@ export async function restaurarBackup(
   const novo = await db.escritorio.create({
     data: {
       slug: slugNovo,
-      nome: String(original.nome ?? "Escritorio restaurado"),
+      nome: String(original.nome ?? "Escritório restaurado"),
       cnpj: (original.cnpj as string | null) ?? null,
       // Restauracao nasce suspensa: quem decide reabrir o acesso e gente, nao
       // o script. Evita duas copias do mesmo escritorio no ar por engano.

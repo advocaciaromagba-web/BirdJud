@@ -137,7 +137,7 @@ export async function tratarMensagem(
   });
 
   const respondeu = await responder(escritorioId, telefone, intencao, {
-    nomeEscritorio: escritorio?.nome ?? "O escritorio",
+    nomeEscritorio: escritorio?.nome ?? "O escritório",
     telefoneDoEscritorio: escritorio?.telefoneAtendimento ?? null,
     titulo: compromisso?.titulo ?? null,
     quando: compromisso ? dataHoraBR.format(compromisso.inicio) : null,
@@ -215,7 +215,7 @@ async function responder(
     // Nao responder e ruim; devolver erro para a Meta e pior, porque ela
     // reentrega e o resto do tratamento aconteceria de novo.
     console.log(
-      `whatsapp entrada: resposta nao saiu ${JSON.stringify({
+      `whatsapp entrada: resposta não saiu ${JSON.stringify({
         escritorioId,
         motivo: erro instanceof FalhaNoWhatsapp ? erro.message : "falha",
       })}`.slice(0, 500),

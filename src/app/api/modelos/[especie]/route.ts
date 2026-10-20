@@ -31,7 +31,7 @@ export async function GET(
     const { escritorioId } = await exigirSessao();
     const { especie } = await params;
     if (!ehEspecie(especie)) {
-      return NextResponse.json({ erro: "Especie invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
     }
 
     // ?qual=sistema ou ?qual=escritorio baixa um dos dois de proposito; sem
@@ -63,10 +63,10 @@ export async function PATCH(
     const { escritorioId } = await exigirAdmin();
     const { especie } = await params;
     if (!ehEspecie(especie)) {
-      return NextResponse.json({ erro: "Especie invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
     }
     const corpo = escolha.safeParse(await req.json().catch(() => null));
-    if (!corpo.success) return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     await fixarModelo(escritorioId, especie, corpo.data.usar);
     return NextResponse.json({ ok: true });
   } catch (erro) {
@@ -83,7 +83,7 @@ export async function DELETE(
     const { escritorioId } = await exigirAdmin();
     const { especie } = await params;
     if (!ehEspecie(especie)) {
-      return NextResponse.json({ erro: "Especie invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
     }
     await voltarAoPadrao(escritorioId, especie);
     return NextResponse.json({ ok: true });

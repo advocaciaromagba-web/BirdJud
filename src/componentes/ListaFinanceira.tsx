@@ -44,7 +44,7 @@ export function ListaFinanceira({ lancamentos }: { lancamentos: Lancamento[] }) 
       });
       if (!resposta.ok) {
         const corpo = await resposta.json().catch(() => ({}));
-        setErro(corpo.erro ?? "Nao foi possivel atualizar.");
+        setErro(corpo.erro ?? "Não foi possível atualizar.");
         return;
       }
       router.refresh();
@@ -54,7 +54,7 @@ export function ListaFinanceira({ lancamentos }: { lancamentos: Lancamento[] }) 
   }
 
   if (lancamentos.length === 0) {
-    return <p className="vazio">Nenhum lancamento nesta competencia.</p>;
+    return <p className="vazio">Nenhum lançamento nesta competência.</p>;
   }
 
   const hoje = new Date();
@@ -66,10 +66,10 @@ export function ListaFinanceira({ lancamentos }: { lancamentos: Lancamento[] }) 
         <thead>
           <tr>
             <th>Vencimento</th>
-            <th>Descricao</th>
+            <th>Descrição</th>
             <th>Categoria</th>
             <th className="text-right">Valor</th>
-            <th>Situacao</th>
+            <th>Situação</th>
           </tr>
         </thead>
         <tbody>

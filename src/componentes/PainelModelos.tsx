@@ -57,13 +57,13 @@ export function PainelModelos({
     setOcupado(null);
     const det = await resposta.json().catch(() => null);
     if (!resposta.ok) {
-      setErro(det?.erro ?? "Nao consegui guardar o modelo.");
+      setErro(det?.erro ?? "Não consegui guardar o modelo.");
       return;
     }
     const desconhecidos: string[] = det?.desconhecidos ?? [];
     setAviso(
       desconhecidos.length > 0
-        ? `Modelo guardado. Atencao: ${desconhecidos.map((d) => `{{${d}}}`).join(", ")} nao e campo do sistema e vai sair escrito assim na peca.`
+        ? `Modelo guardado. Atencao: ${desconhecidos.map((d) => `{{${d}}}`).join(", ")} não é campo do sistema e vai sair escrito assim na peça.`
         : `Modelo guardado, com ${det?.usados?.length ?? 0} campo(s) reconhecido(s).`,
     );
     router.refresh();
@@ -81,13 +81,13 @@ export function PainelModelos({
     setOcupado(null);
     if (!resposta.ok) {
       const det = await resposta.json().catch(() => null);
-      setErro(det?.erro ?? "Nao consegui trocar o modelo.");
+      setErro(det?.erro ?? "Não consegui trocar o modelo.");
       return;
     }
     setAviso(
       usar === "ESCRITORIO"
-        ? "Fixado: as pecas saem no modelo do escritorio."
-        : "Fixado: as pecas saem no modelo do sistema. O do escritorio continua guardado.",
+        ? "Fixado: as peças saem no modelo do escritório."
+        : "Fixado: as peças saem no modelo do sistema. O do escritório continua guardado.",
     );
     router.refresh();
   }
@@ -95,7 +95,7 @@ export function PainelModelos({
   async function excluirOMeu(especie: string) {
     if (
       !confirm(
-        "Excluir o modelo que o escritorio enviou? O arquivo sai do sistema e passa a valer o modelo do sistema. As pecas ja geradas continuam como estao.",
+        "Excluir o modelo que o escritório enviou? O arquivo sai do sistema e passa a valer o modelo do sistema. As peças já geradas continuam como estão.",
       )
     )
       return;
@@ -106,10 +106,10 @@ export function PainelModelos({
     setOcupado(null);
     if (!resposta.ok) {
       const det = await resposta.json().catch(() => null);
-      setErro(det?.erro ?? "Nao consegui excluir o modelo.");
+      setErro(det?.erro ?? "Não consegui excluir o modelo.");
       return;
     }
-    setAviso("Modelo do escritorio excluido. Vale o do sistema.");
+    setAviso("Modelo do escritório excluído. Vale o do sistema.");
     router.refresh();
   }
 
@@ -119,25 +119,25 @@ export function PainelModelos({
         <h2 className="font-semibold">Como funciona</h2>
         <ol className="mt-2 grid gap-1 text-sm text-slate-600">
           <li>
-            1. Baixe o modelo que esta valendo — o do escritorio, ou o que ja vem
+            1. Baixe o modelo que está valendo — o do escritório, ou o que já vem
             no sistema.
           </li>
           <li>
-            2. Abra no Word e deixe do jeito do escritorio: o timbre, a fonte, as
-            clausulas. Os campos entre chaves ficam como estao.
+            2. Abra no Word e deixe do jeito do escritório: o timbre, a fonte, as
+            cláusulas. Os campos entre chaves ficam como estão.
           </li>
-          <li>3. Mande o arquivo de volta aqui. A partir dai, e esse que sai.</li>
+          <li>3. Mande o arquivo de volta aqui. A partir daí, é esse que sai.</li>
           <li>
-            4. Com o do escritorio guardado, fixe qual sai nas pecas — o do
-            escritorio ou o do sistema. Os dois ficam guardados, e trocar e um
+            4. Com o do escritório guardado, fixe qual sai nas peças — o do
+            escritório ou o do sistema. Os dois ficam guardados, e trocar é um
             clique.
           </li>
         </ol>
         <p className="mt-3 text-sm text-amber-700">
-          O modelo que ja vem no sistema e so o ponto de partida, para o
-          escritorio novo conseguir emitir no primeiro dia. Antes de usar como
-          esta, o advogado responsavel le e adapta: a redacao e a
-          responsabilidade sao do escritorio.
+          O modelo que já vem no sistema é só o ponto de partida, para o
+          escritório novo conseguir emitir no primeiro dia. Antes de usar como
+          esta, o advogado responsável lê e adapta: a redação e a
+          responsabilidade são do escritório.
         </p>
         {aviso ? <p className="mt-3 text-sm text-emerald-700">{aviso}</p> : null}
         {erro ? <p className="aviso-erro mt-3">{erro}</p> : null}
@@ -159,11 +159,11 @@ export function PainelModelos({
                       ? `Em uso: modelo do escritorio — ${m.nomeDoArquivo}${m.enviadoEmBR ? `, enviado em ${m.enviadoEmBR}` : ""}`
                       : m.temProprio
                         ? `Em uso: modelo do sistema. Guardado: ${m.nomeDoArquivo}${m.enviadoEmBR ? `, enviado em ${m.enviadoEmBR}` : ""}`
-                        : "Em uso: modelo que ja vem no sistema"}
+                        : "Em uso: modelo que já vem no sistema"}
                   </p>
                   {m.temProprio && podeTrocar ? (
                     <fieldset className="mt-2 flex flex-wrap gap-4 text-sm" disabled={ocupado === m.especie}>
-                      <legend className="sr-only">Qual modelo sai nas pecas de {m.nome}</legend>
+                      <legend className="sr-only">Qual modelo sai nas peças de {m.nome}</legend>
                       <label className="flex items-center gap-1">
                         <input
                           type="radio"
@@ -171,7 +171,7 @@ export function PainelModelos({
                           checked={m.doEscritorio}
                           onChange={() => fixar(m.especie, "ESCRITORIO")}
                         />
-                        Usar o do escritorio
+                        Usar o do escritório
                       </label>
                       <label className="flex items-center gap-1">
                         <input
@@ -191,14 +191,14 @@ export function PainelModelos({
                   ) : null}
                   {m.temProprio && m.usados.length === 0 ? (
                     <p className="mt-1 text-xs text-amber-700">
-                      Nenhum campo reconhecido: a peca vai sair igual para todo
-                      cliente. Confira se os campos estao escritos entre chaves
+                      Nenhum campo reconhecido: a peça vai sair igual para todo
+                      cliente. Confira se os campos estão escritos entre chaves
                       duplas.
                     </p>
                   ) : null}
                   {m.desconhecidos.length > 0 ? (
                     <p className="mt-1 text-xs text-amber-700">
-                      Nao sao campos do sistema e vao sair escritos assim:{" "}
+                      Não são campos do sistema e vão sair escritos assim:{" "}
                       {m.desconhecidos.map((d) => `{{${d}}}`).join(", ")}
                     </p>
                   ) : null}
@@ -218,7 +218,7 @@ export function PainelModelos({
                       className="botao-secundario"
                       download
                     >
-                      Baixar o do escritorio
+                      Baixar o do escritório
                     </a>
                   ) : null}
                   {podeTrocar ? (
@@ -251,7 +251,7 @@ export function PainelModelos({
                           onClick={() => excluirOMeu(m.especie)}
                           className="botao-secundario disabled:opacity-50"
                         >
-                          Excluir o do escritorio
+                          Excluir o do escritório
                         </button>
                       ) : null}
                     </>
@@ -263,7 +263,7 @@ export function PainelModelos({
         </ul>
         {!podeTrocar ? (
           <p className="mt-3 text-sm text-slate-600">
-            Só o administrador do escritorio envia, fixa ou exclui modelo.
+            Só o administrador do escritório envia, fixa ou exclui modelo.
             Baixar, todo mundo pode.
           </p>
         ) : null}
@@ -273,8 +273,8 @@ export function PainelModelos({
         <h2 className="font-semibold">Campos que o sistema preenche</h2>
         <p className="mt-1 text-sm text-slate-600">
           Escreva no Word exatamente assim, com as chaves duplas. Campo que o
-          sistema nao conhece sai escrito como esta na peca — de proposito, para
-          o erro de digitacao aparecer. Campo conhecido sem valor no cadastro sai
+          sistema não conhece sai escrito como está na peça — de propósito, para
+          o erro de digitação aparecer. Campo conhecido sem valor no cadastro sai
           marcado, nunca em branco.
         </p>
         <ul className="mt-3 grid gap-1 sm:grid-cols-2">

@@ -75,7 +75,7 @@ export function AcoesDoEscritorio({
 
   return (
     <section className="cartao-aperto mt-6 text-sm">
-      <h2 className="font-semibold">Acoes da plataforma</h2>
+      <h2 className="font-semibold">Ações da plataforma</h2>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className="text-slate-600">Faixa:</span>
@@ -101,8 +101,8 @@ export function AcoesDoEscritorio({
           Plano{planoAtual ? `: ${PLANO[planoAtual].rotulo}` : " (montado)"}
         </p>
         <p className="ajuda">
-          Aplicar um plano diz o conjunto inteiro: o que nao esta nele sai. O
-          valor da assinatura nao muda sozinho.
+          Aplicar um plano diz o conjunto inteiro: o que não esta nele sai. O
+          valor da assinatura não muda sozinho.
         </p>
         <div className="mt-2 flex flex-wrap gap-2">
           {PLANOS.map((plano) => (
@@ -127,7 +127,7 @@ export function AcoesDoEscritorio({
       </div>
 
       <div className="mt-4">
-        <p className="text-slate-600">Modulos contratados:</p>
+        <p className="text-slate-600">Módulos contratados:</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {MODULOS.filter((modulo) => modulo !== "NUCLEO").map((modulo) => {
             const ativo = contratados.get(modulo) === true;
@@ -165,8 +165,8 @@ export function AcoesDoEscritorio({
       <div className="mt-4 border-t border-slate-200 pt-4">
         <p className="font-semibold">Cortesia</p>
         <p className="mt-1 text-slate-600">
-          Usa sem pagar, por tempo indeterminado: nenhuma fatura e gerada, o escritorio fica ativo e sai da receita e da
-          previsao do painel.
+          Usa sem pagar, por tempo indeterminado: nenhuma fatura é gerada, o escritório fica ativo e sai da receita e da
+          previsão do painel.
         </p>
         {emCortesia ? (
           <button
@@ -182,7 +182,7 @@ export function AcoesDoEscritorio({
             <input
               aria-label="Motivo da cortesia"
               className="campo max-w-sm"
-              placeholder="Motivo (ex.: escritorio da casa, para testes)"
+              placeholder="Motivo (ex.: escritório da casa, para testes)"
               value={motivo}
               maxLength={300}
               onChange={(e) => setMotivo(e.target.value)}
@@ -203,7 +203,7 @@ export function AcoesDoEscritorio({
         <div className="mt-4 border-t border-slate-200 pt-4">
           <p className="font-semibold">Valor da mensalidade</p>
           <p className="mt-1 text-slate-600">
-            Preco negociado, fechado na assinatura. Em branco ou zero, vale a tabela. Muda as faturas seguintes, nao a ja gerada.
+            Preço negociado, fechado na assinatura. Em branco ou zero, vale a tabela. Muda as faturas seguintes, não a já gerada.
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-1">
@@ -236,7 +236,7 @@ export function AcoesDoEscritorio({
               type="button"
               disabled={ocupado}
               onClick={() => {
-                if (window.confirm("Encerrar o periodo de teste agora? A primeira fatura sai na proxima regua.")) {
+                if (window.confirm("Encerrar o período de teste agora? A primeira fatura sai na próxima regua.")) {
                   void agir({ acao: "encerrarTeste" });
                 }
               }}
@@ -253,7 +253,7 @@ export function AcoesDoEscritorio({
           <p className="font-semibold">Ciclo da assinatura</p>
           <p className="mt-1 text-slate-600">
             Hoje: {ciclo === "ANUAL" ? "anual, com 10% de desconto" : "mensal"}. No anual sai uma fatura de 12 meses;
-            nos meses do meio, so excedente de consumo.
+            nos meses do meio, só excedente de consumo.
           </p>
           <button
             type="button"
@@ -269,7 +269,7 @@ export function AcoesDoEscritorio({
       <div className="mt-4 border-t border-slate-200 pt-4">
         <p className="font-semibold">Processos do DJEN</p>
         <p className="mt-1 text-slate-600">
-          Busca agora os processos dos ultimos 12 meses das OABs que ainda nao foram buscadas, sem esperar a captura da
+          Busca agora os processos dos últimos 12 meses das OABs que ainda não foram buscadas, sem esperar a captura da
           madrugada.
         </p>
         <button
@@ -283,9 +283,9 @@ export function AcoesDoEscritorio({
       </div>
 
       <div className="mt-4 border-t border-slate-200 pt-4">
-        <p className="font-semibold">Nuvem do escritorio</p>
+        <p className="font-semibold">Nuvem do escritório</p>
         <p className="mt-1 text-slate-600">
-          Copia agora para a nuvem conectada os documentos que ficaram para tras. Roda sozinho todo dia e depois de
+          Cópia agora para a nuvem conectada os documentos que ficaram para trás. Roda sozinho todo dia e depois de
           cada falha.
         </p>
         <button
@@ -307,19 +307,19 @@ export function AcoesDoEscritorio({
             onClick={() => agir({ acao: "reativar" })}
             className="mt-2 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
           >
-            Reativar o escritorio
+            Reativar o escritório
           </button>
         ) : (
           <>
             <p className="mt-1 text-slate-600">
-              Interrompe o acesso e a cobranca. Os dados ficam guardados pelo prazo de retencao, para exportacao, e
-              depois sao apagados pela rotina semanal. Ate la, da para reativar.
+              Interrompe o acesso e a cobrança. Os dados ficam guardados pelo prazo de retenção, para exportação, e
+              depois são apagados pela rotina semanal. Até lá, dá para reativar.
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <input
                 aria-label="Motivo do encerramento"
                 className="campo max-w-sm"
-                placeholder="Motivo (ex.: escritorio de teste)"
+                placeholder="Motivo (ex.: escritório de teste)"
                 value={motivoDoEncerramento}
                 maxLength={300}
                 onChange={(e) => setMotivoDoEncerramento(e.target.value)}
@@ -328,13 +328,13 @@ export function AcoesDoEscritorio({
                 type="button"
                 disabled={ocupado || motivoDoEncerramento.trim().length < 3}
                 onClick={() => {
-                  if (window.confirm("Encerrar este escritorio? O acesso e interrompido na hora.")) {
+                  if (window.confirm("Encerrar este escritório? O acesso é interrompido na hora.")) {
                     void agir({ acao: "encerrar", motivo: motivoDoEncerramento.trim() });
                   }
                 }}
                 className="rounded border border-red-300 px-3 py-1.5 font-semibold text-red-800 disabled:opacity-60"
               >
-                Encerrar escritorio
+                Encerrar escritório
               </button>
             </div>
           </>

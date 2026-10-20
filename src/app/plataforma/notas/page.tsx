@@ -34,7 +34,7 @@ export default async function NotasDaPlataforma() {
     erroDoCertificado = (e as Error).message;
   }
   const pendencias = pendenciasDaPlataforma(fiscal, cert);
-  if (erroDoCertificado) pendencias.unshift(`O certificado das variaveis nao abriu: ${erroDoCertificado}`);
+  if (erroDoCertificado) pendencias.unshift(`O certificado das variáveis não abriu: ${erroDoCertificado}`);
 
   const notas = await prismaPlataforma().notaDaPlataforma.findMany({ orderBy: { criadoEm: "desc" }, take: 100 });
 
@@ -43,21 +43,21 @@ export default async function NotasDaPlataforma() {
       <NavegacaoDaPlataforma ativo="/plataforma/notas" operador={operador.nome} />
       <h1 className="mt-6">Notas fiscais da mensalidade</h1>
       <p className="chamada">
-        A Blackbird emitindo para os escritorios, pelo Sistema Nacional da NFS-e. Sai sozinha quando a fatura e paga
-        (com a emissao automatica ligada) e vai ao e-mail do escritorio. Tambem se emite e cancela por aqui ou pela
-        ficha do escritorio.
+        A Blackbird emitindo para os escritórios, pelo Sistema Nacional da NFS-e. Sai sozinha quando a fatura é paga
+        (com a emissão automática ligada) e vai ao e-mail do escritório. Também se emite e cancela por aqui ou pela
+        ficha do escritório.
       </p>
 
       <section className="cartao-aperto mt-6 text-sm">
         <h2 className="font-semibold">Emissor</h2>
         <p className="mt-2">
-          {fiscal ? `${fiscal.razaoSocial} · CNPJ ${fiscal.cnpj} · ${fiscal.ambiente === "PRODUCAO" ? "PRODUCAO" : "TESTES (producao restrita, sem valor fiscal)"}` : "Ainda nao cadastrado."}
+          {fiscal ? `${fiscal.razaoSocial} · CNPJ ${fiscal.cnpj} · ${fiscal.ambiente === "PRODUCAO" ? "PRODUCAO" : "TESTES (produção restrita, sem valor fiscal)"}` : "Ainda não cadastrado."}
         </p>
         <p className="mt-1">
           Certificado:{" "}
           {cert
-            ? `${cert.titular}, valido ate ${data(cert.validoAte)}`
-            : "nao configurado (variaveis NFSE_PLATAFORMA_PFX e NFSE_PLATAFORMA_SENHA no Railway)"}
+            ? `${cert.titular}, válido até ${data(cert.validoAte)}`
+            : "não configurado (variáveis NFSE_PLATAFORMA_PFX e NFSE_PLATAFORMA_SENHA no Railway)"}
         </p>
         {pendencias.length ? (
           <ul className="aviso-atencao mt-3 list-disc pl-6">
@@ -109,7 +109,7 @@ export default async function NotasDaPlataforma() {
       <section className="mt-8">
         <h2>Cadastro fiscal da Blackbird</h2>
         <p className="ajuda">
-          Codigo de tributacao sugerido 010501 (licenciamento de programa de computador, LC 116 item 1.05) — confirme
+          Código de tributação sugerido 010501 (licenciamento de programa de computador, LC 116 item 1.05) — confirme
           com o contador, assim como o regime e o percentual de tributos. Comece em Testes.
         </p>
         <ConfigFiscal

@@ -162,33 +162,33 @@ export type DadosDaResposta = {
 export function textoDaResposta(intencao: Intencao, d: DadosDaResposta): string {
   const oQue = d.titulo && d.quando ? `${d.titulo}, em ${d.quando}` : "o compromisso";
   const ondeFalar = d.telefoneDoEscritorio?.trim()
-    ? `ligue para o escritorio: ${d.telefoneDoEscritorio.trim()}.`
-    : `procure o escritorio pelos canais de sempre.`;
+    ? `ligue para o escritório: ${d.telefoneDoEscritorio.trim()}.`
+    : `procure o escritório pelos canais de sempre.`;
   // Em TODA resposta, inclusive na que confirma: este numero notifica e nao
   // atende. Quem escrever aqui esperando o advogado esperaria para sempre.
-  const naoAtende = `Este numero so envia avisos e nao recebe mensagens — para falar com alguem, ${ondeFalar}`;
+  const naoAtende = `Este número só envia avisos e não recebe mensagens — para falar com alguém, ${ondeFalar}`;
 
   if (intencao === "CONFIRMA") {
     return (
-      `${d.nomeEscritorio}: presenca confirmada em ${oQue}. Obrigado. ${naoAtende}`
+      `${d.nomeEscritorio}: presença confirmada em ${oQue}. Obrigado. ${naoAtende}`
     );
   }
   if (intencao === "DESMARCA") {
     return (
-      `${d.nomeEscritorio}: anotamos que voce NAO podera comparecer a ${oQue}. ` +
-      `O compromisso NAO foi desmarcado no processo — so o escritorio pode fazer isso. ` +
+      `${d.nomeEscritorio}: anotamos que você NAO poderá comparecer a ${oQue}. ` +
+      `O compromisso NAO foi desmarcado no processo — só o escritório pode fazer isso. ` +
       naoAtende
     );
   }
   if (intencao === "PARAR") {
     return (
-      `${d.nomeEscritorio}: voce nao recebera mais avisos por WhatsApp. ` +
+      `${d.nomeEscritorio}: você não receberá mais avisos por WhatsApp. ` +
       `Para voltar a receber, ${ondeFalar}`
     );
   }
   return (
-    `${d.nomeEscritorio}: para confirmar presenca responda 1, e para avisar que ` +
-    `nao podera ir responda 2. ${naoAtende}`
+    `${d.nomeEscritorio}: para confirmar presença responda 1, e para avisar que ` +
+    `não poderá ir responda 2. ${naoAtende}`
   );
 }
 

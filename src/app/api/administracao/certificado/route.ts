@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     }
     if (!/\.(pfx|p12)$/i.test(arquivo.name)) {
       return NextResponse.json(
-        { erro: "O certificado A1 e um arquivo .pfx ou .p12." },
+        { erro: "O certificado A1 é um arquivo .pfx ou .p12." },
         { status: 400 },
       );
     }
@@ -74,14 +74,14 @@ export async function POST(req: Request) {
     // A Sefin so aceita a DPS assinada pelo e-CNPJ do proprio emitente (E0718).
     if (!cert.cnpj) {
       return NextResponse.json(
-        { erro: "Este e um e-CPF. Para emitir nota e preciso o e-CNPJ do escritorio." },
+        { erro: "Este é um e-CPF. Para emitir nota é preciso o e-CNPJ do escritório." },
         { status: 400 },
       );
     }
     const fiscal = await comEscritorio(escritorioId, (db) => db.fiscal.findFirst({ select: { cnpj: true } }));
     if (fiscal && fiscal.cnpj.replace(/\D/g, "") !== cert.cnpj) {
       return NextResponse.json(
-        { erro: `Este certificado e do CNPJ ${cert.cnpj}, diferente do cadastro fiscal. A Receita recusa (E0718).` },
+        { erro: `Este certificado é do CNPJ ${cert.cnpj}, diferente do cadastro fiscal. A Receita recusa (E0718).` },
         { status: 400 },
       );
     }

@@ -67,7 +67,7 @@ const quando = new Intl.DateTimeFormat("pt-BR", {
 });
 
 const SITUACAO_DA_PESSOA: Record<DadosDaImplantacao["pessoas"][number]["situacao"], { texto: string; classe: string }> = {
-  ENTROU: { texto: "ja entrou", classe: "etiqueta-ok" },
+  ENTROU: { texto: "já entrou", classe: "etiqueta-ok" },
   CONVIDADO: { texto: "convite enviado", classe: "etiqueta-marca" },
   CONVITE_VENCIDO: { texto: "convite vencido", classe: "etiqueta-erro" },
   AGUARDANDO: { texto: "recebe na entrega", classe: "etiqueta-neutra" },
@@ -114,7 +114,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
     const json = await r.json().catch(() => ({}));
     setOcupado(null);
     if (!r.ok) {
-      setRecado({ onde, texto: json.erro ?? "Nao deu certo.", ok: false });
+      setRecado({ onde, texto: json.erro ?? "Não deu certo.", ok: false });
       return null;
     }
     if (json.detalhe) setRecado({ onde, texto: json.detalhe, ok: json.ok !== false });
@@ -139,22 +139,22 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
   return (
     <div className="mt-4 grid gap-6">
       <div>
-        <p className="sobretitulo">Implantacao</p>
+        <p className="sobretitulo">Implantação</p>
         <h1 className="mt-1">{dados.nome}</h1>
         <p className="mt-1 text-sm text-slate-600">
           {dados.endereco} · {dados.status.toLowerCase()}
-          {dados.implantadoEm ? ` · implantado em ${quando.format(new Date(dados.implantadoEm))}` : " · cadastrado pelo proprio escritorio"}
+          {dados.implantadoEm ? ` · implantado em ${quando.format(new Date(dados.implantadoEm))}` : " · cadastrado pelo próprio escritório"}
           {dados.entregueEm ? ` · entregue em ${quando.format(new Date(dados.entregueEm))}` : ""}
         </p>
         <div className="mt-4 max-w-xl">
           <BarraDeProgresso
             porcento={dados.roteiro.porcento}
-            rotulo={`${dados.roteiro.feitos} de ${dados.roteiro.total} passos do roteiro do escritorio`}
+            rotulo={`${dados.roteiro.feitos} de ${dados.roteiro.total} passos do roteiro do escritório`}
           />
         </div>
       </div>
 
-      <Secao numero={1} titulo="Dados do escritorio" resumo="CNPJ para a fatura da assinatura; endereco da sede para as pecas; telefone que vai em toda mensagem ao cliente; as cores do sistema.">
+      <Secao numero={1} titulo="Dados do escritório" resumo="CNPJ para a fatura da assinatura; endereço da sede para as peças; telefone que vai em toda mensagem ao cliente; as cores do sistema.">
         <form
           className="grid gap-3 sm:grid-cols-2"
           onSubmit={(e) => {
@@ -165,7 +165,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
         >
           {(
             [
-              ["razaoSocial", "Razao social"],
+              ["razaoSocial", "Razão social"],
               ["cnpj", "CNPJ"],
               ["telefoneAtendimento", "Telefone de atendimento"],
             ] as const
@@ -176,8 +176,8 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
             </label>
           ))}
           <div className="sm:col-span-2">
-            <p className="rotulo">Endereco da sede</p>
-            <p className="mb-2 text-xs text-slate-500">Comece pelo CEP: rua, bairro e cidade vem sozinhos, falta so o numero.</p>
+            <p className="rotulo">Endereço da sede</p>
+            <p className="mb-2 text-xs text-slate-500">Comece pelo CEP: rua, bairro e cidade vem sozinhos, falta só o número.</p>
             <EnderecoComCep prefixo="sede" valor={sede} aoMudar={setSede} />
           </div>
           <label className="grid gap-1 text-sm">
@@ -192,13 +192,13 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
             <button type="submit" disabled={ocupado === "dados"} className="botao-principal">
               {ocupado === "dados" ? "Gravando..." : "Gravar dados"}
             </button>
-            <span className="ml-3 text-xs text-slate-500">O logotipo o escritorio envia em Configuracoes.</span>
+            <span className="ml-3 text-xs text-slate-500">O logotipo o escritório envia em Configurações.</span>
           </div>
         </form>
         <Recado onde="dados" />
       </Secao>
 
-      <Secao numero={2} titulo="Equipe" resumo="Cada pessoa recebe o proprio convite na entrega e escolhe a propria senha. Advogado com OAB entra sozinho no monitoramento do DJEN.">
+      <Secao numero={2} titulo="Equipe" resumo="Cada pessoa recebe o próprio convite na entrega e escolhe a própria senha. Advogado com OAB entra sozinho no monitoramento do DJEN.">
         <div className="overflow-x-auto">
           <table className="tabela">
             <thead>
@@ -208,7 +208,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                 <th>OAB</th>
                 <th>WhatsApp</th>
                 <th>Acesso</th>
-                <th><span className="sr-only">Acoes</span></th>
+                <th><span className="sr-only">Ações</span></th>
               </tr>
             </thead>
             <tbody>
@@ -231,7 +231,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                       {p.doisFatores ? <div className="text-xs text-slate-600">duas etapas ligada</div> : null}
                       {p.bloqueadoAte ? (
                         <div className="text-xs font-medium text-red-700">
-                          bloqueada ate {quando.format(new Date(p.bloqueadoAte))}
+                          bloqueada até {quando.format(new Date(p.bloqueadoAte))}
                         </div>
                       ) : null}
                     </td>
@@ -254,7 +254,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                           onClick={() => {
                             if (
                               window.confirm(
-                                `Destravar o acesso de ${p.nome}? Tira o bloqueio, desliga a verificacao em duas etapas e manda um link para criar senha nova.`,
+                                `Destravar o acesso de ${p.nome}? Tira o bloqueio, desliga a verificação em duas etapas e manda um link para criar senha nova.`,
                               )
                             ) {
                               void agir(`convite-${p.id}`, { acao: "destravar", usuarioId: p.id });
@@ -315,7 +315,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
       </Secao>
 
       {dados.temDjen ? (
-        <Secao numero={3} titulo="OABs no Diario de Justica" resumo="De cada OAB daqui sai a captura de publicacoes da madrugada. A do advogado cadastrado com OAB ja entra sozinha.">
+        <Secao numero={3} titulo="OABs no Diário de Justiça" resumo="De cada OAB daqui sai a captura de publicações da madrugada. A do advogado cadastrado com OAB já entra sozinha.">
           {dados.oabs.length ? (
             <ul className="mb-3 flex flex-wrap gap-2">
               {dados.oabs.map((o) => (
@@ -336,7 +336,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
               agir("oab", { acao: "oab", numero: v.numero, uf: v.uf.toUpperCase(), nomeAdvogado: v.nomeAdvogado || undefined }, e.currentTarget);
             }}
           >
-            <input name="numero" required placeholder="Numero" className="campo" />
+            <input name="numero" required placeholder="Número" className="campo" />
             <input name="uf" required maxLength={2} placeholder="UF" className="campo uppercase" />
             <input name="nomeAdvogado" placeholder="Nome do advogado (opcional)" className="campo" />
             <button type="submit" disabled={ocupado === "oab"} className="botao-secundario">
@@ -347,7 +347,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
         </Secao>
       ) : null}
 
-      <Secao numero={dados.temDjen ? 4 : 3} titulo="Integracoes" resumo="Cada credencial e testada no servico de verdade antes de ser guardada. O que falhar fica marcado, com o motivo, para corrigir aqui mesmo.">
+      <Secao numero={dados.temDjen ? 4 : 3} titulo="Integracoes" resumo="Cada credencial é testada no serviço de verdade antes de ser guardada. O que falhar fica marcado, com o motivo, para corrigir aqui mesmo.">
         <div className="grid gap-3">
           {dados.integracoes.map((i) => (
             <Integracao key={i.tipo} i={i} ocupado={ocupado} agir={agir} Recado={Recado} />
@@ -355,13 +355,13 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
         </div>
       </Secao>
 
-      <Secao numero={dados.temDjen ? 5 : 4} titulo="Clientes do sistema anterior" resumo="A planilha exportada do sistema que o escritorio usava (Excel ou CSV). Confere linha a linha antes de gravar, e o lote pode ser desfeito.">
+      <Secao numero={dados.temDjen ? 5 : 4} titulo="Clientes do sistema anterior" resumo="A planilha exportada do sistema que o escritório usava (Excel ou CSV). Confere linha a linha antes de gravar, e o lote pode ser desfeito.">
         <a href={`/plataforma/${dados.id}/importar`} className="botao-secundario">
           Importar clientes por planilha
         </a>
       </Secao>
 
-      <Secao numero={dados.temDjen ? 6 : 5} titulo="O roteiro do escritorio" resumo="O mesmo que o escritorio ve em Primeiros passos, medido do mesmo jeito. Os marcados como 'do escritorio' so ele pode fazer.">
+      <Secao numero={dados.temDjen ? 6 : 5} titulo="O roteiro do escritório" resumo="O mesmo que o escritório vê em Primeiros passos, medido do mesmo jeito. Os marcados como 'do escritório' só ele pode fazer.">
         <ol className="grid gap-1">
           {dados.roteiro.passos.map((p) => {
             const selo = SELO_DO_PASSO[p.situacao];
@@ -370,7 +370,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                 <span className={selo.classe}>{selo.texto}</span>
                 <span className="flex-1 font-medium text-slate-800">{p.titulo}</span>
                 {SO_DO_ESCRITORIO.has(p.chave) && p.situacao !== "FEITO" ? (
-                  <span className="text-xs text-slate-500">do escritorio</span>
+                  <span className="text-xs text-slate-500">do escritório</span>
                 ) : null}
                 {p.situacao === "PENDENTE" && !p.essencial && !SO_DO_ESCRITORIO.has(p.chave) ? (
                   <button
@@ -378,7 +378,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                     className="text-xs text-slate-500 hover:underline"
                     onClick={() => agir(`passo-${p.chave}`, { acao: "pular", chave: p.chave })}
                   >
-                    nao vai usar
+                    não vai usar
                   </button>
                 ) : null}
                 {p.situacao === "PULADO" ? (
@@ -396,7 +396,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
         </ol>
       </Secao>
 
-      <Secao numero={dados.temDjen ? 7 : 6} titulo="Entrega" resumo="Manda o convite a quem ainda nao entrou. Pode repetir: reenviar invalida o link anterior da pessoa.">
+      <Secao numero={dados.temDjen ? 7 : 6} titulo="Entrega" resumo="Manda o convite a quem ainda não entrou. Pode repetir: reenviar invalida o link anterior da pessoa.">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Falta da plataforma</p>
@@ -411,11 +411,11 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
             )}
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">O escritorio faz no primeiro acesso</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">O escritório faz no primeiro acesso</p>
             <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
-              <li>Escolher a propria senha, pelo convite.</li>
+              <li>Escolher a própria senha, pelo convite.</li>
               {dados.aceitePendente ? <li>Aceitar os termos, o contrato e o acordo de LGPD.</li> : null}
-              <li>Criar a senha de administracao (um minuto).</li>
+              <li>Criar a senha de administração (um minuto).</li>
               {dados.temNuvem ? <li>Conectar o OneDrive ou o Google Drive, se quiser (um clique).</li> : null}
             </ul>
           </div>
@@ -435,13 +435,13 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
           }}
           className="botao-principal mt-4"
         >
-          {ocupado === "entregar" ? "Entregando..." : dados.entregueEm ? "Entregar de novo" : "Entregar ao escritorio"}
+          {ocupado === "entregar" ? "Entregando..." : dados.entregueEm ? "Entregar de novo" : "Entregar ao escritório"}
         </button>
         <Recado onde="entregar" />
         {convites ? (
           <div className="mt-4 grid gap-2">
             {convites.length === 0 ? (
-              <p className="aviso-ok">Todos ja entraram: nenhum convite precisou sair.</p>
+              <p className="aviso-ok">Todos já entraram: nenhum convite precisou sair.</p>
             ) : (
               convites.map((c) => (
                 <div key={c.email} className={c.enviado ? "aviso-ok" : "aviso-atencao"}>
@@ -483,7 +483,7 @@ function Integracao({
       ? { texto: "conectada e testada", classe: "etiqueta-ok" }
       : i.status === "ERRO"
         ? { texto: "com erro", classe: "etiqueta-erro" }
-        : { texto: "nao conectada", classe: "etiqueta-neutra" };
+        : { texto: "não conectada", classe: "etiqueta-neutra" };
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -527,7 +527,7 @@ function Integracao({
       {i.erro ? <p className="mt-1 text-sm text-red-700">Ultimo erro: {i.erro}</p> : null}
       {i.oauth ? (
         <p className="mt-2 text-sm text-slate-500">
-          Conecta-se entrando na conta do escritorio: ele faz no primeiro acesso, em Integracoes, com um clique.
+          Conecta-se entrando na conta do escritório: ele faz no primeiro acesso, em Integrações, com um clique.
         </p>
       ) : null}
       {aberto ? (

@@ -70,9 +70,9 @@ function anotar(desfecho: string, detalhe: Record<string, unknown> = {}): void {
 export async function POST(req: Request) {
   const esperado = process.env.ASAAS_WEBHOOK_TOKEN;
   if (!esperado) {
-    console.error("ASAAS_WEBHOOK_TOKEN nao definido: webhook recusado.");
+    console.error("ASAAS_WEBHOOK_TOKEN não definido: webhook recusado.");
     return NextResponse.json(
-      { erro: "Webhook nao configurado." },
+      { erro: "Webhook não configurado." },
       { status: 503 },
     );
   }
@@ -80,14 +80,14 @@ export async function POST(req: Request) {
   if (!tokenConfere(req.headers.get("asaas-access-token"), esperado)) {
     // Sem o token recebido no log: quem esta tentando adivinhar nao ganha
     // confirmacao de quanto chegou perto.
-    anotar("token invalido");
-    return NextResponse.json({ erro: "Token invalido." }, { status: 401 });
+    anotar("token inválido");
+    return NextResponse.json({ erro: "Token inválido." }, { status: 401 });
   }
 
   const corpo = evento.safeParse(await req.json().catch(() => null));
   if (!corpo.success) {
-    anotar("corpo invalido");
-    return NextResponse.json({ erro: "Evento invalido." }, { status: 400 });
+    anotar("corpo inválido");
+    return NextResponse.json({ erro: "Evento inválido." }, { status: 400 });
   }
 
   // Evento que nao e de baixa e reconhecido com 200: o provedor nao precisa
@@ -127,12 +127,12 @@ export async function POST(req: Request) {
     faturaId = parcelada?.id ?? null;
   }
   if (!faturaId) {
-    anotar("evento sem referencia", { evento: corpo.data.event });
+    anotar("evento sem referência", { evento: corpo.data.event });
     // Tambem 200: referencia ausente nao aparece por reenvio.
     return NextResponse.json({ ok: true, semReferencia: true });
   }
   if (leitura.dono === "nosso" && leitura.tipo !== "fatura") {
-    anotar("referencia nossa que nao e de fatura", {
+    anotar("referência nossa que não é de fatura", {
       tipo: leitura.tipo,
       evento: corpo.data.event,
     });
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
     // provavel e que o pagamento seja de outro sistema da conta.
     anotar(
       leitura.dono === "nosso"
-        ? "fatura marcada como nossa nao existe no banco"
+        ? "fatura marcada como nossa não existe no banco"
         : "pagamento sem marca e sem fatura nossa: de outro sistema",
       { faturaId, evento: corpo.data.event },
     );
@@ -163,7 +163,7 @@ export async function POST(req: Request) {
   // Provedor reenvia evento quando nao recebe 200. Fatura ja paga responde ok
   // sem mexer em nada — senao um reenvio reabriria a conversa.
   if (fatura.status !== "ABERTA") {
-    anotar("fatura ja processada", { faturaId, status: fatura.status });
+    anotar("fatura já processada", { faturaId, status: fatura.status });
     return NextResponse.json({ ok: true, jaProcessada: true });
   }
 

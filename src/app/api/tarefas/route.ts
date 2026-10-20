@@ -32,14 +32,14 @@ export async function POST(req: Request) {
     const dados = corpo.parse(await req.json());
     const quando = new Date(dados.vencimento);
     if (Number.isNaN(quando.getTime())) {
-      return NextResponse.json({ erro: "Prazo invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Prazo inválido." }, { status: 400 });
     }
     // Audiencia, pericia e atendimento sao da Agenda (natureza.ts). Meta da
     // equipe ("fazer 20 atendimentos") nao passa por esta trava.
     const recusa = dados.meta ? null : recusaDeTarefa(dados.titulo);
     if (recusa) return NextResponse.json({ erro: recusa }, { status: 400 });
     const prazoFatal = fimDoDia(dados.prazoFatal);
-    if (prazoFatal === undefined) return NextResponse.json({ erro: "Prazo fatal invalido." }, { status: 400 });
+    if (prazoFatal === undefined) return NextResponse.json({ erro: "Prazo fatal inválido." }, { status: 400 });
 
     const tarefa = await criarTarefa(
       escritorioId,

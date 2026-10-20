@@ -26,7 +26,7 @@ function recortar(texto: string, limite = 220): string {
 }
 
 export function assuntoDoResumo(quantidade: number, urgentes: number): string {
-  const base = `${quantidade} publicac${quantidade === 1 ? "ao" : "oes"} nova${quantidade === 1 ? "" : "s"}`;
+  const base = `${quantidade} ${quantidade === 1 ? "publicação nova" : "publicações novas"}`;
   // A urgencia vai no assunto: e o que decide se a pessoa abre agora ou depois.
   return urgentes > 0 ? `[URGENTE] ${base}` : base;
 }
@@ -39,7 +39,7 @@ export function corpoDoResumo(
   const urgentes = publicacoes.filter((p) => p.urgente);
   const demais = publicacoes.filter((p) => !p.urgente);
 
-  const linhas: string[] = [`${nomeEscritorio} — publicacoes do dia`, ""];
+  const linhas: string[] = [`${nomeEscritorio} — publicações do dia`, ""];
 
   if (urgentes.length > 0) {
     linhas.push(`URGENTE (${urgentes.length}):`, "");
@@ -54,7 +54,7 @@ export function corpoDoResumo(
     "Abra o sistema para ler o texto completo e marcar como lida:",
     endereco,
     "",
-    "O prazo indicado e leitura automatica do texto e serve como alerta —",
+    "O prazo indicado é leitura automática do texto e serve como alerta —",
     "confira sempre nos autos.",
   );
 
@@ -64,7 +64,7 @@ export function corpoDoResumo(
 function item(publicacao: PublicacaoNoResumo): string[] {
   const numero = publicacao.numeroProcesso
     ? formatarNumeroProcesso(publicacao.numeroProcesso)
-    : "sem numero de processo";
+    : "sem número de processo";
   const prazo =
     publicacao.prazoDias !== null
       ? ` · prazo indicado: ${publicacao.prazoDias} dia(s)`
@@ -117,7 +117,7 @@ export function corpoDoLembreteAoParticipante(
   compromisso: CompromissoNoLembrete,
 ): string {
   const linhas = [
-    `${nomeDoParticipante}, o escritorio ${nomeEscritorio} lembra:`,
+    `${nomeDoParticipante}, o escritório ${nomeEscritorio} lembra:`,
     "",
     `${compromisso.titulo} — ${dataHora.format(compromisso.inicio)}`,
   ];
@@ -127,7 +127,7 @@ export function corpoDoLembreteAoParticipante(
     linhas.push(`Processo: ${formatarNumeroProcesso(compromisso.numeroProcesso)}`);
   }
 
-  linhas.push("", "Em caso de duvida, fale com o escritorio.");
+  linhas.push("", "Em caso de dúvida, fale com o escritório.");
   return linhas.join("\n");
 }
 
@@ -149,7 +149,7 @@ export function assuntoDoLembreteAoParticipante(
  * escritorio inteiro e tarefa que cada um acha que e do outro.
  */
 export function assuntoDaDesignacao(compromisso: CompromissoNoLembrete): string {
-  return `Ficou com voce: ${compromisso.titulo}`;
+  return `Ficou com você: ${compromisso.titulo}`;
 }
 
 export function corpoDaDesignacao(
@@ -159,7 +159,7 @@ export function corpoDaDesignacao(
   endereco: string,
 ): string {
   const linhas = [
-    `${nomeEscritorio} — ${nomeDeQuemDesignou ? `${nomeDeQuemDesignou} designou` : "foi designado"} para voce:`,
+    `${nomeEscritorio} — ${nomeDeQuemDesignou ? `${nomeDeQuemDesignou} designou` : "foi designado"} para você:`,
     "",
     compromisso.titulo,
     `${compromisso.tipo} · ${dataHora.format(compromisso.inicio)}`,
@@ -194,7 +194,7 @@ export function corpoDoAgendamento(
   compromisso: CompromissoNoLembrete,
 ): string {
   const linhas = [
-    `${nomeDoParticipante}, o escritorio ${nomeEscritorio} marcou:`,
+    `${nomeDoParticipante}, o escritório ${nomeEscritorio} marcou:`,
     "",
     `${compromisso.titulo} — ${dataHora.format(compromisso.inicio)}`,
   ];
@@ -206,8 +206,8 @@ export function corpoDoAgendamento(
 
   linhas.push(
     "",
-    "Voce recebera lembretes 3 dias antes, 1 dia antes e 1 hora antes.",
-    "Em caso de duvida, fale com o escritorio.",
+    "Você receberá lembretes 3 dias antes, 1 dia antes e 1 hora antes.",
+    "Em caso de dúvida, fale com o escritório.",
   );
   return linhas.join("\n");
 }

@@ -16,15 +16,15 @@ import {
 } from "@/lib/financeiro";
 import { numeroPorExtenso, porExtenso } from "@/lib/dinheiro";
 
-describe("catalogo de categorias", () => {
-  it("nao repete categoria entre despesa e receita", () => {
+describe("catálogo de categorias", () => {
+  it("não repete categoria entre despesa e receita", () => {
     const repetidas = CATEGORIAS_DE_DESPESA.filter((c) =>
       (CATEGORIAS_DE_RECEITA as readonly string[]).includes(c),
     );
     expect(repetidas).toEqual([]);
   });
 
-  it("toda categoria tem rotulo em portugues", () => {
+  it("toda categoria tem rotulo em português", () => {
     for (const c of [...CATEGORIAS_DE_DESPESA, ...CATEGORIAS_DE_RECEITA]) {
       const rotulo = rotuloDaCategoria(c);
       expect(rotulo).not.toBe(c);
@@ -32,7 +32,7 @@ describe("catalogo de categorias", () => {
     }
   });
 
-  it("reconhece o que e categoria e o que nao e", () => {
+  it("reconhece o que e categoria e o que não e", () => {
     expect(ehCategoria("AGUA")).toBe(true);
     expect(ehCategoria("agua")).toBe(false);
     expect(ehCategoria("QUALQUER")).toBe(false);
@@ -40,7 +40,7 @@ describe("catalogo de categorias", () => {
 
   // Aluguel lancado como receita passa despercebido no total e destroi o
   // comparativo com o mes anterior.
-  it("recusa categoria que nao combina com o tipo", () => {
+  it("recusa categoria que não combina com o tipo", () => {
     expect(categoriaCombina("DESPESA", "ALUGUEL")).toBe(true);
     expect(categoriaCombina("RECEITA", "ALUGUEL")).toBe(false);
     expect(categoriaCombina("RECEITA", "HONORARIOS")).toBe(true);
@@ -50,19 +50,19 @@ describe("catalogo de categorias", () => {
 
 describe("palpite de categoria", () => {
   it("reconhece as concessionarias mais comuns", () => {
-    expect(categoriaProvavel("EMBASA - conta de agua")).toBe("AGUA");
+    expect(categoriaProvavel("EMBASA - conta de água")).toBe("AGUA");
     expect(categoriaProvavel("Coelba / Neoenergia")).toBe("ENERGIA");
     expect(categoriaProvavel("Vivo Fibra 500MB")).toBe("INTERNET");
     expect(categoriaProvavel("DARF Simples Nacional")).toBe("IMPOSTOS");
   });
 
-  it("nao chuta quando nao sabe", () => {
+  it("não chuta quando não sabe", () => {
     expect(categoriaProvavel("Pagamento avulso")).toBeNull();
     expect(categoriaProvavel("")).toBeNull();
   });
 });
 
-describe("resumo do mes", () => {
+describe("resumo do mês", () => {
   const base = { categoria: null, competencia: "2026-09" };
   const lancamentos = [
     { ...base, tipo: "RECEITA", valorCentavos: 500_000, pagoEm: new Date() },
@@ -89,15 +89,15 @@ describe("resumo do mes", () => {
 
   // O grafico mostra o comprometido, pago ou nao: e o que decide se da para
   // gastar mais neste mes.
-  it("o grafico soma despesa paga e a pagar, ordenado pela maior", () => {
+  it("o gráfico soma despesa paga e a pagar, ordenado pela maior", () => {
     const r = resumoDoMes(lancamentos, "2026-09");
     expect(r.porCategoria).toEqual([
       { categoria: "ALUGUEL", rotulo: "Aluguel", centavos: 200_000 },
-      { categoria: "AGUA", rotulo: "Agua e esgoto", centavos: 10_000 },
+      { categoria: "AGUA", rotulo: "Água e esgoto", centavos: 10_000 },
     ]);
   });
 
-  it("mes sem nada nao quebra", () => {
+  it("mês sem nada não quebra", () => {
     const r = resumoDoMes([], "2026-09");
     expect(r).toMatchObject({ receitas: 0, despesas: 0, saldo: 0 });
     expect(r.porCategoria).toEqual([]);
@@ -127,7 +127,7 @@ describe("fatias da pizza", () => {
     expect(f.reduce((s, x) => s + x.porcentagem, 0)).toBeCloseTo(100, 6);
   });
 
-  it("sem despesa, nao ha pizza", () => {
+  it("sem despesa, não há pizza", () => {
     expect(fatias([])).toEqual([]);
     expect(fatias([{ categoria: "A", rotulo: "A", centavos: 0 }])).toEqual([]);
   });
@@ -136,7 +136,7 @@ describe("fatias da pizza", () => {
 describe("competencia", () => {
   // 1h da manha do dia 1 em UTC ainda e dia 30 as 22h em Brasilia: a
   // competencia tem que ser a do escritorio, nao a do servidor.
-  it("usa o fuso de Brasilia", () => {
+  it("usa o fuso de Brasília", () => {
     expect(competenciaDaData(new Date("2026-10-01T01:00:00Z"))).toBe("2026-09");
     expect(competenciaDaData(new Date("2026-10-01T12:00:00Z"))).toBe("2026-10");
   });
@@ -151,7 +151,7 @@ describe("vencimento da despesa fixa", () => {
 
   // Dia 31 em mes de 30 cai no ultimo dia, como qualquer boleto — nao no dia
   // 1 do mes seguinte, que e o que o Date faria sozinho.
-  it("dia 31 em mes de 30 cai no ultimo dia do mes", () => {
+  it("dia 31 em mês de 30 cai no último dia do mês", () => {
     expect(vencimentoNaCompetencia("2026-09", 31)?.toISOString().slice(0, 10)).toBe(
       "2026-09-30",
     );
@@ -160,7 +160,7 @@ describe("vencimento da despesa fixa", () => {
     );
   });
 
-  it("recusa competencia e dia impossiveis", () => {
+  it("recusa competência e dia impossiveis", () => {
     expect(vencimentoNaCompetencia("2026-13", 10)).toBeNull();
     expect(vencimentoNaCompetencia("setembro", 10)).toBeNull();
     expect(vencimentoNaCompetencia("2026-09", 0)).toBeNull();
@@ -174,7 +174,7 @@ describe("valor por extenso", () => {
   it("escreve o que se escreve em contrato", () => {
     expect(porExtenso(100)).toBe("um real");
     expect(porExtenso(200)).toBe("dois reais");
-    expect(porExtenso(300_000)).toBe("tres mil reais");
+    expect(porExtenso(300_000)).toBe("três mil reais");
     expect(porExtenso(150_000)).toBe("mil e quinhentos reais");
     expect(porExtenso(29_990)).toBe("duzentos e noventa e nove reais e noventa centavos");
     expect(porExtenso(1)).toBe("um centavo");
@@ -194,11 +194,11 @@ describe("valor por extenso", () => {
     expect(numeroPorExtenso(2030)).toBe("dois mil e trinta");
     expect(numeroPorExtenso(1234)).toBe("mil duzentos e trinta e quatro");
     expect(numeroPorExtenso(100_000)).toBe("cem mil");
-    expect(numeroPorExtenso(1_000_000)).toBe("um milhao");
-    expect(numeroPorExtenso(2_000_000)).toBe("dois milhoes");
+    expect(numeroPorExtenso(1_000_000)).toBe("um milhão");
+    expect(numeroPorExtenso(2_000_000)).toBe("dois milhões");
   });
 
-  it("centavos nao viram reais", () => {
+  it("centavos não viram reais", () => {
     expect(porExtenso(99)).toBe("noventa e nove centavos");
     expect(porExtenso(101)).toBe("um real e um centavo");
   });

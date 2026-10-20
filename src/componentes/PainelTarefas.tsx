@@ -130,7 +130,7 @@ export function PainelTarefas({
     });
     if (!r.ok) {
       const dados = await r.json().catch(() => ({}));
-      throw new Error(dados.erro ?? "Nao deu certo. Tente de novo.");
+      throw new Error(dados.erro ?? "Não deu certo. Tente de novo.");
     }
     return r.json();
   }
@@ -176,19 +176,19 @@ export function PainelTarefas({
       className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4"
     >
       <label className="grid gap-1 text-sm">
-        <span className="text-slate-600">Titulo</span>
+        <span className="text-slate-600">Título</span>
         <input
           name="titulo"
           required
           minLength={3}
           defaultValue={preenchido.titulo ?? tarefa?.titulo ?? ""}
-          placeholder="O servico a executar. Ex: contestacao, manifestacao sobre o laudo, recurso"
+          placeholder="O serviço a executar. Ex: contestação, manifestação sobre o laudo, recurso"
           className="rounded-lg border border-slate-300 px-3 py-2"
         />
       </label>
 
       <label className="grid gap-1 text-sm">
-        <span className="text-slate-600">Descricao (opcional)</span>
+        <span className="text-slate-600">Descrição (opcional)</span>
         <textarea
           name="descricao"
           rows={3}
@@ -199,7 +199,7 @@ export function PainelTarefas({
 
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="grid gap-1 text-sm">
-          <span className="text-slate-600">Entrega (no escritorio)</span>
+          <span className="text-slate-600">Entrega (no escritório)</span>
           <input
             type="datetime-local"
             name="vencimento"
@@ -238,7 +238,7 @@ export function PainelTarefas({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1 text-sm">
-          <span className="text-slate-600">Responsavel</span>
+          <span className="text-slate-600">Responsável</span>
           <select
             name="responsavelId"
             required
@@ -255,7 +255,7 @@ export function PainelTarefas({
         </label>
         <label className="grid gap-1 text-sm">
           <span className="text-slate-600">
-            Numero do processo (opcional)
+            Número do processo (opcional)
           </span>
           <input
             name="numeroProcesso"
@@ -284,7 +284,7 @@ export function PainelTarefas({
 
       <label className="flex items-center gap-2 text-sm text-slate-700">
         <input type="checkbox" name="meta" defaultChecked={tarefa?.meta} />
-        <span>E uma meta (nao uma tarefa do dia a dia)</span>
+        <span>É uma meta (não uma tarefa do dia a dia)</span>
       </label>
 
       <div className="flex gap-2">
@@ -339,7 +339,7 @@ export function PainelTarefas({
       ) : null}
       {criando && Object.keys(preenchido).length > 0 ? (
         <p className="rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
-          Sugestao da IA no formulario abaixo: confira o prazo e o assunto nos
+          Sugestao da IA no formulário abaixo: confira o prazo e o assunto nos
           autos antes de salvar.
         </p>
       ) : null}
@@ -374,7 +374,7 @@ export function PainelTarefas({
           {busca
             ? "Nenhuma tarefa com esse termo."
             : mostrandoConcluidas
-              ? "Nada concluido ainda."
+              ? "Nada concluído ainda."
               : "Nenhuma tarefa ativa. O que a equipe precisa fazer entra aqui."}
         </p>
       ) : (
@@ -383,10 +383,10 @@ export function PainelTarefas({
             <thead className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">Tarefa</th>
-                <th className="px-4 py-3 font-semibold">Responsavel</th>
+                <th className="px-4 py-3 font-semibold">Responsável</th>
                 <th className="px-4 py-3 font-semibold">Entrega / prazo fatal</th>
                 <th className="px-4 py-3 font-semibold">Prioridade</th>
-                <th className="px-4 py-3 font-semibold">Situacao</th>
+                <th className="px-4 py-3 font-semibold">Situação</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -484,7 +484,7 @@ export function PainelTarefas({
                         onClick={() => {
                           if (
                             !confirm(
-                              `Apagar "${t.titulo}"? Isso nao tem volta.`,
+                              `Apagar "${t.titulo}"? Isso não tem volta.`,
                             )
                           )
                             return;

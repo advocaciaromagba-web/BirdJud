@@ -16,7 +16,7 @@ export type TipoIntegracao =
 
 export class IntegracaoAusente extends Error {
   constructor(tipo: TipoIntegracao) {
-    super(`Integracao ${tipo} nao conectada para este escritorio.`);
+    super(`Integração ${tipo} não conectada para este escritório.`);
     this.name = "IntegracaoAusente";
   }
 }

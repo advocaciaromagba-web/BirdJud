@@ -74,7 +74,7 @@ async function chamar(
     });
   } catch {
     // Rede: pode ser momentaneo, entao nao e definitiva.
-    throw new FalhaNaInfinitePay("Nao consegui falar com a InfinitePay.");
+    throw new FalhaNaInfinitePay("Não consegui falar com a InfinitePay.");
   }
 
   const dados = (await resposta.json().catch(() => null)) as Record<
@@ -143,7 +143,7 @@ export async function criarLink(pedido: PedidoDeLink): Promise<{ url: string }> 
   });
 
   const url = typeof dados.url === "string" ? dados.url : null;
-  if (!url) throw new FalhaNaInfinitePay("A InfinitePay nao devolveu o link.");
+  if (!url) throw new FalhaNaInfinitePay("A InfinitePay não devolveu o link.");
   return { url };
 }
 

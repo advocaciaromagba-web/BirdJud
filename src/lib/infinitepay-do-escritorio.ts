@@ -22,12 +22,12 @@ export async function handleDoEscritorio(escritorioId: string): Promise<string> 
     dados = await obterIntegracao<{ handle: string }>(escritorioId, "INFINITEPAY");
   } catch (erro) {
     if (erro instanceof IntegracaoAusente) {
-      throw new SemContaDeCobranca("Conta InfinitePay nao conectada.");
+      throw new SemContaDeCobranca("Conta InfinitePay não conectada.");
     }
     throw erro;
   }
   const handle = limparHandle(String(dados.handle ?? ""));
-  if (!handle) throw new SemContaDeCobranca("A InfiniteTag gravada nao e valida.");
+  if (!handle) throw new SemContaDeCobranca("A InfiniteTag gravada não é válida.");
   return handle;
 }
 
@@ -65,7 +65,7 @@ export async function emitirNaInfinitePay(
   const hoje = new Date();
   hoje.setUTCHours(0, 0, 0, 0);
   if (pedido.vencimento < hoje) {
-    throw new PedidoInvalido("O vencimento nao pode estar no passado.");
+    throw new PedidoInvalido("O vencimento não pode estar no passado.");
   }
 
   const handle = await handleDoEscritorio(escritorioId);
@@ -73,7 +73,7 @@ export async function emitirNaInfinitePay(
   const cliente = await comEscritorio(escritorioId, (db) =>
     db.cliente.findFirst({ where: { id: pedido.clienteId } }),
   );
-  if (!cliente) throw new PedidoInvalido("Cliente nao encontrado.");
+  if (!cliente) throw new PedidoInvalido("Cliente não encontrado.");
 
   const chaveOperacao = pedido.chaveOperacao ?? randomUUID();
 
@@ -168,9 +168,9 @@ export async function tratarAviso(
       lancamentoId: true,
     },
   });
-  if (!cobranca) return { tratado: false, motivo: "Cobranca nao encontrada." };
+  if (!cobranca) return { tratado: false, motivo: "Cobrança não encontrada." };
   if (cobranca.status === "PAGA") {
-    return { tratado: true, pago: true, motivo: "Ja estava paga." };
+    return { tratado: true, pago: true, motivo: "Já estava paga." };
   }
 
   const handle = await handleDoEscritorio(cobranca.escritorioId);
@@ -179,7 +179,7 @@ export async function tratarAviso(
   if (!conferencia.pago) {
     // Aviso que nao se confirma nao e erro nosso: pode ser tentativa recusada
     // ou aviso forjado. Nos dois casos nao se mexe na cobranca.
-    return { tratado: true, pago: false, motivo: "A InfinitePay nao confirmou o pagamento." };
+    return { tratado: true, pago: false, motivo: "A InfinitePay não confirmou o pagamento." };
   }
 
   const quando = new Date();
@@ -209,5 +209,5 @@ export async function tratarAviso(
     }),
   );
 
-  return { tratado: true, pago: true, motivo: "Baixa dada apos conferir com a InfinitePay." };
+  return { tratado: true, pago: true, motivo: "Baixa dada após conferir com a InfinitePay." };
 }

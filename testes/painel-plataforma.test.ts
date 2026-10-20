@@ -66,7 +66,7 @@ const CARTEIRA: EscritorioNoPainel[] = [
 ];
 
 describe("painel da plataforma: competencias", () => {
-  it("mes no fuso de Brasilia, soma de meses e rotulo", () => {
+  it("mês no fuso de Brasília, soma de meses e rotulo", () => {
     expect(competenciaDe(new Date("2026-11-01T02:00:00Z"))).toBe("2026-10");
     expect(somarMeses("2026-11", 3)).toBe("2027-02");
     expect(somarMeses("2026-01", -1)).toBe("2025-12");
@@ -77,7 +77,7 @@ describe("painel da plataforma: competencias", () => {
 describe("painel da plataforma: a carteira", () => {
   const a = analisarCarteira(CARTEIRA, AGORA);
 
-  it("conta por situacao e deixa encerrado fora do total", () => {
+  it("conta por situação e deixa encerrado fora do total", () => {
     const n = Object.fromEntries(a.escritorios.porStatus.map((s) => [s.chave, s.valor]));
     expect(n).toEqual({ ATIVO: 2, TESTE: 2, INADIMPLENTE: 1, SUSPENSO: 1, ENCERRADO: 1 });
     expect(a.escritorios.total).toBe(6);
@@ -101,7 +101,7 @@ describe("painel da plataforma: a carteira", () => {
     expect(a.vencido.porcentoDaReceita).toBe(225.1);
   });
 
-  it("recebido pelo mes do pagamento, nao da competencia", () => {
+  it("recebido pelo mês do pagamento, não da competência", () => {
     const mes = Object.fromEntries(a.recebidos.map((r) => [r.competencia, r.valor]));
     expect(mes["2026-09"]).toBe(29900);
     expect(mes["2026-10"]).toBe(29900);
@@ -110,7 +110,7 @@ describe("painel da plataforma: a carteira", () => {
     expect(a.recebidos[0].competencia).toBe("2026-05");
   });
 
-  it("previsao: garantido todo mes; teste so a partir do vencimento depois do fim do teste", () => {
+  it("previsão: garantido todo mês; teste só a partir do vencimento depois do fim do teste", () => {
     const [nov, dez, jan] = a.previsao;
     expect(nov).toMatchObject({ competencia: "2026-11", garantido: 119800, testes: 14900 });
     expect(dez).toMatchObject({ competencia: "2026-12", garantido: 119800, testes: 34900 });
@@ -118,23 +118,23 @@ describe("painel da plataforma: a carteira", () => {
     expect(a.previsao).toHaveLength(6);
   });
 
-  it("a analise escrita diz os fatos que pedem decisao", () => {
+  it("a análise escrita diz os fatos que pedem decisão", () => {
     const t = a.textos.join("\n");
     expect(t).toContain("Receita mensal contratada de R$");
-    expect(t).toContain("2 escritorio(s) pagante(s)");
-    expect(t).toMatch(/vencidos ha mais de 60 dias/);
+    expect(t).toContain("2 escritório(s) pagante(s)");
+    expect(t).toMatch(/vencidos há mais de 60 dias/);
     expect(t).toContain("Maior valor em atraso: Silva");
     expect(t).toContain("Novo"); // teste terminando em 5 dias
     expect(t).toMatch(/Silva responde por 75%/);
-    expect(t).toMatch(/Proximos 3 meses/);
+    expect(t).toMatch(/Próximos 3 meses/);
   });
 
-  it("carteira vazia nao inventa numero", () => {
+  it("carteira vazia não inventa número", () => {
     const v = analisarCarteira([], AGORA);
     expect(v.receitaMensal).toBe(0);
     expect(v.ticketMedio).toBe(0);
     expect(v.concentracao).toBeNull();
-    expect(v.textos[0]).toMatch(/Ainda nao ha escritorio pagante nem em teste/);
+    expect(v.textos[0]).toMatch(/Ainda não há escritório pagante nem em teste/);
     expect(v.textos).toContain("Nenhuma fatura vencida em aberto.");
   });
 });

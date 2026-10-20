@@ -86,21 +86,21 @@ export function julgar(
   agora: Date,
 ): Veredito {
   if (!certificado || Object.keys(certificado).length === 0) {
-    return { situacao: "inconclusivo", motivo: "a borda nao apresentou certificado" };
+    return { situacao: "inconclusivo", motivo: "a borda não apresentou certificado" };
   }
 
   const nomes = nomesDoCertificado(certificado);
   if (nomes.length === 0) {
-    return { situacao: "inconclusivo", motivo: "certificado sem nome legivel" };
+    return { situacao: "inconclusivo", motivo: "certificado sem nome legível" };
   }
 
   if (!nomes.some((nome) => nomeCobre(nome, host))) {
     return {
       situacao: "falha",
       motivo:
-        `o certificado apresentado nao cobre ${host} — ` +
+        `o certificado apresentado não cobre ${host} — ` +
         `a borda entregou ${nomes.join(", ")}. ` +
-        "No Railway: dominio > certificado; se estiver em falha, reemitir.",
+        "No Railway: domínio > certificado; se estiver em falha, reemitir.",
     };
   }
 
@@ -118,7 +118,7 @@ export function julgar(
   if (dias < DIAS_DE_AVISO) {
     return {
       situacao: "falha",
-      motivo: `o certificado de ${host} vence em ${dias} dia(s) (${certificado.valid_to}) e nao foi renovado`,
+      motivo: `o certificado de ${host} vence em ${dias} dia(s) (${certificado.valid_to}) e não foi renovado`,
     };
   }
   return { situacao: "ok", nomes, expiraEm: dias };

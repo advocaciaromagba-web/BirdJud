@@ -67,22 +67,22 @@ export async function definirPermissao(
   permitido: boolean,
 ): Promise<void> {
   if (quemMuda.papel !== "ADMIN") {
-    throw new SemPermissao("So o administrador do escritorio muda permissoes.");
+    throw new SemPermissao("Só o administrador do escritório muda permissões.");
   }
   if (quemMuda.usuarioId === usuarioId) {
-    throw new SemPermissao("Ninguem muda a propria permissao.");
+    throw new SemPermissao("Ninguém muda a própria permissão.");
   }
-  if (!ehArea(area)) throw new SemPermissao("Area desconhecida.");
+  if (!ehArea(area)) throw new SemPermissao("Área desconhecida.");
 
   const modulos = await modulosAtivos(escritorioId);
   if (!areasDistribuiveis(modulos).some((a) => a.chave === area)) {
-    throw new SemPermissao("Esta area nao e distribuivel neste escritorio.");
+    throw new SemPermissao("Esta área não é distribuível neste escritório.");
   }
 
   const alvo = await comEscritorio(escritorioId, (db) =>
     db.usuario.findFirst({ where: { id: usuarioId }, select: { id: true } }),
   );
-  if (!alvo) throw new SemPermissao("Usuario nao encontrado.");
+  if (!alvo) throw new SemPermissao("Usuário não encontrado.");
 
   await comEscritorio(escritorioId, (db) =>
     db.permissaoDeArea.upsert({

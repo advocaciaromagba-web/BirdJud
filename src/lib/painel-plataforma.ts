@@ -38,7 +38,7 @@ export const ROTULO_DA_FAIXA: Record<string, string> = {
 };
 export const FAIXAS_EM_ORDEM = ["ATE_1", "ATE_3", "ATE_10", "ATE_25", "ATE_50"] as const;
 export const FAIXAS_DE_ATRASO = [
-  { chave: "ATE_15", rotulo: "ate 15 dias", ate: 15 },
+  { chave: "ATE_15", rotulo: "até 15 dias", ate: 15 },
   { chave: "ATE_30", rotulo: "16 a 30 dias", ate: 30 },
   { chave: "ATE_60", rotulo: "31 a 60 dias", ate: 60 },
   { chave: "MAIS_60", rotulo: "mais de 60 dias", ate: Infinity },
@@ -238,16 +238,16 @@ export function escreverAnalise(a: Analise): string[] {
   if (a.pagantes === 0) {
     t.push(
       a.receitaEmTeste > 0
-        ? `Ainda nao ha escritorio pagante. ${emReais(a.receitaEmTeste)} por mes estao em teste e viram receita se assinarem.`
-        : "Ainda nao ha escritorio pagante nem em teste.",
+        ? `Ainda não há escritório pagante. ${emReais(a.receitaEmTeste)} por mês estão em teste e viram receita se assinarem.`
+        : "Ainda não há escritório pagante nem em teste.",
     );
   } else {
     t.push(
-      `Receita mensal contratada de ${emReais(a.receitaMensal)}, em ${a.pagantes} escritorio(s) pagante(s), com ticket medio de ${emReais(a.ticketMedio)}.`,
+      `Receita mensal contratada de ${emReais(a.receitaMensal)}, em ${a.pagantes} escritório(s) pagante(s), com ticket médio de ${emReais(a.ticketMedio)}.`,
     );
     if (a.receitaEmTeste > 0) {
       t.push(
-        `Os testes somam ${emReais(a.receitaEmTeste)} por mes: se todos assinarem, a receita sobe ${porcento(a.receitaEmTeste, a.receitaMensal)}%.`,
+        `Os testes somam ${emReais(a.receitaEmTeste)} por mês: se todos assinarem, a receita sobe ${porcento(a.receitaEmTeste, a.receitaMensal)}%.`,
       );
     }
   }
@@ -256,30 +256,30 @@ export function escreverAnalise(a: Analise): string[] {
     t.push("Nenhuma fatura vencida em aberto.");
   } else {
     t.push(
-      `${emReais(a.vencido.total)} vencidos em ${a.vencido.escritorios} escritorio(s)` +
+      `${emReais(a.vencido.total)} vencidos em ${a.vencido.escritorios} escritório(s)` +
         (a.receitaMensal ? `, ${a.vencido.porcentoDaReceita}% da receita mensal.` : "."),
     );
     const velho = a.vencido.porIdade.find((f) => f.chave === "MAIS_60")!;
     if (velho.valor > 0) {
-      t.push(`${emReais(velho.valor)} estao vencidos ha mais de 60 dias: quanto mais velho, menor a chance de receber.`);
+      t.push(`${emReais(velho.valor)} estão vencidos há mais de 60 dias: quanto mais velho, menor a chance de receber.`);
     }
     if (a.vencido.maiorDevedor) {
       const m = a.vencido.maiorDevedor;
-      t.push(`Maior valor em atraso: ${m.nome}, ${emReais(m.valor)}, ha ${m.dias} dia(s).`);
+      t.push(`Maior valor em atraso: ${m.nome}, ${emReais(m.valor)}, há ${m.dias} dia(s).`);
     }
   }
 
   if (a.testesAcabando.length) {
     t.push(
-      `${a.testesAcabando.length} teste(s) terminam nos proximos 7 dias: ${a.testesAcabando
+      `${a.testesAcabando.length} teste(s) terminam nos próximos 7 dias: ${a.testesAcabando
         .map((x) => x.nome)
-        .join(", ")}. E a hora da conversa comercial.`,
+        .join(", ")}. É a hora da conversa comercial.`,
     );
   }
 
   if (a.concentracao && a.concentracao.porcento >= 30) {
     t.push(
-      `${a.concentracao.nome} responde por ${a.concentracao.porcento}% da receita: a carteira depende demais de um escritorio.`,
+      `${a.concentracao.nome} responde por ${a.concentracao.porcento}% da receita: a carteira depende demais de um escritório.`,
     );
   }
 
@@ -288,8 +288,8 @@ export function escreverAnalise(a: Analise): string[] {
     const garantido = [p1, p2, p3].filter(Boolean).reduce((s, m) => s + m!.garantido, 0);
     const comTestes = [p1, p2, p3].filter(Boolean).reduce((s, m) => s + m!.garantido + m!.testes, 0);
     t.push(
-      `Proximos 3 meses: ${emReais(garantido)} garantidos pelas assinaturas` +
-        (comTestes > garantido ? `; ate ${emReais(comTestes)} se os testes assinarem.` : "."),
+      `Próximos 3 meses: ${emReais(garantido)} garantidos pelas assinaturas` +
+        (comTestes > garantido ? `; até ${emReais(comTestes)} se os testes assinarem.` : "."),
     );
   }
 
@@ -299,7 +299,7 @@ export function escreverAnalise(a: Analise): string[] {
     const agora = a.recebidos[n - 1].valor;
     const variacao = Math.round(((agora - antes) / antes) * 100);
     t.push(
-      `Recebido no mes: ${emReais(agora)} (${variacao >= 0 ? "+" : ""}${variacao}% sobre ${a.recebidos[n - 2].rotulo}; o mes corrente ainda esta em curso).`,
+      `Recebido no mês: ${emReais(agora)} (${variacao >= 0 ? "+" : ""}${variacao}% sobre ${a.recebidos[n - 2].rotulo}; o mês corrente ainda está em curso).`,
     );
   }
   return t;

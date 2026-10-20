@@ -13,6 +13,6 @@ export const NOME_DO_PROVEDOR: Record<Provedor, string> = {
 
 /** O que cada conta oferece a quem vai pagar. */
 export const COMO_PAGA: Record<Provedor, string> = {
-  ASAAS: "boleto, Pix ou cartao, como o escritorio escolher",
-  INFINITEPAY: "link com Pix ou cartao, o cliente escolhe no checkout",
+  ASAAS: "boleto, Pix ou cartão, como o escritório escolher",
+  INFINITEPAY: "link com Pix ou cartão, o cliente escolhe no checkout",
 };

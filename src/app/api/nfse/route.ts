@@ -47,11 +47,11 @@ export async function POST(req: Request) {
     const { escritorioId, usuarioId } = await exigirSessao("NFSE", "NOTAS");
     const corpo = novaNota.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
     }
     const valorCentavos = paraCentavos(corpo.data.valor);
     if (valorCentavos === null || valorCentavos <= 0) {
-      return NextResponse.json({ erro: "Valor invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Valor inválido." }, { status: 400 });
     }
 
     const r = await prepararNota(escritorioId, {
@@ -79,7 +79,7 @@ export async function PATCH(req: Request) {
     const { escritorioId } = await exigirAdmin("NFSE");
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Cadastro invalido." }, { status: 400 });
+      return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Cadastro inválido." }, { status: 400 });
     }
     const dados = {
       ...dadosDoCadastroFiscal(corpo.data.dados),

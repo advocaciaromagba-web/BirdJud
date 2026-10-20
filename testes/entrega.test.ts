@@ -41,7 +41,7 @@ const MIN = 60 * 1000;
 const HORA = 60 * MIN;
 const agora = new Date("2026-10-09T12:00:00Z");
 
-describe("o erro da Meta, em lingua de escritorio", () => {
+describe("o erro da Meta, em lingua de escritório", () => {
   it("separa de quem e o problema", () => {
     expect(categoriaDaFalha("WHATSAPP", 131026)).toBe("NUMERO");
     expect(categoriaDaFalha("WHATSAPP", 131050)).toBe("RECUSOU");
@@ -55,11 +55,11 @@ describe("o erro da Meta, em lingua de escritorio", () => {
     expect(categoriaDaFalha("EMAIL", null)).toBe("EMAIL");
   });
 
-  it("explica o motivo, e passa o da Meta quando nao conhece o codigo", () => {
-    expect(motivoDaFalha(131026)).toMatch(/nao recebe WhatsApp/);
+  it("explica o motivo, e passa o da Meta quando não conhece o código", () => {
+    expect(motivoDaFalha(131026)).toMatch(/não recebe WhatsApp/);
     expect(motivoDaFalha(131050)).toMatch(/bloqueou/);
     expect(motivoDaFalha(424242, "Texto da Meta")).toBe("Texto da Meta");
-    expect(motivoDaFalha(424242, null)).toMatch(/nao informou/);
+    expect(motivoDaFalha(424242, null)).toMatch(/não informou/);
   });
 });
 
@@ -77,7 +77,7 @@ describe("o retorno da Meta, fora de ordem", () => {
     expect(mudancaPorStatus(novo, "read", t)).toEqual({ lidoEm: t, entregueEm: t });
   });
 
-  it("nada anda para tras e nada se repete", () => {
+  it("nada anda para trás e nada se repete", () => {
     const entregue = { estado: "ENVIADO", entregueEm: t, lidoEm: null };
     expect(mudancaPorStatus(entregue, "delivered", t)).toBeNull();
     expect(mudancaPorStatus(entregue, "failed", t)).toBeNull();
@@ -101,7 +101,7 @@ describe("quando o sistema reenvia sozinho", () => {
     expect(quandoReenviarSozinho({ ...base, erroCodigo: 131049 }, agora)).toEqual(new Date(agora.getTime() + 24 * HORA));
   });
 
-  it("nunca: numero errado, plataforma, e-mail, documento ou segundo reenvio automatico", () => {
+  it("nunca: número errado, plataforma, e-mail, documento ou segundo reenvio automático", () => {
     expect(quandoReenviarSozinho({ ...base, erroCodigo: 131026 }, agora)).toBeNull();
     expect(quandoReenviarSozinho({ ...base, erroCodigo: 131042 }, agora)).toBeNull();
     expect(quandoReenviarSozinho({ ...base, canal: "EMAIL" }, agora)).toBeNull();
@@ -109,7 +109,7 @@ describe("quando o sistema reenvia sozinho", () => {
     expect(quandoReenviarSozinho({ ...base, chave: "reenvio:auto:abc" }, agora)).toBeNull();
   });
 
-  it("nunca para compromisso que ja tera comecado", () => {
+  it("nunca para compromisso que já terá comecado", () => {
     const daqui20 = new Date(agora.getTime() + 20 * MIN);
     expect(quandoReenviarSozinho({ ...base, inicioDoCompromisso: daqui20 }, agora)).toBeNull();
     const daqui10h = new Date(agora.getTime() + 10 * HORA);
@@ -117,7 +117,7 @@ describe("quando o sistema reenvia sozinho", () => {
   });
 });
 
-describe("sem confirmacao e rotulo na auditoria", () => {
+describe("sem confirmação e rotulo na auditoria", () => {
   const enviado = {
     canal: "WHATSAPP",
     estado: "ENVIADO",
@@ -139,7 +139,7 @@ describe("sem confirmacao e rotulo na auditoria", () => {
   it("rotulo diz o que de fato se sabe", () => {
     expect(rotuloDaEntrega({ ...enviado, lidoEm: agora, entregueEm: agora })).toBe("Lida");
     expect(rotuloDaEntrega({ ...enviado, entregueEm: agora })).toBe("Entregue");
-    expect(rotuloDaEntrega(enviado)).toBe("Sem confirmacao de entrega");
+    expect(rotuloDaEntrega(enviado)).toBe("Sem confirmação de entrega");
     expect(rotuloDaEntrega({ ...enviado, idNaMeta: null })).toBeNull();
     expect(rotuloDaEntrega({ ...enviado, canal: "EMAIL" })).toBeNull();
   });
@@ -188,8 +188,8 @@ async function avisoPendente(chave: string, extra: Record<string, unknown> = {})
         tipo: "LEMBRETE_AO_PARTICIPANTE",
         chave,
         destino: "5571988887777",
-        assunto: "Audiencia amanha",
-        corpo: "Lembrete da audiencia.",
+        assunto: "Audiência amanhã",
+        corpo: "Lembrete da audiência.",
         modelo: "birdjud_lembrete_participante",
         parametros: ["Maria", "Banca", "Audiencia", "amanha", "Forum", "71 3333-4444"],
         compromissoId: compromisso,
@@ -248,14 +248,14 @@ d("entrega no banco", () => {
       });
       quemEnviou = q.id;
       const r = await db.usuario.create({
-        data: semEscritorio({ nome: "Dra. Responsavel", email: `resp-entrega-${marca}@teste.br`, senhaHash: "x", papel: "ADVOGADO" }),
+        data: semEscritorio({ nome: "Dra. Responsável", email: `resp-entrega-${marca}@teste.br`, senhaHash: "x", papel: "ADVOGADO" }),
       });
       responsavel = r.id;
       const c = await db.cliente.create({ data: semEscritorio({ nome: "Maria Cliente", telefone: "(71) 98888-7777" }) });
       cliente = c.id;
       const k = await db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia de instrucao",
+          titulo: "Audiência de instrução",
           tipo: "AUDIENCIA",
           inicio: new Date(Date.now() + 3 * 24 * HORA),
           responsavelId: responsavel,
@@ -293,7 +293,7 @@ d("entrega no banco", () => {
     expect(rotuloDaEntrega(a)).toBe("Lida");
   });
 
-  it("numero sem WhatsApp: falha com motivo e alerta o responsavel uma vez so", async () => {
+  it("número sem WhatsApp: falha com motivo e alerta o responsável uma vez só", async () => {
     const { id, idNaMeta } = await enviarERetornarId(`t2:${marca}`);
     const falha = { id: idNaMeta, status: "failed", timestamp: String(Math.floor(Date.now() / 1000)), errors: [{ code: 131026, title: "Message undeliverable" }] };
     await webhook([falha]);
@@ -302,7 +302,7 @@ d("entrega no banco", () => {
     const a = await lerAviso(id);
     expect(a.estado).toBe("FALHOU");
     expect(a.erroCodigo).toBe(131026);
-    expect(a.erro).toMatch(/nao recebe WhatsApp/);
+    expect(a.erro).toMatch(/não recebe WhatsApp/);
 
     const alertas = await alertasDe(id);
     expect(alertas).toHaveLength(1);
@@ -323,7 +323,7 @@ d("entrega no banco", () => {
     await expect(marcarResolvida(esc, id, "DESCARTADO", "Outra", null)).rejects.toBeInstanceOf(NaoDaParaReenviar);
   });
 
-  it("instabilidade: sem alerta, reenvio automatico unico, e o segundo erro vai para a equipe", async () => {
+  it("instabilidade: sem alerta, reenvio automático único, e o segundo erro vai para a equipe", async () => {
     const { id, idNaMeta } = await enviarERetornarId(`t3:${marca}`);
     const falhouEm = Math.floor(Date.now() / 1000);
     await webhook([{ id: idNaMeta, status: "failed", timestamp: String(falhouEm), errors: [{ code: 131000 }] }]);
@@ -350,7 +350,7 @@ d("entrega no banco", () => {
     expect(await alertasDe(copia.id)).toHaveLength(1);
   });
 
-  it("quem enviou recebe por e-mail E WhatsApp: a rodada seguinte nao quebra (chave repetida na transacao)", async () => {
+  it("quem enviou recebe por e-mail E WhatsApp: a rodada seguinte não quebra (chave repetida na transação)", async () => {
     const { id, idNaMeta } = await enviarERetornarId(`tdup:${marca}`, { enviadoPorId: quemEnviou });
     await webhook([{ id: idNaMeta, status: "failed", errors: [{ code: 131026 }] }]);
     const canais = (await alertasDe(id)).map((a) => a.canal).sort();
@@ -366,7 +366,7 @@ d("entrega no banco", () => {
     await marcarResolvida(esc, id, "DESCARTADO", "Secretaria", null);
   });
 
-  it("mensagem montada com parametros a menos (#132000) nao se reenvia igual", async () => {
+  it("mensagem montada com parâmetros a menos (#132000) não se reenvia igual", async () => {
     const { id, idNaMeta } = await enviarERetornarId(`t132:${marca}`, {
       parametros: ["Maria", "Banca", "Audiencia", "amanha", "Forum"],
     });
@@ -388,22 +388,22 @@ d("entrega no banco", () => {
     const original = await lerAviso(id);
     expect(original.tratamento).toBe("REENVIADO");
     expect(original.observacao).toMatch(/5571977776666/);
-    await expect(reenviar(esc, id, { automatico: false, quem: "x" })).rejects.toThrow(/ja foi tratada/);
+    await expect(reenviar(esc, id, { automatico: false, quem: "x" })).rejects.toThrow(/já foi tratada/);
 
     await comEscritorio(esc, (db) => db.cliente.update({ where: { id: cliente }, data: { telefone: "(71) 98888-7777" } }));
   });
 
-  it("nao reenvia para quem pediu para parar, nem documento", async () => {
+  it("não reenvia para quem pediu para parar, nem documento", async () => {
     const a = await avisoPendente(`t5:${marca}`, { estado: "FALHOU", falhouEm: new Date(), erroCodigo: 131026 });
     await comEscritorio(esc, (db) => db.bloqueioDeWhatsapp.create({ data: semEscritorio({ telefone: "5571988887777" }) }));
-    await expect(reenviar(esc, a.id, { automatico: false, quem: "x" })).rejects.toThrow(/nao receber/);
+    await expect(reenviar(esc, a.id, { automatico: false, quem: "x" })).rejects.toThrow(/não receber/);
     await comEscritorio(esc, (db) => db.bloqueioDeWhatsapp.deleteMany({}));
 
     const doc = await avisoPendente(`t6:${marca}`, { tipo: "DOCUMENTO", estado: "FALHOU", falhouEm: new Date(), clienteId: cliente });
     await expect(reenviar(esc, doc.id, { automatico: false, quem: "x" })).rejects.toThrow(/ficha do cliente/);
   });
 
-  it("a tela mostra o nao entregue com o outro canal, o sem confirmacao e o resolvido", async () => {
+  it("a tela mostra o não entregue com o outro canal, o sem confirmação e o resolvido", async () => {
     // Par no e-mail do mesmo aviso, que chegou.
     await comEscritorio(esc, (db) =>
       db.aviso.create({
@@ -459,10 +459,10 @@ d("entrega no banco", () => {
       "Banca Entrega",
       "Lembrete ao participante, por WhatsApp",
       "Maria Cliente",
-      expect.stringMatching(/nao recebe WhatsApp/),
-      "o escritorio",
+      expect.stringMatching(/não recebe WhatsApp/),
+      "o escritório",
     ]);
-    expect(alertas[0].corpo).toMatch(/A mensagem que voce enviou para Maria Cliente nao chegou/);
+    expect(alertas[0].corpo).toMatch(/A mensagem que você enviou para Maria Cliente não chegou/);
 
     // O alerta que falha nao gera alerta de alerta.
     await enviarAvisosNoWhatsapp(esc);
@@ -471,7 +471,7 @@ d("entrega no banco", () => {
     expect(await comEscritorio(esc, (db) => db.aviso.count({ where: { chave: { contains: `falha:${zap.id}:` } } }))).toBe(0);
   });
 
-  it("retorno de mensagem desconhecida nao quebra o webhook", async () => {
+  it("retorno de mensagem desconhecida não quebra o webhook", async () => {
     expect(await webhook([{ id: "wamid.ninguem", status: "delivered" }])).toBe(200);
   });
 });

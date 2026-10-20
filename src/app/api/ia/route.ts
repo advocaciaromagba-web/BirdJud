@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 
     const corpo = pedido.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
 
     const publicacao = await comEscritorio(escritorioId, (db) =>
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     );
     if (!publicacao) {
       return NextResponse.json(
-        { erro: "Publicacao nao encontrada." },
+        { erro: "Publicação não encontrada." },
         { status: 404 },
       );
     }

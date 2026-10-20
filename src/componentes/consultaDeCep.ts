@@ -48,16 +48,16 @@ export async function consultarCep(valor: string): Promise<EnderecoAchado | null
 
 export function estadoDepois(achado: EnderecoAchado | null | undefined): EstadoDoCep {
   if (achado === undefined) {
-    return { tipo: "nao-achou", texto: "Nao deu para consultar o CEP agora. Preencha o endereco a mao." };
+    return { tipo: "nao-achou", texto: "Não deu para consultar o CEP agora. Preencha o endereço a mão." };
   }
   if (achado === null) {
-    return { tipo: "nao-achou", texto: "CEP nao encontrado. Confira os numeros ou preencha o endereco a mao." };
+    return { tipo: "nao-achou", texto: "CEP não encontrado. Confira os números ou preencha o endereço a mão." };
   }
   if (achado.geral) {
     return {
       tipo: "achou",
       geral: true,
-      texto: `CEP geral de ${achado.cidade}/${achado.uf}: informe a rua e o numero.`,
+      texto: `CEP geral de ${achado.cidade}/${achado.uf}: informe a rua e o número.`,
     };
   }
   return {

@@ -27,7 +27,7 @@ export function PagarNoCartao({ faturaId, opcoes }: { faturaId: string; opcoes: 
   async function pagar() {
     if (!escolhida) return;
     if (!window.confirm(
-      `Pagar no cartao de credito: ${rotulo(escolhida)}, com a tarifa do cartao? ` +
+      `Pagar no cartão de crédito: ${rotulo(escolhida)}, com a tarifa do cartão? ` +
         "O boleto e o Pix desta fatura deixam de valer.",
     )) return;
     setEnviando(true);
@@ -39,7 +39,7 @@ export function PagarNoCartao({ faturaId, opcoes }: { faturaId: string; opcoes: 
         body: JSON.stringify({ parcelas }),
       });
       const corpo = (await r.json().catch(() => ({}))) as { erro?: string; linkPagamento?: string | null };
-      if (!r.ok) throw new Error(corpo.erro ?? "Nao foi possivel passar para o cartao.");
+      if (!r.ok) throw new Error(corpo.erro ?? "Não foi possível passar para o cartão.");
       if (corpo.linkPagamento) window.location.href = corpo.linkPagamento;
       else window.location.reload();
     } catch (e) {
@@ -51,7 +51,7 @@ export function PagarNoCartao({ faturaId, opcoes }: { faturaId: string; opcoes: 
   if (!aberto) {
     return (
       <button type="button" className="botao-secundario" onClick={() => setAberto(true)}>
-        Pagar no cartao
+        Pagar no cartão
       </button>
     );
   }
@@ -60,7 +60,7 @@ export function PagarNoCartao({ faturaId, opcoes }: { faturaId: string; opcoes: 
     <div className="grid gap-2">
       {opcoes.length > 1 ? (
         <label className="text-sm">
-          <span className="block font-medium">Como pagar no cartao</span>
+          <span className="block font-medium">Como pagar no cartão</span>
           <select className="campo mt-1" value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))}>
             {opcoes.map((o) => (
               <option key={o.parcelas} value={o.parcelas}>{rotulo(o)}</option>
@@ -72,8 +72,8 @@ export function PagarNoCartao({ faturaId, opcoes }: { faturaId: string; opcoes: 
       )}
       {escolhida ? (
         <p className="ajuda">
-          Inclui {reais(escolhida.tarifaCentavos)} de tarifa do cartao
-          {escolhida.parcelas > 1 ? " e da antecipacao das parcelas" : ""}. Boleto ou Pix nao tem acrescimo.
+          Inclui {reais(escolhida.tarifaCentavos)} de tarifa do cartão
+          {escolhida.parcelas > 1 ? " e da antecipação das parcelas" : ""}. Boleto ou Pix não tem acréscimo.
         </p>
       ) : null}
       <span className="flex gap-2">

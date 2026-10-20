@@ -1,6 +1,6 @@
 // Bateria de isolamento — escrita ANTES das rotas, de proposito.
 //
-// Cria dois escritorios e tenta, a partir de um, ler / alterar / apagar dados
+// Cria dois escritórios e tenta, a partir de um, ler / alterar / apagar dados
 // do outro. Nenhuma tentativa pode funcionar. Roda antes de todo deploy.
 //
 // Precisa de um banco de testes com o schema aplicado E com prisma/rls.sql
@@ -22,13 +22,13 @@ let alfa = "";
 let beta = "";
 let clienteDeBeta = "";
 
-d("isolamento entre escritorios", () => {
+d("isolamento entre escritórios", () => {
   beforeAll(async () => {
     const a = await prismaPlataforma().escritorio.create({
-      data: { slug: `alfa-${Date.now()}`, nome: "Escritorio Alfa" },
+      data: { slug: `alfa-${Date.now()}`, nome: "Escritório Alfa" },
     });
     const b = await prismaPlataforma().escritorio.create({
-      data: { slug: `beta-${Date.now()}`, nome: "Escritorio Beta" },
+      data: { slug: `beta-${Date.now()}`, nome: "Escritório Beta" },
     });
     alfa = a.id;
     beta = b.id;
@@ -52,24 +52,24 @@ d("isolamento entre escritorios", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("consulta fora de comEscritorio() nao roda", async () => {
-    await expect(prisma.cliente.findMany()).rejects.toThrow(/sem escritorio/i);
+  it("consulta fora de comEscritorio() não roda", async () => {
+    await expect(prisma.cliente.findMany()).rejects.toThrow(/sem escritório/i);
   });
 
-  it("listagem so devolve os proprios registros", async () => {
+  it("listagem só devolve os próprios registros", async () => {
     const vistos = await comEscritorio(alfa, (db) => db.cliente.findMany());
     expect(vistos).toHaveLength(1);
     expect(vistos[0]?.nome).toBe("Cliente de Alfa");
   });
 
-  it("busca por id de outro escritorio nao encontra", async () => {
+  it("busca por id de outro escritório não encontra", async () => {
     const achado = await comEscritorio(alfa, (db) =>
       db.cliente.findFirst({ where: { id: clienteDeBeta } }),
     );
     expect(achado).toBeNull();
   });
 
-  it("alteracao de registro de outro escritorio nao afeta nada", async () => {
+  it("alteração de registro de outro escritório não afeta nada", async () => {
     const r = await comEscritorio(alfa, (db) =>
       db.cliente.updateMany({
         where: { id: clienteDeBeta },
@@ -84,14 +84,14 @@ d("isolamento entre escritorios", () => {
     expect(intacto?.nome).toBe("Cliente de Beta");
   });
 
-  it("exclusao de registro de outro escritorio nao afeta nada", async () => {
+  it("exclusão de registro de outro escritório não afeta nada", async () => {
     const r = await comEscritorio(alfa, (db) =>
       db.cliente.deleteMany({ where: { id: clienteDeBeta } }),
     );
     expect(r.count).toBe(0);
   });
 
-  it("criacao nao consegue forjar outro escritorio no payload", async () => {
+  it("criacao não consegue forjar outro escritório no payload", async () => {
     const criado = await comEscritorio(alfa, (db) =>
       // escritorioId injetado pela extensao sobrepoe o que vier do chamador
       db.cliente.create({
@@ -101,7 +101,7 @@ d("isolamento entre escritorios", () => {
     expect(criado.escritorioId).toBe(alfa);
   });
 
-  it("trava 2 sozinha: sem app.escritorio_id o banco nao devolve nada", async () => {
+  it("trava 2 sozinha: sem app.escritorio_id o banco não devolve nada", async () => {
     // Driblando a trava de codigo de proposito: conexao da aplicacao, sem a
     // extensao e fora de comEscritorio(). So o RLS esta protegendo aqui.
     const linhas = await prismaSemEscritorio.$queryRaw<{ id: string }[]>`
@@ -119,16 +119,16 @@ d("isolamento entre escritorios", () => {
     ).rejects.toThrow();
   });
 
-  it("marca do subdominio e legivel antes do login, sem vazar negocio", async () => {
+  it("marca do subdomínio e legível antes do login, sem vazar negocio", async () => {
     const slug = (await prismaPlataforma().escritorio.findUnique({
       where: { id: alfa },
     }))!.slug;
     const marca = await escritorioPorSlug(slug);
-    expect(marca?.nome).toBe("Escritorio Alfa");
+    expect(marca?.nome).toBe("Escritório Alfa");
     expect(marca).not.toHaveProperty("cnpj");
   });
 
-  it("RLS barra a consulta crua quando app.escritorio_id e de outro escritorio", async () => {
+  it("RLS barra a consulta crua quando app.escritorio_id e de outro escritório", async () => {
     const linhas = await comEscritorio(
       alfa,
       (db) =>
@@ -166,7 +166,7 @@ d("isolamento dos prazos", () => {
     await comEscritorio(alfaP, (db) =>
       db.prazo.create({
         data: semEscritorio({
-          titulo: "Contestacao de Alfa",
+          titulo: "Contestação de Alfa",
           termoInicial: new Date("2026-10-08T00:00:00Z"),
           dias: 15,
           contagem: "UTEIS",
@@ -201,13 +201,13 @@ d("isolamento dos prazos", () => {
     }
   });
 
-  it("um escritorio nao ve o prazo do outro", async () => {
+  it("um escritório não ve o prazo do outro", async () => {
     const vistos = await comEscritorio(alfaP, (db) => db.prazo.findMany());
     expect(vistos).toHaveLength(1);
-    expect(vistos[0]!.titulo).toBe("Contestacao de Alfa");
+    expect(vistos[0]!.titulo).toBe("Contestação de Alfa");
   });
 
-  it("marcar como cumprido o prazo de outro escritorio nao afeta nada", async () => {
+  it("marcar como cumprido o prazo de outro escritório não afeta nada", async () => {
     const r = await comEscritorio(alfaP, (db) =>
       db.prazo.updateMany({
         where: { id: prazoDeBeta },
@@ -221,7 +221,7 @@ d("isolamento dos prazos", () => {
     expect(intacto?.cumpridoEm).toBeNull();
   });
 
-  it("a lista de documentos de um cliente nao vaza para o outro escritorio", async () => {
+  it("a lista de documentos de um cliente não vaza para o outro escritório", async () => {
     const cliA = await comEscritorio(alfaP, (db) =>
       db.cliente.create({ data: semEscritorio({ nome: "Cliente de Alfa" }) }),
     );
@@ -242,7 +242,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("representante de cliente de um escritorio nao vaza para o outro", async () => {
+  it("representante de cliente de um escritório não vaza para o outro", async () => {
     const cli = await comEscritorio(alfaP, (db) =>
       db.cliente.create({
         data: semEscritorio({ nome: "Empresa de Alfa", documento: "11.222.333/0001-81" }),
@@ -261,7 +261,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("o extrato de um escritorio nao aparece para o outro", async () => {
+  it("o extrato de um escritório não aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.entradaDeExtrato.create({
         data: semEscritorio({
@@ -280,7 +280,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("contrato de honorarios de um escritorio nao vaza para o outro", async () => {
+  it("contrato de honorários de um escritório não vaza para o outro", async () => {
     const cliA = await comEscritorio(alfaP, (db) =>
       db.cliente.create({ data: semEscritorio({ nome: "Cliente de Alfa" }) }),
     );
@@ -302,7 +302,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("modelo de documento de um escritorio nao vaza para o outro", async () => {
+  it("modelo de documento de um escritório não vaza para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.modeloDeDocumento.create({
         data: semEscritorio({
@@ -319,7 +319,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("peca mandada para assinatura nao vaza para o outro escritorio", async () => {
+  it("peça mandada para assinatura não vaza para o outro escritório", async () => {
     // O registro carrega e-mail de cliente e link de assinatura. Vazado, o
     // escritorio vizinho veria para quem o outro manda contrato — e o link
     // abre o documento.
@@ -340,7 +340,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("quem pediu para parar de receber WhatsApp so parou naquele escritorio", async () => {
+  it("quem pediu para parar de receber WhatsApp só parou naquele escritório", async () => {
     await comEscritorio(alfaP, (db) =>
       db.bloqueioDeWhatsapp.create({
         data: semEscritorio({ telefone: "5577988880000" }),
@@ -352,14 +352,14 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("resposta de WhatsApp de um escritorio nao vaza para o outro", async () => {
+  it("resposta de WhatsApp de um escritório não vaza para o outro", async () => {
     // Carrega telefone e o texto que o cliente escreveu ao advogado.
     await comEscritorio(alfaP, (db) =>
       db.respostaDeWhatsapp.create({
         data: semEscritorio({
           idNaMeta: `wamid.isolamento.${Date.now()}`,
           telefone: "5577988881111",
-          texto: "nao posso ir, estou no hospital",
+          texto: "não posso ir, estou no hospital",
           intencao: "DESMARCA",
         }),
       }),
@@ -370,7 +370,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("resposta SEM DONO nao e visivel para escritorio nenhum", async () => {
+  it("resposta SEM DONO não e visivel para escritório nenhum", async () => {
     // Mensagem de telefone que recebeu lembrete de duas bancas fica guardada
     // com escritorioId nulo. Mostra-la a qualquer uma das duas contaria que
     // aquela pessoa tambem e cliente da outra.
@@ -399,7 +399,7 @@ d("isolamento dos prazos", () => {
     await prismaPlataforma().respostaDeWhatsapp.deleteMany({ where: { idNaMeta } });
   });
 
-  it("a triagem de uma publicacao nao vaza para o outro escritorio", async () => {
+  it("a triagem de uma publicação não vaza para o outro escritório", async () => {
     // Carrega o resumo do que o juizo determinou e o prazo fatal do processo
     // alheio — e, pelo numero do processo, diz de quem o outro escritorio e
     // advogado.
@@ -418,7 +418,7 @@ d("isolamento dos prazos", () => {
           publicacaoId: pub.id,
           especie: "TAREFA",
           tipo: "TAREFA",
-          titulo: "Contestacao de Alfa",
+          titulo: "Contestação de Alfa",
           resumo: "Prazo para contestar.",
           confianca: "ALTA",
         }),
@@ -430,7 +430,7 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("a entrevista de triagem nao vaza para o outro escritorio", async () => {
+  it("a entrevista de triagem não vaza para o outro escritório", async () => {
     // O pior vazamento possivel do sistema. A entrevista carrega o relato
     // cru de quem procurou o escritorio — antes de contrato, antes de
     // procuracao, as vezes antes de a pessoa decidir se vai processar. Junto
@@ -443,7 +443,7 @@ d("isolamento dos prazos", () => {
         data: semEscritorio({
           nome: "Pessoa que procurou Alfa",
           telefone: "77999990000",
-          assunto: "Quer processar o ex-patrao por verbas nao pagas",
+          assunto: "Quer processar o ex-patrao por verbas não pagas",
           situacao: "ANALISADA",
           urgencia: "ALTA",
           roteiro: ["Quando foi dispensado?"],
@@ -462,7 +462,7 @@ d("isolamento dos prazos", () => {
     expect(contadasPorBeta).toBe(0);
   });
 
-  it("a tarefa de um escritorio nao aparece para o outro", async () => {
+  it("a tarefa de um escritório não aparece para o outro", async () => {
     // A lista de tarefas e a agenda de trabalho da banca: o que esta
     // atrasado, de quem e, e para qual processo. Vazar isso entrega a
     // carteira de clientes e o ritmo do escritorio ao concorrente.
@@ -492,14 +492,14 @@ d("isolamento dos prazos", () => {
     expect(await comEscritorio(betaP, (db) => db.tarefa.count())).toBe(0);
   });
 
-  it("a auditoria da agenda de um escritorio nao aparece para o outro", async () => {
+  it("a auditoria da agenda de um escritório não aparece para o outro", async () => {
     // O que saiu da agenda ainda diz quem e cliente, que processo e com
     // quem — vaza tanto quanto o compromisso vivo.
     await comEscritorio(alfaP, (db) =>
       db.compromissoExcluido.create({
         data: semEscritorio({
           compromissoId: "c-de-alfa",
-          titulo: "Audiencia de Alfa",
+          titulo: "Audiência de Alfa",
           tipo: "AUDIENCIA",
           inicio: new Date("2026-10-01T13:00:00Z"),
           nomeDoCliente: "Cliente de Alfa",
@@ -512,7 +512,7 @@ d("isolamento dos prazos", () => {
     expect(await comEscritorio(alfaP, (db) => db.compromissoExcluido.count())).toBe(1);
   });
 
-  it("a meta de um escritorio nao aparece para o outro", async () => {
+  it("a meta de um escritório não aparece para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.meta.create({
         data: semEscritorio({ ano: 2026, valorCentavos: 600_000_00 }),
@@ -522,11 +522,11 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("participante de compromisso de um escritorio nao vaza para o outro", async () => {
+  it("participante de compromisso de um escritório não vaza para o outro", async () => {
     const comp = await comEscritorio(alfaP, (db) =>
       db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia de Alfa",
+          titulo: "Audiência de Alfa",
           inicio: new Date("2026-11-10T13:00:00Z"),
         }),
       }),
@@ -547,12 +547,12 @@ d("isolamento dos prazos", () => {
     expect(deBeta).toHaveLength(0);
   });
 
-  it("o calendario de um escritorio nao vale para o outro", async () => {
+  it("o calendario de um escritório não vale para o outro", async () => {
     await comEscritorio(alfaP, (db) =>
       db.diaSemExpediente.create({
         data: semEscritorio({
           dia: new Date("2026-10-14T00:00:00Z"),
-          motivo: "feriado so da comarca de Alfa",
+          motivo: "feriado só da comarca de Alfa",
         }),
       }),
     );

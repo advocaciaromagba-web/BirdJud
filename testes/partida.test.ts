@@ -17,13 +17,13 @@ const conferencia = readFileSync("scripts/conferir-producao.mjs", "utf8");
 const partida = JSON.parse(readFileSync("railway.json", "utf8"));
 
 describe("repetir com espera crescente", () => {
-  it("espera uma vez a menos que o numero de tentativas", () => {
+  it("espera uma vez a menos que o número de tentativas", () => {
     expect(esperasDe({ tentativas: 5, esperaMs: 1000, fator: 2 })).toEqual([
       1000, 2000, 4000, 8000,
     ]);
   });
 
-  it("uma tentativa unica nao espera por nada", () => {
+  it("uma tentativa única não espera por nada", () => {
     expect(esperasDe({ tentativas: 1 })).toEqual([]);
   });
 
@@ -32,7 +32,7 @@ describe("repetir com espera crescente", () => {
     expect(total).toBeGreaterThanOrEqual(30_000);
   });
 
-  it("devolve o resultado assim que a acao para de falhar", async () => {
+  it("devolve o resultado assim que a ação para de falhar", async () => {
     let vezes = 0;
     const valor = await tentar(
       async () => {
@@ -74,7 +74,7 @@ describe("o que pode derrubar o start", () => {
   ];
 
   for (const nome of SO_AVISA) {
-    it(`${nome} avisa, nao derruba`, () => {
+    it(`${nome} avisa, não derruba`, () => {
       const trecho = conferencia.slice(
         0,
         conferencia.indexOf(`"${nome}"`),
@@ -95,7 +95,7 @@ describe("comando de partida", () => {
     expect(cmd.indexOf("esperar-banco")).toBeLessThan(cmd.indexOf("migrar"));
   });
 
-  it("liga o servidor por ultimo, com exec", () => {
+  it("liga o servidor por último, com exec", () => {
     expect(partida.deploy.startCommand).toMatch(/exec \S*next start$/);
   });
 

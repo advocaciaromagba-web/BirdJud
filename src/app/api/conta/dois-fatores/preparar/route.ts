@@ -21,7 +21,7 @@ export async function POST() {
     );
     if (!usuario)
       return NextResponse.json(
-        { erro: "Usuario nao encontrado." },
+        { erro: "Usuário não encontrado." },
         { status: 404 },
       );
 

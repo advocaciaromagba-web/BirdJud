@@ -51,7 +51,7 @@ function Selo({ status }: { status: string | null }) {
   }
   return (
     <span className="rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-      nao conectada
+      não conectada
     </span>
   );
 }
@@ -64,7 +64,7 @@ export function PainelIntegracoes({
   if (integracoes.length === 0) {
     return (
       <p className="mt-6 text-slate-600">
-        Nenhuma integracao disponivel: elas aparecem conforme os modulos
+        Nenhuma integração disponível: elas aparecem conforme os módulos
         contratados.
       </p>
     );
@@ -114,7 +114,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
 
     if (!resposta.ok) {
       setRecado({
-        texto: json.erro ?? "Nao foi possivel conectar.",
+        texto: json.erro ?? "Não foi possível conectar.",
         ok: false,
       });
       return;
@@ -145,12 +145,12 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
     if (
       integracao.oauth &&
       !window.confirm(
-        `Desconectar o ${integracao.rotulo}?\n\nAs pastas e os documentos que ja estao la continuam na conta do escritorio. O sistema so para de criar e copiar.`,
+        `Desconectar o ${integracao.rotulo}?\n\nAs pastas e os documentos que já estão lá continuam na conta do escritório. O sistema só para de criar e copiar.`,
       )
     )
       return;
     await chamar(`/api/integracoes/${integracao.tipo}`, { method: "DELETE" });
-    setRecado({ texto: "Integracao desconectada.", ok: true });
+    setRecado({ texto: "Integração desconectada.", ok: true });
   }
 
   return (
@@ -163,7 +163,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
 
       {integracao.erro ? (
         <p className="mt-2 text-sm text-red-700">
-          Ultimo erro: {integracao.erro}
+          Último erro: {integracao.erro}
         </p>
       ) : null}
       {integracao.verificadoEm ? (
@@ -189,7 +189,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
           </p>
           <p className="mt-1 text-xs text-slate-500">
             Tudo fica em BirdJud / Clientes / nome do cliente. Cliente novo ganha
-            pasta sozinho, e documento anexado a um cliente e copiado para a
+            pasta sozinho, e documento anexado a um cliente é copiado para a
             pasta dele.
           </p>
           {integracao.nuvem.endereco ? (
@@ -209,11 +209,11 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
         {integracao.oauth && !integracao.conectada ? (
           integracao.disponivel === false ? (
             <p className="text-sm text-slate-500">
-              Aguardando a plataforma liberar a conexao com o {integracao.rotulo}.
+              Aguardando a plataforma liberar a conexão com o {integracao.rotulo}.
             </p>
           ) : integracao.bloqueadaPor ? (
             <p className="text-sm text-slate-500">
-              O escritorio ja usa o {integracao.bloqueadaPor}. Para trocar,
+              O escritório já usa o {integracao.bloqueadaPor}. Para trocar,
               desconecte-o primeiro.
             </p>
           ) : (
@@ -236,8 +236,8 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
               const { resposta } = await chamar("/api/nuvem/organizar", { method: "POST" });
               setRecado({
                 texto: resposta.ok
-                  ? "Organizacao na fila: as pastas que faltam e os documentos que nao foram saem em instantes."
-                  : "Nao foi possivel agendar agora.",
+                  ? "Organização na fila: as pastas que faltam e os documentos que não foram saem em instantes."
+                  : "Não foi possível agendar agora.",
                 ok: resposta.ok,
               });
             }}
@@ -264,7 +264,7 @@ function Cartao({ integracao }: { integracao: IntegracaoNaTela }) {
               disabled={ocupado}
               className="rounded border border-slate-400 px-3 py-1.5 text-sm font-semibold disabled:opacity-60"
             >
-              {ocupado ? "Testando..." : "Testar conexao"}
+              {ocupado ? "Testando..." : "Testar conexão"}
             </button>
             <button
               type="button"

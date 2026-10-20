@@ -18,7 +18,7 @@ const MIN = 60_000;
 const BASE = Date.parse("2026-10-20T14:00:00Z");
 const c = (id: string, inicio: number): ProximoCompromisso => ({
   id,
-  titulo: "Audiencia de conciliacao",
+  titulo: "Audiência de conciliação",
   tipo: "AUDIENCIA",
   inicio: new Date(inicio).toISOString(),
   local: null,
@@ -49,17 +49,17 @@ describe("quando o alerta toca", () => {
     expect(alertasDevidos([audiencia], BASE - 5 * MIN, tocados)).toEqual([]);
   });
 
-  it("marcado em cima da hora: so o de 15, nao os dois", () => {
+  it("marcado em cima da hora: só o de 15, não os dois", () => {
     const devidos = alertasDevidos([audiencia], BASE - 10 * MIN, new Set());
     expect(devidos.map((d) => d.antecedencia)).toEqual([15]);
     expect(textoDoQuantoFalta(devidos[0].faltamMinutos)).toBe("Faltam 10 minutos");
   });
 
-  it("ja comecou: nao toca", () => {
+  it("já começou: não toca", () => {
     expect(alertasDevidos([audiencia], BASE + MIN, new Set())).toEqual([]);
   });
 
-  it("remarcado: toca de novo no horario novo", () => {
+  it("remarcado: toca de novo no horário novo", () => {
     const tocados = new Set(alertasDevidos([audiencia], BASE - 60 * MIN, new Set()).map((d) => d.chave));
     const remarcada = c("a1", BASE + 2 * 60 * MIN);
     expect(alertasDevidos([remarcada], BASE + 60 * MIN, tocados)).toHaveLength(1);
@@ -87,18 +87,18 @@ const temBanco = Boolean(process.env.DATABASE_URL);
       const b = await db.usuario.create({ data: semEscritorio({ nome: "Dr. Bruno", email: `bruno-${Date.now()}@a.test`, senhaHash: "x", papel: "ADVOGADO" }) });
       await db.compromisso.createMany({
         data: [
-          { escritorioId: escritorio, titulo: "Audiencia da Ana", tipo: "AUDIENCIA", inicio: em(45), responsavelId: a.id },
-          { escritorioId: escritorio, titulo: "Pericia do Bruno", tipo: "PERICIA", inicio: em(30), responsavelId: b.id },
-          { escritorioId: escritorio, titulo: "Reuniao de todos", tipo: "COMPROMISSO", inicio: em(50) },
-          { escritorioId: escritorio, titulo: "Ja concluida", tipo: "AUDIENCIA", inicio: em(20), responsavelId: a.id, concluido: true },
+          { escritorioId: escritorio, titulo: "Audiência da Ana", tipo: "AUDIENCIA", inicio: em(45), responsavelId: a.id },
+          { escritorioId: escritorio, titulo: "Perícia do Bruno", tipo: "PERICIA", inicio: em(30), responsavelId: b.id },
+          { escritorioId: escritorio, titulo: "Reunião de todos", tipo: "COMPROMISSO", inicio: em(50) },
+          { escritorioId: escritorio, titulo: "Já concluída", tipo: "AUDIENCIA", inicio: em(20), responsavelId: a.id, concluido: true },
           { escritorioId: escritorio, titulo: "Tarefa do dia", tipo: "TAREFA", inicio: em(20), responsavelId: a.id },
-          { escritorioId: escritorio, titulo: "Ja passou", tipo: "AUDIENCIA", inicio: em(-5), responsavelId: a.id },
+          { escritorioId: escritorio, titulo: "Já passou", tipo: "AUDIENCIA", inicio: em(-5), responsavelId: a.id },
         ],
       });
       return [a.id, b.id];
     });
     await comEscritorio(outro, (db) =>
-      db.compromisso.create({ data: semEscritorio({ titulo: "De outro escritorio", tipo: "AUDIENCIA", inicio: em(10) }) }),
+      db.compromisso.create({ data: semEscritorio({ titulo: "De outro escritório", tipo: "AUDIENCIA", inicio: em(10) }) }),
     );
   });
 
@@ -108,13 +108,13 @@ const temBanco = Boolean(process.env.DATABASE_URL);
     }
   });
 
-  it("o responsavel ve o seu e o de todos; nao o do colega, nem concluido, tarefa ou passado", async () => {
+  it("o responsável ve o seu e o de todos; não o do colega, nem concluído, tarefa ou passado", async () => {
     const ana = await proximosDoUsuario(escritorio, dra, agora);
-    expect(ana.compromissos.map((x) => x.titulo)).toEqual(["Audiencia da Ana", "Reuniao de todos"]);
+    expect(ana.compromissos.map((x) => x.titulo)).toEqual(["Audiência da Ana", "Reunião de todos"]);
     expect(ana.alertaSonoro).toBe(true);
 
     const bruno = await proximosDoUsuario(escritorio, dr, agora);
-    expect(bruno.compromissos.map((x) => x.titulo)).toEqual(["Pericia do Bruno", "Reuniao de todos"]);
+    expect(bruno.compromissos.map((x) => x.titulo)).toEqual(["Perícia do Bruno", "Reunião de todos"]);
   });
 
   it("o som desligado vem desligado; o aviso continua", async () => {

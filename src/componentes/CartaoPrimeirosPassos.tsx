@@ -33,14 +33,14 @@ export function CartaoPrimeirosPassos({
           ? `Bem-vindo ao BirdJud, ${nomeEscritorio}.`
           : roteiro.essenciaisFeitos
             ? "Falta pouco para o sistema trabalhar sozinho."
-            : "Continue a configuracao do escritorio."}
+            : "Continue a configuração do escritório."}
       </h2>
       {chegando ? (
         <p className="mt-2 leitura text-slate-600">
-          Antes do primeiro cliente, o sistema precisa saber quem e o
-          escritorio e quem trabalha nele. Sao tres passos essenciais, em menos
+          Antes do primeiro cliente, o sistema precisa saber quem é o
+          escritório e quem trabalha nele. São três passos essenciais, em menos
           de dez minutos; depois, as conexoes que fazem os avisos, as
-          publicacoes e as cobrancas acontecerem sem ninguem lembrar.
+          publicações e as cobranças acontecerem sem ninguém lembrar.
         </p>
       ) : null}
 
@@ -53,7 +53,7 @@ export function CartaoPrimeirosPassos({
 
       <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Proximo passo · ~{p.minutos} min
+          Próximo passo · ~{p.minutos} min
         </p>
         <p className="mt-1 font-semibold text-slate-900">{p.titulo}</p>
         <p className="mt-1 text-sm leading-relaxed text-slate-600">{p.porque}</p>

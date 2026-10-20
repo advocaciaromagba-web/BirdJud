@@ -62,7 +62,7 @@ export default async function PaginaClientes() {
           { nome: "nascimento", rotulo: "Nascimento", tipo: "date" },
           { nome: "nacionalidade", rotulo: "Nacionalidade" },
           { nome: "estadoCivil", rotulo: "Estado civil" },
-          { nome: "profissao", rotulo: "Profissao" },
+          { nome: "profissao", rotulo: "Profissão" },
 
           // Endereco: o CEP primeiro, e o resto vem sozinho — falta o numero.
           {
@@ -74,7 +74,7 @@ export default async function PaginaClientes() {
             ajuda: "Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos.",
           },
           { nome: "logradouro", rotulo: "Rua / avenida" },
-          { nome: "numero", rotulo: "Numero" },
+          { nome: "numero", rotulo: "Número" },
           { nome: "complemento", rotulo: "Complemento" },
           { nome: "bairro", rotulo: "Bairro" },
           { nome: "cidade", rotulo: "Cidade" },
@@ -85,24 +85,24 @@ export default async function PaginaClientes() {
           // numero so para conseguir cadastrar.
           {
             nome: "honDescricao",
-            rotulo: "Honorarios — sobre o que",
+            rotulo: "Honorários — sobre o que",
             largo: true,
             ajuda:
-              "Preencha daqui para baixo so se ja houver contratacao. Valor fixo, " +
-              "percentual de exito, ou os dois.",
+              "Preencha daqui para baixo só se já houver contratação. Valor fixo, " +
+              "percentual de êxito, ou os dois.",
           },
           { nome: "honValor", rotulo: "Valor total (R$)" },
           {
             nome: "honEntrada",
             rotulo: "Entrada (R$)",
-            ajuda: "Para a vista mais parcelamento. Em branco, nao ha entrada.",
+            ajuda: "Para a vista mais parcelamento. Em branco, não há entrada.",
           },
           {
             nome: "honParcelas",
             rotulo: "Parcelas",
-            ajuda: "Em quantas vezes o que sobra depois da entrada. 1 e a vista.",
+            ajuda: "Em quantas vezes o que sobra depois da entrada. 1 é à vista.",
           },
-          { nome: "honPercentual", rotulo: "Exito (%)" },
+          { nome: "honPercentual", rotulo: "Êxito (%)" },
           {
             nome: "honPrimeiroVencimento",
             rotulo: "1o vencimento",
@@ -115,26 +115,26 @@ export default async function PaginaClientes() {
             opcoes: [
               { valor: "BOLETO", rotulo: "Boleto" },
               { valor: "PIX", rotulo: "Pix" },
-              { valor: "CARTAO", rotulo: "Cartao" },
+              { valor: "CARTAO", rotulo: "Cartão" },
               { valor: "QUALQUER", rotulo: "O cliente escolhe" },
             ],
           },
         ]}
       />
       {/*
-        So o nome e obrigatorio, e vale dizer na tela: documento de
-        identificacao hoje e o CPF, e RG nao e exigido em lugar nenhum. Quem
-        nao sabe disso deixa de cadastrar o cliente por nao ter o papel a mao.
+        Só o nome é obrigatório, e vale dizer na tela: documento de
+        identificação hoje é o CPF, e RG não é exigido em lugar nenhum. Quem
+        não sabe disso deixa de cadastrar o cliente por não ter o papel a mão.
       */}
       <p className="ajuda mt-2">
-        So o nome e obrigatorio. O resto pode entrar depois — a ficha de cada
+        Só o nome é obrigatório. O resto pode entrar depois — a ficha de cada
         cliente mostra o que falta e o que aquilo atrapalha.
       </p>
 
       {clientes.length === 0 ? (
         <p className="vazio mt-6">
-          Nenhum cliente cadastrado ainda. Comece pelo botao acima — depois cada
-          processo, cobranca e arquivo se pendura no cliente.
+          Nenhum cliente cadastrado ainda. Comece pelo botão acima — depois cada
+          processo, cobrança e arquivo se pendura no cliente.
         </p>
       ) : (
         <div className="cartao mt-6 overflow-x-auto p-0">
@@ -159,8 +159,8 @@ export default async function PaginaClientes() {
                   <tr key={cliente.id}>
                     <td className="font-medium">
                       {/*
-                        Vai para a FICHA, nao para a busca. Era a busca que
-                        abria antes, e de la nao dava para editar nada.
+                        Vai para a FICHA, não para a busca. Era a busca que
+                        abria antes, e de lá não dava para editar nada.
                       */}
                       <Link
                         href={`/clientes/${cliente.id}`}

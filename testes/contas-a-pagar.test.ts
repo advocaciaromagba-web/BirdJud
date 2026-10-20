@@ -15,15 +15,15 @@ import {
   vigenteNaCompetencia,
 } from "../src/lib/contas-a-pagar";
 
-describe("vigencia da despesa fixa", () => {
+describe("vigência da despesa fixa", () => {
   const sempre = { inicioEm: null, fimEm: null, ativo: true };
 
-  it("sem inicio nem fim, vale todo mes", () => {
+  it("sem início nem fim, vale todo mês", () => {
     expect(vigenteNaCompetencia(sempre, "2026-01")).toBe(true);
     expect(vigenteNaCompetencia(sempre, "2030-12")).toBe(true);
   });
 
-  it("nao gera mes anterior ao comeco", () => {
+  it("não gera mês anterior ao começo", () => {
     const v = { inicioEm: "2026-03-20", fimEm: null, ativo: true };
     expect(vigenteNaCompetencia(v, "2026-02")).toBe(false);
     // Comecou dia 20 de marco: ainda e despesa de marco.
@@ -32,29 +32,29 @@ describe("vigencia da despesa fixa", () => {
   });
 
   // O caso que custa dinheiro: a sala foi devolvida em junho.
-  it("nao gera mes posterior ao fim", () => {
+  it("não gera mês posterior ao fim", () => {
     const v = { inicioEm: "2026-01-01", fimEm: "2026-06-30", ativo: true };
     expect(vigenteNaCompetencia(v, "2026-06")).toBe(true);
     expect(vigenteNaCompetencia(v, "2026-07")).toBe(false);
     expect(vigenteNaCompetencia(v, "2027-01")).toBe(false);
   });
 
-  it("fim no comeco do mes ainda vale aquele mes", () => {
+  it("fim no começo do mês ainda vale aquele mês", () => {
     const v = { inicioEm: null, fimEm: "2026-06-02", ativo: true };
     expect(vigenteNaCompetencia(v, "2026-06")).toBe(true);
     expect(vigenteNaCompetencia(v, "2026-07")).toBe(false);
   });
 
-  it("desligada nao gera nunca", () => {
+  it("desligada não gera nunca", () => {
     expect(vigenteNaCompetencia({ ...sempre, ativo: false }, "2026-06")).toBe(false);
   });
 
-  it("competencia malformada nao gera", () => {
+  it("competência malformada não gera", () => {
     expect(vigenteNaCompetencia(sempre, "2026")).toBe(false);
     expect(vigenteNaCompetencia(sempre, "06/2026")).toBe(false);
   });
 
-  it("o fim nao pode vir antes do comeco", () => {
+  it("o fim não pode vir antes do começo", () => {
     expect(vigenciaCoerente("2026-03-01", "2026-02-01")).toBe(false);
     expect(vigenciaCoerente("2026-03-01", "2026-03-01")).toBe(true);
     expect(vigenciaCoerente("2026-03-01", null)).toBe(true);
@@ -71,7 +71,7 @@ describe("regua do aviso", () => {
   });
 
   // Avisar todo dia e o jeito certo de o aviso virar ruido que ninguem le.
-  it("nao avisa nos dias de folga da regua", () => {
+  it("não avisa nos dias de folga da regua", () => {
     expect(urgencia("2026-10-10", "2026-10-08")).toBeNull(); // faltam 2
     expect(urgencia("2026-10-10", "2026-10-06")).toBeNull(); // faltam 4
     expect(urgencia("2026-10-10", "2026-09-10")).toBeNull();
@@ -81,17 +81,17 @@ describe("regua do aviso", () => {
     expect([...AVISOS_EM_DIAS]).toEqual([3, 1, 0]);
   });
 
-  it("atravessa a virada do mes e do ano", () => {
+  it("atravessa a virada do mês e do ano", () => {
     expect(urgencia("2027-01-01", "2026-12-29")).toBe("EM_3_DIAS");
     expect(urgencia("2027-01-01", "2026-12-31")).toBe("AMANHA");
     expect(diasAte("2027-01-01", "2026-12-01")).toBe(31);
   });
 
   it("escreve do jeito que se fala", () => {
-    expect(comoTexto("ATRASADA", -1)).toBe("venceu ha 1 dia");
-    expect(comoTexto("ATRASADA", -5)).toBe("venceu ha 5 dias");
+    expect(comoTexto("ATRASADA", -1)).toBe("venceu há 1 dia");
+    expect(comoTexto("ATRASADA", -5)).toBe("venceu há 5 dias");
     expect(comoTexto("HOJE", 0)).toBe("vence hoje");
-    expect(comoTexto("AMANHA", 1)).toBe("vence amanha");
+    expect(comoTexto("AMANHA", 1)).toBe("vence amanhã");
   });
 });
 
@@ -105,13 +105,13 @@ describe("limite da busca", () => {
     expect(vencimentoAoMeioDia.getTime()).toBeLessThan(limite.getTime());
   });
 
-  it("nao alcanca o quarto dia", () => {
+  it("não alcanca o quarto dia", () => {
     const limite = limiteDaBusca("2026-10-07");
     expect(new Date("2026-10-11T12:00:00Z").getTime()).toBeGreaterThan(limite.getTime());
   });
 
   // Buscar um dia a mais nao cria aviso a mais: quem decide e `urgencia`.
-  it("buscar mais nao avisa mais", () => {
+  it("buscar mais não avisa mais", () => {
     expect(urgencia("2026-10-10", "2026-10-06")).toBeNull();
   });
 });

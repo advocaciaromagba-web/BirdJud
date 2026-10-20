@@ -19,11 +19,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const { escritorioId, usuarioId, papel } = await exigirSessao(undefined, "ENTREVISTAS");
     if (papel !== "ADVOGADO" && papel !== "ADMIN") {
-      return NextResponse.json({ erro: "Somente o advogado responsavel libera o texto da peticao inicial." }, { status: 403 });
+      return NextResponse.json({ erro: "Somente o advogado responsável libera o texto da petição inicial." }, { status: 403 });
     }
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => ({})));
-    if (!corpo.success) return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     return NextResponse.json(await gerarMinuta(escritorioId, id, usuarioId, corpo.data));
   } catch (erro) {
     if (erro instanceof EntrevistaNaoEncontrada || erro instanceof EntrevistaIncompleta) {

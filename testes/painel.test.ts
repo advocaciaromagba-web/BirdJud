@@ -27,7 +27,7 @@ const HORA = 60 * 60 * 1000;
 const DIA = 24 * HORA;
 
 describe("termo de busca", () => {
-  it("termo curto demais nao vira consulta", () => {
+  it("termo curto demais não vira consulta", () => {
     expect(termoUtil("ab")).toBeNull();
     expect(termoUtil("   ")).toBeNull();
     expect(termoUtil(" souza ")).toBe("souza");
@@ -35,8 +35,8 @@ describe("termo de busca", () => {
   });
 });
 
-describe("pendencia por papel", () => {
-  it("o que so admin resolve nao aparece para os outros", () => {
+describe("pendência por papel", () => {
+  it("o que só admin resolve não aparece para os outros", () => {
     const pendencias = [
       {
         tipo: "SEM_OAB" as const,
@@ -69,7 +69,7 @@ const marca = Date.now();
 let alfa = "";
 let beta = "";
 
-d("painel e busca por escritorio", () => {
+d("painel e busca por escritório", () => {
   beforeAll(async () => {
     vi.useFakeTimers({ toFake: ["Date"], shouldAdvanceTime: true });
     vi.setSystemTime(AGORA);
@@ -105,14 +105,14 @@ d("painel e busca por escritorio", () => {
       const processo = await db.processo.create({
         data: semEscritorio({
           numero: numeroParaGravar("0001234-56.2026.8.26.0100"),
-          vara: "1a Vara Civel",
+          vara: "1a Vara Cível",
           area: "Civel",
           clienteId: cliente.id,
         }),
       });
       await db.compromisso.create({
         data: semEscritorio({
-          titulo: "Audiencia de instrucao",
+          titulo: "Audiência de instrução",
           tipo: "AUDIENCIA",
           inicio: new Date(Date.now() + 3 * HORA),
           local: "Forum central",
@@ -130,7 +130,7 @@ d("painel e busca por escritorio", () => {
         data: semEscritorio({
           idExterno: `pnl-${marca}`,
           texto:
-            "Fica intimado para, no prazo de 5 dias, manifestar-se sobre a pericia.",
+            "Fica intimado para, no prazo de 5 dias, manifestar-se sobre a perícia.",
           dataDisponibilizacao: new Date(),
           numeroProcesso: numeroParaGravar("0001234-56.2026.8.26.0100"),
           urgente: true,
@@ -143,7 +143,7 @@ d("painel e busca por escritorio", () => {
       await db.cobranca.create({
         data: semEscritorio({
           clienteId: cliente.id,
-          descricao: "Honorarios de agosto",
+          descricao: "Honorários de agosto",
           valorCentavos: 250_000,
           vencimento: new Date(Date.now() - 10 * DIA),
           forma: "BOLETO",
@@ -156,7 +156,7 @@ d("painel e busca por escritorio", () => {
           nome: "procuracao-souza.pdf",
           tipo: "application/pdf",
           tamanhoBytes: 1024,
-          descricao: "Procuracao assinada",
+          descricao: "Procuração assinada",
         }),
       });
     });
@@ -178,14 +178,14 @@ d("painel e busca por escritorio", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("mostra o que acontece nas proximas 48 horas, e nao o que e daqui a uma semana", async () => {
+  it("mostra o que acontece nas próximas 48 horas, e não o que e daqui a uma semana", async () => {
     const painel = await montarPainel(alfa);
     expect(painel.compromissos).toHaveLength(1);
-    expect(painel.compromissos[0].titulo).toBe("Audiencia de instrucao");
+    expect(painel.compromissos[0].titulo).toBe("Audiência de instrução");
     expect(painel.compromissos[0].hoje).toBe(true);
   });
 
-  it("traz a publicacao urgente e a cobranca vencida com o total", async () => {
+  it("traz a publicação urgente e a cobrança vencida com o total", async () => {
     const painel = await montarPainel(alfa);
     expect(painel.naoLidas).toBe(1);
     expect(painel.publicacoes[0].urgente).toBe(true);
@@ -218,7 +218,7 @@ d("painel e busca por escritorio", () => {
     expect(com.pendencias.map((p) => p.tipo)).not.toContain("SEM_CNPJ");
   });
 
-  it("aponta a integracao que falta e a que esta com erro", async () => {
+  it("aponta a integração que falta e a que esta com erro", async () => {
     const semEmail = await montarPainel(alfa);
     // O modulo de e-mail esta contratado e o SMTP nao foi conectado.
     expect(semEmail.pendencias.map((p) => p.tipo)).toContain(
@@ -241,7 +241,7 @@ d("painel e busca por escritorio", () => {
     );
   });
 
-  it("escritorio sem os modulos nao ve bloco nenhum deles, nem vazio", async () => {
+  it("escritório sem os módulos não ve bloco nenhum deles, nem vazio", async () => {
     const painel = await montarPainel(beta);
     expect(painel.publicacoes).toHaveLength(0);
     expect(painel.naoLidas).toBe(0);
@@ -253,7 +253,7 @@ d("painel e busca por escritorio", () => {
     );
   });
 
-  it("acha o processo com e sem mascara", async () => {
+  it("acha o processo com e sem máscara", async () => {
     const comMascara = await buscar(alfa, "0001234-56.2026.8.26.0100");
     const semMascara = await buscar(alfa, "00012345620268260100");
 
@@ -264,37 +264,37 @@ d("painel e busca por escritorio", () => {
     }
   });
 
-  it("acha cliente, arquivo e o texto da publicacao", async () => {
+  it("acha cliente, arquivo e o texto da publicação", async () => {
     const porNome = await buscar(alfa, "souza");
     expect(porNome.map((a) => a.tipo)).toContain("CLIENTE");
     expect(porNome.map((a) => a.tipo)).toContain("ARQUIVO");
 
-    const porTexto = await buscar(alfa, "pericia");
+    const porTexto = await buscar(alfa, "perícia");
     expect(porTexto.some((a) => a.tipo === "PUBLICACAO")).toBe(true);
 
     // Maiuscula e minuscula nao mudam o resultado.
     expect((await buscar(alfa, "SOUZA")).length).toBe(porNome.length);
   });
 
-  it("nao acha o que e de outro escritorio", async () => {
+  it("não acha o que e de outro escritório", async () => {
     expect(await buscar(beta, "souza")).toHaveLength(0);
     expect(await buscar(beta, "0001234-56.2026.8.26.0100")).toHaveLength(0);
     // E o do Beta aparece para o Beta.
     expect((await buscar(beta, "Cliente do Beta")).length).toBeGreaterThan(0);
   });
 
-  it("termo curto nao devolve o escritorio inteiro", async () => {
+  it("termo curto não devolve o escritório inteiro", async () => {
     expect(await buscar(alfa, "so")).toHaveLength(0);
   });
 
-  it("busca nao vaza modulo nao contratado", async () => {
+  it("busca não vaza módulo não contratado", async () => {
     // O Beta nao tem publicacoes nem nuvem: mesmo com termo que casaria,
     // nao ha de onde vir resultado.
-    const achados = await buscar(beta, "pericia");
+    const achados = await buscar(beta, "perícia");
     expect(achados).toHaveLength(0);
   });
 
-  it("junta publicacao, agenda, documento e cobranca do mesmo caso", async () => {
+  it("junta publicação, agenda, documento e cobrança do mesmo caso", async () => {
     const processo = await comEscritorio(alfa, (db) =>
       db.processo.findFirstOrThrow({
         where: { numero: numeroParaGravar("0001234-56.2026.8.26.0100") },
@@ -326,14 +326,14 @@ d("painel e busca por escritorio", () => {
     expect(ficha!.cobrancas.length).toBeGreaterThan(0);
   });
 
-  it("processo de outro escritorio nao abre, nem com o id na mao", async () => {
+  it("processo de outro escritório não abre, nem com o id na mão", async () => {
     const processo = await comEscritorio(alfa, (db) =>
       db.processo.findFirstOrThrow(),
     );
     expect(await fichaDoProcesso(beta, processo.id)).toBeNull();
   });
 
-  it("sem o modulo, o bloco daquele modulo nem vem vazio", async () => {
+  it("sem o módulo, o bloco daquele módulo nem vem vazio", async () => {
     const doBeta = await comEscritorio(beta, (db) =>
       db.processo.create({
         data: semEscritorio({
@@ -348,8 +348,8 @@ d("painel e busca por escritorio", () => {
   });
 });
 
-describe("fuso de Brasilia", () => {
-  it("o dia e o de Brasilia, nao o do servidor", () => {
+describe("fuso de Brasília", () => {
+  it("o dia e o de Brasília, não o do servidor", () => {
     // Servidor em UTC: 2026-09-21T01:15Z ainda e dia 20 em Brasilia.
     const audiencia = new Date("2026-09-21T01:15:00Z");
     const tarde = new Date("2026-09-20T20:15:00Z");
@@ -359,12 +359,12 @@ describe("fuso de Brasilia", () => {
     expect(ehMesmoDiaEmBrasilia(audiencia, tarde)).toBe(true);
   });
 
-  it("a virada do dia em Brasilia e as 3h UTC", () => {
+  it("a virada do dia em Brasília e as 3h UTC", () => {
     expect(diaEmBrasilia(new Date("2026-09-21T02:59:00Z"))).toBe("2026-09-20");
     expect(diaEmBrasilia(new Date("2026-09-21T03:01:00Z"))).toBe("2026-09-21");
   });
 
-  it("a hora mostrada e a de Brasilia", () => {
+  it("a hora mostrada e a de Brasília", () => {
     expect(horaBR.format(new Date("2026-09-21T01:15:00Z"))).toBe("22:15");
     expect(dataBR.format(new Date("2026-09-21T01:15:00Z"))).toBe("20/09/2026");
   });

@@ -37,7 +37,7 @@ export async function POST(
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
 
     if (corpo.data.acao === "RECUSAR") {

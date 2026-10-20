@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const operador = await exigirOperador();
     const corpo = corpoEsperado.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const fatura = await prismaPlataforma().fatura.findUnique({
@@ -36,12 +36,12 @@ export async function POST(req: Request) {
     });
     if (!fatura)
       return NextResponse.json(
-        { erro: "Fatura nao encontrada." },
+        { erro: "Fatura não encontrada." },
         { status: 404 },
       );
     if (fatura.status !== "ABERTA") {
       return NextResponse.json(
-        { erro: `Fatura ja esta ${fatura.status}.` },
+        { erro: `Fatura já está ${fatura.status}.` },
         { status: 409 },
       );
     }
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       },
     );
     return NextResponse.json({
-      detalhe: `Pagamento registrado. Escritorio agora ${resultado.statusNovo}.`,
+      detalhe: `Pagamento registrado. Escritório agora ${resultado.statusNovo}.`,
     });
   } catch (erro) {
     if (erro instanceof SemOperador) {

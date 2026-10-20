@@ -47,12 +47,12 @@ describe("token do rele de e-mail", () => {
   });
 });
 
-describe("endereco do destinatario", () => {
-  it("aceita um endereco comum", () => {
+describe("endereço do destinatário", () => {
+  it("aceita um endereço comum", () => {
     expect(enderecoValido("alguem@exemplo.com.br")).toBe(true);
   });
 
-  it("recusa lista, cabecalho embutido e coisa que nao e endereco", () => {
+  it("recusa lista, cabeçalho embutido e coisa que não e endereço", () => {
     expect(enderecoValido("a@b.com, c@d.com")).toBe(false);
     expect(enderecoValido("a@b.com;c@d.com")).toBe(false);
     expect(enderecoValido("Nome <a@b.com>")).toBe(false);
@@ -62,14 +62,14 @@ describe("endereco do destinatario", () => {
   });
 });
 
-describe("conferencia da mensagem", () => {
+describe("conferência da mensagem", () => {
   const boa = { para: "a@b.com.br", assunto: "Redefinir senha", texto: "link" };
 
   it("aprova a mensagem completa", () => {
     expect(conferirMensagem(boa)).toEqual(boa);
   });
 
-  it("recusa corpo que nao e objeto", () => {
+  it("recusa corpo que não e objeto", () => {
     for (const ruim of [null, "texto", 7, undefined]) {
       const r = conferirMensagem(ruim);
       expect("erro" in r).toBe(true);
@@ -98,7 +98,7 @@ describe("o rele pelo HTTP", () => {
     expect(r.status).toBe(503);
   });
 
-  it("com token configurado, recusa quem nao manda token", async () => {
+  it("com token configurado, recusa quem não manda token", async () => {
     process.env.EMAIL_TOKEN = TOKEN;
     const base = await subir();
     const r = await fetch(`${base}/api/email`, { method: "POST", body: "{}" });
@@ -130,7 +130,7 @@ describe("o rele pelo HTTP", () => {
     expect(r.status).toBe(503);
   });
 
-  it("recusa GET quando nao e diagnostico", async () => {
+  it("recusa GET quando não e diagnostico", async () => {
     process.env.EMAIL_TOKEN = TOKEN;
     process.env.GMAIL_USUARIO = "u@gmail.com";
     process.env.GMAIL_SENHA = "senha";
@@ -141,7 +141,7 @@ describe("o rele pelo HTTP", () => {
     expect(r.status).toBe(405);
   });
 
-  it("recusa corpo que nao e JSON", async () => {
+  it("recusa corpo que não e JSON", async () => {
     process.env.EMAIL_TOKEN = TOKEN;
     process.env.GMAIL_USUARIO = "u@gmail.com";
     process.env.GMAIL_SENHA = "senha";
@@ -149,7 +149,7 @@ describe("o rele pelo HTTP", () => {
     const r = await fetch(`${base}/api/email`, {
       method: "POST",
       headers: { Authorization: `Bearer ${TOKEN}` },
-      body: "nao e json",
+      body: "não e json",
     });
     expect(r.status).toBe(400);
   });

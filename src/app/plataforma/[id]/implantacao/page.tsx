@@ -34,7 +34,7 @@ export default async function ImplantacaoDoEscritorio({ params }: { params: Prom
     include: { assinatura: true },
   });
   if (!escritorio) notFound();
-  await registrarAcessoSuporte(operador.operadorId, id, "Abertura da implantacao");
+  await registrarAcessoSuporte(operador.operadorId, id, "Abertura da implantação");
 
   const modulos = await modulosAtivos(id);
   const [roteiro, pendentes, d] = await Promise.all([
@@ -129,7 +129,7 @@ export default async function ImplantacaoDoEscritorio({ params }: { params: Prom
     <main className="pagina">
       <NavegacaoDaPlataforma ativo={null} operador={operador.nome} />
       <Link href={`/plataforma/${id}`} className="mt-4 inline-block text-sm text-slate-500">
-        ← ficha comercial do escritorio
+        ← ficha comercial do escritório
       </Link>
       <PainelImplantacao dados={dados} />
     </main>

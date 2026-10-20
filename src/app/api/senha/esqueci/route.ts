@@ -39,7 +39,7 @@ const pedido = z.object({ email: z.string().email().max(200) });
 const RESPOSTA = {
   ok: true,
   detalhe:
-    "Se este e-mail estiver cadastrado neste escritorio, o link de redefinicao chega em instantes.",
+    "Se este e-mail estiver cadastrado neste escritório, o link de redefinição chega em instantes.",
 };
 
 export async function POST(req: Request) {
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const marca = await escritorioDoEndereco();
     if (!marca?.id) {
       return NextResponse.json(
-        { erro: "Cada escritorio redefine a senha pelo proprio endereco." },
+        { erro: "Cada escritório redefine a senha pelo próprio endereço." },
         { status: 400 },
       );
     }
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const corpo = pedido.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json(
-        { erro: "Informe um e-mail valido." },
+        { erro: "Informe um e-mail válido." },
         { status: 400 },
       );
     }

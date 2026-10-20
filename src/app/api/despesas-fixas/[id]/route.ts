@@ -23,7 +23,7 @@ export async function PATCH(
     const { id } = await params;
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
     if (corpo.data.ativo === undefined && corpo.data.fimEm === undefined) {
       return NextResponse.json({ erro: "Nada para mudar." }, { status: 400 });
@@ -33,7 +33,7 @@ export async function PATCH(
       db.despesaFixa.findFirst({ where: { id }, select: { inicioEm: true } }),
     );
     if (!atual) {
-      return NextResponse.json({ erro: "Nao encontrada." }, { status: 404 });
+      return NextResponse.json({ erro: "Não encontrada." }, { status: 404 });
     }
     if (
       corpo.data.fimEm &&
@@ -43,7 +43,7 @@ export async function PATCH(
       )
     ) {
       return NextResponse.json(
-        { erro: "O fim da vigencia vem antes do comeco." },
+        { erro: "O fim da vigência vem antes do começo." },
         { status: 400 },
       );
     }
@@ -64,7 +64,7 @@ export async function PATCH(
       }),
     );
     if (alterados.count === 0) {
-      return NextResponse.json({ erro: "Nao encontrada." }, { status: 404 });
+      return NextResponse.json({ erro: "Não encontrada." }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
   } catch (erro) {

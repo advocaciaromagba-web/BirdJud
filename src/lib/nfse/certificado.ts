@@ -45,7 +45,7 @@ export function carregarCertificado(pfx: Buffer, senha: string): CertificadoCarr
     if (/mac|invalid password|integrity/i.test(String((e as Error)?.message))) {
       throw new CertificadoInvalido("Senha do certificado incorreta.");
     }
-    throw new CertificadoInvalido("Nao foi possivel abrir o certificado. Confira o arquivo (.pfx) e a senha.");
+    throw new CertificadoInvalido("Não foi possível abrir o certificado. Confira o arquivo (.pfx) e a senha.");
   }
 
   const chaves = [
@@ -53,7 +53,7 @@ export function carregarCertificado(pfx: Buffer, senha: string): CertificadoCarr
     ...(p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] ?? []),
   ];
   const chave = chaves.find((b) => b.key)?.key as forge.pki.rsa.PrivateKey | undefined;
-  if (!chave) throw new CertificadoInvalido("O arquivo nao contem a chave privada do certificado.");
+  if (!chave) throw new CertificadoInvalido("O arquivo não contém a chave privada do certificado.");
 
   const certs = (p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] ?? [])
     .map((b) => b.cert)
@@ -63,7 +63,7 @@ export function carregarCertificado(pfx: Buffer, senha: string): CertificadoCarr
   const titularCert =
     certs.find((c) => (c.publicKey as forge.pki.rsa.PublicKey).n.equals(chave.n)) ??
     certs.find((c) => !(c.getExtension("basicConstraints") as { cA?: boolean } | undefined)?.cA);
-  if (!titularCert) throw new CertificadoInvalido("Nao foi encontrado o certificado do titular dentro do arquivo.");
+  if (!titularCert) throw new CertificadoInvalido("Não foi encontrado o certificado do titular dentro do arquivo.");
 
   const cn = String(titularCert.subject.getField("CN")?.value ?? "");
   // Padrao ICP-Brasil: "NOME:CPF(11)" no e-CPF e "RAZAO SOCIAL:CNPJ(14)" no e-CNPJ.

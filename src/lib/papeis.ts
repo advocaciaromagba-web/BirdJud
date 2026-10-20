@@ -12,7 +12,7 @@ export function ehPapel(valor: string): valor is Papel {
 
 export class SemPermissao extends Error {
   readonly status = 403;
-  constructor(motivo = "Seu papel nao permite esta acao.") {
+  constructor(motivo = "Seu papel não permite esta ação.") {
     super(motivo);
     this.name = "SemPermissao";
   }

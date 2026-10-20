@@ -36,7 +36,7 @@ export function GraficoDePizza({
   if (pedacos.length === 0) {
     return (
       <p className="vazio">
-        Sem despesa lancada neste mes. O grafico aparece com o primeiro
+        Sem despesa lançada neste mês. O gráfico aparece com o primeiro
         lancamento.
       </p>
     );

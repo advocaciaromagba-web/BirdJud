@@ -16,7 +16,7 @@ function baseAutentique(): string {
 export const conectorAutentique: Conector = {
   tipo: "AUTENTIQUE",
   rotulo: "Autentique (assinatura)",
-  descricao: "Envio de contratos e procuracoes para assinatura eletronica.",
+  descricao: "Envio de contratos e procurações para assinatura eletrônica.",
   modulo: "ASSINATURA",
   campos: [
     {

@@ -67,12 +67,12 @@ export default async function PainelDaPlataforma() {
           valor={emReais(a.vencido.total)}
           detalhe={
             a.vencido.total
-              ? `${a.vencido.escritorios} escritorio(s) · ${a.vencido.porcentoDaReceita}% da receita`
+              ? `${a.vencido.escritorios} escritório(s) · ${a.vencido.porcentoDaReceita}% da receita`
               : "nada em atraso"
           }
           alerta={a.vencido.total > 0}
         />
-        <Numero rotulo="Recebido no mes" valor={emReais(a.recebidoNoMes)} detalhe="faturas pagas neste mes" />
+        <Numero rotulo="Recebido no mês" valor={emReais(a.recebidoNoMes)} detalhe="faturas pagas neste mês" />
         <Numero
           rotulo={`Previsto ${proximo?.rotulo ?? ""}`}
           valor={emReais(proximo?.garantido ?? 0)}
@@ -81,7 +81,7 @@ export default async function PainelDaPlataforma() {
       </div>
 
       <section className="cartao mt-6">
-        <h2 className="text-lg font-bold">Analise</h2>
+        <h2 className="text-lg font-bold">Análise</h2>
         <ul className="mt-3 grid gap-2 text-slate-700">
           {a.textos.map((t) => (
             <li key={t} className="flex gap-2 leading-relaxed">
@@ -94,18 +94,18 @@ export default async function PainelDaPlataforma() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Pizza
-          titulo="Escritorios por situacao"
+          titulo="Escritórios por situação"
           fatias={a.escritorios.porStatus}
           cores={CATEGORICA}
           formato="contagem"
-          vazio="Nenhum escritorio ainda."
+          vazio="Nenhum escritório ainda."
         />
         <Pizza
           titulo="Receita mensal por faixa"
           fatias={a.porFaixa}
           cores={ORDINAL}
           formato="moeda"
-          vazio="Sem escritorio pagante ainda: a receita aparece com a primeira assinatura cobrada."
+          vazio="Sem escritório pagante ainda: a receita aparece com a primeira assinatura cobrada."
         />
         <Pizza
           titulo="Vencido por tempo de atraso"
@@ -118,8 +118,8 @@ export default async function PainelDaPlataforma() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Colunas
-          titulo="Previsao de recebimentos"
-          explicacao="Garantido: assinaturas de quem ja paga. Testes: quem sai do teste antes do vencimento do mes, se assinar."
+          titulo="Previsão de recebimentos"
+          explicacao="Garantido: assinaturas de quem já paga. Testes: quem sai do teste antes do vencimento do mês, se assinar."
           meses={a.previsao.map((m) => ({ rotulo: m.rotulo, valores: [m.garantido, m.testes] }))}
           series={[
             { rotulo: "Garantido", cor: CATEGORICA[0] },
@@ -127,8 +127,8 @@ export default async function PainelDaPlataforma() {
           ]}
         />
         <Colunas
-          titulo="Recebido nos ultimos meses"
-          explicacao="Faturas pagas, pelo mes em que o dinheiro entrou. O mes corrente ainda esta em curso."
+          titulo="Recebido nos últimos meses"
+          explicacao="Faturas pagas, pelo mês em que o dinheiro entrou. O mês corrente ainda está em curso."
           meses={a.recebidos.map((m) => ({ rotulo: m.rotulo, valores: [m.valor] }))}
           series={[{ rotulo: "Recebido", cor: CATEGORICA[0] }]}
         />
@@ -156,7 +156,7 @@ export default async function PainelDaPlataforma() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Implantacoes em andamento</h2>
             <Link href="/plataforma/novo" className="botao-secundario">
-              Implantar escritorio
+              Implantar escritório
             </Link>
           </div>
           {emImplantacao.length ? (
@@ -166,12 +166,12 @@ export default async function PainelDaPlataforma() {
                   <Link href={`/plataforma/${e.id}/implantacao`} className="font-medium text-[color:var(--marca-primaria)] hover:underline">
                     {e.nome}
                   </Link>
-                  <span className="text-slate-500">ainda nao entregue</span>
+                  <span className="text-slate-500">ainda não entregue</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-slate-500">Nenhuma implantacao aberta: tudo o que foi montado ja foi entregue.</p>
+            <p className="mt-3 text-sm text-slate-500">Nenhuma implantação aberta: tudo o que foi montado já foi entregue.</p>
           )}
         </section>
       </div>

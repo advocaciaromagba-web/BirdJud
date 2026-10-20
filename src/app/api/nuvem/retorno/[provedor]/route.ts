@@ -23,7 +23,7 @@ export async function GET(
 
   if (!provedor || !estado || estado.p !== provedor) {
     return new NextResponse(
-      "Este link de conexao venceu ou nao e valido. Volte ao sistema e clique em Conectar de novo.",
+      "Este link de conexão venceu ou não é válido. Volte ao sistema e clique em Conectar de novo.",
       { status: 400, headers: { "content-type": "text/plain; charset=utf-8" } },
     );
   }

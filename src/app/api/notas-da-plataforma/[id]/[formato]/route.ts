@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string; formato: string }> }) {
   const { id, formato } = await params;
-  if (formato !== "pdf" && formato !== "xml") return NextResponse.json({ erro: "Nao encontrado." }, { status: 404 });
+  if (formato !== "pdf" && formato !== "xml") return NextResponse.json({ erro: "Não encontrado." }, { status: 404 });
 
   const token = new URL(req.url).searchParams.get("t");
   let autorizado = false;
@@ -25,10 +25,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!autorizado) {
     autorizado = await exigirOperador().then(() => true, () => false);
   }
-  if (!autorizado) return NextResponse.json({ erro: "Nao encontrado." }, { status: 404 });
+  if (!autorizado) return NextResponse.json({ erro: "Não encontrado." }, { status: 404 });
 
   const nota = await prismaPlataforma().notaDaPlataforma.findUnique({ where: { id } });
-  if (!nota?.xmlRetorno) return NextResponse.json({ erro: "Nao encontrado." }, { status: 404 });
+  if (!nota?.xmlRetorno) return NextResponse.json({ erro: "Não encontrado." }, { status: 404 });
 
   const nome = `nfse-birdjud-${nota.numeroNaPrefeitura ?? nota.numero ?? nota.id}`;
   if (formato === "xml") {

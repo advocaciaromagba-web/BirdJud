@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: Request, { params }: { params: Promise<{ cep: string }> }) {
   const cep = digitosDoCep((await params).cep);
-  if (!cep) return NextResponse.json({ erro: "O CEP tem 8 digitos." }, { status: 400 });
+  if (!cep) return NextResponse.json({ erro: "O CEP tem 8 dígitos." }, { status: 400 });
 
   const origem = ipDeQuemChamou(req.headers) ?? "sem-origem";
   const limite = await registrarTentativa(`cep:${origem}`, 120, 60 * 60);
@@ -22,7 +22,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ cep: str
 
   const endereco = await buscarCep(cep);
   if (!endereco) {
-    return NextResponse.json({ erro: "CEP nao encontrado. Confira os numeros ou preencha o endereco a mao." }, { status: 404 });
+    return NextResponse.json({ erro: "CEP não encontrado. Confira os números ou preencha o endereço a mão." }, { status: 404 });
   }
   return NextResponse.json({ endereco }, { headers: { "cache-control": "private, max-age=86400" } });
 }

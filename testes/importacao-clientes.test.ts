@@ -13,7 +13,7 @@ import {
 } from "../src/lib/importacao-clientes";
 import { qualificacaoDoCliente } from "../src/lib/modelos-do-escritorio";
 
-/** CPF valido a partir de 9 digitos. */
+/** CPF válido a partir de 9 dígitos. */
 function cpf(base: string): string {
   const d = base.split("").map(Number);
   for (const n of [9, 10]) {
@@ -55,7 +55,7 @@ async function xlsx(): Promise<Buffer> {
 }
 
 describe("leitor de planilha", () => {
-  it("le .xlsx: texto compartilhado, rich text sem fonetica, inline, numero, data, cientifica e buraco", async () => {
+  it("le .xlsx: texto compartilhado, rich text sem fonetica, inline, número, data, científica e buraco", async () => {
     const p = await lerPlanilha(await xlsx());
     expect(p.formato).toBe("XLSX");
     expect(p.aba).toBe("Clientes");
@@ -71,7 +71,7 @@ describe("leitor de planilha", () => {
     expect(p.linhas[4][1].texto).toBe(""); // coluna pulada
   });
 
-  it("le CSV do Excel brasileiro: Windows-1252, ponto e virgula, aspas e quebra dentro de aspas", async () => {
+  it("le CSV do Excel brasileiro: Windows-1252, ponto e vírgula, aspas e quebra dentro de aspas", async () => {
     const texto = 'Nome;CPF;Obs\r\n"Conceição Araújo";123;"linha um\nlinha dois"\r\n"Diz ""oi""";;\r\n';
     const bytes = Buffer.from(new TextEncoder().encode(texto).length ? [...texto].map((c) => c.charCodeAt(0)) : []);
     const p = await lerPlanilha(bytes);
@@ -84,7 +84,7 @@ describe("leitor de planilha", () => {
     expect(separarCsv("a;b\n", ";")).toEqual([["a", "b"]]);
   });
 
-  it("recusa .xls antigo com a instrucao, e arquivo vazio", async () => {
+  it("recusa .xls antigo com a instrução, e arquivo vazio", async () => {
     await expect(lerPlanilha(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 1, 2]))).rejects.toThrow(/Salvar como/);
     await expect(lerPlanilha(Buffer.alloc(0))).rejects.toBeInstanceOf(PlanilhaInvalida);
   });
@@ -98,8 +98,8 @@ describe("leitor de planilha", () => {
   });
 });
 
-describe("regras da importacao", () => {
-  it("sugere as colunas pelos titulos que os sistemas usam", () => {
+describe("regras da importação", () => {
+  it("sugere as colunas pelos títulos que os sistemas usam", () => {
     const m = sugerirMapeamento([
       "Nome do Cliente", "CPF/CNPJ", "Celular", "E-mail", "Data de Nascimento", "Endereço",
       "Nº", "Bairro", "Município", "UF", "CEP", "Profissão", "Estado Civil", "RG", "Obs.", "Código interno",
@@ -112,22 +112,22 @@ describe("regras da importacao", () => {
     expect(sugerirMapeamento(["Nome", "Nome fantasia"]).filter((c) => c === "nome")).toHaveLength(1);
   });
 
-  it("devolve o zero do CPF SO quando o digito fecha", () => {
+  it("devolve o zero do CPF SO quando o dígito fecha", () => {
     const comZero = lerDocumento(cel(CPF_COM_ZERO.slice(1), { numero: true }));
     expect(comZero.valor?.replace(/\D/g, "")).toBe(CPF_COM_ZERO);
     expect(comZero.aviso).toMatch(/zero da frente/);
     // Como TEXTO, faltando digito: nao se adivinha.
-    expect(lerDocumento(cel(CPF_COM_ZERO.slice(1))).problema).toMatch(/10 digito/);
+    expect(lerDocumento(cel(CPF_COM_ZERO.slice(1))).problema).toMatch(/10 dígito/);
     // Numero que nao fecha nem com zero: recusa.
     const quebrado = CPF_COM_ZERO.slice(1, -1) + String((Number(CPF_COM_ZERO.slice(-1)) + 1) % 10);
     expect(lerDocumento(cel(quebrado, { numero: true })).problema).toBeDefined();
-    expect(lerDocumento(cel("1.12223330001E+13", { numero: true, cientifica: true })).problema).toMatch(/notacao cientifica/);
-    expect(lerDocumento(cel("123.456.789-00")).problema).toMatch(/nao fecha/);
+    expect(lerDocumento(cel("1.12223330001E+13", { numero: true, cientifica: true })).problema).toMatch(/notação científica/);
+    expect(lerDocumento(cel("123.456.789-00")).problema).toMatch(/não fecha/);
     expect(lerDocumento(cel(CPF_A)).valor).toMatch(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/);
     expect(lerDocumento(undefined).valor).toBeNull();
   });
 
-  it("telefone e data em varios formatos", () => {
+  it("telefone e data em vários formatos", () => {
     expect(lerTelefone("+55 (16) 99999-0000")).toBe("(16) 99999-0000");
     expect(lerTelefone("1633221100")).toBe("(16) 3322-1100");
     expect(lerTelefone("99999-0000")).toBeNull();
@@ -140,7 +140,7 @@ describe("regras da importacao", () => {
     expect(lerData(cel("01/01/2030"), hoje)).toBeNull();
   });
 
-  it("campo acessorio ruim vira aviso; so nome e documento barram", () => {
+  it("campo acessorio ruim vira aviso; só nome e documento barram", () => {
     const mapa: Mapeamento = ["nome", "documento", "email", "telefone", "uf", "cep"];
     const ok = interpretarLinha(
       [cel("  Maria   Silva "), cel(CPF_A), cel("maria@"), cel("123"), cel("XX"), cel("1310100", { numero: true })],
@@ -151,13 +151,13 @@ describe("regras da importacao", () => {
     expect(ok.dados.email).toBeNull();
     expect(ok.dados.telefone).toBeNull();
     expect(ok.dados.endereco).toEqual({ cep: "01310100" });
-    expect(ok.avisos.join(" | ")).toMatch(/e-mail .* invalido.*telefone.*CEP.*UF/);
+    expect(ok.avisos.join(" | ")).toMatch(/e-mail .* inválido.*telefone.*CEP.*UF/);
 
     const ruim = interpretarLinha([cel(""), cel("123")], mapa);
     expect(ruim.problemas).toContain("sem nome");
   });
 
-  it("classifica: novo, ja cadastrado, repetido na planilha, problema e vazia", () => {
+  it("classifica: novo, já cadastrado, repetido na planilha, problema e vazia", () => {
     const mapa: Mapeamento = ["nome", "documento"];
     const linhas = [
       [cel("Ana"), cel(CPF_A)],
@@ -183,14 +183,14 @@ describe("regras da importacao", () => {
   });
 });
 
-describe("qualificacao do cliente pessoa fisica", () => {
+describe("qualificação do cliente pessoa física", () => {
   const base = { nome: "Ana Paula Martins", documento: CPF_A, email: null, telefone: null, endereco: { logradouro: "Rua A", numero: "10", cidade: "Guariba", uf: "SP" } };
 
   it("sem os campos novos, o texto de sempre", () => {
-    expect(qualificacaoDoCliente(base)).toMatch(/^Ana Paula Martins, inscrito no CPF sob o nº [\d.-]+, com endereco em Rua A, 10, Guariba, SP$/);
+    expect(qualificacaoDoCliente(base)).toMatch(/^Ana Paula Martins, inscrito no CPF sob o nº [\d.-]+, com endereço em Rua A, 10, Guariba, SP$/);
   });
 
-  it("com nacionalidade, estado civil, profissao e RG — no feminino quando ela escreveu assim", () => {
+  it("com nacionalidade, estado civil, profissão e RG — no feminino quando ela escreveu assim", () => {
     const q = qualificacaoDoCliente({ ...base, nacionalidade: "brasileira", estadoCivil: "casada", profissao: "professora", rg: "12.345.678-9" });
     expect(q).toMatch(/^Ana Paula Martins, brasileira, casada, professora, portadora do RG nº 12\.345\.678-9, inscrita no CPF/);
     const m = qualificacaoDoCliente({ ...base, nome: "Joao", nacionalidade: "brasileiro", rg: "1" });
@@ -206,11 +206,11 @@ const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 let escritorio = "";
 
-d("importacao no banco", () => {
+d("importação no banco", () => {
   beforeAll(async () => {
-    const e = await prismaPlataforma().escritorio.create({ data: { slug: `importa-${Date.now()}`, nome: "Escritorio que Importa" } });
+    const e = await prismaPlataforma().escritorio.create({ data: { slug: `importa-${Date.now()}`, nome: "Escritório que Importa" } });
     escritorio = e.id;
-    await comEscritorio(escritorio, (db) => db.cliente.create({ data: semEscritorio({ nome: "Bruno Ja Existe", documento: CPF_B }) }));
+    await comEscritorio(escritorio, (db) => db.cliente.create({ data: semEscritorio({ nome: "Bruno Já Existe", documento: CPF_B }) }));
   });
   afterAll(async () => {
     if (escritorio) await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
@@ -240,7 +240,7 @@ d("importacao no banco", () => {
     expect(await comEscritorio(escritorio, (db) => db.cliente.count())).toBe(1);
   });
 
-  it("importa so os novos, com a qualificacao, e marca o lote", async () => {
+  it("importa só os novos, com a qualificação, e marca o lote", async () => {
     const a = await analisarPlanilha(escritorio, csv());
     const r = await importarPlanilha(escritorio, "clientes.csv", "Dra. Teste", csv(), a.mapeamento);
     expect(r.importados).toBe(2);
@@ -254,7 +254,7 @@ d("importacao no banco", () => {
     expect(segunda.contagem.NOVO).toBe(0);
   });
 
-  it("desfazer apaga o lote, menos quem ja tem algo ligado", async () => {
+  it("desfazer apaga o lote, menos quem já tem algo ligado", async () => {
     const imp = await comEscritorio(escritorio, (db) => db.importacaoDeClientes.findFirstOrThrow());
     expect(imp).toMatchObject({ importados: 2, jaExistiam: 1, recusados: 1, feitaPor: "Dra. Teste", nomeDoArquivo: "clientes.csv" });
     const ana = await comEscritorio(escritorio, (db) => db.cliente.findFirstOrThrow({ where: { nome: "Ana Importada" } }));
@@ -264,7 +264,7 @@ d("importacao no banco", () => {
     const r = await desfazerImportacao(escritorio, imp.id);
     expect(r).toEqual({ apagados: 1, mantidos: 1 });
     const nomes = (await comEscritorio(escritorio, (db) => db.cliente.findMany({ select: { nome: true } }))).map((c) => c.nome).sort();
-    expect(nomes).toEqual(["Ana Importada", "Bruno Ja Existe"]);
+    expect(nomes).toEqual(["Ana Importada", "Bruno Já Existe"]);
     // Desfazer de novo nao faz nada.
     expect(await desfazerImportacao(escritorio, imp.id)).toEqual({ apagados: 0, mantidos: 1 });
   });

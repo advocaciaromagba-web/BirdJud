@@ -16,11 +16,11 @@ export async function POST(req: Request) {
     const { escritorioId, usuarioId } = await exigirSessao();
     const corpo = corpoEsperado.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     if (!(await conferirCodigo(corpo.data.codigo, corpo.data.segredo))) {
-      return NextResponse.json({ erro: "Codigo invalido." }, { status: 400 });
+      return NextResponse.json({ erro: "Código inválido." }, { status: 400 });
     }
 
     await comEscritorio(escritorioId, (db) =>

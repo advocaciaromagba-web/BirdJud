@@ -28,12 +28,12 @@ const RESPOSTA = {
 export async function POST(req: Request) {
   try {
     if ((await headers()).get(CABECALHO_SLUG)) {
-      return NextResponse.json({ erro: "O console fica no endereco da plataforma." }, { status: 400 });
+      return NextResponse.json({ erro: "O console fica no endereço da plataforma." }, { status: 400 });
     }
     if (!temRemetenteDaPlataforma()) throw new PlataformaSemRemetente();
 
     const corpo = pedido.safeParse(await req.json().catch(() => null));
-    if (!corpo.success) return NextResponse.json({ erro: "Informe um e-mail valido." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Informe um e-mail válido." }, { status: 400 });
     const email = corpo.data.email.trim().toLowerCase();
     const ip = ipDaRequisicao(req) ?? "sem-ip";
 

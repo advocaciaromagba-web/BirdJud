@@ -46,7 +46,7 @@ beforeAll(async () => {
         pronto(null, { user: credenciais.username });
         return;
       }
-      pronto(new Error("Usuario ou senha invalidos"));
+      pronto(new Error("Usuário ou senha inválidos"));
     },
   });
   await new Promise<void>((ok) => smtp.listen(0, "127.0.0.1", ok));
@@ -80,7 +80,7 @@ describe("conector de e-mail", () => {
     expect(resultado.ok).toBe(false);
   });
 
-  it("recusa porta invalida antes de tentar conectar", async () => {
+  it("recusa porta inválida antes de tentar conectar", async () => {
     const resultado = await conectorEmail.testar({
       host: "127.0.0.1",
       porta: "porta",
@@ -88,7 +88,7 @@ describe("conector de e-mail", () => {
       senha: "segredo",
       remetente: "contato@alfa.adv.br",
     });
-    expect(resultado).toEqual({ ok: false, detalhe: "Porta invalida." });
+    expect(resultado).toEqual({ ok: false, detalhe: "Porta inválida." });
   });
 
   it("o resumo mostra remetente e servidor, nunca a senha", () => {
@@ -144,20 +144,20 @@ afterAll(async () => {
 });
 
 describe("conector Asaas", () => {
-  it("manda a chave no cabecalho access_token e le a conta", async () => {
+  it("manda a chave no cabeçalho access_token e le a conta", async () => {
     let chaveRecebida: unknown = null;
     rota = (url, cabecalhos) => {
       expect(url.pathname).toBe("/myAccount");
       chaveRecebida = cabecalhos["access_token"];
       return {
         status: 200,
-        json: { name: "Escritorio Alfa", email: "fin@alfa.adv.br" },
+        json: { name: "Escritório Alfa", email: "fin@alfa.adv.br" },
       };
     };
 
     const resultado = await conectorAsaas.testar({ chave: "chave-de-teste" });
     expect(chaveRecebida).toBe("chave-de-teste");
-    expect(resultado).toEqual({ ok: true, detalhe: "Conta Escritorio Alfa." });
+    expect(resultado).toEqual({ ok: true, detalhe: "Conta Escritório Alfa." });
   });
 
   it("traduz 401 em recusa da chave", async () => {
@@ -208,8 +208,8 @@ describe("conector Autentique", () => {
   });
 });
 
-describe("o WhatsApp saiu dos conectores do escritorio", () => {
-  it("nao e mais oferecido na tela de Integracoes", () => {
+describe("o WhatsApp saiu dos conectores do escritório", () => {
+  it("não e mais oferecido na tela de Integrações", () => {
     // O numero e UM SO, da plataforma, e a credencial vem do ambiente. Deixar
     // o campo na tela faria cada escritorio abrir conta na Meta para um numero
     // que ele nao usa — e achar que precisa disso para receber os avisos.
@@ -275,7 +275,7 @@ function gerarPfx(dias: number, senha: string, nome: string): string {
 }
 
 describe("conector de certificado", () => {
-  it("abre o certificado, le o titular e aceita o que esta valido", async () => {
+  it("abre o certificado, le o titular e aceita o que esta válido", async () => {
     const pfx = gerarPfx(365, "senha-do-cert", "ESCRITORIO ALFA LTDA");
     const resultado = await conectorCertificado.testar({
       arquivo: pfx,
@@ -285,7 +285,7 @@ describe("conector de certificado", () => {
     expect(resultado.detalhe).toContain("ESCRITORIO ALFA LTDA");
   });
 
-  it("recusa senha errada com mensagem propria", async () => {
+  it("recusa senha errada com mensagem própria", async () => {
     const pfx = gerarPfx(365, "senha-do-cert", "ALFA");
     const resultado = await conectorCertificado.testar({
       arquivo: pfx,
@@ -297,9 +297,9 @@ describe("conector de certificado", () => {
     });
   });
 
-  it("recusa arquivo que nao e certificado", async () => {
+  it("recusa arquivo que não e certificado", async () => {
     const resultado = await conectorCertificado.testar({
-      arquivo: Buffer.from("isto nao e um pfx").toString("base64"),
+      arquivo: Buffer.from("isto não e um pfx").toString("base64"),
       senha: "x",
     });
     expect(resultado.ok).toBe(false);
@@ -323,7 +323,7 @@ describe("conector de certificado", () => {
     expect(resultado.detalhe).toContain("vencido em");
   });
 
-  it("recusa certificado que ainda nao comecou a valer", () => {
+  it("recusa certificado que ainda não começou a valer", () => {
     const leitura = {
       titular: "ALFA",
       de: new Date("2027-01-01"),
@@ -332,11 +332,11 @@ describe("conector de certificado", () => {
     const resultado = avaliarValidade(leitura, new Date("2026-09-17"));
     expect(resultado).toEqual({
       ok: false,
-      detalhe: "Certificado ainda nao esta valido.",
+      detalhe: "Certificado ainda não está válido.",
     });
   });
 
-  it("avisa perto do vencimento e nao avisa longe dele", () => {
+  it("avisa perto do vencimento e não avisa longe dele", () => {
     const base = new Date("2026-09-17T12:00:00Z");
     const perto = avaliarValidade(
       {
@@ -347,7 +347,7 @@ describe("conector de certificado", () => {
       base,
     );
     expect(perto.ok).toBe(true);
-    expect(perto.detalhe).toContain("Atencao: vence em 14 dia(s)");
+    expect(perto.detalhe).toContain("Atenção: vence em 14 dia(s)");
 
     const longe = avaliarValidade(
       {
@@ -377,7 +377,7 @@ describe("conector de certificado", () => {
 // ---------------------------------------------------------------------------
 
 describe("conectores da nuvem", () => {
-  it("nao pedem credencial em formulario e se marcam como OAuth", async () => {
+  it("não pedem credencial em formulário e se marcam como OAuth", async () => {
     for (const [c, provedor] of [
       [conectorMicrosoft, "MICROSOFT"],
       [conectorGoogle, "GOOGLE"],
@@ -400,20 +400,20 @@ describe("registro de conectores", () => {
     }
   });
 
-  it("reconhece so os tipos registrados", () => {
+  it("reconhece só os tipos registrados", () => {
     expect(ehTipoDeIntegracao("ASAAS")).toBe(true);
     expect(ehTipoDeIntegracao("QUALQUER_COISA")).toBe(false);
   });
 
-  it("mascarar mostra so o fim do segredo", () => {
+  it("mascarar mostra só o fim do segredo", () => {
     expect(mascarar("chave-super-secreta-a1b2")).toBe("•••a1b2");
     expect(mascarar("abc")).toBe("•••");
     expect(mascarar(undefined)).toBe("—");
   });
 });
 
-describe("politica de seguranca de conteudo", () => {
-  it("em producao, script-src usa nonce e nao aceita inline", () => {
+describe("política de segurança de conteúdo", () => {
+  it("em produção, script-src usa nonce e não aceita inline", () => {
     const csp = montarCSP("abc123", true);
     expect(csp).toContain("'nonce-abc123'");
     expect(csp).toContain("'strict-dynamic'");
@@ -430,7 +430,7 @@ describe("politica de seguranca de conteudo", () => {
     expect(scriptSrc).toContain("unsafe-eval");
   });
 
-  it("so forca HTTPS quando a requisicao ja veio por HTTPS", () => {
+  it("só força HTTPS quando a requisição já veio por HTTPS", () => {
     // Emitido em ambiente HTTP, upgrade-insecure-requests faz o navegador
     // buscar os proprios scripts da pagina em HTTPS — e nada carrega.
     expect(montarCSP("n", true, true)).toContain("upgrade-insecure-requests");
@@ -446,7 +446,7 @@ describe("politica de seguranca de conteudo", () => {
     expect(csp).toContain("base-uri 'self'");
   });
 
-  it("deixa a propria pagina mostrar o PDF da conferencia, e so ela", () => {
+  it("deixa a própria página mostrar o PDF da conferência, e só ela", () => {
     // frame-src precisa de blob: para o <iframe> da conferencia da peca. O que
     // NAO pode entrar e http:, https: ou *, que abririam quadro de terceiro.
     const frameSrc = montarCSP("n", true)

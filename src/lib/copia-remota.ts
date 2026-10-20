@@ -24,7 +24,7 @@ import {
 
 export class CopiaRemotaMalConfigurada extends Error {
   constructor(motivo: string) {
-    super(`Copia remota do backup: ${motivo}`);
+    super(`Cópia remota do backup: ${motivo}`);
     this.name = "CopiaRemotaMalConfigurada";
   }
 }
@@ -266,7 +266,7 @@ export function avaliarCopias(
   horas: number = HORAS_ATE_ACUSAR,
 ): string | null {
   if (objetos.length === 0) {
-    return "Nao ha NENHUMA copia do banco no armazenamento externo.";
+    return "Não há NENHUMA cópia do banco no armazenamento externo.";
   }
 
   const maisNova = objetos.reduce((a, b) =>
@@ -276,7 +276,7 @@ export function avaliarCopias(
 
   if (idade > horas) {
     return (
-      `A copia mais nova do banco tem ${Math.floor(idade)} horas ` +
+      `A cópia mais nova do banco tem ${Math.floor(idade)} horas ` +
       `(${maisNova.chave}). O backup roda todo dia — isto significa que ele ` +
       "parou de subir."
     );
@@ -286,7 +286,7 @@ export function avaliarCopias(
   // dump antes de enviar, e inventar um piso aqui produziria alarme falso no
   // dia em que o banco estivesse legitimamente pequeno.
   if (maisNova.tamanho === 0) {
-    return `A copia mais nova (${maisNova.chave}) esta com zero byte.`;
+    return `A cópia mais nova (${maisNova.chave}) está com zero byte.`;
   }
 
   return null;
@@ -294,7 +294,7 @@ export function avaliarCopias(
 
 export class FalhaNaCopia extends Error {
   constructor(motivo: string) {
-    super(`Copia remota falhou: ${motivo}`);
+    super(`Cópia remota falhou: ${motivo}`);
     this.name = "FalhaNaCopia";
   }
 }
@@ -347,7 +347,7 @@ export async function enviarObjeto(
   const tamanhoLido = Number(conferencia?.headers.get("content-length") ?? -1);
   if (!conferencia?.ok || tamanhoLido !== corpo.byteLength) {
     throw new FalhaNaCopia(
-      `o objeto nao voltou com o tamanho enviado (${tamanhoLido} != ${corpo.byteLength}).`,
+      `o objeto não voltou com o tamanho enviado (${tamanhoLido} != ${corpo.byteLength}).`,
     );
   }
 
@@ -401,7 +401,7 @@ export function cifrarBackup(conteudo: Buffer, chave: Buffer): Buffer {
 export function decifrarBackup(pacote: Buffer, chave: Buffer): Buffer {
   if (!pacote.subarray(0, MARCA.length).equals(MARCA)) {
     throw new FalhaNaCopia(
-      "este arquivo nao foi cifrado pelo BirdJud (falta a marca).",
+      "este arquivo não foi cifrado pelo BirdJud (falta a marca).",
     );
   }
   const iv = pacote.subarray(MARCA.length, MARCA.length + TAMANHO_IV);

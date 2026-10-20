@@ -82,7 +82,7 @@ export function PainelDoAno({
     setOcupado(false);
     if (!resposta.ok) {
       const d = await resposta.json().catch(() => null);
-      setErro(d?.erro ?? "Nao consegui gravar a meta.");
+      setErro(d?.erro ?? "Não consegui gravar a meta.");
       return;
     }
     setEditando(false);
@@ -158,7 +158,7 @@ export function PainelDoAno({
           </p>
           {ritmo.porMesRestante ? (
             <p className="mt-1 text-sm text-slate-600">
-              Faltam {ritmo.falta}: {ritmo.porMesRestante} por mes no tempo que
+              Faltam {ritmo.falta}: {ritmo.porMesRestante} por mês no tempo que
               sobra. No ritmo de hoje, o ano fecha em {ritmo.projecao}.
             </p>
           ) : null}
@@ -167,7 +167,7 @@ export function PainelDoAno({
         <div className="mt-5 border-t border-slate-100 pt-4">
           <p className="text-sm text-slate-600">
             Sem meta para {ano}. Com uma meta, o painel passa a dizer se da
-            tempo — e nao so quanto entrou.
+            tempo — e não só quanto entrou.
           </p>
           <button
             type="button"
@@ -230,7 +230,7 @@ export function PainelDoAno({
         ))}
       </ol>
       <p className="mt-2 text-xs text-slate-500">
-        A barra e a receita que ENTROU no mes. Cobranca emitida e aguardando nao
+        A barra é a receita que ENTROU no mês. Cobrança emitida e aguardando não
         conta: bater a meta por causa de boleto que ninguem pagou seria o pior
         jeito de se enganar.
       </p>

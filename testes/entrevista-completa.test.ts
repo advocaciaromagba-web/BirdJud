@@ -21,14 +21,14 @@ import {
 
 const ANALISE: AnaliseDaEntrevista = {
   area: "Civel",
-  resumo: "Inquilino sem pagar ha tres meses.",
+  resumo: "Inquilino sem pagar há três meses.",
   fatos: ["Contrato de 2024", "Sem pagar desde julho"],
   pretensoes: ["Despejo", "Receber os alugueis"],
   documentosCitados: ["Contrato de locacao"],
-  documentosQueFaltam: ["Notificacao ao inquilino"],
+  documentosQueFaltam: ["Notificação ao inquilino"],
   testemunhas: [],
-  pontosDeAtencao: ["Conferir se houve notificacao"],
-  perguntasEmAberto: ["Ha fiador?"],
+  pontosDeAtencao: ["Conferir se houve notificação"],
+  perguntasEmAberto: ["Há fiador?"],
   urgencia: "MEDIA",
   valorEnvolvido: "R$ 6.000,00",
 };
@@ -45,7 +45,7 @@ const CLIENTE: ClienteParaMinuta = {
   endereco: { logradouro: "Rua das Flores", numero: "10", bairro: "Centro", cidade: "Guariba", uf: "SP", cep: "14840-000" },
 };
 
-describe("texto para a peticao inicial", () => {
+describe("texto para a petição inicial", () => {
   it("lista o que falta no cadastro e marca a lacuna, sem inventar", () => {
     expect(camposFaltando(CLIENTE)).toEqual(["Estado civil"]);
     const texto = montarPromptMinuta(CLIENTE, { nome: "Dra. Ana", oab: null, escritorio: "Banca" }, ANALISE, "Pedir liminar");
@@ -53,7 +53,7 @@ describe("texto para a peticao inicial", () => {
     expect(texto).toContain("[PREENCHER: OAB]");
     expect(texto).toContain("Faltam: Estado civil.");
     expect(texto).toContain("- Contrato de locacao");
-    expect(texto).toContain("DOCUMENTOS AINDA NAO OBTIDOS (nao afirme que estao anexados):\n- Notificacao ao inquilino");
+    expect(texto).toContain("DOCUMENTOS AINDA NAO OBTIDOS (não afirme que estão anexados):\n- Notificação ao inquilino");
     expect(texto).toContain("Valor mencionado pelo cliente: R$ 6.000,00");
     expect(texto).toContain("ORIENTACOES ESPECIFICAS DO ADVOGADO RESPONSAVEL:\nPedir liminar");
     // Sem RG no cadastro (CIN usa o CPF): nao pede RG.
@@ -70,11 +70,11 @@ describe("texto para a peticao inicial", () => {
       iniciadaEm: new Date(),
       encerradaEm: null,
       origemTranscricao: "LOCAL",
-      transcricao: "[CLIENTE] O inquilino nao paga desde julho — e ja avisei.",
+      transcricao: "[CLIENTE] O inquilino não paga desde julho — e já avisei.",
       anotacoes: "Conferir fiador.",
       analise: ANALISE,
       tipoAcao: "despejo",
-      perguntas: ["Ha contrato escrito?"],
+      perguntas: ["Há contrato escrito?"],
     });
     expect(Buffer.from(pdf).subarray(0, 4).toString()).toBe("%PDF");
   });
@@ -103,18 +103,18 @@ d("fluxo da entrevista", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("anotacoes e origem sao guardadas; encerrar e reabrir nao apagam nada", async () => {
-    const e = await criarEntrevista(escritorio, { nome: "Maria", assunto: "Inquilino nao paga o aluguel ha meses", usuarioId: advogada });
-    const anotada = await anotar(escritorio, e.id, "[CLIENTE] Ele nao paga.", { anotacoes: "Conferir fiador", origem: "LOCAL" });
+  it("anotações e origem são guardadas; encerrar e reabrir não apagam nada", async () => {
+    const e = await criarEntrevista(escritorio, { nome: "Maria", assunto: "Inquilino não paga o aluguel há meses", usuarioId: advogada });
+    const anotada = await anotar(escritorio, e.id, "[CLIENTE] Ele não paga.", { anotacoes: "Conferir fiador", origem: "LOCAL" });
     expect(anotada.anotacoes).toBe("Conferir fiador");
     expect(anotada.origemTranscricao).toBe("LOCAL");
     // Corrigir a mao depois nao apaga a origem por voz.
-    expect((await anotar(escritorio, e.id, "[CLIENTE] Ele nao paga desde julho.")).origemTranscricao).toBe("LOCAL");
+    expect((await anotar(escritorio, e.id, "[CLIENTE] Ele não paga desde julho.")).origemTranscricao).toBe("LOCAL");
     expect((await encerrar(escritorio, e.id)).encerradaEm).not.toBeNull();
     expect((await encerrar(escritorio, e.id, true)).encerradaEm).toBeNull();
   });
 
-  it("o texto da inicial so sai encerrada, organizada e com cliente", async () => {
+  it("o texto da inicial só sai encerrada, organizada e com cliente", async () => {
     const e = await criarEntrevista(escritorio, { nome: "Maria", assunto: "Despejo por falta de pagamento", usuarioId: advogada });
     await expect(gerarMinuta(escritorio, e.id, advogada)).rejects.toBeInstanceOf(EntrevistaIncompleta);
     await encerrar(escritorio, e.id);

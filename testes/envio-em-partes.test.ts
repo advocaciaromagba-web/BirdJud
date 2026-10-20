@@ -1,4 +1,4 @@
-// Gravacao longa de entrevista: o arquivo chega em pedacos (18/10/2026).
+// Gravação longa de entrevista: o arquivo chega em pedaços (18/10/2026).
 //
 // O que protege o escritorio: o pedaco reenviado nao duplica audio, o fora de
 // ordem nao corrompe, o grande demais nao enche o disco, e o envio abandonado
@@ -37,7 +37,7 @@ afterAll(() => {
 const pedaco = (n: number, byte: number) => Buffer.alloc(n, byte);
 
 describe("envio em partes", () => {
-  it("junta os pedacos em ordem e conclui com o hash do conteudo inteiro", async () => {
+  it("junta os pedaços em ordem e conclui com o hash do conteúdo inteiro", async () => {
     const a = pedaco(3 * MB, 1);
     const b = pedaco(2 * MB, 2);
     expect(await anexarAoEnvio(ESC, "envio_ordem_000001", 0, a, 10 * MB)).toBe(3 * MB);
@@ -52,14 +52,14 @@ describe("envio em partes", () => {
     expect(await tamanhoDoEnvio(ESC, "envio_ordem_000001")).toBe(0);
   });
 
-  it("pedaco reenviado (resposta perdida) nao duplica o audio", async () => {
+  it("pedaco reenviado (resposta perdida) não duplica o áudio", async () => {
     const a = pedaco(MB, 7);
     await anexarAoEnvio(ESC, "envio_reenvio_0001", 0, a, 10 * MB);
     expect(await anexarAoEnvio(ESC, "envio_reenvio_0001", 0, a, 10 * MB)).toBe(MB);
     expect(await tamanhoDoEnvio(ESC, "envio_reenvio_0001")).toBe(MB);
   });
 
-  it("pedaco fora de ordem e recusado com 409 e nao altera o envio", async () => {
+  it("pedaco fora de ordem e recusado com 409 e não altera o envio", async () => {
     await anexarAoEnvio(ESC, "envio_fora_000001", 0, pedaco(MB, 1), 10 * MB);
     const erro = await anexarAoEnvio(ESC, "envio_fora_000001", 5 * MB, pedaco(MB, 2), 10 * MB).catch(
       (e) => e,
@@ -85,7 +85,7 @@ describe("envio em partes", () => {
     expect(erro.status).toBe(404);
   });
 
-  it("nome de envio com barra ou ponto nao vira caminho", async () => {
+  it("nome de envio com barra ou ponto não vira caminho", async () => {
     await expect(anexarAoEnvio(ESC, "../../etc/passwd", 0, pedaco(1, 1), MB)).rejects.toThrow();
   });
 
@@ -95,7 +95,7 @@ describe("envio em partes", () => {
     expect(await tamanhoDoEnvio(ESC, "envio_descarte_01")).toBe(0);
   });
 
-  it("envio abandonado ha mais de um dia e apagado; o recente fica", async () => {
+  it("envio abandonado há mais de um dia e apagado; o recente fica", async () => {
     await anexarAoEnvio(ESC, "envio_velho_00001", 0, pedaco(MB, 1), 10 * MB);
     await anexarAoEnvio(ESC, "envio_novo_000001", 0, pedaco(MB, 1), 10 * MB);
     const doisDias = (Date.now() - 2 * 24 * 60 * 60 * 1000) / 1000;

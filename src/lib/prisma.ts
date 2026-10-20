@@ -140,7 +140,7 @@ export function prismaPlataforma(): PrismaClient {
   const url = process.env.DATABASE_URL_PLATAFORMA;
   if (!url) {
     throw new Error(
-      "DATABASE_URL_PLATAFORMA nao definida. O plano de controle precisa do papel birdjud_plataforma (BYPASSRLS).",
+      "DATABASE_URL_PLATAFORMA não definida. O plano de controle precisa do papel birdjud_plataforma (BYPASSRLS).",
     );
   }
   clientePlataforma ??= new PrismaClient({ datasources: { db: { url } } });

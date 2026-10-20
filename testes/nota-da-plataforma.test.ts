@@ -15,7 +15,7 @@ import { descompactar } from "../src/lib/nfse/api";
 
 vi.mock("@/lib/cep", async (original) => ({
   ...(await original<typeof import("@/lib/cep")>()),
-  buscarCep: async () => ({ ibge: "3550308", cep: "01310100", logradouro: "Av. Paulista", bairro: "Bela Vista", cidade: "Sao Paulo", uf: "SP" }),
+  buscarCep: async () => ({ ibge: "3550308", cep: "01310100", logradouro: "Av. Paulista", bairro: "Bela Vista", cidade: "São Paulo", uf: "SP" }),
 }));
 
 const {
@@ -68,7 +68,7 @@ beforeAll(async () => {
         res.end(JSON.stringify(corpo));
       };
       if (req.method === "POST" && caminho === "/nfse") {
-        if (recusar) return json(400, { erros: [{ Codigo: "E0312", Descricao: "Codigo de tributacao invalido" }] });
+        if (recusar) return json(400, { erros: [{ Codigo: "E0312", Descricao: "Código de tributação inválido" }] });
         n += 1;
         return json(201, {
           chaveAcesso: `${Date.now()}${n}`.padStart(50, "4"),
@@ -97,7 +97,7 @@ afterAll(async () => {
 });
 
 describe("link do e-mail", () => {
-  it("so abre com a assinatura da propria nota", () => {
+  it("só abre com a assinatura da própria nota", () => {
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 7).toString("base64");
     const t = tokenDaNota("nota-1");
     expect(tokenConfere("nota-1", t)).toBe(true);
@@ -133,7 +133,7 @@ d("nota da mensalidade", () => {
           nome: "Banca Tomadora",
           razaoSocial: "Banca Tomadora Sociedade de Advogados",
           cnpj: "11.444.777/0001-61",
-          enderecos: [{ cep: "01310100", logradouro: "Av. Paulista", numero: "1000", bairro: "Bela Vista", cidade: "Sao Paulo", uf: "SP" }],
+          enderecos: [{ cep: "01310100", logradouro: "Av. Paulista", numero: "1000", bairro: "Bela Vista", cidade: "São Paulo", uf: "SP" }],
         },
       })
     ).id;
@@ -158,7 +158,7 @@ d("nota da mensalidade", () => {
     await prismaPlataforma().fiscalDaPlataforma.delete({ where: { id: "PLATAFORMA" } }).catch(() => {});
   });
 
-  it("recusa da Sefin fica registrada, e reemitir usa o mesmo registro com numero novo", async () => {
+  it("recusa da Sefin fica registrada, e reemitir usa o mesmo registro com número novo", async () => {
     recusar = true;
     const recusada = await emitirNotaDaFatura(fatura, "AUTOMATICA", new Date("2026-10-16T12:00:00Z"));
     expect(recusada.status).toBe("REJEITADA");
@@ -172,7 +172,7 @@ d("nota da mensalidade", () => {
     expect(emitida.numeroNaPrefeitura).toMatch(/^1\d\d$/);
   });
 
-  it("a DPS sai da Blackbird para o escritorio, com o valor da fatura", async () => {
+  it("a DPS sai da Blackbird para o escritório, com o valor da fatura", async () => {
     const envio = pedidos.filter((p) => p.metodo === "POST" && p.caminho === "/nfse").at(-1)!;
     const dps = descompactar(envio.corpo.dpsXmlGZipB64);
     expect(dps).toContain(`<CNPJ>${CNPJ_BLACKBIRD}</CNPJ>`);
@@ -183,7 +183,7 @@ d("nota da mensalidade", () => {
     expect(dps).toContain("<Signature");
   });
 
-  it("emitir de novo nao gasta outro numero", async () => {
+  it("emitir de novo não gasta outro número", async () => {
     const antes = pedidos.length;
     const outra = await emitirNotaDaFatura(fatura, "MANUAL");
     expect(outra.status).toBe("EMITIDA");
@@ -193,7 +193,7 @@ d("nota da mensalidade", () => {
   it("cancelar pede justificativa, e solta a fatura para nova nota", async () => {
     const nota = await prismaPlataforma().notaDaPlataforma.findUniqueOrThrow({ where: { faturaId: fatura } });
     await expect(cancelarNotaDaPlataforma(nota.id, 1, "curta")).rejects.toThrow(NotaInvalida);
-    const cancelada = await cancelarNotaDaPlataforma(nota.id, 1, "Valor emitido errado, sera reemitida");
+    const cancelada = await cancelarNotaDaPlataforma(nota.id, 1, "Valor emitido errado, será reemitida");
     expect(cancelada.status).toBe("CANCELADA");
     expect(cancelada.faturaId).toBeNull();
     expect(cancelada.faturaOriginalId).toBe(fatura);
@@ -213,7 +213,7 @@ d("nota da mensalidade", () => {
     process.env.NFSE_PLATAFORMA_PFX = pfx;
   });
 
-  it("pagamento poe a nota na fila so com a emissao automatica ligada", async () => {
+  it("pagamento poe a nota na fila só com a emissão automática ligada", async () => {
     const nova = async (competencia: string) =>
       (await prismaPlataforma().fatura.create({
         data: { escritorioId: esc, competencia, valorCentavos: 27_900, vencimento: new Date("2027-01-20T12:00:00Z") },

@@ -19,18 +19,18 @@ import { capturarPublicacoes } from "../src/lib/publicacoes";
 process.env.DJEN_PAUSA_MS = "0";
 
 describe("regras", () => {
-  it("segredo de justica: pelo texto ou pelas partes em iniciais", () => {
-    expect(pareceSegredo({ texto: "Processo em segredo de justica.", partes: [] })).toBe(true);
+  it("segredo de justiça: pelo texto ou pelas partes em iniciais", () => {
+    expect(pareceSegredo({ texto: "Processo em segredo de justiça.", partes: [] })).toBe(true);
     expect(pareceSegredo({ texto: "Intimacao.", partes: [{ nome: "J. S. S.", polo: "A" }] })).toBe(true);
     expect(pareceSegredo({ texto: "Intimacao.", partes: [{ nome: "M.A.S", polo: "A" }] })).toBe(true);
     expect(pareceSegredo({ texto: "Intimacao.", partes: [{ nome: "***", polo: "P" }] })).toBe(true);
     expect(pareceSegredo({ texto: "Intimacao.", partes: [{ nome: "MARIA APARECIDA SOUZA", polo: "A" }] })).toBe(false);
   });
 
-  it("cliente pelas partes: so quando bate com um so, e sem confundir homonimo parcial", () => {
+  it("cliente pelas partes: só quando bate com um só, e sem confundir homonimo parcial", () => {
     const clientes = [
       { id: "maria", nome: "Maria Aparecida Souza" },
-      { id: "jose", nome: "Jose da Silva" },
+      { id: "jose", nome: "José da Silva" },
     ];
     expect(clienteDasPartes([{ nome: "MARIA APARECIDA SOUZA", polo: "A" }, { nome: "BANCO X S.A.", polo: "P" }], clientes)).toBe("maria");
     // Sobrenome de casada: mesmo nome com 3+ palavras contido.
@@ -55,7 +55,7 @@ function comunicacao(id: number, numero: string, partes: string[], extra: Record
     data_disponibilizacao: "2026-09-17",
     numero_processo: numero,
     siglaTribunal: "TJSP",
-    nomeOrgao: "1a Vara Civel de Guariba",
+    nomeOrgao: "1a Vara Cível de Guariba",
     nomeClasse: "PROCEDIMENTO COMUM CIVEL",
     tipoComunicacao: "Intimacao",
     texto: "Fica intimada a parte.",
@@ -98,7 +98,7 @@ d("cadastro de processos pelo DJEN", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("publicacao de processo novo: cadastra e liga ao cliente pelas partes", async () => {
+  it("publicação de processo novo: cadastra e liga ao cliente pelas partes", async () => {
     itens = [comunicacao(1, "1000001-11.2026.8.26.0222", ["MARIA APARECIDA SOUZA", "BANCO X S.A."])];
     const r = await capturarPublicacoes(escritorio);
     expect(r.processosNovos).toBe(1);
@@ -110,7 +110,7 @@ d("cadastro de processos pelo DJEN", () => {
     expect(pub.processoId).toBe(p.id);
   });
 
-  it("segredo de justica nao e cadastrado: a publicacao fica marcada para a mao", async () => {
+  it("segredo de justiça não e cadastrado: a publicação fica marcada para a mão", async () => {
     itens = [comunicacao(2, "1000002-22.2026.8.26.0222", ["J. S. S."])];
     await capturarPublicacoes(escritorio);
     const pub = await comEscritorio(escritorio, (db) => db.publicacao.findFirstOrThrow({ where: { idExterno: "2" } }));
@@ -119,7 +119,7 @@ d("cadastro de processos pelo DJEN", () => {
     expect(await comEscritorio(escritorio, (db) => db.processo.count({ where: { numero: "10000022220268260222" } }))).toBe(0);
   });
 
-  it("comunicacao de outro advogado nao vira processo do escritorio", async () => {
+  it("comunicação de outro advogado não vira processo do escritório", async () => {
     itens = [
       comunicacao(3, "1000003-33.2026.8.26.0222", ["FULANO DE TAL"], {
         destinatarioadvogados: [{ advogado: { numero_oab: OAB.numero, uf_oab: "MG", nome: "Outro" } }],
@@ -147,7 +147,7 @@ d("cadastro de processos pelo DJEN", () => {
     expect(await comEscritorio(escritorio, (db) => db.publicacao.count({ where: { idExterno: { in: ["10", "11", "12"] } } }))).toBe(0);
   });
 
-  it("guarda o ultimo andamento, e comunicacao mais antiga nao o sobrescreve", async () => {
+  it("guarda o último andamento, e comunicação mais antiga não o sobrescreve", async () => {
     itens = [
       comunicacao(20, "1000020-20.2026.8.26.0222", ["ANA BEATRIZ COSTA"], {
         data_disponibilizacao: "2026-10-01",
@@ -171,7 +171,7 @@ d("cadastro de processos pelo DJEN", () => {
     expect(p.partes).toEqual([{ nome: "ANA BEATRIZ COSTA", polo: "A" }]);
   });
 
-  it("na busca do ano, o processo em segredo aparece em Publicacoes, uma vez", async () => {
+  it("na busca do ano, o processo em segredo aparece em Publicações, uma vez", async () => {
     await comEscritorio(escritorio, (db) => db.oabMonitorada.update({ where: { id: oabId }, data: { processosImportadosEm: null } }));
     itens = [
       comunicacao(30, "1000030-30.2025.8.26.0222", ["J. S. S."]),

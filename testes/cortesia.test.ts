@@ -22,7 +22,7 @@ function esc(id: string, extra: Partial<EscritorioNoPainel> = {}): EscritorioNoP
 }
 
 describe("cortesia no painel da plataforma", () => {
-  it("fica fora da receita, do ticket e da previsao, e e contada a parte", () => {
+  it("fica fora da receita, do ticket e da previsão, e e contada a parte", () => {
     const a = analisarCarteira(
       [
         esc("Pagante"),
@@ -47,12 +47,12 @@ d("cortesia na regua", () => {
     if (escritorio) await prismaPlataforma().escritorio.delete({ where: { id: escritorio } }).catch(() => {});
   });
 
-  it("teste acabado e cortesia: nenhuma fatura, e o escritorio fica ATIVO", async () => {
+  it("teste acabado e cortesia: nenhuma fatura, e o escritório fica ATIVO", async () => {
     escritorio = (await prismaPlataforma().escritorio.create({ data: { slug: `cortesia-${marca}`, nome: "Casa" } })).id;
     await criarAssinatura(escritorio, 29900, 14);
     await prismaPlataforma().assinatura.update({
       where: { escritorioId: escritorio },
-      data: { fimDoTeste: new Date(Date.now() - 24 * 3600_000), cortesiaDesde: new Date(), cortesiaMotivo: "Escritorio da casa" },
+      data: { fimDoTeste: new Date(Date.now() - 24 * 3600_000), cortesiaDesde: new Date(), cortesiaMotivo: "Escritório da casa" },
     });
 
     const r = await aplicarRegua(escritorio);

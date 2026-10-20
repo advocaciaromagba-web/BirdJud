@@ -35,7 +35,7 @@ export default async function PaginaAdministracao() {
       >
         <PortaDeAdministracao
           tranca={porta.tranca}
-          area="A administracao do escritorio"
+          area="A administração do escritório"
           minutos={MINUTOS_DESTRAVADO}
         />
       </Estrutura>
@@ -82,7 +82,7 @@ export default async function PaginaAdministracao() {
       titulo="Administracao"
     >
       <p className="mt-1 leitura text-sm text-slate-500">
-        Area destravada por {MINUTOS_DESTRAVADO} minutos. Depois disso a senha e
+        Área destravada por {MINUTOS_DESTRAVADO} minutos. Depois disso a senha e
         pedida de novo.
       </p>
 
@@ -107,7 +107,7 @@ export default async function PaginaAdministracao() {
             jaEnviado={Boolean(certificado)}
             resumo={
               certificado?.status === "OK"
-                ? (certificado.erro ?? "Certificado cadastrado e valido.")
+                ? (certificado.erro ?? "Certificado cadastrado e válido.")
                 : (certificado?.erro ?? null)
             }
           />
@@ -116,19 +116,19 @@ export default async function PaginaAdministracao() {
             <p className="sobretitulo">Nota fiscal</p>
             <h2 className="mt-1 text-lg font-bold">Certificado digital A1</h2>
             <p className="mt-2 leitura text-slate-600">
-              O modulo de NFS-e nao faz parte do plano deste escritorio. Sem
-              ele nao ha emissao de nota, e o certificado nao tem o que
+              O módulo de NFS-e não faz parte do plano deste escritório. Sem
+              ele não há emissão de nota, e o certificado não tem o que
               assinar.
             </p>
           </section>
         )}
 
         <section className="cartao">
-          <p className="sobretitulo">Comunicacao</p>
-          <h2 className="mt-1 text-lg font-bold">Mensagens nao entregues</h2>
+          <p className="sobretitulo">Comunicação</p>
+          <h2 className="mt-1 text-lg font-bold">Mensagens não entregues</h2>
           <p className="mt-2 leitura text-slate-600">
-            WhatsApp e e-mail que nao chegaram ao cliente: o motivo, o
-            reenvio e o que ja foi resolvido. Quem enviou recebe o alerta na
+            WhatsApp e e-mail que não chegaram ao cliente: o motivo, o
+            reenvio e o que já foi resolvido. Quem enviou recebe o alerta na
             hora, com o link desta tela.
           </p>
           <Link className="botao-secundario mt-4 inline-block" href="/mensagens">
@@ -138,13 +138,13 @@ export default async function PaginaAdministracao() {
 
         <section className="cartao">
           <p className="sobretitulo">Pessoas</p>
-          <h2 className="mt-1 text-lg font-bold">Usuarios do escritorio</h2>
+          <h2 className="mt-1 text-lg font-bold">Usuários do escritório</h2>
           <p className="mt-2 leitura text-slate-600">
             Incluir, desativar e definir o papel de cada pessoa. Quantas cabem
             depende da faixa contratada.
           </p>
           <Link className="botao-secundario mt-4 inline-block" href="/usuarios">
-            Abrir usuarios
+            Abrir usuários
           </Link>
         </section>
       </div>

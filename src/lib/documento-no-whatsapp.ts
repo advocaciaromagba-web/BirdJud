@@ -45,9 +45,9 @@ export class NaoDaParaMandar extends Error {
  * aqui", porque este numero nao recebe.
  */
 const O_QUE_FAZER: Record<Especie, string> = {
-  CONTRATO: "Leia com atencao e, se estiver de acordo, assine e devolva ao escritorio",
-  PROCURACAO: "Imprima, assine e devolva ao escritorio",
-  DECLARACAO: "Imprima, assine e devolva ao escritorio",
+  CONTRATO: "Leia com atenção e, se estiver de acordo, assine e devolva ao escritório",
+  PROCURACAO: "Imprima, assine e devolva ao escritório",
+  DECLARACAO: "Imprima, assine e devolva ao escritório",
   RECIBO: "Guarde este recibo",
 };
 
@@ -65,14 +65,14 @@ export async function mandarPecaNoWhatsapp(
   enviadoPorId: string | null = null,
 ): Promise<PecaMandada> {
   if (!(await moduloAtivo(escritorioId, "WHATSAPP"))) {
-    throw new NaoDaParaMandar("O modulo de WhatsApp nao esta contratado.");
+    throw new NaoDaParaMandar("O módulo de WhatsApp não está contratado.");
   }
 
   const telefone = paraE164BR(dados.cliente.telefone);
   if (!telefone) {
     throw new NaoDaParaMandar(
       dados.cliente.telefone
-        ? `O telefone do cadastro nao da para ler como celular: ${dados.cliente.telefone}.`
+        ? `O telefone do cadastro não dá para ler como celular: ${dados.cliente.telefone}.`
         : "Sem telefone para mandar: preencha o telefone no cadastro (ou na entrevista).",
     );
   }
@@ -82,12 +82,12 @@ export async function mandarPecaNoWhatsapp(
   );
   if (bloqueado) {
     throw new NaoDaParaMandar(
-      "Esta pessoa pediu para nao receber mais mensagens deste escritorio no WhatsApp.",
+      "Esta pessoa pediu para não receber mais mensagens deste escritório no WhatsApp.",
     );
   }
 
   const modelo = modeloDoTipo("DOCUMENTO");
-  if (!modelo) throw new NaoDaParaMandar("Modelo de documento nao configurado.");
+  if (!modelo) throw new NaoDaParaMandar("Modelo de documento não configurado.");
 
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
@@ -150,24 +150,24 @@ export async function mandarArquivoNoWhatsapp(
   enviadoPorId: string | null = null,
 ): Promise<PecaMandada> {
   if (!(await moduloAtivo(escritorioId, "WHATSAPP"))) {
-    throw new NaoDaParaMandar("O modulo de WhatsApp nao esta contratado.");
+    throw new NaoDaParaMandar("O módulo de WhatsApp não está contratado.");
   }
   const telefone = paraE164BR(pdf.telefoneDoCadastro);
   if (!telefone) {
     throw new NaoDaParaMandar(
       pdf.telefoneDoCadastro
-        ? `O telefone do cadastro nao da para ler como celular: ${pdf.telefoneDoCadastro}.`
-        : "O cliente esta sem telefone no cadastro.",
+        ? `O telefone do cadastro não dá para ler como celular: ${pdf.telefoneDoCadastro}.`
+        : "O cliente está sem telefone no cadastro.",
     );
   }
   const bloqueado = await comEscritorio(escritorioId, (db) =>
     db.bloqueioDeWhatsapp.findFirst({ where: { telefone }, select: { id: true } }),
   );
   if (bloqueado) {
-    throw new NaoDaParaMandar("Esta pessoa pediu para nao receber mais mensagens deste escritorio no WhatsApp.");
+    throw new NaoDaParaMandar("Esta pessoa pediu para não receber mais mensagens deste escritório no WhatsApp.");
   }
   const modelo = modeloDoTipo("DOCUMENTO");
-  if (!modelo) throw new NaoDaParaMandar("Modelo de documento nao configurado.");
+  if (!modelo) throw new NaoDaParaMandar("Modelo de documento não configurado.");
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
     select: { nome: true, telefoneAtendimento: true },
@@ -196,7 +196,7 @@ async function mandarPdfAoCliente(
         limparParametro(escritorio.nome),
         limparParametro(pdf.oQueE.toLowerCase()),
         limparParametro(pdf.oQueFazer),
-        limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritorio"),
+        limparParametro(escritorio.telefoneAtendimento?.trim() || "o escritório"),
       ],
     });
     idNaMeta = enviado.idNaMeta;

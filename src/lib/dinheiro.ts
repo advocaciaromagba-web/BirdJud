@@ -28,7 +28,7 @@ export function emReais(centavos: number): string {
 // ---------------------------------------------------------------------------
 
 const ATE_VINTE = [
-  "zero", "um", "dois", "tres", "quatro", "cinco", "seis", "sete", "oito",
+  "zero", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito",
   "nove", "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis",
   "dezessete", "dezoito", "dezenove",
 ];
@@ -62,8 +62,8 @@ function ateNovecentos(n: number): string {
 const GRUPOS: Array<[string, string]> = [
   ["", ""],
   ["mil", "mil"],
-  ["milhao", "milhoes"],
-  ["bilhao", "bilhoes"],
+  ["milhão", "milhões"],
+  ["bilhão", "bilhões"],
 ];
 
 /** Numero inteiro por extenso, sem unidade. */

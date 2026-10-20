@@ -17,7 +17,7 @@ import { criarEntrevista, mandarPerguntasNoWhatsapp } from "../src/lib/entrevist
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
 
-d("mandar a peca no WhatsApp", () => {
+d("mandar a peça no WhatsApp", () => {
   let escritorio = "";
   let servidor: Server;
   let subidos: Array<{ nome: string; bytes: number; tipo: string }> = [];
@@ -100,7 +100,7 @@ d("mandar a peca no WhatsApp", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("sobe o PDF como arquivo e manda o id no cabecalho", async () => {
+  it("sobe o PDF como arquivo e manda o id no cabeçalho", async () => {
     subidos = [];
     mandadas = [];
     const r = await mandarPecaNoWhatsapp(escritorio, "PROCURACAO", {
@@ -128,17 +128,17 @@ d("mandar a peca no WhatsApp", () => {
     expect(JSON.stringify(corpo)).not.toContain("%PDF");
   });
 
-  it("perguntas da entrevista vao para quem ainda nao e cliente, pelo telefone da entrevista", async () => {
+  it("perguntas da entrevista vão para quem ainda não e cliente, pelo telefone da entrevista", async () => {
     subidos = [];
     mandadas = [];
     const e = await criarEntrevista(escritorio, {
-      nome: "Joao Ainda Nao Cliente",
-      assunto: "Foi demitido e nao recebeu as verbas",
+      nome: "Joao Ainda Não Cliente",
+      assunto: "Foi demitido e não recebeu as verbas",
       telefone: "(77) 97777-1111",
       usuarioId: "x",
     });
     await comEscritorio(escritorio, (db) =>
-      db.entrevista.update({ where: { id: e.id }, data: { roteiro: ["Quando voce foi demitido?"] } }),
+      db.entrevista.update({ where: { id: e.id }, data: { roteiro: ["Quando você foi demitido?"] } }),
     );
     const r = await mandarPerguntasNoWhatsapp(escritorio, e.id, null);
     expect(r.telefone).toBe("5577977771111");
@@ -150,7 +150,7 @@ d("mandar a peca no WhatsApp", () => {
     expect(aviso.estado).toBe("ENVIADO");
   });
 
-  it("conta a mensagem no consumo do mes", async () => {
+  it("conta a mensagem no consumo do mês", async () => {
     // Sem isto, a franquia do modulo nao enxergaria o documento mandado e o
     // excedente da fatura sairia menor do que o uso real.
     const consumo = await consumoDoMes(escritorio);
@@ -158,7 +158,7 @@ d("mandar a peca no WhatsApp", () => {
     expect(zap?.quantidade ?? 0).toBeGreaterThan(0);
   });
 
-  it("CLIENTE SEM TELEFONE nao manda, e nao sobe nada", async () => {
+  it("CLIENTE SEM TELEFONE não manda, e não sobe nada", async () => {
     subidos = [];
     mandadas = [];
     await expect(
@@ -173,7 +173,7 @@ d("mandar a peca no WhatsApp", () => {
     expect(mandadas).toHaveLength(0);
   });
 
-  it("telefone que nao da para ler e recusado, com o numero na mensagem", async () => {
+  it("telefone que não da para ler e recusado, com o número na mensagem", async () => {
     await expect(
       mandarPecaNoWhatsapp(escritorio, "PROCURACAO", {
         clienteId: "cli-3",
@@ -183,7 +183,7 @@ d("mandar a peca no WhatsApp", () => {
     ).rejects.toThrow(/123/);
   });
 
-  it("quem pediu para parar nao recebe nem documento", async () => {
+  it("quem pediu para parar não recebe nem documento", async () => {
     // O pedido vale para tudo, nao so para lembrete: documento e a mensagem
     // mais invasiva que o sistema manda.
     await comEscritorio(escritorio, (db) =>
@@ -198,11 +198,11 @@ d("mandar a peca no WhatsApp", () => {
         cliente: cliente("77977770000"),
         escritorio: ESCRITORIO,
       }),
-    ).rejects.toThrow(/nao receber mais/);
+    ).rejects.toThrow(/não receber mais/);
     expect(subidos).toHaveLength(0);
   });
 
-  it("RECIBO SEM VALOR nao sai: seria quitacao de valor que ninguem conferiu", async () => {
+  it("RECIBO SEM VALOR não sai: seria quitação de valor que ninguém conferiu", async () => {
     subidos = [];
     await expect(
       mandarPecaNoWhatsapp(escritorio, "RECIBO", {
@@ -224,21 +224,21 @@ d("mandar a peca no WhatsApp", () => {
       escritorio: ESCRITORIO,
       recibo: {
         valorCentavos: 300000,
-        referenteA: "honorarios da acao trabalhista",
+        referenteA: "honorários da ação trabalhista",
         forma: "Pix",
         quando: new Date("2026-10-07T12:00:00Z"),
       },
     });
     expect(subidos).toHaveLength(1);
     const corpo = JSON.stringify(mandadas[0]);
-    expect(corpo).toContain("recibo de pagamento de honorarios");
+    expect(corpo).toContain("recibo de pagamento de honorários");
     // A mensagem traz o telefone do escritorio: este numero nao atende.
     expect(corpo).toContain("(77) 3611-0000");
   });
 
-  it("sem o modulo contratado, nao manda", async () => {
+  it("sem o módulo contratado, não manda", async () => {
     const outro = await prismaPlataforma().escritorio.create({
-      data: { slug: `doc-sem-${Date.now()}`, nome: "Sem modulo" },
+      data: { slug: `doc-sem-${Date.now()}`, nome: "Sem módulo" },
     });
     try {
       await expect(
@@ -247,7 +247,7 @@ d("mandar a peca no WhatsApp", () => {
           cliente: cliente("(77) 98888-0000"),
           escritorio: ESCRITORIO,
         }),
-      ).rejects.toThrow(/nao esta contratado/);
+      ).rejects.toThrow(/não está contratado/);
     } finally {
       await prismaPlataforma().escritorio.delete({ where: { id: outro.id } });
     }

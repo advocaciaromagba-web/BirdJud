@@ -20,37 +20,37 @@ describe("tarefa", () => {
 
   // Processo e opcional: ha tarefa de escritorio que nao tem processo, e
   // exigir um obrigaria a inventar numero.
-  it("nao exige processo", () => {
+  it("não exige processo", () => {
     expect(faltaParaGravar({ tipo: "TAREFA", clienteId: "cli-1" })).toBeNull();
   });
 });
 
 describe("agendamento", () => {
-  it("nao exige cliente nem processo", () => {
+  it("não exige cliente nem processo", () => {
     for (const tipo of ["COMPROMISSO", "AUDIENCIA", "PRAZO"]) {
       expect(faltaParaGravar({ tipo })).toBeNull();
     }
   });
 
-  it("aceita cliente quando ha", () => {
+  it("aceita cliente quando há", () => {
     expect(faltaParaGravar({ tipo: "COMPROMISSO", clienteId: "cli-1" })).toBeNull();
   });
 });
 
 describe("os dois ao mesmo tempo", () => {
-  it("e recusado, para nao duplicar cadastro sem querer", () => {
+  it("e recusado, para não duplicar cadastro sem querer", () => {
     expect(
       faltaParaGravar({
         tipo: "COMPROMISSO",
         clienteId: "cli-1",
         clienteNovo: { nome: "Maria" },
       }),
-    ).toContain("nao os dois");
+    ).toContain("não os dois");
   });
 });
 
 describe("ehTarefa", () => {
-  it("so TAREFA e tarefa", () => {
+  it("só TAREFA e tarefa", () => {
     expect(ehTarefa("TAREFA")).toBe(true);
     expect(ehTarefa("COMPROMISSO")).toBe(false);
     expect(ehTarefa("tarefa")).toBe(false);

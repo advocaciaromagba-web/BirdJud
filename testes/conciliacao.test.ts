@@ -36,8 +36,8 @@ const ENTRADA = (over: Partial<EntradaDoExtrato> = {}): EntradaDoExtrato => ({
   ...over,
 });
 
-describe("o que cada lancamento do extrato significa", () => {
-  it("cobranca e Pix recebidos sao receita, automaticos", () => {
+describe("o que cada lançamento do extrato significa", () => {
+  it("cobrança e Pix recebidos são receita, automaticos", () => {
     expect(regraDoTipo("PAYMENT_RECEIVED")).toMatchObject({
       destino: "RECEITA",
       automatico: true,
@@ -66,10 +66,10 @@ describe("o que cada lancamento do extrato significa", () => {
   // O provedor acrescenta tipo novo sem avisar. Ignorar automaticamente o que
   // nao se conhece faz o lancamento sumir, e ninguem procura o que nunca
   // apareceu.
-  it("tipo desconhecido nunca e automatico", () => {
+  it("tipo desconhecido nunca e automático", () => {
     const r = regraDoTipo("ALGO_QUE_O_PROVEDOR_INVENTOU");
     expect(r.automatico).toBe(false);
-    expect(r.rotulo).toContain("nao reconhecido");
+    expect(r.rotulo).toContain("não reconhecido");
   });
 });
 
@@ -87,7 +87,7 @@ describe("o nome de quem pagou", () => {
 
   // "ANA" esta dentro de "MARIANA" e de "SANTANA". Aceitar isso aponta a
   // sugestao para o cliente errado.
-  it("nome curto nao casa por conter", () => {
+  it("nome curto não casa por conter", () => {
     expect(mesmoNome("ANA", "MARIANA SOUZA")).toBe(false);
     expect(mesmoNome("ANA", "ANA PAULA LIMA")).toBe(false);
   });
@@ -98,18 +98,18 @@ describe("o nome de quem pagou", () => {
     expect(mesmoNome("SANTOS DA SILVA", "DOS SANTOS DA SILVA FILHO")).toBe(true);
   });
 
-  it("nao casa pedaco no meio de palavra", () => {
+  it("não casa pedaco no meio de palavra", () => {
     expect(mesmoNome("MARIANA", "MARIANALVES")).toBe(false);
   });
 
-  it("vazio nao casa com nada", () => {
+  it("vazio não casa com nada", () => {
     expect(mesmoNome("", "ANA SOUZA")).toBe(false);
     expect(mesmoNome("ANA SOUZA", "")).toBe(false);
   });
 });
 
 describe("a sugestao", () => {
-  it("o id do provedor manda: e certeza, nao palpite", () => {
+  it("o id do provedor manda: e certeza, não palpite", () => {
     const s = sugerir(
       [ENTRADA({ idDaCobranca: "pay_1", descricao: "NOME QUE NAO BATE" })],
       [COBRANCA()],
@@ -117,19 +117,19 @@ describe("a sugestao", () => {
     expect(s.get("tr1")).toMatchObject({ tipo: "CERTA", cobrancaId: "cob1" });
   });
 
-  it("nome e valor batendo viram sugestao provavel", () => {
+  it("nome e valor batendo viram sugestao provável", () => {
     const s = sugerir([ENTRADA()], [COBRANCA()]);
     expect(s.get("tr1")).toMatchObject({ tipo: "PROVAVEL", cobrancaId: "cob1" });
   });
 
-  it("valor diferente nao sugere nada", () => {
+  it("valor diferente não sugere nada", () => {
     const s = sugerir([ENTRADA({ valorCentavos: 149_900 })], [COBRANCA()]);
     expect(s.get("tr1")).toEqual({ tipo: "NENHUMA" });
   });
 
   // Duas cobrancas do mesmo valor para nomes parecidos e exatamente quando o
   // palpite erra. Escolher uma em silencio e o pior desfecho.
-  it("duas candidatas viram AMBIGUA, e nao escolhemos", () => {
+  it("duas candidatas viram AMBIGUA, e não escolhemos", () => {
     const s = sugerir(
       [ENTRADA()],
       [COBRANCA(), COBRANCA({ id: "cob2", idNoProvedor: "pay_2" })],
@@ -139,7 +139,7 @@ describe("a sugestao", () => {
     expect(r.tipo === "AMBIGUA" && r.candidatos).toEqual(["cob1", "cob2"]);
   });
 
-  it("so considera o que e receita", () => {
+  it("só considera o que e receita", () => {
     const s = sugerir(
       [ENTRADA({ tipo: "PAYMENT_FEE" }), ENTRADA({ id: "tr2", tipo: "TRANSFER" })],
       [COBRANCA()],
@@ -148,7 +148,7 @@ describe("a sugestao", () => {
     expect(s.get("tr2")).toEqual({ tipo: "NENHUMA" });
   });
 
-  it("casa pelo que FALTA, nao pelo valor cheio da cobranca", () => {
+  it("casa pelo que FALTA, não pelo valor cheio da cobrança", () => {
     // Cobranca de 1.500 com 500 ja pagos: o Pix de 1.000 e o que resta.
     const s = sugerir(
       [ENTRADA({ valorCentavos: 100_000 })],
@@ -157,7 +157,7 @@ describe("a sugestao", () => {
     expect(s.get("tr1")).toMatchObject({ tipo: "PROVAVEL" });
   });
 
-  it("valor negativo no extrato e lido pelo modulo", () => {
+  it("valor negativo no extrato e lido pelo módulo", () => {
     const s = sugerir([ENTRADA({ valorCentavos: -150_000 })], [COBRANCA()]);
     expect(s.get("tr1")).toMatchObject({ tipo: "PROVAVEL" });
   });
@@ -173,13 +173,13 @@ describe("dinheiro em centavos", () => {
   });
 });
 
-describe("documento na descricao", () => {
+describe("documento na descrição", () => {
   it("acha CPF e CNPJ", () => {
     expect(documentoNaDescricao("ANA SOUZA - 529.982.247-25")).toBe("52998224725");
     expect(documentoNaDescricao("AURORA LTDA 11.222.333/0001-81")).toBe("11222333000181");
   });
 
-  it("numero que nao e documento nao vira documento", () => {
+  it("número que não e documento não vira documento", () => {
     expect(documentoNaDescricao("PIX ANA SOUZA")).toBeNull();
     expect(documentoNaDescricao("PEDIDO 12345")).toBeNull();
   });
@@ -188,7 +188,7 @@ describe("documento na descricao", () => {
 describe("dia de calendario na tela", () => {
   // O extrato guarda DIA, nao momento. Formatar em Brasilia voltaria tres
   // horas e mostraria o dia anterior: um Pix do dia 1o viraria dia 30.
-  it("mostra o dia que foi gravado, nao o de tres horas antes", () => {
+  it("mostra o dia que foi gravado, não o de três horas antes", () => {
     expect(diaBR(new Date("2026-10-01T00:00:00Z"))).toBe("01/10/2026");
     expect(diaBR(new Date("2026-01-01T00:00:00Z"))).toBe("01/01/2026");
   });

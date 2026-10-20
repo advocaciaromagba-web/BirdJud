@@ -22,13 +22,13 @@ const doc = (...ps: string[]) =>
   `<?xml version="1.0"?><w:document><w:body>${ps.join("")}</w:body></w:document>`;
 
 const CLAUSULA =
-  "O CONTRATANTE pagara ao CONTRATADO, a titulo de honorarios advocaticios, " +
-  "a quantia ajustada neste instrumento, que sera paga na forma e nos prazos " +
-  "aqui previstos, servindo o presente como titulo executivo extrajudicial " +
-  "nos termos do artigo 784, inciso III, do Codigo de Processo Civil.";
+  "O CONTRATANTE pagara ao CONTRATADO, a título de honorários advocatícios, " +
+  "a quantia ajustada neste instrumento, que será paga na forma e nos prazos " +
+  "aqui previstos, servindo o presente como título executivo extrajudicial " +
+  "nos termos do artigo 784, inciso III, do Código de Processo Civil.";
 
 describe("ler a estrutura do documento", () => {
-  it("le o alinhamento de cada paragrafo", () => {
+  it("le o alinhamento de cada parágrafo", () => {
     const ps = estruturaDoDocumento(
       doc(p("center", r("PROCURACAO")), p("both", r("Texto")), p(null, r("Fim"))),
     );
@@ -39,7 +39,7 @@ describe("ler a estrutura do documento", () => {
     ]);
   });
 
-  it("le o negrito corrida por corrida, nao do paragrafo inteiro", () => {
+  it("le o negrito corrida por corrida, não do parágrafo inteiro", () => {
     // "CLAUSULA PRIMEIRA" em negrito e o resto sem: marcar o paragrafo todo em
     // negrito deixaria a clausula inteira berrando na folha.
     const ps = estruturaDoDocumento(
@@ -50,14 +50,14 @@ describe("ler a estrutura do documento", () => {
     expect(ps[0].pedacos.some((x) => !x.negrito && x.texto === "objeto")).toBe(true);
   });
 
-  it("nao inventa espaco onde o Word partiu a palavra", () => {
+  it("não inventa espaço onde o Word partiu a palavra", () => {
     // O corretor ortografico do Word reparte a palavra em varias corridas. Se
     // cada corrida virasse uma palavra, "honorarios" sairia "hono rarios".
     const ps = estruturaDoDocumento(doc(p("both", r("hono"), r("rarios"), r(" devidos"))));
     expect(ps[0].pedacos.map((x) => x.texto)).toEqual(["honorarios", "devidos"]);
   });
 
-  it("separa a palavra onde o negrito muda, e sem espaco entre as partes", () => {
+  it("separa a palavra onde o negrito muda, e sem espaço entre as partes", () => {
     const ps = estruturaDoDocumento(doc(p("both", r("CLAUSULA", true), r(":"))));
     expect(ps[0].pedacos).toEqual([
       { texto: "CLAUSULA", negrito: true, espacos: 0 },
@@ -65,7 +65,7 @@ describe("ler a estrutura do documento", () => {
     ]);
   });
 
-  it("paragrafo sem texto vale uma linha em branco", () => {
+  it("parágrafo sem texto vale uma linha em branco", () => {
     // E assim que o modelo separa as clausulas. Jogar fora juntaria o contrato
     // inteiro em um bloco so.
     const ps = estruturaDoDocumento(doc(p(null, r("Antes")), "<w:p/>", p(null, r("Depois"))));
@@ -73,9 +73,9 @@ describe("ler a estrutura do documento", () => {
   });
 });
 
-describe("colocar a peca na folha", () => {
+describe("colocar a peça na folha", () => {
   const direita = MARGEM.esquerda + LARGURA_UTIL;
-  /** A direita de uma linha: onde termina o ultimo pedaco. */
+  /** A direita de uma linha: onde termina o último pedaco. */
   const fim = (l: { pedacos: Array<{ x: number; largura: number }> }) =>
     Math.max(...l.pedacos.map((x) => x.x + x.largura));
 
@@ -93,7 +93,7 @@ describe("colocar a peca na folha", () => {
     }
   });
 
-  it("justificado fecha na margem, menos na ultima linha do paragrafo", async () => {
+  it("justificado fecha na margem, menos na última linha do parágrafo", async () => {
     const { linhas } = await diagramar(estruturaDoDocumento(doc(p("both", r(CLAUSULA)))));
     for (const l of linhas.slice(0, -1)) {
       expect(fim(l)).toBeGreaterThan(direita - 1);
@@ -109,15 +109,15 @@ describe("colocar a peca na folha", () => {
     // palavras. Com um teto apertado ela saia alinhada a esquerda no meio de um
     // paragrafo justificado — e parecia defeito de formatacao na peca.
     const texto =
-      "O total dos honorarios podera ser exigido se houver composicao, " +
-      "substabelecimento ou desistencia por qualquer das partes litigantes, " +
+      "O total dos honorários poderá ser exigido se houver composição, " +
+      "substabelecimento ou desistência por qualquer das partes litigantes, " +
       "dentro ou fora do processo.";
     const { linhas } = await diagramar(estruturaDoDocumento(doc(p("both", r(texto)))));
     expect(linhas.length).toBeGreaterThan(1);
     for (const l of linhas.slice(0, -1)) expect(fim(l)).toBeGreaterThan(direita - 1);
   });
 
-  it("nao estica o justificado alem do razoavel", async () => {
+  it("não estica o justificado além do razoável", async () => {
     // Duas palavras esticadas de ponta a ponta da folha parecem defeito. Acima
     // do teto, alinha a esquerda.
     const enorme = "x".repeat(70);
@@ -128,7 +128,7 @@ describe("colocar a peca na folha", () => {
     expect(fim(linhas[0])).toBeLessThan(direita - 50);
   });
 
-  it("centraliza o titulo", async () => {
+  it("centraliza o título", async () => {
     const { linhas } = await diagramar(
       estruturaDoDocumento(doc(p("center", r("INSTRUMENTO PARTICULAR DE PROCURACAO", true)))),
     );
@@ -136,7 +136,7 @@ describe("colocar a peca na folha", () => {
     expect(linhas[0].pedacos[0].x - MARGEM.esquerda).toBeCloseTo(sobra, 1);
   });
 
-  it("vira a pagina quando o texto nao cabe mais", async () => {
+  it("vira a página quando o texto não cabe mais", async () => {
     const muitos = Array.from({ length: 40 }, () => p("both", r(CLAUSULA)));
     const { paginas, linhas } = await diagramar(estruturaDoDocumento(doc(...muitos)));
     expect(paginas).toBeGreaterThan(1);
@@ -144,7 +144,7 @@ describe("colocar a peca na folha", () => {
     for (const l of linhas) expect(l.y).toBeGreaterThanOrEqual(MARGEM.baixo);
   });
 
-  it("reparte na forca a palavra maior que a folha, em vez de estourar a margem", async () => {
+  it("reparte na força a palavra maior que a folha, em vez de estourar a margem", async () => {
     const enorme = "a".repeat(400);
     const { linhas } = await diagramar(estruturaDoDocumento(doc(p("both", r(enorme)))));
     expect(linhas.length).toBeGreaterThan(1);
@@ -159,7 +159,7 @@ describe("colocar a peca na folha", () => {
     expect(linhas[0].pedacos.map((x) => x.texto).join(" ")).toContain("hipossuficiência");
   });
 
-  it("avisa qual caractere a fonte do PDF nao escreve", async () => {
+  it("avisa qual caractere a fonte do PDF não escreve", async () => {
     // Texto copiado de outro programa traz caractere de outra tabela. Deixar
     // passar calado poria um quadrado no meio de uma clausula.
     const { caracteresTrocados, linhas } = await diagramar(
@@ -169,7 +169,7 @@ describe("colocar a peca na folha", () => {
     expect(linhas[0].pedacos.map((x) => x.texto)).toContain("?");
   });
 
-  it("troca a tabulacao por espacos em vez de recusar a peca", async () => {
+  it("troca a tabulacao por espacos em vez de recusar a peça", async () => {
     const { caracteresTrocados } = await diagramar(
       estruturaDoDocumento(doc(p("both", r("Item\tvalor")))),
     );
@@ -181,27 +181,27 @@ describe("o arquivo PDF", () => {
   it("sai como PDF de verdade, com pelo menos uma folha", async () => {
     const pdf = await montarPdf(
       estruturaDoDocumento(doc(p("center", r("PROCURACAO", true)), p("both", r(CLAUSULA)))),
-      { titulo: "Procuracao - Jose Cicero" },
+      { titulo: "Procuração - José Cicero" },
     );
     expect(pdf.arquivo.subarray(0, 5).toString()).toBe("%PDF-");
     expect(pdf.paginas).toBe(1);
     expect(pdf.arquivo.byteLength).toBeGreaterThan(500);
   });
 
-  it("peca vazia ainda sai com uma folha, nao com nenhuma", async () => {
+  it("peça vazia ainda sai com uma folha, não com nenhuma", async () => {
     // PDF sem pagina nenhuma nao abre em visualizador algum.
     const pdf = await montarPdf([]);
     expect(pdf.paginas).toBe(1);
   });
 
-  it("conta as folhas que a peca ocupa", async () => {
+  it("conta as folhas que a peça ocupa", async () => {
     const muitos = Array.from({ length: 40 }, () => p("both", r(CLAUSULA)));
     const pdf = await montarPdf(estruturaDoDocumento(doc(...muitos)));
     expect(pdf.paginas).toBeGreaterThan(1);
   });
 });
 
-describe("quebra de linha dentro do paragrafo", () => {
+describe("quebra de linha dentro do parágrafo", () => {
   it("as linhas de assinatura saem uma embaixo da outra", () => {
     // A ARMADILHA: o valor do campo vem com "\n" entre uma assinatura e a
     // outra. Um "\n" solto dentro de <w:t> nao quebra nada — o Word trata como
@@ -244,8 +244,8 @@ describe("quebra de linha dentro do paragrafo", () => {
   });
 });
 
-describe("linha de preencher a mao", () => {
-  it("mantem os espacos seguidos que abrem o espaco da escrita", async () => {
+describe("linha de preencher a mão", () => {
+  it("mantém os espacos seguidos que abrem o espaço da escrita", async () => {
     // "Nome:        CPF:" e um campo para preencher a caneta. Engolir os
     // espacos seguidos, como faz quem trata todo branco como um so, fecha o
     // espaco e o contrato sai sem onde escrever o nome da testemunha.
@@ -258,8 +258,8 @@ describe("linha de preencher a mao", () => {
   });
 });
 
-describe("o CEP na qualificacao", () => {
-  it("sai como se escreve em documento, nao como esta no banco", () => {
+describe("o CEP na qualificação", () => {
+  it("sai como se escreve em documento, não como esta no banco", () => {
     // O cadastro guarda so os digitos, que e o certo para buscar. Na peca, um
     // "47800000" no meio da qualificacao parece numero digitado errado.
     expect(cepEmTexto("47800000")).toBe("CEP 47800-000");
@@ -270,7 +270,7 @@ describe("o CEP na qualificacao", () => {
     expect(cepEmTexto(null)).toBe("");
   });
 
-  it("entra na linha do endereco", () => {
+  it("entra na linha do endereço", () => {
     expect(
       enderecoEmLinha({
         logradouro: "Rua das Palmeiras",

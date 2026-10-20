@@ -22,10 +22,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const formulario = await req.formData();
     const arquivo = formulario.get("procuracao");
     if (!(arquivo instanceof File)) {
-      return NextResponse.json({ erro: "Envie a procuracao (PDF ou foto)." }, { status: 400 });
+      return NextResponse.json({ erro: "Envie a procuração (PDF ou foto)." }, { status: 400 });
     }
     if (arquivo.size > MAXIMO_DE_BYTES) {
-      return NextResponse.json({ erro: "A procuracao passa do tamanho aceito. Envie um PDF menor ou uma foto." }, { status: 413 });
+      return NextResponse.json({ erro: "A procuração passa do tamanho aceito. Envie um PDF menor ou uma foto." }, { status: 413 });
     }
     const resultado = await roteiroDaProcuracao(escritorioId, id, {
       nome: arquivo.name || "procuracao",
@@ -42,7 +42,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ erro: erro.message }, { status: erro.status });
     }
     if (erro instanceof SemChaveDeIA || erro instanceof IARecusou) {
-      return NextResponse.json({ erro: "A leitura por IA nao esta disponivel agora. Use o tipo de acao para sugerir as perguntas." }, { status: 503 });
+      return NextResponse.json({ erro: "A leitura por IA não está disponível agora. Use o tipo de ação para sugerir as perguntas." }, { status: 503 });
     }
     return tratarErro(erro);
   }

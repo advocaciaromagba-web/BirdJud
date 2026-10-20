@@ -31,12 +31,12 @@ export async function lerTextos(arquivo: Buffer): Promise<Record<string, string>
   try {
     zip = await JSZip.loadAsync(arquivo);
   } catch {
-    throw new DocxInvalido("O arquivo nao e um .docx: nao abriu como documento do Word.");
+    throw new DocxInvalido("O arquivo não é um .docx: não abriu como documento do Word.");
   }
   const nomes = Object.keys(zip.files).filter((n) => PARTE_COM_TEXTO.test(n));
   if (!nomes.includes(CAMINHO_DO_TEXTO)) {
     throw new DocxInvalido(
-      "O arquivo nao e um .docx do Word. Se for .doc ou .odt, abra no Word e salve como .docx.",
+      "O arquivo não é um .docx do Word. Se for .doc ou .odt, abra no Word e salve como .docx.",
     );
   }
   const partes: Record<string, string> = {};

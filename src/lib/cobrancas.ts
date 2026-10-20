@@ -60,7 +60,7 @@ export function statusNosso(statusDoAsaas: string): string | null {
 
 export class SemContaDeCobranca extends Error {
   readonly status = 503;
-  constructor(motivo = "O escritorio ainda nao conectou a conta Asaas em Integracoes.") {
+  constructor(motivo = "O escritório ainda não conectou a conta Asaas em Integrações.") {
     super(motivo);
     this.name = "SemContaDeCobranca";
   }
@@ -70,7 +70,7 @@ export class ClienteSemDocumento extends Error {
   readonly status = 422;
   constructor(nome: string) {
     super(
-      `${nome} esta sem CPF/CNPJ, e o Asaas exige o documento para cobrar.`,
+      `${nome} está sem CPF/CNPJ, e o Asaas exige o documento para cobrar.`,
     );
     this.name = "ClienteSemDocumento";
   }
@@ -210,7 +210,7 @@ export async function clienteNoAsaas(
   });
 
   const id = typeof criado.id === "string" ? criado.id : null;
-  if (!id) throw new FalhaNoAsaas("O Asaas nao devolveu o id do cliente.");
+  if (!id) throw new FalhaNoAsaas("O Asaas não devolveu o id do cliente.");
 
   await comEscritorio(escritorioId, (db) =>
     db.cliente.update({ where: { id: cliente.id }, data: { idNoAsaas: id } }),
@@ -258,7 +258,7 @@ export async function emitirCobranca(
   const hoje = new Date();
   hoje.setUTCHours(0, 0, 0, 0);
   if (pedido.vencimento < hoje) {
-    throw new PedidoInvalido("O vencimento nao pode estar no passado.");
+    throw new PedidoInvalido("O vencimento não pode estar no passado.");
   }
 
   const chave = await chaveDoEscritorio(escritorioId);
@@ -266,14 +266,14 @@ export async function emitirCobranca(
   const cliente = await comEscritorio(escritorioId, (db) =>
     db.cliente.findUnique({ where: { id: pedido.clienteId } }),
   );
-  if (!cliente) throw new PedidoInvalido("Cliente nao encontrado.");
+  if (!cliente) throw new PedidoInvalido("Cliente não encontrado.");
 
   if (pedido.processoId) {
     const processoId = pedido.processoId;
     const processo = await comEscritorio(escritorioId, (db) =>
       db.processo.findFirst({ where: { id: processoId } }),
     );
-    if (!processo) throw new PedidoInvalido("Processo nao encontrado.");
+    if (!processo) throw new PedidoInvalido("Processo não encontrado.");
   }
 
   const idDoCliente = await clienteNoAsaas(escritorioId, cliente, chave);
@@ -287,7 +287,7 @@ export async function emitirCobranca(
       NOT: { chaveOperacao },
     } }),
   );
-  if (outraPendente) throw new PedidoInvalido("Ha uma emissao identica pendente de conciliacao no Asaas.");
+  if (outraPendente) throw new PedidoInvalido("Há uma emissão idêntica pendente de conciliação no Asaas.");
   let existente = await comEscritorio(escritorioId, (db) =>
     db.cobranca.findFirst({ where: { chaveOperacao } }),
   );
@@ -298,7 +298,7 @@ export async function emitirCobranca(
     existente.valorCentavos !== pedido.valorCentavos ||
     existente.vencimento.getTime() !== pedido.vencimento.getTime() ||
     existente.forma !== pedido.forma
-  )) throw new PedidoInvalido("Esta tentativa pertence a outra cobranca.");
+  )) throw new PedidoInvalido("Esta tentativa pertence a outra cobrança.");
 
   if (!existente) {
     try {
@@ -323,7 +323,7 @@ export async function emitirCobranca(
       const concorrente = await comEscritorio(escritorioId, (db) =>
         db.cobranca.findFirst({ where: { chaveOperacao } }),
       );
-      if (concorrente) throw new PedidoInvalido("Emissao em andamento. Confira a lista antes de repetir.");
+      if (concorrente) throw new PedidoInvalido("Emissão em andamento. Confira a lista antes de repetir.");
       throw erro;
     }
   } else if (existente.status !== "PENDENTE") {
@@ -360,7 +360,7 @@ export async function conciliarCobranca(
   escritorioId: string, id: string, chaveConhecida?: string,
 ): Promise<{ id: string; linkPagamento: string | null }> {
   const pendente = await comEscritorio(escritorioId, (db) => db.cobranca.findFirst({ where: { id } }));
-  if (!pendente) throw new PedidoInvalido("Cobranca nao encontrada.");
+  if (!pendente) throw new PedidoInvalido("Cobrança não encontrada.");
   if (pendente.status !== "PENDENTE") return { id, linkPagamento: pendente.linkPagamento };
   const chave = chaveConhecida ?? await chaveDoEscritorio(escritorioId);
   // Consulta pelo identificador que foi enviado na criacao. Zero resultados
@@ -368,7 +368,7 @@ export async function conciliarCobranca(
   const lista = await chamarAsaas(chave, `/payments?externalReference=${encodeURIComponent(id)}`);
   const achadas = Array.isArray(lista.data) ? lista.data : [];
   if (achadas.length !== 1 || !achadas[0] || typeof achadas[0] !== "object") {
-    throw new PedidoInvalido("Emissao pendente de conciliacao no Asaas. Confira a conta antes de criar outra cobranca.");
+    throw new PedidoInvalido("Emissão pendente de conciliação no Asaas. Confira a conta antes de criar outra cobrança.");
   }
   return finalizarCobranca(escritorioId, id, achadas[0] as Record<string, unknown>);
 }
@@ -379,7 +379,7 @@ async function finalizarCobranca(
   criada: Record<string, unknown>,
 ): Promise<{ id: string; linkPagamento: string | null }> {
   const idNoProvedor = typeof criada.id === "string" ? criada.id : null;
-  if (!idNoProvedor) throw new FalhaNoAsaas("O Asaas nao devolveu o id da cobranca.");
+  if (!idNoProvedor) throw new FalhaNoAsaas("O Asaas não devolveu o id da cobrança.");
 
   const cobranca = await comEscritorio(escritorioId, (db) =>
     db.cobranca.update({
@@ -593,13 +593,13 @@ export async function cancelarCobranca(
   const cobranca = await comEscritorio(escritorioId, (db) =>
     db.cobranca.findUnique({ where: { id } }),
   );
-  if (!cobranca) throw new PedidoInvalido("Cobranca nao encontrada.");
+  if (!cobranca) throw new PedidoInvalido("Cobrança não encontrada.");
   if (cobranca.status === "PENDENTE") {
-    throw new PedidoInvalido("Concilie a emissao pendente antes de cancelar no Asaas.");
+    throw new PedidoInvalido("Concilie a emissão pendente antes de cancelar no Asaas.");
   }
   if (cobranca.status === "PAGA") {
     throw new PedidoInvalido(
-      "Cobranca ja paga: o estorno e feito no painel do Asaas.",
+      "Cobrança já paga: o estorno é feito no painel do Asaas.",
     );
   }
   if (cobranca.status === "CANCELADA") return;

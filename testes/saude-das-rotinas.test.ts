@@ -16,11 +16,11 @@ const d = temBanco ? describe : describe.skip;
 const AGORA = new Date("2099-03-10T12:00:00Z");
 const antes = (min: number) => new Date(AGORA.getTime() - min * 60_000);
 
-d("saude das rotinas", () => {
+d("saúde das rotinas", () => {
   let esc = "";
 
   beforeAll(async () => {
-    esc = (await prismaPlataforma().escritorio.create({ data: { slug: `saude-${Date.now()}`, nome: "Banca da Saude" } })).id;
+    esc = (await prismaPlataforma().escritorio.create({ data: { slug: `saude-${Date.now()}`, nome: "Banca da Saúde" } })).id;
   });
 
   afterAll(async () => {
@@ -34,7 +34,7 @@ d("saude das rotinas", () => {
       data: { escritorioId: esc, tipo, estado, concluidoEm: antes(minutosAtras), agendadoPara: antes(minutosAtras) },
     });
 
-  it("nada concluido nos ultimos 90 minutos: trabalhador parado", async () => {
+  it("nada concluído nos últimos 90 minutos: trabalhador parado", async () => {
     await trabalho("LEMBRAR", "CONCLUIDO", 120);
     expect(await saudeDasRotinas(AGORA)).toEqual({ ok: false, trabalhadorParado: true, rotinasFalhando: 0 });
   });
@@ -44,7 +44,7 @@ d("saude das rotinas", () => {
     expect(await saudeDasRotinas(AGORA)).toEqual({ ok: true, trabalhadorParado: false, rotinasFalhando: 0 });
   });
 
-  it("ultima execucao de rotina essencial em FALHOU: alarme", async () => {
+  it("última execução de rotina essencial em FALHOU: alarme", async () => {
     await trabalho("LEMBRAR", "FALHOU", 5);
     expect(await saudeDasRotinas(AGORA)).toEqual({ ok: false, trabalhadorParado: false, rotinasFalhando: 1 });
   });
@@ -54,7 +54,7 @@ d("saude das rotinas", () => {
     expect((await saudeDasRotinas(AGORA)).ok).toBe(true);
   });
 
-  it("rotina que nao e essencial nao dispara", async () => {
+  it("rotina que não e essencial não dispara", async () => {
     await trabalho("ORGANIZAR_NUVEM", "FALHOU", 1);
     expect((await saudeDasRotinas(AGORA)).ok).toBe(true);
   });

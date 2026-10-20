@@ -81,11 +81,11 @@ export function lerReferencia(bruto: string | null | undefined): Leitura {
 const FORMAS: Record<string, string> = {
   BOLETO: "boleto",
   PIX: "Pix",
-  CREDIT_CARD: "cartao de credito",
-  DEBIT_CARD: "cartao de debito",
+  CREDIT_CARD: "cartão de crédito",
+  DEBIT_CARD: "cartão de débito",
   TRANSFER: "transferencia",
   DEPOSIT: "deposito",
-  UNDEFINED: "forma nao informada",
+  UNDEFINED: "forma não informada",
 };
 
 /**
@@ -138,7 +138,7 @@ export function resumoDaBaixa(baixa: unknown): string | null {
     partes.push(`sistema ${d.sistema}`);
   }
   if (d.marcada === false) {
-    partes.push("sem marca de sistema na referencia");
+    partes.push("sem marca de sistema na referência");
   }
 
   return partes.join(" · ");

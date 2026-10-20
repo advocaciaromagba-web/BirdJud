@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     const corpo = novaOab.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json(
-        { erro: "Numero ou UF invalidos." },
+        { erro: "Número ou UF inválidos." },
         { status: 400 },
       );
     }
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   } catch (erro) {
     if (ehDuplicado(erro)) {
       return NextResponse.json(
-        { erro: "Esta OAB ja esta sendo monitorada." },
+        { erro: "Esta OAB já está sendo monitorada." },
         { status: 409 },
       );
     }

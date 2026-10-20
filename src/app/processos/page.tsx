@@ -46,7 +46,7 @@ export default async function PaginaProcessos({
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Processos"
-      chamada={`${total} cadastrado(s)${totalSemCliente ? ` · ${totalSemCliente} sem cliente` : ""}. Os processos das OABs do escritorio entram sozinhos pelo DJEN.`}
+      chamada={`${total} cadastrado(s)${totalSemCliente ? ` · ${totalSemCliente} sem cliente` : ""}. Os processos das OABs do escritório entram sozinhos pelo DJEN.`}
     >
       <nav className="mt-3 flex flex-wrap gap-2 text-sm" aria-label="Filtro">
         <Link
@@ -71,9 +71,9 @@ export default async function PaginaProcessos({
         campos={[
           {
             nome: "numero",
-            rotulo: "Numero do processo",
+            rotulo: "Número do processo",
             obrigatorio: true,
-            ajuda: "Numero unico do CNJ, com ou sem mascara.",
+            ajuda: "Número único do CNJ, com ou sem máscara.",
           },
           {
             nome: "clienteId",
@@ -83,24 +83,24 @@ export default async function PaginaProcessos({
           },
           { nome: "tribunal", rotulo: "Tribunal" },
           { nome: "vara", rotulo: "Vara" },
-          { nome: "area", rotulo: "Area" },
+          { nome: "area", rotulo: "Área" },
         ]}
       />
 
       {processos.length === 0 ? (
         <p className="vazio mt-6">
           Nenhum processo cadastrado ainda. Cadastre o primeiro para que as
-          publicacoes capturadas encontrem onde se prender.
+          publicações capturadas encontrem onde se prender.
         </p>
       ) : (
         <div className="cartao mt-6 overflow-x-auto p-0">
           <table className="tabela">
             <thead>
               <tr>
-                <th>Numero</th>
+                <th>Número</th>
                 <th>Cliente</th>
                 <th>Partes</th>
-                <th>Ultimo andamento</th>
+                <th>Último andamento</th>
                 <th>Tribunal / vara</th>
               </tr>
             </thead>

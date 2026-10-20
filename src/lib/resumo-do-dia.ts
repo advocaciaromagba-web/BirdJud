@@ -89,12 +89,12 @@ export function assuntoDoResumo(f: FatosDoDia, nomeDoEscritorio: string): string
     return `${inicio}: ${plural(f.compromissosHoje.length, "compromisso", "compromissos")}`;
   }
   if (f.prazosAmanha.length > 0) {
-    return `${inicio}: ${plural(f.prazosAmanha.length, "prazo vence no proximo dia util", "prazos vencem no proximo dia util")}`;
+    return `${inicio}: ${plural(f.prazosAmanha.length, "prazo vence no próximo dia útil", "prazos vencem no próximo dia útil")}`;
   }
   if (f.prazosProximos.length > 0) {
-    return `${inicio}: ${plural(f.prazosProximos.length, "prazo nos proximos 4 dias uteis", "prazos nos proximos 4 dias uteis")}`;
+    return `${inicio}: ${plural(f.prazosProximos.length, "prazo nos próximos 4 dias úteis", "prazos nos próximos 4 dias úteis")}`;
   }
-  return `${inicio}: ${plural(f.audienciasAmanha, "audiencia amanha", "audiencias amanha")}`;
+  return `${inicio}: ${plural(f.audienciasAmanha, "audiência amanhã", "audiências amanhã")}`;
 }
 
 /** Uma linha so, para o WhatsApp: numeros, nao narrativa. */
@@ -104,16 +104,16 @@ export function linhaDoResumo(f: FatosDoDia): string {
     partes.push(`${plural(f.prazosVencidos.length, "prazo vencido", "prazos vencidos")}`);
   }
   if (f.prazosHoje.length > 0) partes.push(`${f.prazosHoje.length} vencendo hoje`);
-  if (f.prazosAmanha.length > 0) partes.push(`${f.prazosAmanha.length} no proximo dia util`);
-  if (f.prazosProximos.length > 0) partes.push(`${f.prazosProximos.length} nos proximos 4 dias uteis`);
+  if (f.prazosAmanha.length > 0) partes.push(`${f.prazosAmanha.length} no próximo dia útil`);
+  if (f.prazosProximos.length > 0) partes.push(`${f.prazosProximos.length} nos próximos 4 dias úteis`);
   if (f.compromissosHoje.length > 0) {
     partes.push(plural(f.compromissosHoje.length, "compromisso hoje", "compromissos hoje"));
   }
   if (f.audienciasAmanha > 0) {
-    partes.push(plural(f.audienciasAmanha, "audiencia amanha", "audiencias amanha"));
+    partes.push(plural(f.audienciasAmanha, "audiência amanhã", "audiências amanhã"));
   }
   if (f.publicacoesNovas > 0) {
-    partes.push(plural(f.publicacoesNovas, "publicacao nova", "publicacoes novas"));
+    partes.push(plural(f.publicacoesNovas, "publicação nova", "publicações novas"));
   }
   return partes.join(", ") + ".";
 }
@@ -148,7 +148,7 @@ export function corpoDoResumo(
 
   if (f.prazosVencidos.length > 0) {
     blocos.push(
-      `<p style="margin:0 0 4px"><strong style="color:#b45309">Prazo vencido e nao cumprido</strong></p>` +
+      `<p style="margin:0 0 4px"><strong style="color:#b45309">Prazo vencido e não cumprido</strong></p>` +
         lista(f.prazosVencidos.map((p) => linhaDePrazo(p, true))),
     );
   }
@@ -172,23 +172,23 @@ export function corpoDoResumo(
   }
   if (f.prazosAmanha.length > 0) {
     blocos.push(
-      `<p style="margin:0 0 4px"><strong>Vence no proximo dia util</strong></p>` +
+      `<p style="margin:0 0 4px"><strong>Vence no próximo dia útil</strong></p>` +
         lista(f.prazosAmanha.map((p) => linhaDePrazo(p, true))),
     );
   }
   if (f.prazosProximos.length > 0) {
     blocos.push(
-      `<p style="margin:0 0 4px"><strong>Prazo fatal nos proximos 4 dias uteis</strong></p>` +
+      `<p style="margin:0 0 4px"><strong>Prazo fatal nos próximos 4 dias úteis</strong></p>` +
         lista(f.prazosProximos.map((p) => linhaDePrazo(p, true))),
     );
   }
 
   const rodape: string[] = [];
   if (f.audienciasAmanha > 0) {
-    rodape.push(plural(f.audienciasAmanha, "audiencia amanha", "audiencias amanha"));
+    rodape.push(plural(f.audienciasAmanha, "audiência amanhã", "audiências amanhã"));
   }
   if (f.publicacoesNovas > 0) {
-    rodape.push(plural(f.publicacoesNovas, "publicacao nova", "publicacoes novas"));
+    rodape.push(plural(f.publicacoesNovas, "publicação nova", "publicações novas"));
   }
 
   return (
@@ -196,7 +196,7 @@ export function corpoDoResumo(
     `<p style="margin:0 0 14px">Bom dia. O que o dia reserva no ${escapar(nomeDoEscritorio)}:</p>` +
     blocos.join("") +
     (rodape.length > 0
-      ? `<p style="margin:0 0 14px;color:#475569">Tambem: ${rodape.join(", ")}.</p>`
+      ? `<p style="margin:0 0 14px;color:#475569">Também: ${rodape.join(", ")}.</p>`
       : "") +
     `<p style="margin:16px 0 0"><a href="${endereco}" style="color:#1e293b">Abrir o sistema</a></p>` +
     `</div>`

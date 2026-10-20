@@ -39,7 +39,7 @@ export type Contexto = { escritorioId: string | null; dados: unknown };
 
 /** Apura o retrato de uso do mes: o que alimenta franquia e fatura. */
 async function apurarConsumo({ escritorioId, dados }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("APURAR_CONSUMO exige escritorio.");
+  if (!escritorioId) throw new Error("APURAR_CONSUMO exige escritório.");
   const competencia =
     typeof dados === "object" && dados !== null && "competencia" in dados
       ? String((dados as { competencia: unknown }).competencia)
@@ -72,7 +72,7 @@ async function apurarConsumo({ escritorioId, dados }: Contexto): Promise<void> {
  * ajusta o status do escritorio conforme o atraso.
  */
 async function ruaDeCobranca({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("REGUA_DE_COBRANCA exige escritorio.");
+  if (!escritorioId) throw new Error("REGUA_DE_COBRANCA exige escritório.");
   await aplicarRegua(escritorioId);
 }
 
@@ -102,7 +102,7 @@ async function purgar(): Promise<void> {
  * e deixar para o dia seguinte seria mostrar o prazo em dobro por um dia.
  */
 async function capturar({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("CAPTURAR_PUBLICACOES exige escritorio.");
+  if (!escritorioId) throw new Error("CAPTURAR_PUBLICACOES exige escritório.");
   const resultado = await capturarPublicacoes(escritorioId);
   if (resultado.processosNovos > 0) {
     console.log(`CAPTURAR_PUBLICACOES ${escritorioId}: ${resultado.processosNovos} processo(s) novo(s) cadastrado(s).`);
@@ -160,7 +160,7 @@ async function capturar({ escritorioId }: Contexto): Promise<void> {
  * sem duplicar.
  */
 async function avisar({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("AVISAR exige escritorio.");
+  if (!escritorioId) throw new Error("AVISAR exige escritório.");
 
   await gerarAvisos(escritorioId);
 
@@ -179,7 +179,7 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
     // Nao e erro do trabalho: e configuracao que falta no escritorio. Repetir
     // a tentativa nao ajuda, e marcar como falha encheria a fila de ruido.
     console.log(
-      `AVISAR ${escritorioId}: e-mail nao conectado, avisos aguardando.`,
+      `AVISAR ${escritorioId}: e-mail não conectado, avisos aguardando.`,
     );
   }
 
@@ -188,13 +188,13 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
   const zap = await enviarAvisosNoWhatsapp(escritorioId);
   if (zap.semNumero) {
     console.log(
-      `AVISAR ${escritorioId}: WhatsApp nao conectado, avisos aguardando.`,
+      `AVISAR ${escritorioId}: WhatsApp não conectado, avisos aguardando.`,
     );
   }
 
   const falhas = envio.falhas + zap.falhas;
   if (falhas > 0) {
-    throw new Error(`${falhas} aviso(s) nao enviado(s).`);
+    throw new Error(`${falhas} aviso(s) não enviado(s).`);
   }
 }
 
@@ -207,7 +207,7 @@ async function avisar({ escritorioId }: Contexto): Promise<void> {
 async function sincronizarCobrancasDoEscritorio({
   escritorioId,
 }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("SINCRONIZAR_COBRANCAS exige escritorio.");
+  if (!escritorioId) throw new Error("SINCRONIZAR_COBRANCAS exige escritório.");
 
   let resultado;
   try {
@@ -215,7 +215,7 @@ async function sincronizarCobrancasDoEscritorio({
   } catch (erro) {
     if (erro instanceof SemContaDeCobranca) {
       console.log(
-        `SINCRONIZAR_COBRANCAS ${escritorioId}: conta Asaas nao conectada.`,
+        `SINCRONIZAR_COBRANCAS ${escritorioId}: conta Asaas não conectada.`,
       );
       return;
     }
@@ -227,7 +227,7 @@ async function sincronizarCobrancasDoEscritorio({
       .map((f) => `${f.cobranca}: ${f.motivo}`)
       .join(" | ");
     throw new Error(
-      `Falha em ${resultado.falhas.length} cobranca(s) — ${motivos}`,
+      `Falha em ${resultado.falhas.length} cobrança(s) — ${motivos}`,
     );
   }
 }
@@ -257,7 +257,7 @@ async function limparVencidos(): Promise<void> {
  * do trabalho: e decisao que espera alguem. Vira linha no log e fica na tela.
  */
 async function emitirHonorarios({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("EMITIR_HONORARIOS exige escritorio.");
+  if (!escritorioId) throw new Error("EMITIR_HONORARIOS exige escritório.");
 
   // Antes de emitir: todo contrato com as parcelas a receber no financeiro.
   // Idempotente; pega os contratos gravados antes de a previsao existir.
@@ -269,7 +269,7 @@ async function emitirHonorarios({ escritorioId }: Contexto): Promise<void> {
     r = await emitirParcelasDevidas(escritorioId);
   } catch (erro) {
     if (erro instanceof SemContaDeCobranca) {
-      console.log(`EMITIR_HONORARIOS ${escritorioId}: conta Asaas nao conectada.`);
+      console.log(`EMITIR_HONORARIOS ${escritorioId}: conta Asaas não conectada.`);
       return;
     }
     throw erro;
@@ -280,7 +280,7 @@ async function emitirHonorarios({ escritorioId }: Contexto): Promise<void> {
   }
   if (r.falhas.length > 0) {
     console.log(
-      `EMITIR_HONORARIOS ${escritorioId}: esperando decisao — ${r.falhas.join(" | ")}`,
+      `EMITIR_HONORARIOS ${escritorioId}: esperando decisão — ${r.falhas.join(" | ")}`,
     );
   }
 }
@@ -293,7 +293,7 @@ async function emitirHonorarios({ escritorioId }: Contexto): Promise<void> {
  * em nada. Repetir nao duplica.
  */
 async function gerarContasAPagar({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("GERAR_CONTAS_A_PAGAR exige escritorio.");
+  if (!escritorioId) throw new Error("GERAR_CONTAS_A_PAGAR exige escritório.");
   const r = await gerarContasDoMes(escritorioId);
   if (r.criados > 0) {
     console.log(`GERAR_CONTAS_A_PAGAR ${escritorioId}: ${r.criados} conta(s) do mes.`);
@@ -313,7 +313,7 @@ async function gerarContasAPagar({ escritorioId }: Contexto): Promise<void> {
  * repetido, e o envio so olha o que esta pendente.
  */
 async function lembrar({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("LEMBRAR exige escritorio.");
+  if (!escritorioId) throw new Error("LEMBRAR exige escritório.");
 
   // Primeiro a entrega do que ja saiu: reenvio automatico vencido entra na
   // fila e sai nesta mesma passada; o que precisa de alguem vira alerta.
@@ -332,11 +332,11 @@ async function lembrar({ escritorioId }: Contexto): Promise<void> {
  * processos-do-djen.ts.
  */
 async function importarProcessos({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("IMPORTAR_PROCESSOS exige escritorio.");
+  if (!escritorioId) throw new Error("IMPORTAR_PROCESSOS exige escritório.");
   const r = await importarProcessosPendentes(escritorioId);
   console.log(
     `IMPORTAR_PROCESSOS ${escritorioId}: ${r.comunicacoes} comunicacao(oes), ${r.criados} processo(s) novo(s), ` +
-      `${r.comCliente} ja com cliente, ${r.segredos} em segredo (a mao)` +
+      `${r.comCliente} já com cliente, ${r.segredos} em segredo (a mão)` +
       (r.falhas.length ? `, ${r.falhas.length} janela(s) com falha — ${r.falhas.slice(0, 3).join(" | ")}` : ""),
   );
 }
@@ -350,7 +350,7 @@ async function importarProcessos({ escritorioId }: Contexto): Promise<void> {
  * sao justamente os dias em que o prazo escapa.
  */
 async function triar({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("TRIAR_PUBLICACOES exige escritorio.");
+  if (!escritorioId) throw new Error("TRIAR_PUBLICACOES exige escritório.");
   const feitas = await triarPendentes(escritorioId);
   if (feitas > 0) {
     console.log(`TRIAR_PUBLICACOES ${escritorioId}: ${feitas} publicacao(oes).`);
@@ -364,7 +364,7 @@ async function triar({ escritorioId }: Contexto): Promise<void> {
  * agenda e do sistema base. Ver arquivarVencidos para o que sai e o que fica.
  */
 async function arquivarAgenda({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("ARQUIVAR_AGENDA exige escritorio.");
+  if (!escritorioId) throw new Error("ARQUIVAR_AGENDA exige escritório.");
   // Peca e prazo que ainda estavam na agenda ou na tela de Prazos vao para
   // Tarefas (separarAgendaETarefas). Idempotente: depois da primeira vez, nao
   // acha nada.
@@ -390,7 +390,7 @@ async function arquivarAgenda({ escritorioId }: Contexto): Promise<void> {
  * erro vai para o log. A copia e conveniencia; o documento esta no sistema.
  */
 async function organizarNuvem({ escritorioId }: Contexto): Promise<void> {
-  if (!escritorioId) throw new Error("ORGANIZAR_NUVEM exige escritorio.");
+  if (!escritorioId) throw new Error("ORGANIZAR_NUVEM exige escritório.");
   const pastas = await organizarPastas(escritorioId);
   if (!pastas.conectada) return;
 
@@ -435,7 +435,7 @@ async function organizarNuvem({ escritorioId }: Contexto): Promise<void> {
 async function emitirNotaDaPlataforma({ escritorioId, dados }: Contexto): Promise<void> {
   const bruto = (dados ?? {}) as { faturaId?: unknown };
   const faturaId = typeof bruto.faturaId === "string" ? bruto.faturaId : null;
-  if (!escritorioId || !faturaId) throw new Error("EMITIR_NOTA_DA_PLATAFORMA exige escritorio e fatura.");
+  if (!escritorioId || !faturaId) throw new Error("EMITIR_NOTA_DA_PLATAFORMA exige escritório e fatura.");
   const nota = await emitirNotaDaFatura(faturaId, "AUTOMATICA");
   if (nota.status === "REJEITADA") throw new Error(`nota da fatura ${faturaId} recusada: ${nota.erro ?? "sem detalhe"}`);
   console.log(`ok   EMITIR_NOTA_DA_PLATAFORMA ${escritorioId}: ${nota.status} ${nota.numeroNaPrefeitura ?? ""}`.trim());

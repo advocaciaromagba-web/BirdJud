@@ -14,13 +14,13 @@ import {
  *   - achar que um pagamento alheio e nosso -> baixa na fatura errada;
  *   - achar que um pagamento nosso e alheio -> escritorio pago e suspenso.
  */
-describe("referencia de cobranca", () => {
-  it("marca a referencia com o sistema e o tipo", () => {
+describe("referência de cobrança", () => {
+  it("marca a referência com o sistema e o tipo", () => {
     expect(referencia("fatura", "abc123")).toBe("birdjud:fatura:abc123");
     expect(referencia("escritorio", "esc1")).toBe("birdjud:escritorio:esc1");
   });
 
-  it("reconhece a propria marca", () => {
+  it("reconhece a própria marca", () => {
     expect(lerReferencia("birdjud:fatura:abc123")).toEqual({
       dono: "nosso",
       tipo: "fatura",
@@ -28,7 +28,7 @@ describe("referencia de cobranca", () => {
     });
   });
 
-  it("devolve o que a referencia ida produziu", () => {
+  it("devolve o que a referência ida produziu", () => {
     const leitura = lerReferencia(referencia("fatura", "cmul0001"));
     expect(leitura).toEqual({ dono: "nosso", tipo: "fatura", id: "cmul0001" });
   });
@@ -43,7 +43,7 @@ describe("referencia de cobranca", () => {
     }
   });
 
-  it("nao se engana com maiusculas na marca", () => {
+  it("não se engana com maiusculas na marca", () => {
     expect(lerReferencia("BirdJud:fatura:abc")).toEqual({
       dono: "nosso",
       tipo: "fatura",
@@ -55,7 +55,7 @@ describe("referencia de cobranca", () => {
     });
   });
 
-  it("nao chuta: referencia sem marca fica indefinida, nunca nossa", () => {
+  it("não chuta: referência sem marca fica indefinida, nunca nossa", () => {
     // Era assim que as cobrancas antigas saiam, e e assim que saem as de
     // sistemas que nao marcam. Quem le decide pelo banco.
     expect(lerReferencia("cmuljjo3z0000tp3nyq30n0tl")).toEqual({
@@ -70,17 +70,17 @@ describe("referencia de cobranca", () => {
     });
   });
 
-  it("nossa marca com tipo desconhecido nao vira tipo inventado", () => {
+  it("nossa marca com tipo desconhecido não vira tipo inventado", () => {
     const leitura = lerReferencia("birdjud:boleto:abc");
     expect(leitura.dono).toBe("indefinido");
   });
 
-  it("nossa marca sem id nao vale", () => {
+  it("nossa marca sem id não vale", () => {
     expect(lerReferencia("birdjud:fatura:").dono).toBe("indefinido");
     expect(lerReferencia("birdjud:fatura").dono).toBe("indefinido");
   });
 
-  it("id que contem o separador volta inteiro", () => {
+  it("id que contém o separador volta inteiro", () => {
     // Nao vai acontecer com cuid, mas partir o id no primeiro ":" daria baixa
     // em outra fatura — e isto e dinheiro.
     expect(lerReferencia("birdjud:fatura:a:b:c")).toEqual({
@@ -90,7 +90,7 @@ describe("referencia de cobranca", () => {
     });
   });
 
-  it("a marca e estavel: esta gravada nas cobrancas ja emitidas", () => {
+  it("a marca e estavel: esta gravada nas cobranças já emitidas", () => {
     expect(SISTEMA).toBe("birdjud");
   });
 });
@@ -111,11 +111,11 @@ describe("resumo da baixa", () => {
   it("traduz as formas do provedor", () => {
     expect(resumoDaBaixa({ forma: "BOLETO" })).toBe("recebido por boleto");
     expect(resumoDaBaixa({ forma: "CREDIT_CARD" })).toBe(
-      "recebido por cartao de credito",
+      "recebido por cartão de crédito",
     );
   });
 
-  it("forma que nao conhecemos aparece como veio, nao desaparece", () => {
+  it("forma que não conhecemos aparece como veio, não desaparece", () => {
     expect(resumoDaBaixa({ forma: "FORMA_NOVA" })).toBe(
       "recebido por FORMA_NOVA",
     );
@@ -131,13 +131,13 @@ describe("resumo da baixa", () => {
     ).toBe("baixa manual no console da plataforma");
   });
 
-  it("avisa quando a referencia veio sem marca de sistema", () => {
+  it("avisa quando a referência veio sem marca de sistema", () => {
     expect(resumoDaBaixa({ forma: "PIX", marcada: false })).toBe(
-      "recebido por Pix · sem marca de sistema na referencia",
+      "recebido por Pix · sem marca de sistema na referência",
     );
   });
 
-  it("aguenta lixo sem derrubar a pagina", () => {
+  it("aguenta lixo sem derrubar a página", () => {
     // O conteudo vem de evento de terceiro. A pagina do console e exatamente
     // onde alguem vai olhar quando o pagamento deu problema: ela nao pode ser
     // a segunda coisa a falhar.

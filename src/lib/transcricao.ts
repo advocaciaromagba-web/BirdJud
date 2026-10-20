@@ -39,14 +39,14 @@ export type Disponibilidade =
 
 export const AVISO_DA_DISPONIBILIDADE: Record<Disponibilidade, string> = {
   verificando: "Vendo se este computador consegue transcrever sem internet...",
-  pronto: "Transcricao no proprio computador. A conversa nao sai daqui.",
+  pronto: "Transcrição no próprio computador. A conversa não sai daqui.",
   "precisa-instalar":
-    "Falta baixar o portugues para transcrever sem internet. Sao alguns " +
-    "minutos, uma vez so, e depois funciona offline.",
+    "Falta baixar o português para transcrever sem internet. São alguns " +
+    "minutos, uma vez só, e depois funciona offline.",
   "sem-suporte":
-    "Este navegador nao transcreve sem mandar o audio para fora. Use o " +
-    "Chrome atualizado, ou digite a anotacao — transcrever pela nuvem " +
-    "significa a conversa do cliente sair do escritorio.",
+    "Este navegador não transcreve sem mandar o áudio para fora. Use o " +
+    "Chrome atualizado, ou digite a anotação — transcrever pela nuvem " +
+    "significa a conversa do cliente sair do escritório.",
 };
 
 /**

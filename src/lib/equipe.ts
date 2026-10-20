@@ -75,12 +75,12 @@ export async function convidarPessoa(
   const pessoa = await comEscritorio(escritorioId, (db) =>
     db.usuario.findFirst({ where: { id: usuarioId }, select: { email: true } }),
   );
-  if (!pessoa) throw new Error("Pessoa nao encontrada.");
+  if (!pessoa) throw new Error("Pessoa não encontrada.");
 
   const { token } = await criarPedido(escritorioId, usuarioId, null, "CONVITE");
   const link = `https://${quem.slug}.${dominioDaPlataforma()}/redefinir-senha?t=${token}&c=1`;
   if (!temRemetenteDaPlataforma()) {
-    return { email: pessoa.email, enviado: false, link, motivo: "A plataforma nao tem remetente de e-mail." };
+    return { email: pessoa.email, enviado: false, link, motivo: "A plataforma não tem remetente de e-mail." };
   }
   const mensagem = mensagemDeConvite({
     nomeDoEscritorio: quem.nomeDoEscritorio,
@@ -92,7 +92,7 @@ export async function convidarPessoa(
     await enviarPelaPlataforma({ para: pessoa.email, ...mensagem });
     return { email: pessoa.email, enviado: true, link: null, motivo: null };
   } catch (falha) {
-    console.error("convite nao enviado:", falha);
-    return { email: pessoa.email, enviado: false, link, motivo: "O e-mail nao pode ser enviado agora." };
+    console.error("convite não enviado:", falha);
+    return { email: pessoa.email, enviado: false, link, motivo: "O e-mail não pode ser enviado agora." };
   }
 }

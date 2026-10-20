@@ -21,13 +21,13 @@ export async function conectarPorFormulario(
   dados: Record<string, string>,
 ): Promise<{ ok: boolean; detalhe: string }> {
   const conector = CONECTORES[tipo];
-  if (!conector) throw new ConexaoRecusada("Esta integracao nao e mais configurada pelo escritorio.", 404);
+  if (!conector) throw new ConexaoRecusada("Esta integração não é mais configurada pelo escritório.", 404);
   if (conector.modulo && !(await moduloAtivo(escritorioId, conector.modulo))) {
-    throw new ConexaoRecusada(`O modulo ${conector.modulo} nao esta contratado.`, 403);
+    throw new ConexaoRecusada(`O módulo ${conector.modulo} não está contratado.`, 403);
   }
   if (conector.oauth) {
     throw new ConexaoRecusada(
-      `O ${conector.rotulo} se conecta pelo botao, entrando na conta do escritorio.`,
+      `O ${conector.rotulo} se conecta pelo botão, entrando na conta do escritório.`,
       400,
     );
   }

@@ -24,7 +24,7 @@ export type Mensagem = {
 
 export class SemRemetente extends Error {
   constructor() {
-    super("O escritorio ainda nao conectou o e-mail em Integracoes.");
+    super("O escritório ainda não conectou o e-mail em Integrações.");
     this.name = "SemRemetente";
   }
 }

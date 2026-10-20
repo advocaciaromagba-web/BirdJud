@@ -24,7 +24,7 @@ export async function PATCH(
     const { id } = await params;
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     // updateMany com o id no filtro: prazo de outro escritorio nao e
@@ -36,7 +36,7 @@ export async function PATCH(
       }),
     );
     if (r.count === 0) {
-      return NextResponse.json({ erro: "Prazo nao encontrado." }, { status: 404 });
+      return NextResponse.json({ erro: "Prazo não encontrado." }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
   } catch (erro) {

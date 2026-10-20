@@ -12,8 +12,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const operador = await exigirOperador();
     const { id } = await params;
     const existe = await prismaPlataforma().escritorio.findUnique({ where: { id }, select: { id: true } });
-    if (!existe) return NextResponse.json({ erro: "Escritorio nao encontrado." }, { status: 404 });
-    await registrarAcessoSuporte(operador.operadorId, id, "Implantacao: importacao de clientes");
+    if (!existe) return NextResponse.json({ erro: "Escritório não encontrado." }, { status: 404 });
+    await registrarAcessoSuporte(operador.operadorId, id, "Implantação: importação de clientes");
     return await atenderImportacao(req, id, `${operador.nome} (Blackbird)`);
   } catch (erro) {
     if (erro instanceof SemOperador) return NextResponse.json({ erro: erro.message }, { status: erro.status });

@@ -68,7 +68,7 @@ export default async function PaginaEntrevistas() {
       titulo="Entrevistas"
       chamada={
         naTela.length === 0
-          ? "A primeira conversa com quem procura o escritorio, virando documento."
+          ? "A primeira conversa com quem procura o escritório, virando documento."
           : semOrganizar > 0
             ? `${naTela.length} entrevista(s) · ${semOrganizar} anotada(s) esperando ser organizada(s).`
             : `${naTela.length} entrevista(s).`

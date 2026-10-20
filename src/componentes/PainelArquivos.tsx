@@ -47,15 +47,15 @@ export function PainelArquivos({
       return;
     }
     const json = await resposta.json().catch(() => ({}));
-    setErro(json.erro ?? "Nao foi possivel guardar o arquivo.");
+    setErro(json.erro ?? "Não foi possível guardar o arquivo.");
   }
 
   async function apagar(id: string, nome: string) {
-    if (!confirm(`Apagar "${nome}"? Isso nao tem volta.`)) return;
+    if (!confirm(`Apagar "${nome}"? Isso não tem volta.`)) return;
     const resposta = await fetch(`/api/arquivos/${id}`, { method: "DELETE" });
     if (!resposta.ok) {
       const json = await resposta.json().catch(() => ({}));
-      setErro(json.erro ?? "Nao foi possivel apagar.");
+      setErro(json.erro ?? "Não foi possível apagar.");
       return;
     }
     router.refresh();

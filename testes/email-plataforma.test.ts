@@ -46,13 +46,13 @@ function limpar() {
 }
 
 describe("escolha do transporte", () => {
-  it("sem nada configurado, nao ha remetente", () => {
+  it("sem nada configurado, não há remetente", () => {
     limpar();
     expect(transporteDaPlataforma()).toBeNull();
     expect(temRemetenteDaPlataforma()).toBe(false);
   });
 
-  it("Resend na frente, rele de reserva, SMTP por ultimo", () => {
+  it("Resend na frente, rele de reserva, SMTP por último", () => {
     limpar();
     process.env.EMAIL_RELE_URL = "https://rele.exemplo/api/email";
     process.env.EMAIL_RELE_TOKEN = "t";
@@ -64,7 +64,7 @@ describe("escolha do transporte", () => {
     expect(transportesDaPlataforma().map((t) => t.tipo)).toEqual(["https", "rele", "smtp"]);
   });
 
-  it("Resend sem remetente nao conta: fica o rele", () => {
+  it("Resend sem remetente não conta: fica o rele", () => {
     limpar();
     process.env.EMAIL_RELE_URL = "https://rele.exemplo/api/email";
     process.env.EMAIL_RELE_TOKEN = "t";
@@ -81,7 +81,7 @@ describe("escolha do transporte", () => {
     expect(transporteDaPlataforma()?.tipo).toBe("rele");
   });
 
-  it("rele pela metade nao conta", () => {
+  it("rele pela metade não conta", () => {
     limpar();
     process.env.EMAIL_RELE_URL = "https://rele.exemplo/api/email";
     expect(transporteDaPlataforma()).toBeNull();
@@ -90,14 +90,14 @@ describe("escolha do transporte", () => {
     expect(transporteDaPlataforma()).toBeNull();
   });
 
-  it("variavel vazia nao vale como configurada", () => {
+  it("variável vazia não vale como configurada", () => {
     limpar();
     process.env.EMAIL_RELE_URL = "   ";
     process.env.EMAIL_RELE_TOKEN = "t";
     expect(transporteDaPlataforma()).toBeNull();
   });
 
-  it("sem rele, o servico de envio vem antes do SMTP direto", () => {
+  it("sem rele, o serviço de envio vem antes do SMTP direto", () => {
     limpar();
     process.env.RESEND_API_KEY = "chave";
     process.env.PLATAFORMA_REMETENTE = "BirdJud <a@b.com>";
@@ -107,7 +107,7 @@ describe("escolha do transporte", () => {
     expect(transporteDaPlataforma()?.tipo).toBe("https");
   });
 
-  it("so com SMTP completo sobra o SMTP direto", () => {
+  it("só com SMTP completo sobra o SMTP direto", () => {
     limpar();
     process.env.PLATAFORMA_REMETENTE = "BirdJud <a@b.com>";
     process.env.PLATAFORMA_SMTP_HOST = "smtp.gmail.com";
@@ -116,7 +116,7 @@ describe("escolha do transporte", () => {
     expect(transporteDaPlataforma()?.tipo).toBe("smtp");
   });
 
-  it("barra sobrando no fim do endereco do rele nao duplica", () => {
+  it("barra sobrando no fim do endereço do rele não duplica", () => {
     limpar();
     process.env.EMAIL_RELE_URL = "https://rele.exemplo/api/email//";
     process.env.EMAIL_RELE_TOKEN = "t";
@@ -150,7 +150,7 @@ describe("envio pelo rele", () => {
     return { base: `http://127.0.0.1:${e.port}`, recebido: () => visto };
   }
 
-  it("manda a mensagem com o token no cabecalho", async () => {
+  it("manda a mensagem com o token no cabeçalho", async () => {
     limpar();
     const { base, recebido } = await subirRele(() => ({
       status: 200,
@@ -174,30 +174,30 @@ describe("envio pelo rele", () => {
     });
   });
 
-  it("rele que recusa vira FalhaNoEnvio com o motivo, nao silencio", async () => {
+  it("rele que recusa vira FalhaNoEnvio com o motivo, não silêncio", async () => {
     limpar();
     const { base } = await subirRele(() => ({
       status: 502,
-      corpo: '{"erro":"O Gmail recusou o envio: senha invalida"}',
+      corpo: '{"erro":"O Gmail recusou o envio: senha inválida"}',
     }));
     process.env.EMAIL_RELE_URL = `${base}/api/email`;
     process.env.EMAIL_RELE_TOKEN = "t";
 
     await expect(
       enviarPelaPlataforma({ para: "a@b.com", assunto: "x", texto: "y" }),
-    ).rejects.toThrow(/o rele recusou: HTTP 502.*senha invalida/);
+    ).rejects.toThrow(/o rele recusou: HTTP 502.*senha inválida/);
   });
 
-  it("rele fora do ar diz que foi o rele, nao o Gmail", async () => {
+  it("rele fora do ar diz que foi o rele, não o Gmail", async () => {
     limpar();
     process.env.EMAIL_RELE_URL = "http://127.0.0.1:1/api/email";
     process.env.EMAIL_RELE_TOKEN = "t";
     await expect(
       enviarPelaPlataforma({ para: "a@b.com", assunto: "x", texto: "y" }),
-    ).rejects.toThrow(/o rele de e-mail nao respondeu/);
+    ).rejects.toThrow(/o rele de e-mail não respondeu/);
   });
 
-  it("Resend recusou: o rele entrega, e ninguem fica sem o e-mail", async () => {
+  it("Resend recusou: o rele entrega, e ninguém fica sem o e-mail", async () => {
     limpar();
     const { base, recebido } = await subirRele((corpo) =>
       corpo.includes('"from"')

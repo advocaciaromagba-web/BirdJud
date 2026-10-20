@@ -14,7 +14,7 @@ import { FormularioCriar } from "@/componentes/FormularioCriar";
 const PAPEIS = [
   { valor: "ADMIN", rotulo: "Administrador" },
   { valor: "ADVOGADO", rotulo: "Advogado" },
-  { valor: "USUARIO", rotulo: "Usuario de apoio" },
+  { valor: "USUARIO", rotulo: "Usuário de apoio" },
 ];
 
 export default async function PaginaUsuarios() {
@@ -28,9 +28,9 @@ export default async function PaginaUsuarios() {
     if (erro instanceof SemPermissao) {
       return (
         <main className="mx-auto max-w-2xl p-10">
-          <h1 className="text-2xl font-bold">Area restrita</h1>
+          <h1 className="text-2xl font-bold">Área restrita</h1>
           <p className="mt-3 text-slate-600">
-            So administradores do escritorio cadastram usuarios.
+            Só administradores do escritório cadastram usuários.
           </p>
         </main>
       );
@@ -69,8 +69,8 @@ export default async function PaginaUsuarios() {
     >
       <p className="chamada esquerda">
         {temConvite
-          ? "O usuario novo recebe um convite por e-mail e escolhe a propria senha. Ninguem precisa passar senha por WhatsApp nem no papel."
-          : "Sem remetente de e-mail configurado na plataforma, defina uma senha provisoria aqui e passe para a pessoa; ela troca em Minha conta."}
+          ? "O usuário novo recebe um convite por e-mail e escolhe a própria senha. Ninguém precisa passar senha por WhatsApp nem no papel."
+          : "Sem remetente de e-mail configurado na plataforma, defina uma senha provisória aqui e passe para a pessoa; ela troca em Minha conta."}
       </p>
 
       {/* A faixa limita pessoas; quem esta inativo nao ocupa lugar. */}
@@ -90,13 +90,13 @@ export default async function PaginaUsuarios() {
           {
             nome: "senha",
             rotulo: temConvite
-              ? "Senha provisoria (opcional)"
-              : "Senha provisoria (minimo 10 caracteres)",
+              ? "Senha provisória (opcional)"
+              : "Senha provisória (mínimo 10 caracteres)",
             tipo: "password",
             obrigatorio: !temConvite,
             ajuda: temConvite
               ? "Deixe em branco para o sistema enviar um convite por e-mail."
-              : "Minimo de 10 caracteres.",
+              : "Mínimo de 10 caracteres.",
           },
           {
             nome: "papel",
@@ -112,11 +112,11 @@ export default async function PaginaUsuarios() {
 
       <p className="mt-6 text-sm">
         <a href="/api/exportacao" className="text-marca underline">
-          Baixar todos os dados do escritorio (JSON)
+          Baixar todos os dados do escritório (JSON)
         </a>
         <span className="block text-xs text-slate-500">
-          Inclui clientes, processos, agenda, financeiro e faturas. Nao inclui
-          senhas nem credenciais de integracao.
+          Inclui clientes, processos, agenda, financeiro e faturas. Não inclui
+          senhas nem credenciais de integração.
         </span>
       </p>
 
@@ -126,7 +126,7 @@ export default async function PaginaUsuarios() {
             <p className="font-semibold">
               {usuario.nome}{" "}
               {usuario.id === contexto.usuarioId ? (
-                <span className="text-xs text-slate-500">(voce)</span>
+                <span className="text-xs text-slate-500">(você)</span>
               ) : null}
             </p>
             <p className="text-sm text-slate-500">

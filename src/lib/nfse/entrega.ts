@@ -43,7 +43,7 @@ export async function depoisDeEmitida(escritorioId: string, notaId: string): Pro
         conteudo: pdf,
         usuarioId: nota.assinadaPorId,
         clienteId: nota.cliente.id,
-        descricao: `Nota fiscal de servico — ${nota.descricao.slice(0, 120)}`,
+        descricao: `Nota fiscal de serviço — ${nota.descricao.slice(0, 120)}`,
       });
       await comEscritorio(escritorioId, (db) =>
         db.notaFiscal.update({ where: { id: nota.id }, data: { arquivoId: arquivo.id } }),
@@ -51,7 +51,7 @@ export async function depoisDeEmitida(escritorioId: string, notaId: string): Pro
       await cutucarNuvem(escritorioId);
       entrega.guardada = true;
     } catch (e) {
-      console.error("[nfse] nao foi possivel guardar o PDF da nota:", (e as Error).message);
+      console.error("[nfse] não foi possível guardar o PDF da nota:", (e as Error).message);
     }
   }
 
@@ -60,19 +60,19 @@ export async function depoisDeEmitida(escritorioId: string, notaId: string): Pro
   const cliente = nota.cliente;
 
   if (nota.envioCliente.includes("EMAIL")) {
-    if (!cliente.email) entrega.falhas.push("E-mail: cliente nao tem e-mail cadastrado.");
+    if (!cliente.email) entrega.falhas.push("E-mail: cliente não tem e-mail cadastrado.");
     else {
       try {
         const r = await enviarLote(escritorioId, [
           {
             para: cliente.email,
-            assunto: "Nota fiscal de servico (NFS-e)",
-            texto: `Ola, ${cliente.nome}.\n\nSegue em anexo a nota fiscal de servico (NFS-e) referente ao pagamento realizado.\n\nDocumento emitido pelo Sistema Nacional da NFS-e.`,
+            assunto: "Nota fiscal de serviço (NFS-e)",
+            texto: `Ola, ${cliente.nome}.\n\nSegue em anexo a nota fiscal de serviço (NFS-e) referente ao pagamento realizado.\n\nDocumento emitido pelo Sistema Nacional da NFS-e.`,
             anexos: [{ nome, conteudo: pdf, tipo: "application/pdf" }],
           },
         ]);
         if (r.enviadas > 0) entrega.enviados.push("e-mail");
-        else entrega.falhas.push(`E-mail: ${r.falhas[0]?.motivo ?? "nao saiu"}`);
+        else entrega.falhas.push(`E-mail: ${r.falhas[0]?.motivo ?? "não saiu"}`);
       } catch (e) {
         entrega.falhas.push(`E-mail: ${(e as Error).message}`);
       }
@@ -88,7 +88,7 @@ export async function depoisDeEmitida(escritorioId: string, notaId: string): Pro
           telefoneDoCadastro: cliente.telefone,
           arquivo: pdf,
           nomeDoArquivo: nome,
-          oQueE: "Nota fiscal de servico",
+          oQueE: "Nota fiscal de serviço",
           oQueFazer: "Guarde esta nota fiscal",
           rotulo: "NFSE",
         },

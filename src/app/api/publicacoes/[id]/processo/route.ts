@@ -19,13 +19,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { escritorioId } = await exigirSessao("PUBLICACOES_DJEN", "PUBLICACOES");
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
-    if (!corpo.success) return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
 
     const r = await comEscritorio(escritorioId, async (db) => {
       const p = await db.publicacao.findFirst({ where: { id } });
-      if (!p?.numeroProcesso) return { erro: "Publicacao sem numero de processo.", status: 400 } as const;
+      if (!p?.numeroProcesso) return { erro: "Publicação sem número de processo.", status: 400 } as const;
       if (corpo.data.clienteId && !(await db.cliente.findFirst({ where: { id: corpo.data.clienteId }, select: { id: true } }))) {
-        return { erro: "Cliente nao encontrado.", status: 404 } as const;
+        return { erro: "Cliente não encontrado.", status: 404 } as const;
       }
       const existente = await db.processo.findFirst({ where: { numero: p.numeroProcesso }, select: { id: true } });
       const processo =

@@ -67,10 +67,10 @@ export function prepararParticipantes(
 ): ParticipanteLimpo[] {
   if (entrada === null || entrada === undefined) return [];
   if (!Array.isArray(entrada)) {
-    throw new ParticipanteInvalido("Lista de participantes invalida.");
+    throw new ParticipanteInvalido("Lista de participantes inválida.");
   }
   if (entrada.length > MAXIMO) {
-    throw new ParticipanteInvalido(`No maximo ${MAXIMO} participantes.`);
+    throw new ParticipanteInvalido(`No máximo ${MAXIMO} participantes.`);
   }
 
   const limpos: ParticipanteLimpo[] = [];
@@ -85,11 +85,11 @@ export function prepararParticipantes(
 
     if (!clienteId && !nome) {
       throw new ParticipanteInvalido(
-        "Participante sem cliente e sem nome: diga quem e.",
+        "Participante sem cliente e sem nome: diga quem é.",
       );
     }
     if (email && !EMAIL.test(email)) {
-      throw new ParticipanteInvalido(`E-mail invalido: ${email}`);
+      throw new ParticipanteInvalido(`E-mail inválido: ${email}`);
     }
 
     // Telefone guardado no formato de envio, nao como foi digitado: assim
@@ -97,7 +97,7 @@ export function prepararParticipantes(
     // avisar duas vezes.
     const telefone = telefoneBruto ? paraE164BR(telefoneBruto) : null;
     if (telefoneBruto && !telefone) {
-      throw new ParticipanteInvalido(`Telefone invalido: ${telefoneBruto}`);
+      throw new ParticipanteInvalido(`Telefone inválido: ${telefoneBruto}`);
     }
 
     if (clienteId) {

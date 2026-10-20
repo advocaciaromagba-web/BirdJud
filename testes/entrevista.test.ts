@@ -18,7 +18,7 @@ import {
 } from "../src/lib/entrevista";
 
 describe("roteiro de perguntas", () => {
-  it("tira vazio, espaco repetido e corta no teto", () => {
+  it("tira vazio, espaço repetido e corta no teto", () => {
     const bruto = [
       "  Quando   aconteceu?  ",
       "",
@@ -30,7 +30,7 @@ describe("roteiro de perguntas", () => {
     expect(limpo.length).toBe(MAXIMO_DE_PERGUNTAS);
   });
 
-  it("considera repetida a mesma pergunta com outra pontuacao ou caixa", () => {
+  it("considera repetida a mesma pergunta com outra pontuação ou caixa", () => {
     const limpo = arrumarRoteiro([
       "Quando aconteceu?",
       "QUANDO ACONTECEU",
@@ -40,14 +40,14 @@ describe("roteiro de perguntas", () => {
     expect(limpo).toEqual(["Quando aconteceu?", "Quem presenciou?"]);
   });
 
-  it("nunca devolve lista vazia: a tela sem roteiro nao serve a ninguem", () => {
+  it("nunca devolve lista vazia: a tela sem roteiro não serve a ninguém", () => {
     expect(arrumarRoteiro([])).toEqual([...ROTEIRO_BASICO]);
     expect(arrumarRoteiro(null)).toEqual([...ROTEIRO_BASICO]);
     expect(arrumarRoteiro(["", "   "])).toEqual([...ROTEIRO_BASICO]);
     expect(arrumarRoteiro([1, 2, {}])).toEqual([...ROTEIRO_BASICO]);
   });
 
-  it("o roteiro basico cobre data, documento, testemunha e prazo", () => {
+  it("o roteiro básico cobre data, documento, testemunha e prazo", () => {
     const tudo = ROTEIRO_BASICO.join(" ").toLowerCase();
     expect(tudo).toContain("quando");
     expect(tudo).toContain("documento");
@@ -56,8 +56,8 @@ describe("roteiro de perguntas", () => {
   });
 });
 
-describe("situacao da entrevista", () => {
-  it("segue o que a entrevista tem, e nao o que alguem gravou", () => {
+describe("situação da entrevista", () => {
+  it("segue o que a entrevista tem, e não o que alguém gravou", () => {
     expect(situacaoDe({})).toBe("RASCUNHO");
     expect(situacaoDe({ roteiro: ["a"] })).toBe("ROTEIRO");
     expect(situacaoDe({ roteiro: ["a"], transcricao: "contou tudo" })).toBe(
@@ -68,11 +68,11 @@ describe("situacao da entrevista", () => {
     ).toBe("ANALISADA");
   });
 
-  it("roteiro vazio nao conta como roteiro", () => {
+  it("roteiro vazio não conta como roteiro", () => {
     expect(situacaoDe({ roteiro: [] })).toBe("RASCUNHO");
   });
 
-  it("anotacao so com espaco nao conta como anotada", () => {
+  it("anotação só com espaço não conta como anotada", () => {
     expect(situacaoDe({ roteiro: ["a"], transcricao: "   " })).toBe("ROTEIRO");
   });
 
@@ -87,7 +87,7 @@ describe("situacao da entrevista", () => {
     ).toBe("ARQUIVADA");
   });
 
-  it("toda situacao devolvida existe na lista", () => {
+  it("toda situação devolvida existe na lista", () => {
     for (const caso of [
       {},
       { roteiro: ["a"] },
@@ -110,8 +110,8 @@ describe("urgencia", () => {
   });
 });
 
-describe("anotacao curta", () => {
-  it("o erro diz o tamanho e o minimo, porque quem le precisa saber o quanto falta", () => {
+describe("anotação curta", () => {
+  it("o erro diz o tamanho e o mínimo, porque quem le precisa saber o quanto falta", () => {
     const erro = new TranscricaoCurta(40);
     expect(erro.status).toBe(422);
     expect(erro.message).toContain("40");

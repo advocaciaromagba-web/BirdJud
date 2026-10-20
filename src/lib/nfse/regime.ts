@@ -102,10 +102,10 @@ export function pendenciasDoIbsCbs(fiscal: CamposDoRegime): string[] {
   const p: string[] = [];
   const desde = fiscal.ibsCbsDesde.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
   if (!fiscal.cIndOp?.trim() || !fiscal.cstIbsCbs?.trim() || !fiscal.cClassTribIbsCbs?.trim()) {
-    p.push(`Completar os codigos de IBS/CBS (operacao, situacao e classificacao tributaria) usados a partir de ${desde}.`);
+    p.push(`Completar os codigos de IBS/CBS (operação, situação e classificação tributária) usados a partir de ${desde}.`);
   }
   if (fiscal.ibsCbsDesde < new Date("2026-01-01T00:00:00-03:00")) {
-    p.push("A data de inicio do IBS/CBS nao pode ser anterior a 01/01/2026 — a Receita recusa a nota (rejeicao E0850).");
+    p.push("A data de início do IBS/CBS não pode ser anterior a 01/01/2026 — a Receita recusa a nota (rejeição E0850).");
   }
   return p;
 }
@@ -119,7 +119,7 @@ export function regimeVigente(fiscal: CamposDoRegime, competencia: Date = new Da
 
 /** Como o regime aparece para quem nao fala "opSimpNac". */
 export function descreverRegime(r: RegimeNfse): string {
-  const simples = r.opSimpNac === 3 ? "Optante do Simples Nacional" : "Nao optante do Simples";
+  const simples = r.opSimpNac === 3 ? "Optante do Simples Nacional" : "Não optante do Simples";
   const iss =
     r.regEspTrib === 6
       ? "ISS fixo de sociedade de profissionais"

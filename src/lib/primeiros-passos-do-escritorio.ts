@@ -79,7 +79,7 @@ export async function roteiroDoEscritorio(
 export class PassoNaoPulavel extends Error {
   readonly status = 400;
   constructor() {
-    super("Este passo e essencial e nao pode ser pulado.");
+    super("Este passo é essencial e não pode ser pulado.");
     this.name = "PassoNaoPulavel";
   }
 }

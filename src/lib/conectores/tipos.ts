@@ -69,7 +69,7 @@ export async function buscarComLimite(
 /** Erro de rede vira mensagem legivel, sem stack e sem segredo. */
 export function descreverFalha(erro: unknown): string {
   if (erro instanceof DOMException && erro.name === "AbortError") {
-    return "O servico nao respondeu a tempo.";
+    return "O serviço não respondeu a tempo.";
   }
   if (erro instanceof Error) return erro.message;
   return "Falha desconhecida.";

@@ -71,7 +71,7 @@ export function RepresentantesDoCliente({
 
     const detalhe = await resposta.json().catch(() => null);
     if (!resposta.ok) {
-      setErro(detalhe?.erro ?? "Nao consegui gravar.");
+      setErro(detalhe?.erro ?? "Não consegui gravar.");
       return;
     }
     setEditando(false);
@@ -84,8 +84,8 @@ export function RepresentantesDoCliente({
         <div>
           <h2 className="font-semibold">Quem assina pela empresa</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Entra na qualificacao da peca e na procuracao. Mais de um quando os
-            socios assinam em conjunto.
+            Entra na qualificação da peça e na procuração. Mais de um quando os
+            sócios assinam em conjunto.
           </p>
         </div>
         <button
@@ -100,8 +100,8 @@ export function RepresentantesDoCliente({
       {!editando ? (
         iniciais.length === 0 ? (
           <p className="mt-3 text-sm text-amber-700">
-            Nenhum representante cadastrado. Sem isso, a qualificacao da peca
-            sai incompleta e a procuracao nao tem quem assine.
+            Nenhum representante cadastrado. Sem isso, a qualificação da peça
+            sai incompleta e a procuração não tem quem assine.
           </p>
         ) : (
           <ul className="lista mt-3">
@@ -117,7 +117,7 @@ export function RepresentantesDoCliente({
                   </span>
                 ) : (
                   <span className="block text-xs text-amber-700">
-                    sem e-mail: a assinatura eletronica nao tem para onde ir
+                    sem e-mail: a assinatura eletrônica não tem para onde ir
                   </span>
                 )}
               </li>
@@ -207,7 +207,7 @@ export function RepresentantesDoCliente({
                 </div>
                 <div>
                   <label className="rotulo" htmlFor={`rp-prof-${i}`}>
-                    Profissao
+                    Profissão
                   </label>
                   <input
                     id={`rp-prof-${i}`}
@@ -239,7 +239,7 @@ export function RepresentantesDoCliente({
                     className="campo"
                   />
                   <p className="ajuda">
-                    E por ele que a assinatura eletronica chega.
+                    E por ele que a assinatura eletrônica chega.
                   </p>
                 </div>
               </div>

@@ -23,7 +23,7 @@ export function respostaDoDominio(erro: unknown): NextResponse | null {
   if (erro instanceof IntegracaoAusente) {
     return NextResponse.json(
       {
-        erro: "A assinatura eletronica nao esta conectada. Ligue o Autentique em Integracoes.",
+        erro: "A assinatura eletrônica não está conectada. Ligue o Autentique em Integrações.",
       },
       { status: 409 },
     );

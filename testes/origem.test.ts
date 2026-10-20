@@ -23,16 +23,16 @@ function com(cabecalhos: Record<string, string>) {
   return new Headers(cabecalhos);
 }
 
-describe("o cliente nao escolhe a propria origem", () => {
+describe("o cliente não escolhe a própria origem", () => {
   // O ataque exato que isto fecha: o cabecalho que o visitante manda fica a
   // ESQUERDA do que a borda acrescenta.
-  it("ignora o endereco forjado e fica com o que a borda escreveu", () => {
+  it("ignora o endereço forjado e fica com o que a borda escreveu", () => {
     expect(
       ipDeQuemChamou(com({ "x-forwarded-for": "1.2.3.4, 200.200.200.200" })),
     ).toBe("200.200.200.200");
   });
 
-  it("forjar varios tambem nao adianta", () => {
+  it("forjar vários também não adianta", () => {
     expect(
       ipDeQuemChamou(
         com({ "x-forwarded-for": "1.2.3.4, 5.6.7.8, 9.9.9.9, 200.200.200.200" }),
@@ -40,7 +40,7 @@ describe("o cliente nao escolhe a propria origem", () => {
     ).toBe("200.200.200.200");
   });
 
-  it("trocar o forjado a cada tentativa nao gera chave nova", () => {
+  it("trocar o forjado a cada tentativa não gera chave nova", () => {
     // Era assim que cinco tentativas viravam cinco tetos.
     const chaves = new Set<string>();
     for (let i = 0; i < 5; i++) {
@@ -50,9 +50,9 @@ describe("o cliente nao escolhe a propria origem", () => {
     expect([...chaves][0]).toBe("200.200.200.200");
   });
 
-  it("lixo no cabecalho nao vira chave", () => {
+  it("lixo no cabeçalho não vira chave", () => {
     expect(
-      ipDeQuemChamou(com({ "x-forwarded-for": "nao-sou-ip, 200.200.200.200" })),
+      ipDeQuemChamou(com({ "x-forwarded-for": "não-sou-ip, 200.200.200.200" })),
     ).toBe("200.200.200.200");
     // Sem nada legivel, cai na chave unica — e nao em uma chave por lixo.
     expect(chaveDeOrigem(com({ "x-forwarded-for": "<script>, abc" }))).toBe(
@@ -80,12 +80,12 @@ describe("o caminho normal continua funcionando", () => {
     );
   });
 
-  it("sem cabecalho nenhum, nao chuta", () => {
+  it("sem cabeçalho nenhum, não chuta", () => {
     expect(ipDeQuemChamou(com({}))).toBeNull();
     expect(chaveDeOrigem(com({}))).toBe(SEM_ORIGEM);
   });
 
-  it("le tambem o objeto simples que o NextAuth entrega", () => {
+  it("le também o objeto simples que o NextAuth entrega", () => {
     expect(
       ipDeQuemChamou({ "x-forwarded-for": "1.2.3.4, 200.200.200.200" }),
     ).toBe("200.200.200.200");
@@ -93,7 +93,7 @@ describe("o caminho normal continua funcionando", () => {
   });
 });
 
-describe("salto interno nao e visitante", () => {
+describe("salto interno não e visitante", () => {
   // Se a infraestrutura puser um endereco privado por ultimo e nos ficassemos
   // com ele, TODO MUNDO dividiria a mesma chave: o primeiro que errasse a
   // senha trancaria o sistema para os outros. Isso e pior que o buraco.
@@ -112,13 +112,13 @@ describe("salto interno nao e visitante", () => {
     }
   });
 
-  it("so havendo salto interno, usa o que tem em vez de desistir", () => {
+  it("só havendo salto interno, usa o que tem em vez de desistir", () => {
     expect(ipDeQuemChamou(com({ "x-forwarded-for": "10.0.0.7" }))).toBe("10.0.0.7");
   });
 });
 
-describe("atras do Cloudflare", () => {
-  it("solto na internet, CF-Connecting-IP e so texto de visitante", () => {
+describe("atrás do Cloudflare", () => {
+  it("solto na internet, CF-Connecting-IP e só texto de visitante", () => {
     delete process.env.ATRAS_DO_CLOUDFLARE;
     expect(
       ipDeQuemChamou(
@@ -127,7 +127,7 @@ describe("atras do Cloudflare", () => {
     ).toBe("200.200.200.200");
   });
 
-  it("atras dela, o cabecalho dela manda", () => {
+  it("atrás dela, o cabeçalho dela manda", () => {
     process.env.ATRAS_DO_CLOUDFLARE = "1";
     expect(
       ipDeQuemChamou(
@@ -136,7 +136,7 @@ describe("atras do Cloudflare", () => {
     ).toBe("200.200.200.200");
   });
 
-  it("atras dela, cabecalho dela invalido nao derruba a leitura", () => {
+  it("atrás dela, cabeçalho dela inválido não derruba a leitura", () => {
     process.env.ATRAS_DO_CLOUDFLARE = "1";
     expect(
       ipDeQuemChamou(com({ "cf-connecting-ip": "lixo", "x-forwarded-for": "1.2.3.4, 200.200.200.200" })),

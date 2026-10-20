@@ -7,9 +7,9 @@ export default async function LoginDaPlataforma() {
   if (marca?.id) {
     return (
       <main className="pagina-estreita">
-        <h1>Endereco de escritorio</h1>
+        <h1>Endereço de escritório</h1>
         <p className="chamada">
-          O painel da plataforma fica no endereco da plataforma, nao no de um
+          O painel da plataforma fica no endereço da plataforma, não no de um
           escritorio.
         </p>
       </main>

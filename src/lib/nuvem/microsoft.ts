@@ -63,7 +63,7 @@ async function chamar(acesso: string, caminho: string, init: RequestInit = {}): 
 }
 
 function falha(r: Response, oQue: string): FalhaNaNuvem {
-  return new FalhaNaNuvem(`OneDrive: nao foi possivel ${oQue} (${r.status}).`, r.status);
+  return new FalhaNaNuvem(`OneDrive: não foi possível ${oQue} (${r.status}).`, r.status);
 }
 
 async function filhos(acesso: string, paiId: string | null): Promise<ItemNaNuvem[]> {
@@ -116,7 +116,7 @@ export const onedrive: Nuvem = {
     const json = await token({ grant_type: "authorization_code", code: codigo, redirect_uri: retorno });
     const renovacao = json.refresh_token as string | undefined;
     if (!renovacao) {
-      throw new FalhaNaNuvem("A Microsoft nao devolveu acesso permanente. Tente conectar de novo.", 400);
+      throw new FalhaNaNuvem("A Microsoft não devolveu acesso permanente. Tente conectar de novo.", 400);
     }
     let conta: string | null = null;
     const eu = await chamar(String(json.access_token), "/me?$select=userPrincipalName,mail");

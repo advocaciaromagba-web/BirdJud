@@ -235,7 +235,7 @@ export async function pendentesComSugestao(escritorioId: string): Promise<{
 export class EntradaNaoEncontrada extends Error {
   readonly status = 404;
   constructor() {
-    super("Lancamento do extrato nao encontrado.");
+    super("Lançamento do extrato não encontrado.");
     this.name = "EntradaNaoEncontrada";
   }
 }
@@ -243,7 +243,7 @@ export class EntradaNaoEncontrada extends Error {
 export class ParcelaJaRecebida extends Error {
   readonly status = 409;
   constructor() {
-    super("Esta parcela ja foi recebida ou nao existe mais. Atualize a tela.");
+    super("Esta parcela já foi recebida ou não existe mais. Atualize a tela.");
     this.name = "ParcelaJaRecebida";
   }
 }
@@ -251,7 +251,7 @@ export class ParcelaJaRecebida extends Error {
 export class ValorDiferenteDaParcela extends Error {
   readonly status = 400;
   constructor() {
-    super("O valor recebido nao e o da parcela. Lance como receita avulsa e ajuste a parcela no financeiro.");
+    super("O valor recebido não é o da parcela. Lance como receita avulsa e ajuste a parcela no financeiro.");
     this.name = "ValorDiferenteDaParcela";
   }
 }

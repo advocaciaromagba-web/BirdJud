@@ -72,7 +72,7 @@ export function AcoesDaNotaDaPlataforma({ faturaId, nota }: { faturaId: string; 
             className={botao}
             disabled={ocupado}
             onClick={() => {
-              if (window.confirm("Emitir a nota fiscal desta fatura e mandar ao escritorio?")) void agir({ acao: "emitir", faturaId });
+              if (window.confirm("Emitir a nota fiscal desta fatura e mandar ao escritório?")) void agir({ acao: "emitir", faturaId });
             }}
           >
             {nota ? "Emitir de novo" : "Emitir nota"}
@@ -104,13 +104,13 @@ export function AcoesDaNotaDaPlataforma({ faturaId, nota }: { faturaId: string; 
           <label>
             <span className="block font-semibold">Motivo</span>
             <select className="campo mt-1" value={motivo} onChange={(e) => setMotivo(Number(e.target.value))}>
-              <option value={1}>Erro na emissao</option>
-              <option value={2}>Servico nao prestado</option>
+              <option value={1}>Erro na emissão</option>
+              <option value={2}>Serviço não prestado</option>
               <option value={9}>Outros</option>
             </select>
           </label>
           <label>
-            <span className="block font-semibold">Justificativa (minimo 15 caracteres)</span>
+            <span className="block font-semibold">Justificativa (mínimo 15 caracteres)</span>
             <input className="campo mt-1" value={justificativa} onChange={(e) => setJustificativa(e.target.value)} maxLength={255} />
           </label>
           <button

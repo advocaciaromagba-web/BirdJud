@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const marca = await escritorioDoEndereco();
   if (!marca?.id) {
-    return NextResponse.json({ erro: "Endereco sem escritorio." }, { status: 404 });
+    return NextResponse.json({ erro: "Endereço sem escritório." }, { status: 404 });
   }
 
   let conteudo: Buffer;

@@ -318,6 +318,14 @@ pulada — em CI, o banco de teste e obrigatorio.
 17. Backup leva credencial cifrada e serve para restaurar; exportacao nao leva
     segredo nenhum e serve para o cliente levar os dados embora. Nao confundir
     os dois.
+18. Texto que a pessoa le (tela, e-mail, documento juridico, mensagem de
+    erro) vai em portugues correto, com acento e crase. Comentario e nome
+    no codigo continuam sem acento. Ficam SEM acento, de proposito: os
+    modelos de WhatsApp (aprovados na Meta com o texto exato), as listas de
+    palavras-chave comparadas depois de `normalize("NFD")` (triagem,
+    natureza, resposta do WhatsApp, sinonimos da importacao), as chaves do
+    JSON que a IA devolve, os campos `{{...}}` dos modelos de peca, o SQL,
+    atributos de XML e enderecos de exemplo.
 18. Migracao que mexe em DADOS precisa suspender o `FORCE ROW LEVEL SECURITY`
     da tabela e repor no fim. Sem isso o `UPDATE` afeta zero linhas em silencio,
     porque o proprio usuario de migracao esta sob a politica.

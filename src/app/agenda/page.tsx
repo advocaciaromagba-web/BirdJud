@@ -101,7 +101,7 @@ export default async function PaginaAgenda() {
       acesso={contexto.acesso}
       modulos={modulos}
       titulo="Agenda"
-      chamada="Audiencias, pericias e atendimentos do escritorio."
+      chamada="Audiências, perícias e atendimentos do escritório."
     >
       <RespostasNoWhatsapp
         respostas={naCaixa.map((r) => ({

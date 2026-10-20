@@ -39,13 +39,13 @@ const ruim: EstadoDeDeploy[] = [
 ];
 
 describe("guarda do site", () => {
-  it("com o site de pe, nao pergunta nada ao Railway", async () => {
+  it("com o site de pe, não pergunta nada ao Railway", async () => {
     const { deps, chamadas } = montar();
     await rodada(deps, { saude: [], ultimaVolta: null });
     expect(chamadas.leuDeploys).toBe(0);
   });
 
-  it("guarda so as ultimas batidas", async () => {
+  it("guarda só as últimas batidas", async () => {
     const { deps } = montar();
     const fim = await rodada(deps, {
       saude: [true, true, true, true, true],
@@ -54,7 +54,7 @@ describe("guarda do site", () => {
     expect(fim.saude.length).toBeLessThanOrEqual(3);
   });
 
-  it("volta depois de tres quedas seguidas e lembra o alvo", async () => {
+  it("volta depois de três quedas seguidas e lembra o alvo", async () => {
     const { deps, chamadas } = montar({
       bater: async () => false,
       deploys: async () => ruim,
@@ -67,7 +67,7 @@ describe("guarda do site", () => {
     expect(estado.saude).toEqual([]);
   });
 
-  it("nao volta duas vezes para o mesmo alvo", async () => {
+  it("não volta duas vezes para o mesmo alvo", async () => {
     const { deps, chamadas } = montar({
       bater: async () => false,
       deploys: async () => ruim,
@@ -77,7 +77,7 @@ describe("guarda do site", () => {
     expect(chamadas.voltou).toEqual(["bom"]);
   });
 
-  it("healthcheck que estoura conta como queda, sem levantar excecao", async () => {
+  it("healthcheck que estoura conta como queda, sem levantar exceção", async () => {
     const { deps } = montar({
       bater: async () => {
         throw new Error("fetch failed");
@@ -90,7 +90,7 @@ describe("guarda do site", () => {
     expect(fim.saude).toEqual([false]);
   });
 
-  it("API do Railway fora nao derruba a rodada, e nao perde o historico", async () => {
+  it("API do Railway fora não derruba a rodada, e não perde o histórico", async () => {
     const { deps, linhas } = montar({
       bater: async () => false,
       deploys: async () => {
@@ -99,10 +99,10 @@ describe("guarda do site", () => {
     });
     const fim = await rodada(deps, { saude: [false, false], ultimaVolta: null });
     expect(fim.saude).toEqual([false, false, false]);
-    expect(linhas.join(" ")).toContain("nao consegui ler os deploys");
+    expect(linhas.join(" ")).toContain("não consegui ler os deploys");
   });
 
-  it("volta que falha nao e dada como feita", async () => {
+  it("volta que falha não e dada como feita", async () => {
     const { deps, linhas } = montar({
       bater: async () => false,
       deploys: async () => ruim,
@@ -117,7 +117,7 @@ describe("guarda do site", () => {
 });
 
 describe("acesso ao Railway", () => {
-  it("sem nenhuma variavel, a guarda fica desligada e nao reclama", async () => {
+  it("sem nenhuma variável, a guarda fica desligada e não reclama", async () => {
     const { acessoDoAmbiente } = await import("../src/lib/railway");
     expect(acessoDoAmbiente({})).toBeNull();
   });

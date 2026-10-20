@@ -52,7 +52,7 @@ function entrar(
     opcoesAuth.providers as unknown as ProvedorDeCredenciais[]
   ).find((p) => p.options?.id === provedor);
   const authorize = definicao?.options?.authorize;
-  if (!authorize) throw new Error(`Provedor ${provedor} nao encontrado.`);
+  if (!authorize) throw new Error(`Provedor ${provedor} não encontrado.`);
   return authorize(credenciais, { headers: cabecalhos });
 }
 
@@ -65,7 +65,7 @@ let escritorioId = "";
 let comSegundoFator = "";
 let segredo = "";
 
-d("forca bruta no login", () => {
+d("força bruta no login", () => {
   beforeAll(async () => {
     process.env.DOMINIO_PLATAFORMA = "birdjud.com.br";
 
@@ -115,7 +115,7 @@ d("forca bruta no login", () => {
     expect(sessao).toMatchObject({ escritorioId, papel: "ADMIN" });
   });
 
-  it("codigo de segundo fator errado conta tentativa e acaba bloqueando", async () => {
+  it("código de segundo fator errado conta tentativa e acaba bloqueando", async () => {
     // O ataque: quem ja tem a senha (vazamento, reuso) testava o codigo de
     // seis digitos a vontade, porque a falha de 2FA nao contava tentativa.
     const cabecalhos = { host: HOST, "x-forwarded-for": "10.0.1.1" };
@@ -151,7 +151,7 @@ d("forca bruta no login", () => {
     expect(comCodigoCerto).toBeNull();
   });
 
-  it("codigo certo entra quando nao ha bloqueio", async () => {
+  it("código certo entra quando não há bloqueio", async () => {
     await comEscritorio(escritorioId, (db) =>
       db.usuario.update({
         where: { id: comSegundoFator },
@@ -171,7 +171,7 @@ d("forca bruta no login", () => {
     expect(sessao).toMatchObject({ escritorioId });
   });
 
-  it("uma origem so nao testa senha em conta atras de conta", async () => {
+  it("uma origem só não testa senha em conta atrás de conta", async () => {
     // O bloqueio por conta nao alcanca isto: a mesma senha em cem contas
     // diferentes nunca bate no limite de nenhuma delas.
     const origem = `10.0.2.${marca % 200}`;
@@ -203,7 +203,7 @@ d("forca bruta no login", () => {
   });
 });
 
-d("forca bruta no login do operador", () => {
+d("força bruta no login do operador", () => {
   const email = `operador-${marca}@birdjud.com.br`;
 
   beforeAll(async () => {
@@ -219,7 +219,7 @@ d("forca bruta no login do operador", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("a conta que ve todos os escritorios tambem tem teto de tentativas", async () => {
+  it("a conta que ve todos os escritórios também tem teto de tentativas", async () => {
     // O operador nao tem coluna de bloqueio como o usuario de escritorio;
     // antes da correcao, eram tentativas infinitas contra a senha mais
     // importante do sistema.
@@ -245,7 +245,7 @@ d("forca bruta no login do operador", () => {
     expect(comSenhaCerta).toBeNull();
   });
 
-  it("o login do operador nao existe dentro do subdominio de um escritorio", async () => {
+  it("o login do operador não existe dentro do subdomínio de um escritório", async () => {
     const sessao = await entrar(
       PROVEDOR_OPERADOR,
       { email, senha: SENHA },
@@ -255,8 +255,8 @@ d("forca bruta no login do operador", () => {
   });
 });
 
-d("endereco de saude", () => {
-  it("responde sem sessao e nao conta nada alem do necessario", async () => {
+d("endereço de saúde", () => {
+  it("responde sem sessão e não conta nada além do necessário", async () => {
     const { GET } = await import("../src/app/api/saude/route");
     const resposta = await GET();
     const corpo = (await resposta.json()) as Record<string, unknown>;

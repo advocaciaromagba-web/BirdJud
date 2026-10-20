@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   try {
     const { escritorioId, nomeUsuario } = await exigirAdmin();
     const corpo = pedido.safeParse(await req.json().catch(() => null));
-    if (!corpo.success) return NextResponse.json({ erro: "Pedido invalido." }, { status: 400 });
+    if (!corpo.success) return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
 
     const p = corpo.data;
     if (p.acao === "pular") await pularPasso(escritorioId, p.chave, nomeUsuario);

@@ -17,12 +17,12 @@ function arquivoFalso(nome: string, tamanho = 10) {
 }
 
 describe("arquivo enviado", () => {
-  it("reconhece pelo formato, nao pela classe global", () => {
+  it("reconhece pelo formato, não pela classe global", () => {
     // Objeto que nao e File nenhum, e ainda assim e um arquivo enviado.
     expect(ehArquivoEnviado(arquivoFalso("contrato.pdf"))).toBe(true);
   });
 
-  it("nao confunde texto do formulario com arquivo", () => {
+  it("não confunde texto do formulário com arquivo", () => {
     expect(ehArquivoEnviado("CLIENTE")).toBe(false);
     expect(ehArquivoEnviado(null)).toBe(false);
     expect(ehArquivoEnviado(undefined)).toBe(false);
@@ -40,7 +40,7 @@ describe("arquivo enviado", () => {
     expect(achados.map((a) => a.name)).toEqual(["rg.png", "cnpj.pdf"]);
   });
 
-  it("campo sem arquivo devolve lista vazia, nao erro", () => {
+  it("campo sem arquivo devolve lista vazia, não erro", () => {
     const formulario = new FormData();
     formulario.append("perfil", "PROCESSO");
     expect(arquivosDoCampo(formulario, "arquivos")).toEqual([]);

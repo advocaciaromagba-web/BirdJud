@@ -38,7 +38,7 @@ export type Estado = {
 
 function segredo(): string {
   const s = process.env.NEXTAUTH_SECRET;
-  if (!s) throw new Error("NEXTAUTH_SECRET nao definida.");
+  if (!s) throw new Error("NEXTAUTH_SECRET não definida.");
   return s;
 }
 

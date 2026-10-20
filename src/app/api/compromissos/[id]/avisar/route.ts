@@ -25,7 +25,7 @@ export async function POST(
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const r = await avisarAgora(escritorioId, id, corpo.data.qual, usuarioId);
@@ -33,13 +33,13 @@ export async function POST(
 
     const partes: string[] = [];
     if (r.criados === 0) {
-      partes.push("Ninguem para avisar: nenhum participante com telefone ou e-mail.");
+      partes.push("Ninguém para avisar: nenhum participante com telefone ou e-mail.");
     } else {
       partes.push(`${r.criados} aviso(s) na fila — saem em instantes.`);
     }
     if (r.semContato.length) partes.push(`Sem contato: ${r.semContato.join(", ")}.`);
     if (r.soPorWhatsappDesligado.length) {
-      partes.push(`So tem telefone, e o WhatsApp nao esta ligado: ${r.soPorWhatsappDesligado.join(", ")}.`);
+      partes.push(`Só tem telefone, e o WhatsApp não está ligado: ${r.soPorWhatsappDesligado.join(", ")}.`);
     }
 
     return NextResponse.json({ ...r, mensagem: partes.join(" ") });

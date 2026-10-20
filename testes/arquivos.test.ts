@@ -35,7 +35,7 @@ const d = temBanco ? describe : describe.skip;
 const DIA = 24 * 60 * 60 * 1000;
 
 describe("regras do arquivo, antes de tocar em disco", () => {
-  it("aceita so tipo da lista, e com a extensao batendo", () => {
+  it("aceita só tipo da lista, e com a extensao batendo", () => {
     expect(tipoConfere("application/pdf", "peticao.pdf")).toBe(true);
     expect(tipoConfere("image/jpeg", "foto.JPG")).toBe(true);
     expect(tipoConfere("application/pdf", "peticao.exe")).toBe(false);
@@ -44,7 +44,7 @@ describe("regras do arquivo, antes de tocar em disco", () => {
     expect(tipoConfere("", "sem-tipo.pdf")).toBe(false);
   });
 
-  it("nome que volta para o navegador nao carrega caminho nem aspas", () => {
+  it("nome que volta para o navegador não carrega caminho nem aspas", () => {
     expect(nomeLimpo("../../etc/passwd")).toBe("passwd");
     expect(nomeLimpo('peticao".pdf')).toBe("peticao.pdf");
     expect(nomeLimpo("C:\\docs\\peca.docx")).toBe("peca.docx");
@@ -63,7 +63,7 @@ describe("regras do arquivo, antes de tocar em disco", () => {
     expect(emMb(0)).toBe(0);
   });
 
-  it("caminho no disco recusa identificador que nao seja nosso", () => {
+  it("caminho no disco recusa identificador que não seja nosso", () => {
     expect(() => caminhoDo("../outro", "abc")).toThrow();
     expect(() => caminhoDo("esc", "../../etc/passwd")).toThrow();
     expect(() => caminhoDo("esc", "a/b")).toThrow();
@@ -80,7 +80,7 @@ let usuarioBeta = "";
 
 const pdf = (texto: string) => Buffer.from(`%PDF-1.4\n${texto}`);
 
-d("arquivos por escritorio", () => {
+d("arquivos por escritório", () => {
   beforeAll(async () => {
     // Disco de teste proprio: nada escrito fora dele.
     process.env.RAIZ_ARQUIVOS = await mkdtemp(
@@ -140,7 +140,7 @@ d("arquivos por escritorio", () => {
   });
 
   it("guarda o arquivo, vincula ao processo e le de volta igual", async () => {
-    const conteudo = pdf("peticao inicial");
+    const conteudo = pdf("petição inicial");
     const { id } = await guardarArquivo(alfa, {
       nome: "inicial.pdf",
       tipo: "application/pdf",
@@ -161,7 +161,7 @@ d("arquivos por escritorio", () => {
     expect(linha?.hash).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it("o byte fica em caminho nosso, nao no nome que o usuario mandou", async () => {
+  it("o byte fica em caminho nosso, não no nome que o usuário mandou", async () => {
     const { id } = await guardarArquivo(alfa, {
       nome: "../../fuga.pdf",
       tipo: "application/pdf",
@@ -216,7 +216,7 @@ d("arquivos por escritorio", () => {
     ).rejects.toMatchObject({ status: 413 });
   });
 
-  it("mede o espaco usado no consumo do mes", async () => {
+  it("mede o espaço usado no consumo do mês", async () => {
     await guardarArquivo(alfa, {
       nome: "medicao.pdf",
       tipo: "application/pdf",
@@ -234,7 +234,7 @@ d("arquivos por escritorio", () => {
     expect(linha?.franquia).toBe(10);
   });
 
-  it("apagar libera o espaco e some com o byte", async () => {
+  it("apagar libera o espaço e some com o byte", async () => {
     const { id } = await guardarArquivo(alfa, {
       nome: "efemero.pdf",
       tipo: "application/pdf",
@@ -276,7 +276,7 @@ d("arquivos por escritorio", () => {
     expect(espaco.usadoMb).toBeLessThanOrEqual(espaco.tetoMb);
   });
 
-  it("arquivo de um escritorio nao se le do outro, nem sabendo o id", async () => {
+  it("arquivo de um escritório não se le do outro, nem sabendo o id", async () => {
     const { id } = await guardarArquivo(alfa, {
       nome: "so-do-alfa.pdf",
       tipo: "application/pdf",
@@ -296,7 +296,7 @@ d("arquivos por escritorio", () => {
     );
   });
 
-  it("nao vincula arquivo a processo de outro escritorio", async () => {
+  it("não vincula arquivo a processo de outro escritório", async () => {
     const processo = await comEscritorio(beta, (db) =>
       db.processo.create({ data: semEscritorio({ numero: `outro-${marca}` }) }),
     );
@@ -306,7 +306,7 @@ d("arquivos por escritorio", () => {
     })).rejects.toMatchObject({ status: 400 });
   });
 
-  it("linha sem byte no disco responde como nao encontrado", async () => {
+  it("linha sem byte no disco responde como não encontrado", async () => {
     // Acontece se alguem mexer no volume por fora. Melhor 404 do que 500.
     const orfao = await comEscritorio(alfa, (db) =>
       db.arquivo.create({
@@ -324,7 +324,7 @@ d("arquivos por escritorio", () => {
 });
 
 d("purga leva os arquivos junto", () => {
-  it("escritorio purgado nao deixa linha nem byte", async () => {
+  it("escritório purgado não deixa linha nem byte", async () => {
     process.env.RAIZ_ARQUIVOS ??= await mkdtemp(
       join(tmpdir(), "birdjud-purga-"),
     );

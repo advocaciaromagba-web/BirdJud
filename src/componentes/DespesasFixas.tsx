@@ -61,7 +61,7 @@ export function DespesasFixas({
       });
       const corpo = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        setErro(corpo.erro ?? "Nao foi possivel gravar.");
+        setErro(corpo.erro ?? "Não foi possível gravar.");
         return;
       }
       setNova({
@@ -92,13 +92,13 @@ export function DespesasFixas({
       });
       const corpo = await resposta.json().catch(() => ({}));
       if (!resposta.ok) {
-        setErro(corpo.erro ?? "Nao foi possivel gerar.");
+        setErro(corpo.erro ?? "Não foi possível gerar.");
         return;
       }
       setAviso(
         corpo.criados === 0
-          ? `Nada a gerar: as ${corpo.jaExistiam} despesas fixas ja estao lancadas em ${nomeDaCompetencia}.`
-          : `${corpo.criados} lancamento(s) criado(s) em ${nomeDaCompetencia}. O valor e previsto — corrija quando a conta chegar.`,
+          ? `Nada a gerar: as ${corpo.jaExistiam} despesas fixas já estão lancadas em ${nomeDaCompetencia}.`
+          : `${corpo.criados} lançamento(s) criado(s) em ${nomeDaCompetencia}. O valor é previsto — corrija quando a conta chegar.`,
       );
       router.refresh();
     } finally {
@@ -125,12 +125,12 @@ export function DespesasFixas({
 
   return (
     <section className="cartao">
-      <p className="sobretitulo">Todo mes</p>
+      <p className="sobretitulo">Todo mês</p>
       <h2 className="mt-1 text-lg font-bold">Despesas fixas</h2>
       <p className="mt-2 leitura text-slate-600">
         Aluguel, contabilidade, internet, energia. Cadastre uma vez e gere os
-        lancamentos do mes com um clique. O valor e uma previsao — conta de
-        consumo muda todo mes, e o lancamento e corrigido quando a conta chega.
+        lançamentos do mês com um clique. O valor é uma previsão — conta de
+        consumo muda todo mês, e o lançamento é corrigido quando a conta chega.
       </p>
 
       {ativas.length > 0 && (
@@ -194,7 +194,7 @@ export function DespesasFixas({
             onClick={gerar}
             disabled={ocupado}
           >
-            {ocupado ? "..." : `Gerar lancamentos de ${nomeDaCompetencia}`}
+            {ocupado ? "..." : `Gerar lançamentos de ${nomeDaCompetencia}`}
           </button>
         )}
       </div>
@@ -202,7 +202,7 @@ export function DespesasFixas({
       {aberto && (
         <form onSubmit={criar} className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="rotulo" htmlFor="fixa-descricao">Descricao</label>
+            <label className="rotulo" htmlFor="fixa-descricao">Descrição</label>
             <input
               id="fixa-descricao"
               className="campo"
@@ -258,12 +258,12 @@ export function DespesasFixas({
               onChange={(e) => setNova({ ...nova, diaDoVencimento: e.target.value })}
             />
             <p className="ajuda">
-              Dia 31 em mes de 30 cai no ultimo dia do mes, como no boleto.
+              Dia 31 em mês de 30 cai no último dia do mês, como no boleto.
             </p>
           </div>
           <div>
             <label className="rotulo" htmlFor="fixa-inicio">
-              Comeca em <span className="text-slate-500">opcional</span>
+              Começa em <span className="text-slate-500">opcional</span>
             </label>
             <input
               id="fixa-inicio"
@@ -286,8 +286,8 @@ export function DespesasFixas({
               onChange={(e) => setNova({ ...nova, fimEm: e.target.value })}
             />
             <p className="ajuda">
-              Depois desta data a conta nao e mais gerada — e o que impede
-              chegar aluguel de sala ja devolvida.
+              Depois desta data a conta não é mais gerada — é o que impede
+              chegar aluguel de sala já devolvida.
             </p>
           </div>
           <div className="sm:col-span-2">

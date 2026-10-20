@@ -47,12 +47,12 @@ const LIMITE_DO_XML = 60 * 1024 * 1024;
 const vazia = (): Celula => ({ texto: "", numero: false, cientifica: false, data: false });
 
 export async function lerPlanilha(conteudo: Buffer): Promise<Planilha> {
-  if (conteudo.byteLength === 0) throw new PlanilhaInvalida("O arquivo esta vazio.");
+  if (conteudo.byteLength === 0) throw new PlanilhaInvalida("O arquivo está vazio.");
   const b = conteudo;
   if (b[0] === 0x50 && b[1] === 0x4b) return lerXlsx(conteudo);
   if (b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0) {
     throw new PlanilhaInvalida(
-      "Este e o formato antigo do Excel (.xls). Abra no Excel e use Salvar como > Pasta de Trabalho do Excel (.xlsx), ou CSV.",
+      "Este é o formato antigo do Excel (.xls). Abra no Excel e use Salvar como > Pasta de Trabalho do Excel (.xlsx), ou CSV.",
     );
   }
   return lerCsv(conteudo);
@@ -117,21 +117,21 @@ async function lerXlsx(conteudo: Buffer): Promise<Planilha> {
   try {
     zip = await JSZip.loadAsync(conteudo);
   } catch {
-    throw new PlanilhaInvalida("O arquivo nao abriu como planilha .xlsx.");
+    throw new PlanilhaInvalida("O arquivo não abriu como planilha .xlsx.");
   }
   const texto = async (caminho: string) => {
     const f = zip.file(caminho);
     if (!f) return null;
     const t = await f.async("string");
-    if (t.length > LIMITE_DO_XML) throw new PlanilhaInvalida("A planilha e grande demais para importar de uma vez.");
+    if (t.length > LIMITE_DO_XML) throw new PlanilhaInvalida("A planilha é grande demais para importar de uma vez.");
     return t;
   };
 
   const workbook = await texto("xl/workbook.xml");
-  if (!workbook) throw new PlanilhaInvalida("O arquivo nao e uma planilha do Excel (.xlsx).");
+  if (!workbook) throw new PlanilhaInvalida("O arquivo não é uma planilha do Excel (.xlsx).");
   const base1904 = /<workbookPr\b[^>]*\bdate1904="(1|true)"/.test(workbook);
   const primeira = /<sheet\b[^>]*>/.exec(workbook)?.[0];
-  if (!primeira) throw new PlanilhaInvalida("A planilha nao tem nenhuma aba.");
+  if (!primeira) throw new PlanilhaInvalida("A planilha não tem nenhuma aba.");
   const aba = atributo(primeira, "name");
   const rid = atributo(primeira, "r:id");
 
@@ -146,7 +146,7 @@ async function lerXlsx(conteudo: Buffer): Promise<Planilha> {
     }
   }
   const folha = await texto(caminho);
-  if (!folha) throw new PlanilhaInvalida("Nao achei a primeira aba dentro do arquivo.");
+  if (!folha) throw new PlanilhaInvalida("Não achei a primeira aba dentro do arquivo.");
 
   const compartilhados: string[] = [];
   const sst = await texto("xl/sharedStrings.xml");
@@ -266,7 +266,7 @@ export function separarCsv(texto: string, separador: string): string[][] {
 function lerCsv(conteudo: Buffer): Planilha {
   const texto = decodificarTexto(conteudo);
   if (/\u0000/.test(texto.slice(0, 2000))) {
-    throw new PlanilhaInvalida("O arquivo nao e uma planilha nem um CSV de texto.");
+    throw new PlanilhaInvalida("O arquivo não é uma planilha nem um CSV de texto.");
   }
   const primeira = texto.split(/\r?\n/, 1)[0] ?? "";
   const linhas = separarCsv(texto, separadorDe(primeira)).map((l) =>

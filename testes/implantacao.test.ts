@@ -27,7 +27,7 @@ const marca = Date.now();
 let operadorId = "";
 let escritorioId = "";
 
-d("implantacao pela plataforma", () => {
+d("implantação pela plataforma", () => {
   beforeAll(async () => {
     process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 4).toString("base64");
     // Sem remetente: a entrega devolve os links para repassar.
@@ -49,7 +49,7 @@ d("implantacao pela plataforma", () => {
     await prismaPlataforma().$disconnect();
   });
 
-  it("nasce completo: plano, preco fechado, dados, administrador e OAB no DJEN", async () => {
+  it("nasce completo: plano, preço fechado, dados, administrador e OAB no DJEN", async () => {
     const r = await implantarEscritorio(
       { operadorId },
       {
@@ -94,7 +94,7 @@ d("implantacao pela plataforma", () => {
     expect(acessos).toBeGreaterThan(0);
   });
 
-  it("endereco reservado ou repetido e recusado antes de criar qualquer coisa", async () => {
+  it("endereço reservado ou repetido e recusado antes de criar qualquer coisa", async () => {
     const base = {
       nome: "X", modulos: modulosDoPlano("ESSENCIAL"), faixa: "ATE_1" as const, diasDeTeste: 30,
       dados: {}, administrador: { nome: "Y", email: `y-${marca}@x.test` },
@@ -103,12 +103,12 @@ d("implantacao pela plataforma", () => {
     await expect(implantarEscritorio({ operadorId }, { ...base, slug: `impl-${marca}` })).rejects.toBeInstanceOf(EnderecoIndisponivel);
   });
 
-  it("CNPJ com digito errado nao entra", async () => {
+  it("CNPJ com dígito errado não entra", async () => {
     const { salvarDadosDoEscritorio } = await import("../src/lib/dados-do-escritorio");
     await expect(salvarDadosDoEscritorio(escritorioId, { cnpj: "11.111.111/1111-11" })).rejects.toBeInstanceOf(DadoInvalido);
   });
 
-  it("equipe respeita a faixa: o segundo advogado nao cabe no Solo; o apoio cabe", async () => {
+  it("equipe respeita a faixa: o segundo advogado não cabe no Solo; o apoio cabe", async () => {
     await expect(
       incluirNaEquipe(operadorId, escritorioId, { nome: "Dr. Dois", email: `dois-${marca}@impl.test`, papel: "ADVOGADO", oab: "222222/SP" }),
     ).rejects.toBeInstanceOf(FaixaEsgotada);
@@ -116,18 +116,18 @@ d("implantacao pela plataforma", () => {
     expect(r.oabMonitorada).toBe(false);
   });
 
-  it("integracao: campo faltando e nuvem por formulario sao recusados", async () => {
+  it("integração: campo faltando e nuvem por formulário são recusados", async () => {
     await expect(conectarPorFormulario(escritorioId, "ASAAS", {})).rejects.toBeInstanceOf(ConexaoRecusada);
-    await expect(conectarPorFormulario(escritorioId, "MICROSOFT", {})).rejects.toThrow(/pelo botao/);
+    await expect(conectarPorFormulario(escritorioId, "MICROSOFT", {})).rejects.toThrow(/pelo botão/);
   });
 
-  it("o roteiro do escritorio enxerga o que a implantacao fez", async () => {
+  it("o roteiro do escritório enxerga o que a implantação fez", async () => {
     const r = await roteiroDoEscritorio(escritorioId);
     const s = Object.fromEntries(r.passos.map((p) => [p.chave, p.situacao]));
     expect(s).toMatchObject({ IDENTIDADE: "FEITO", EQUIPE: "FEITO", OAB_MONITORADA: "FEITO", WHATSAPP: "FEITO", SENHA_ADMIN: "PENDENTE" });
   });
 
-  it("entrega: convida quem nao entrou, devolve o link quando o e-mail nao sai, e marca a data", async () => {
+  it("entrega: convida quem não entrou, devolve o link quando o e-mail não sai, e marca a data", async () => {
     const e1 = await entregarEscritorio({ operadorId, nome: "Operadora" }, escritorioId);
     expect(e1.convites).toHaveLength(2);
     expect(e1.convites.every((c) => !c.enviado && c.link?.includes("/redefinir-senha?t="))).toBe(true);

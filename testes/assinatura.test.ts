@@ -22,12 +22,12 @@ import {
 
 const CLIENTE = { nome: "Maria Helena", email: "maria@exemplo.test" };
 const ADVOGADOS = [
-  { nome: "Jose Luciano", email: "luciano@banca.test" },
+  { nome: "José Luciano", email: "luciano@banca.test" },
   { nome: "Ana Paula", email: "ana@banca.test" },
 ];
 
-describe("quem assina cada peca", () => {
-  it("a procuracao e ato do cliente: so ele assina", () => {
+describe("quem assina cada peça", () => {
+  it("a procuração e ato do cliente: só ele assina", () => {
     // O advogado nao assina a propria procuracao. Mandar para ele assinar
     // custaria outro documento e confundiria quem recebe.
     expect(ASSINA_POR_PADRAO.PROCURACAO).toBe("CLIENTE");
@@ -35,11 +35,11 @@ describe("quem assina cada peca", () => {
     expect(s.map((x) => x.email)).toEqual(["maria@exemplo.test"]);
   });
 
-  it("a declaracao de hipossuficiencia tambem e so do cliente", () => {
+  it("a declaração de hipossuficiência também e só do cliente", () => {
     expect(montarSignatarios("DECLARACAO", CLIENTE, ADVOGADOS)).toHaveLength(1);
   });
 
-  it("o recibo e do escritorio: quem da quitacao e quem recebeu", () => {
+  it("o recibo e do escritório: quem da quitação e quem recebeu", () => {
     const s = montarSignatarios("RECIBO", CLIENTE, ADVOGADOS);
     expect(s.map((x) => x.email)).toEqual(["luciano@banca.test", "ana@banca.test"]);
   });
@@ -49,7 +49,7 @@ describe("quem assina cada peca", () => {
     expect(s).toHaveLength(3);
   });
 
-  it("nao repete quem aparece dos dois lados", () => {
+  it("não repete quem aparece dos dois lados", () => {
     // O advogado que tambem e o contato do cliente receberia dois e-mails e
     // teria de assinar o mesmo documento duas vezes. E o provedor cobra por
     // signatario.
@@ -64,7 +64,7 @@ describe("quem assina cada peca", () => {
     ]);
   });
 
-  it("deixa escolher diferente do padrao", () => {
+  it("deixa escolher diferente do padrão", () => {
     expect(montarSignatarios("PROCURACAO", CLIENTE, ADVOGADOS, "AMBOS")).toHaveLength(3);
   });
 });
@@ -82,8 +82,8 @@ describe("o que impede o envio", () => {
     expect(motivos[1]).toContain("Torto");
   });
 
-  it("peca sem signatario nenhum nao sai", () => {
-    expect(impedimentosDoEnvio([])).toEqual(["Nenhum signatario: nao ha quem assine."]);
+  it("peça sem signatário nenhum não sai", () => {
+    expect(impedimentosDoEnvio([])).toEqual(["Nenhum signatário: não há quem assine."]);
   });
 
   it("e-mail bom passa", () => {
@@ -145,7 +145,7 @@ describe("em que pe esta o documento", () => {
     expect(situacaoDoDocumento([s("2026-10-07"), s(null)])).toBe("PARCIAL");
   });
 
-  it("ninguem assinou e enviado", () => {
+  it("ninguém assinou e enviado", () => {
     expect(situacaoDoDocumento([s(null), s(null)])).toBe("ENVIADO");
   });
 });
@@ -202,13 +202,13 @@ describe("o envio no fio", () => {
   });
 
   const PECA = {
-    nome: "Contrato de honorarios - Maria Helena",
+    nome: "Contrato de honorários - Maria Helena",
     nomeDoArquivo: "contrato-maria.pdf",
     arquivo: Buffer.from("%PDF-1.7 fingindo ser um contrato"),
     signatarios: montarSignatarios("CONTRATO", CLIENTE, [ADVOGADOS[0]]),
   };
 
-  it("sobe o PDF como arquivo, nao dentro do JSON", async () => {
+  it("sobe o PDF como arquivo, não dentro do JSON", async () => {
     resposta = {
       status: 200,
       corpo: {
@@ -227,7 +227,7 @@ describe("o envio no fio", () => {
               },
               {
                 public_id: "b",
-                name: "Jose Luciano",
+                name: "José Luciano",
                 email: "luciano@banca.test",
                 link: { short_link: "https://assina.test/b" },
                 signed: null,
@@ -253,7 +253,7 @@ describe("o envio no fio", () => {
     expect(doc.signatarios[0].link).toBe("https://assina.test/a");
   });
 
-  it("nao chega a mandar quando falta e-mail — nem gasta documento", async () => {
+  it("não chega a mandar quando falta e-mail — nem gasta documento", async () => {
     recebido = {};
     await expect(
       enviarDocumento("token-de-teste", {
@@ -268,16 +268,16 @@ describe("o envio no fio", () => {
   it("erro de GraphQL com status 200 e erro", async () => {
     // GraphQL responde 200 mesmo quando recusou. Ler so o status deixaria o
     // sistema gravar um envio que nunca existiu.
-    resposta = { status: 200, corpo: { errors: [{ message: "Plano sem creditos." }] } };
-    await expect(enviarDocumento("t", PECA)).rejects.toThrow("Plano sem creditos.");
+    resposta = { status: 200, corpo: { errors: [{ message: "Plano sem créditos." }] } };
+    await expect(enviarDocumento("t", PECA)).rejects.toThrow("Plano sem créditos.");
   });
 
   it("token recusado diz onde reconectar", async () => {
     resposta = { status: 401, corpo: {} };
-    await expect(enviarDocumento("t", PECA)).rejects.toThrow(/Integracoes/);
+    await expect(enviarDocumento("t", PECA)).rejects.toThrow(/Integrações/);
   });
 
-  it("consulta devolve quem ja assinou", async () => {
+  it("consulta devolve quem já assinou", async () => {
     resposta = {
       status: 200,
       corpo: {

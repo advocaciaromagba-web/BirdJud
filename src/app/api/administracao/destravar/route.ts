@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       // A mesma resposta para senha errada e para qualquer outra recusa de
       // senha: nada aqui ajuda quem esta tentando adivinhar.
       return NextResponse.json(
-        { erro: "Senha de administracao incorreta." },
+        { erro: "Senha de administração incorreta." },
         { status: 403 },
       );
     }

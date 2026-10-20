@@ -102,28 +102,28 @@ export function montarPromptMinuta(
   const partes: string[] = [];
 
   partes.push(
-    "Voce e advogado(a) brasileiro(a) e vai redigir uma PETICAO INICIAL completa, pronta para protocolo, " +
-      "a partir das informacoes colhidas na entrevista de triagem abaixo.",
+    "Você é advogado(a) brasileiro(a) e vai redigir uma PETICAO INICIAL completa, pronta para protocolo, " +
+      "a partir das informações colhidas na entrevista de triagem abaixo.",
     "",
     "REGRAS QUE VOCE DEVE SEGUIR:",
-    "1. Use SOMENTE os fatos descritos abaixo. Nao invente fato, data, valor, documento ou testemunha.",
-    "2. Onde faltar informacao necessaria, escreva [PREENCHER: o que falta] no meio do texto. Nao preencha por conta propria.",
-    "3. Nao afirme a existencia de documento que nao conste na lista de documentos disponiveis.",
-    "4. Indique a fundamentacao juridica com artigos de lei, sumulas e teses aplicaveis, mas revise: " +
-      "nao cite precedente do qual nao tenha certeza.",
-    "5. Formule os pedidos de forma certa e determinada, cada um em item proprio.",
+    "1. Use SOMENTE os fatos descritos abaixo. Não invente fato, data, valor, documento ou testemunha.",
+    "2. Onde faltar informação necessária, escreva [PREENCHER: o que falta] no meio do texto. Não preencha por conta própria.",
+    "3. Não afirme a existência de documento que não conste na lista de documentos disponíveis.",
+    "4. Indique a fundamentação jurídica com artigos de lei, súmulas e teses aplicáveis, mas revise: " +
+      "não cite precedente do qual não tenha certeza.",
+    "5. Formule os pedidos de forma certa e determinada, cada um em item próprio.",
     "6. Ao final, liste separadamente as PENDENCIAS que o advogado precisa resolver antes do protocolo.",
     "",
     "ESTRUTURA EXIGIDA (CPC, art. 319):",
-    "- Enderecamento ao juizo competente",
-    "- Qualificacao completa das partes",
+    "- Enderecamento ao juízo competente",
+    "- Qualificação completa das partes",
     "- DOS FATOS",
     "- DO DIREITO",
-    "- DA TUTELA DE URGENCIA (somente se os fatos justificarem; caso contrario, omita a secao)",
+    "- DA TUTELA DE URGENCIA (somente se os fatos justificarem; caso contrário, omita a seção)",
     "- DOS PEDIDOS",
     "- DAS PROVAS",
     "- DO VALOR DA CAUSA",
-    "- Fecho, local, data e espaco para assinatura",
+    "- Fecho, local, data e espaço para assinatura",
     "",
     "=".repeat(60),
     "DADOS DO CASO",
@@ -131,7 +131,7 @@ export function montarPromptMinuta(
     "",
     `AREA DO DIREITO: ${analise.area}`,
     "",
-    "PARTE AUTORA (qualificacao para a peticao):",
+    "PARTE AUTORA (qualificação para a petição):",
     qualificacao(cliente),
     "",
     "ADVOGADO(A) SUBSCRITOR(A):",
@@ -142,18 +142,18 @@ export function montarPromptMinuta(
   partes.push(
     "",
     "PARTE RE:",
-    "[PREENCHER: qualificacao completa da parte contraria]",
+    "[PREENCHER: qualificação completa da parte contrária]",
     "",
     "RESUMO DO CASO:",
     analise.resumo,
     "",
-    bloco("FATOS RELATADOS PELO CLIENTE (ordem cronologica):", analise.fatos, "[PREENCHER: fatos]"),
+    bloco("FATOS RELATADOS PELO CLIENTE (ordem cronológica):", analise.fatos, "[PREENCHER: fatos]"),
     "",
     bloco("O QUE O CLIENTE PRETENDE OBTER:", analise.pretensoes, "[PREENCHER: pedidos]"),
     "",
-    bloco("DOCUMENTOS DISPONIVEIS:", analise.documentosCitados, "Nenhum documento informado ate o momento."),
+    bloco("DOCUMENTOS DISPONIVEIS:", analise.documentosCitados, "Nenhum documento informado até o momento."),
     "",
-    bloco("DOCUMENTOS AINDA NAO OBTIDOS (nao afirme que estao anexados):", analise.documentosQueFaltam, "Nenhum."),
+    bloco("DOCUMENTOS AINDA NAO OBTIDOS (não afirme que estão anexados):", analise.documentosQueFaltam, "Nenhum."),
     "",
     bloco("TESTEMUNHAS MENCIONADAS:", analise.testemunhas, "Nenhuma."),
     "",
@@ -161,13 +161,13 @@ export function montarPromptMinuta(
     "",
   );
   if (analise.perguntasEmAberto.length > 0) {
-    partes.push(bloco("INFORMACOES QUE AINDA FALTAM (trate como lacuna, nao preencha):", analise.perguntasEmAberto, ""), "");
+    partes.push(bloco("INFORMACOES QUE AINDA FALTAM (trate como lacuna, não preencha):", analise.perguntasEmAberto, ""), "");
   }
   partes.push(
     "VALOR DA CAUSA:",
     analise.valorEnvolvido
-      ? `Valor mencionado pelo cliente: ${analise.valorEnvolvido}. Calcule o valor da causa conforme o CPC, art. 292, e explique o criterio usado.`
-      : "[PREENCHER: valor da causa] — nenhum valor foi mencionado na entrevista. Indique o criterio do CPC, art. 292, aplicavel ao pedido.",
+      ? `Valor mencionado pelo cliente: ${analise.valorEnvolvido}. Calcule o valor da causa conforme o CPC, art. 292, e explique o critério usado.`
+      : "[PREENCHER: valor da causa] — nenhum valor foi mencionado na entrevista. Indique o critério do CPC, art. 292, aplicável ao pedido.",
     "",
   );
   if (observacoesAdvogado.trim()) {
@@ -177,14 +177,14 @@ export function montarPromptMinuta(
     partes.push(
       "ATENCAO — O CADASTRO DO CLIENTE ESTA INCOMPLETO.",
       `Faltam: ${faltando.join(", ")}.`,
-      "Mantenha [PREENCHER: ...] nesses pontos e liste-os nas pendencias finais.",
+      "Mantenha [PREENCHER: ...] nesses pontos e liste-os nas pendências finais.",
       "",
     );
   }
   partes.push(
     "=".repeat(60),
-    "Redija agora a peticao inicial completa, seguindo a estrutura exigida.",
-    "Ao final, sob o titulo PENDENCIAS ANTES DO PROTOCOLO, liste tudo que ficou marcado como [PREENCHER] " +
+    "Redija agora a petição inicial completa, seguindo a estrutura exigida.",
+    "Ao final, sob o título PENDENCIAS ANTES DO PROTOCOLO, liste tudo que ficou marcado como [PREENCHER] " +
       "e tudo que o advogado precisa conferir.",
   );
   return partes.join("\n").replace(/\n{3,}/g, "\n\n").trim();

@@ -13,7 +13,7 @@ const novoCompromisso = z.object({
   titulo: z.string().min(2).max(200),
   // So o que e de estar presente: tarefa e prazo moram em Tarefas.
   tipo: z.enum(TIPOS_DA_AGENDA, {
-    errorMap: () => ({ message: "Na agenda vai audiencia, pericia ou atendimento. Tarefa e prazo vao em Tarefas." }),
+    errorMap: () => ({ message: "Na agenda vai audiência, perícia ou atendimento. Tarefa e prazo vão em Tarefas." }),
   }).default("COMPROMISSO"),
   inicio: z.string().datetime({ offset: true }).or(z.string().min(10)),
   local: z.string().max(200).optional(),
@@ -58,12 +58,12 @@ export async function POST(req: Request) {
     const { escritorioId, usuarioId } = await exigirSessao();
     const corpo = novoCompromisso.safeParse(await req.json());
     if (!corpo.success) {
-      return NextResponse.json({ erro: "Dados invalidos." }, { status: 400 });
+      return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
 
     const inicio = new Date(corpo.data.inicio);
     if (Number.isNaN(inicio.getTime())) {
-      return NextResponse.json({ erro: "Data invalida." }, { status: 400 });
+      return NextResponse.json({ erro: "Data inválida." }, { status: 400 });
     }
 
     // Agenda e de estar presente; peca e prazo vao em Tarefas (natureza.ts).
@@ -79,13 +79,13 @@ export async function POST(req: Request) {
         const processo = await db.processo.findFirst({
           where: { id: campos.processoId },
         });
-        if (!processo) return { erro: "Processo nao encontrado." };
+        if (!processo) return { erro: "Processo não encontrado." };
       }
       if (campos.clienteId) {
         const cliente = await db.cliente.findFirst({
           where: { id: campos.clienteId },
         });
-        if (!cliente) return { erro: "Cliente nao encontrado." };
+        if (!cliente) return { erro: "Cliente não encontrado." };
       }
       if (responsavelId) {
         // Usuario de outro escritorio nao vira responsavel: a extensao ja
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
         const pessoa = await db.usuario.findFirst({
           where: { id: responsavelId, ativo: true },
         });
-        if (!pessoa) return { erro: "Responsavel nao encontrado." };
+        if (!pessoa) return { erro: "Responsável não encontrado." };
       }
 
       let clienteId = campos.clienteId;
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
       if (avisos > 0) await enfileirar("LEMBRAR", escritorioId);
     } catch (falha) {
       console.log(
-        `compromisso ${resultado.compromisso.id}: aviso nao gerado ${
+        `compromisso ${resultado.compromisso.id}: aviso não gerado ${
           falha instanceof Error ? falha.message : ""
         }`.slice(0, 300),
       );

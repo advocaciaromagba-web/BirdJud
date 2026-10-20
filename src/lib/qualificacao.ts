@@ -88,7 +88,7 @@ export function sedeDe(enderecos: unknown): Endereco | null {
 export function qualificacaoDoEscritorio(e: EscritorioParaQualificar): string {
   const nome = limpo(e.razaoSocial) ?? e.nome;
   const partes = [
-    "pessoa juridica de direito privado",
+    "pessoa jurídica de direito privado",
     limpo(e.cnpj) ? `inscrita no CNPJ sob o nº ${formatarDocumento(e.cnpj!)}` : null,
     limpo(e.registroOab)
       ? `com Registro de Sociedade de Advocacia nº ${e.registroOab!.trim()} junto a Ordem dos Advogados do Brasil`
@@ -150,7 +150,7 @@ export function qualificacaoDoAdvogado(a: AdvogadoParaQualificar): string {
   if (!sociedade) return dele;
 
   const daSociedade = [
-    "pessoa juridica de direito privado",
+    "pessoa jurídica de direito privado",
     limpo(a.sociedadeCnpj)
       ? `inscrita no CNPJ sob o nº ${formatarDocumento(a.sociedadeCnpj!)}`
       : null,
