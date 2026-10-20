@@ -9,6 +9,18 @@ Este documento e a ordem de fazer isso sem derrubar o sistema no caminho. Ele
 existe porque tres detalhes aqui quebram producao em silencio, e nenhum deles
 e obvio.
 
+## Onde a zona esta (20/10/2026)
+
+A zona `birdjud.com.br` foi refeita na conta da Cloudflare de
+advocaciaromagba@gmail.com (nameservers `piotr` e `riya`; os antigos,
+`ingrid` e `salvador`, eram de uma conta sem acesso). Os quatro registros de
+antes foram recriados iguais, todos na nuvem cinza; o sistema nao saiu do
+ar na troca. Alem deles, os registros do Resend em `envio.birdjud.com.br`
+(ver `docs/EMAIL-DA-PLATAFORMA.md`). Quem mexe no DNS por aqui usa uma
+chave "Edit zone DNS" guardada no ambiente da sessao, nunca no codigo.
+
+A nuvem laranja continua desligada: a ordem abaixo segue valendo.
+
 ## O que foi conferido, e quando
 
 Em 05/10/2026, na documentacao da Cloudflare:

@@ -94,25 +94,21 @@ plano gratis (100 por dia) ou fora do ar cai no Gmail, e o Gmail no limite
 dele cai no Resend — ninguem fica sem o link de senha. O SMTP direto so
 funciona em servidor proprio, por causa do bloqueio descrito acima.
 
-### Resend com o dominio da Blackbird
+### Resend com `envio.birdjud.com.br` (20/10/2026)
 
-O Resend so envia de dominio verificado — nunca de `@gmail.com`. O dominio
-`birdjud.com.br` esta numa conta da Cloudflare ainda sem acesso; por isso o
-envio usa um SUBdominio de `blackbirdsolucoes.com.br` (DNS no Registro.br, caixa
-de entrada na Zoho — o subdominio nao mexe no e-mail da Zoho):
+O Resend so envia de dominio verificado. O dominio e um SUBdominio do
+sistema, `envio.birdjud.com.br`, cadastrado no Resend (regiao Sao Paulo) com
+os registros dele criados na zona da Cloudflare: DKIM
+(`resend._domainkey.envio`), SPF (MX e TXT em `send.envio`), o CNAME
+`rsend.envio` e um `_dmarc.envio` com `p=none`. No Railway, APP e
+TRABALHADOR tem `RESEND_API_KEY` e
+`PLATAFORMA_REMETENTE=Blackbird Solucoes Notifica <notifica@envio.birdjud.com.br>`;
+as respostas continuam indo a `PLATAFORMA_RESPONDER_PARA`
+(blackbirdnotifica@gmail.com).
 
-1. resend.com → **Domains → Add domain** → `envio.blackbirdsolucoes.com.br`,
-   regiao **Sao Paulo (sa-east-1)**;
-2. registro.br → dominio → **DNS → Editar zona**: criar os registros que o
-   Resend mostrar (MX e TXT de `send.envio`, TXT de `resend._domainkey.envio`),
-   copiando nome e valor exatamente; **Verify DNS records** no Resend;
-3. **API Keys → Create** — permissao *Sending access*, so este dominio;
-4. no Railway, servicos APP e TRABALHADOR → Variables:
-   `RESEND_API_KEY=<a chave>` e
-   `PLATAFORMA_REMETENTE=Blackbird Solucoes Notifica <notifica@envio.blackbirdsolucoes.com.br>`.
-
-Enquanto o dominio nao estiver verificado, o Resend recusa e o rele entrega:
-pode ligar a chave antes, sem risco.
+O plano gratis do Resend aceita 3 dominios e 100 e-mails por dia; passando
+disso, o rele do Gmail entrega. A conta do Resend e compartilhada com outros
+sistemas do mesmo dono (so a conta do servico; nenhum dado cruza).
 
 ## Caminho 1: conta do Google com senha de aplicativo
 

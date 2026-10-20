@@ -65,11 +65,11 @@ Sem OAB cadastrada, a captura do DJEN nao tem o que buscar — e e o modulo que
 mais vende o produto. O rele esta no ar e provado com dado real do CNJ. Falta
 o cadastro.
 
-### 3. Nada na frente do sistema `[voce]`
+### 3. Nada na frente do sistema `[nos]`
 
-Ver `docs/CLOUDFLARE.md`. Bloqueado: a zona `birdjud.com.br` esta na
-Cloudflare (nameservers `ingrid` e `salvador`), mas nao na conta a que temos
-acesso. Enquanto a conta nao for encontrada, nao ha o que ligar.
+Ver `docs/CLOUDFLARE.md`. Desbloqueado em 20/10/2026: a zona `birdjud.com.br`
+foi refeita numa conta com acesso, com os mesmos registros. Falta ligar a
+nuvem laranja na ordem do documento.
 
 ### 4. Monitor externo — resolvido em 11/10/2026
 
