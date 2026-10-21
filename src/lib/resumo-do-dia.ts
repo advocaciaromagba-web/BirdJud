@@ -138,6 +138,23 @@ function linhaDePrazo(p: PrazoNoResumo, comData: boolean): string {
   return `<strong>${escapar(p.titulo)}</strong>${processo}${data}`;
 }
 
+/**
+ * Os links do rodape: cada um leva direto a tela que resolve aquele bloco
+ * (tarefas, agenda, publicacoes). A capa do sistema so quando nao ha nada.
+ */
+function linksDoResumo(f: FatosDoDia, endereco: string): string {
+  const link = (rota: string, texto: string) =>
+    `<a href="${endereco}${rota}" style="color:#1e293b">${texto}</a>`;
+  const links: string[] = [];
+  const temPrazo =
+    f.prazosVencidos.length + f.prazosHoje.length + f.prazosAmanha.length + f.prazosProximos.length > 0;
+  if (temPrazo) links.push(link("/tarefas", "Ver as tarefas"));
+  if (f.compromissosHoje.length > 0 || f.audienciasAmanha > 0) links.push(link("/agenda", "Abrir a agenda"));
+  if (f.publicacoesNovas > 0) links.push(link("/publicacoes", "Ler as publicações"));
+  if (links.length === 0) links.push(link("", "Abrir o sistema"));
+  return links.join(" &middot; ");
+}
+
 /** O corpo do e-mail. O que vem primeiro e o que se perde primeiro. */
 export function corpoDoResumo(
   f: FatosDoDia,
@@ -198,7 +215,7 @@ export function corpoDoResumo(
     (rodape.length > 0
       ? `<p style="margin:0 0 14px;color:#475569">Também: ${rodape.join(", ")}.</p>`
       : "") +
-    `<p style="margin:16px 0 0"><a href="${endereco}" style="color:#1e293b">Abrir o sistema</a></p>` +
+    `<p style="margin:16px 0 0">${linksDoResumo(f, endereco)}</p>` +
     `</div>`
   );
 }

@@ -55,9 +55,23 @@ export type Painel = {
   publicacoes: PublicacaoNoPainel[];
   naoLidas: number;
   cobrancasVencidas: { quantidade: number; totalCentavos: number };
+  /**
+   * O que ENTROU no mes corrente (receita com baixa), com o que ainda esta
+   * para entrar ate o fim do mes. Nulo sem o modulo Financeiro. A tela so
+   * mostra ao administrador: o financeiro e fechado por papel.
+   */
+  recebidoNoMes: { totalCentavos: number; quantidade: number; previstoCentavos: number } | null;
   pendencias: Pendencia[];
   modulos: Modulo[];
 };
+
+/** Inicio e fim (exclusivo) do mes corrente em Brasilia (UTC-3, sem horario de verao). */
+export function mesEmBrasilia(agora: Date): { inicio: Date; fim: Date } {
+  const [ano, mes] = diaEmBrasilia(agora).split("-").map(Number);
+  const inicio = new Date(Date.UTC(ano, mes - 1, 1, 3));
+  const fim = new Date(Date.UTC(ano, mes, 1, 3));
+  return { inicio, fim };
+}
 
 /**
  * Monta o painel de um escritorio.
@@ -74,6 +88,7 @@ export async function montarPainel(
 
   const fimDeAmanha = new Date(agora.getTime() + 2 * DIA);
   fimDeAmanha.setHours(23, 59, 59, 999);
+  const mes = mesEmBrasilia(agora);
 
   const dados = await comEscritorio(escritorioId, async (db) => ({
     compromissos: await db.compromisso.findMany({
@@ -99,6 +114,22 @@ export async function montarPainel(
           where: {
             status: { in: ["ABERTA", "VENCIDA"] },
             vencimento: { lt: agora },
+          },
+          select: { valorCentavos: true },
+        })
+      : [],
+    recebidoNoMes: tem("FINANCEIRO")
+      ? await db.lancamento.findMany({
+          where: { tipo: "RECEITA", pagoEm: { gte: mes.inicio, lt: mes.fim } },
+          select: { valorCentavos: true },
+        })
+      : null,
+    aReceberNoMes: tem("FINANCEIRO")
+      ? await db.lancamento.findMany({
+          where: {
+            tipo: "RECEITA",
+            pagoEm: null,
+            vencimento: { gte: agora, lt: mes.fim },
           },
           select: { valorCentavos: true },
         })
@@ -235,6 +266,13 @@ export async function montarPainel(
       texto: p.texto,
     })),
     naoLidas: dados.naoLidas,
+    recebidoNoMes: dados.recebidoNoMes
+      ? {
+          totalCentavos: dados.recebidoNoMes.reduce((t, l) => t + l.valorCentavos, 0),
+          quantidade: dados.recebidoNoMes.length,
+          previstoCentavos: dados.aReceberNoMes.reduce((t, l) => t + l.valorCentavos, 0),
+        }
+      : null,
     cobrancasVencidas: {
       quantidade: dados.cobrancas.length,
       totalCentavos: dados.cobrancas.reduce(

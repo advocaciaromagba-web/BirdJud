@@ -52,7 +52,7 @@ export function corpoDoResumo(
 
   linhas.push(
     "Abra o sistema para ler o texto completo e marcar como lida:",
-    endereco,
+    `${endereco}/publicacoes`,
     "",
     "O prazo indicado é leitura automática do texto e serve como alerta —",
     "confira sempre nos autos.",
@@ -99,7 +99,7 @@ export function corpoDoLembrete(
     );
   }
 
-  linhas.push("", "Agenda completa:", endereco);
+  linhas.push("", "Agenda completa:", `${endereco}/agenda`);
   return linhas.join("\n");
 }
 
@@ -170,7 +170,7 @@ export function corpoDaDesignacao(
     linhas.push(`Processo: ${formatarNumeroProcesso(compromisso.numeroProcesso)}`);
   }
 
-  linhas.push("", "Abra o sistema:", endereco);
+  linhas.push("", "Abra o sistema:", `${endereco}/agenda`);
   return linhas.join("\n");
 }
 

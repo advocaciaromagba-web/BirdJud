@@ -141,7 +141,15 @@ describe("corpo do e-mail", () => {
     expect(html).toContain("09:00");
     expect(html).toContain("Forum Central");
     expect(html).toContain("1 audiência amanhã, 3 publicações novas");
-    expect(html).toContain("https://roma.birdjud.com.br");
+    // Cada bloco leva a tela que o resolve.
+    expect(html).toContain('href="https://roma.birdjud.com.br/tarefas"');
+    expect(html).toContain('href="https://roma.birdjud.com.br/agenda"');
+    expect(html).toContain('href="https://roma.birdjud.com.br/publicacoes"');
+  });
+
+  it("sem nada a resolver, o link e a capa", () => {
+    expect(corpoDoResumo(VAZIO, "Roma", "https://x")).toContain('href="https://x"');
+    expect(corpoDoResumo(VAZIO, "Roma", "https://x")).not.toContain("/tarefas");
   });
 
   // O prazo vencido leva a data: "venceu" sem dizer quando nao ajuda a decidir

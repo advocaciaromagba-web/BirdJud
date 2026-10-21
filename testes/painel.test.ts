@@ -185,6 +185,30 @@ d("painel e busca por escritório", () => {
     expect(painel.compromissos[0].hoje).toBe(true);
   });
 
+  it("sem o módulo Financeiro, não há recebido do mês; com ele, soma só o que entrou", async () => {
+    expect((await montarPainel(alfa)).recebidoNoMes).toBeNull();
+    await comEscritorio(alfa, async (db) => {
+      await db.moduloContratado.create({ data: semEscritorio({ modulo: "FINANCEIRO", ativo: true }) });
+      const receita = (valorCentavos: number, pagoEm: Date | null, vencimento?: Date) =>
+        db.lancamento.create({
+          data: semEscritorio({ descricao: "Honorários", tipo: "RECEITA", competencia: "2026-09", valorCentavos, pagoEm, vencimento }),
+        });
+      await receita(100_00, new Date("2026-09-02T12:00:00Z"));
+      await receita(50_00, new Date("2026-09-20T12:00:00Z"));
+      // Mes passado nao conta; a receber ate o fim do mes conta como previsto.
+      await receita(999_00, new Date("2026-08-31T12:00:00Z"));
+      await receita(30_00, null, new Date("2026-09-28T12:00:00Z"));
+      await db.lancamento.create({
+        data: semEscritorio({ descricao: "Luz", tipo: "DESPESA", competencia: "2026-09", valorCentavos: 70_00, pagoEm: new Date("2026-09-10T12:00:00Z") }),
+      });
+    });
+    expect((await montarPainel(alfa)).recebidoNoMes).toEqual({ totalCentavos: 150_00, quantidade: 2, previstoCentavos: 30_00 });
+    await comEscritorio(alfa, async (db) => {
+      await db.lancamento.deleteMany({});
+      await db.moduloContratado.deleteMany({ where: { modulo: "FINANCEIRO" } });
+    });
+  });
+
   it("traz a publicação urgente e a cobrança vencida com o total", async () => {
     const painel = await montarPainel(alfa);
     expect(painel.naoLidas).toBe(1);

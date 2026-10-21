@@ -95,6 +95,8 @@ export type ContaParaAvisar = {
   corpo: string;
   /** Chave de idempotencia: um aviso por conta, por ponto da regua, por dia. */
   chave: string;
+  /** Onde a pessoa resolve: a tela certa, nao a capa do sistema. */
+  rota: "/financeiro" | "/cobrancas";
 };
 
 /**
@@ -144,6 +146,7 @@ export async function contasParaAvisar(
         `${emReais(conta.valorCentavos)} — vencimento ${diaBR(conta.vencimento!)}` +
         `${conta.fornecedor ? `, ${conta.fornecedor}` : ""}.`,
       chave: `conta:${conta.id}:${u}:${hoje}`,
+      rota: "/financeiro",
     });
   }
 
@@ -159,6 +162,7 @@ export async function contasParaAvisar(
         `${emReais(cobranca.valorCentavos)} — ${cobranca.descricao}, ` +
         `vencimento ${diaBR(cobranca.vencimento)}.`,
       chave: `recebimento:${cobranca.id}:${u}:${hoje}`,
+      rota: "/cobrancas",
     });
   }
 

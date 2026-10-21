@@ -212,6 +212,24 @@ export default async function Painel() {
         ) : null}
       </div>
 
+      {painel.recebidoNoMes && contexto.papel === "ADMIN" ? (
+        <section className="mt-6">
+          <Link href="/financeiro" className="cartao flex flex-wrap items-center gap-x-6 gap-y-1 hover:border-slate-300">
+            <Icone nome="financeiro" />
+            <span>
+              <strong>Recebido em {competenciaDe()}:</strong>{" "}
+              {emReais(painel.recebidoNoMes.totalCentavos)}
+              {painel.recebidoNoMes.quantidade > 0 ? ` (${painel.recebidoNoMes.quantidade} recebimento(s))` : ""}
+            </span>
+            {painel.recebidoNoMes.previstoCentavos > 0 ? (
+              <span className="text-slate-600">
+                Ainda previsto até o fim do mês: {emReais(painel.recebidoNoMes.previstoCentavos)}
+              </span>
+            ) : null}
+          </Link>
+        </section>
+      ) : null}
+
       {painel.cobrancasVencidas.quantidade > 0 ? (
         <section className="mt-6">
           <Link

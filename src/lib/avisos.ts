@@ -454,7 +454,7 @@ export async function gerarAvisosFinanceiros(
   escritorioId: string,
   agora = new Date(),
 ): Promise<number> {
-  const [contas, administradores] = await Promise.all([
+  const [contas, administradores, escritorio] = await Promise.all([
     contasParaAvisar(escritorioId, agora),
     comEscritorio(escritorioId, (db) =>
       db.usuario.findMany({
@@ -462,8 +462,13 @@ export async function gerarAvisosFinanceiros(
         select: { id: true, email: true },
       }),
     ),
+    prismaPlataforma().escritorio.findUniqueOrThrow({
+      where: { id: escritorioId },
+      select: { slug: true },
+    }),
   ]);
   if (contas.length === 0 || administradores.length === 0) return 0;
+  const endereco = `https://${escritorio.slug}.${dominioDaPlataforma()}`;
 
   let criados = 0;
   for (const conta of contas) {
@@ -475,7 +480,7 @@ export async function gerarAvisosFinanceiros(
         chave: `${conta.chave}:${admin.id}`,
         destino: admin.email,
         assunto: conta.titulo,
-        corpo: conta.corpo,
+        corpo: `${conta.corpo}\n\nAbra em ${endereco}${conta.rota}`,
       });
       if (criado) criados += 1;
     }

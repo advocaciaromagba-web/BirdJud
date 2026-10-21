@@ -88,6 +88,8 @@ describe("textos do aviso", () => {
     );
     expect(corpo).toContain("Forum Central");
     expect(corpo).toContain("0001234-56.2026.8.26.0100");
+    // O link leva direto a agenda, nao a capa do sistema.
+    expect(corpo).toContain("https://alfa.birdjud.com.br/agenda");
   });
 });
 
