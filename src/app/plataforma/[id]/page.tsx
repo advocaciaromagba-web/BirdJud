@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
+import { fiscalDaPlataforma, lembreteDoPercentual } from "@/lib/nota-da-plataforma";
 import { notFound, redirect } from "next/navigation";
 import { prismaPlataforma } from "@/lib/prisma";
 import {
@@ -58,6 +59,7 @@ export default async function EscritorioNoPainel({
   ]);
   const notaDaFatura = (faturaId: string) =>
     notas.find((n) => n.faturaId === faturaId) ?? notas.find((n) => n.faturaOriginalId === faturaId) ?? null;
+  const lembrete = lembreteDoPercentual(await fiscalDaPlataforma());
 
   const agora = new Date();
 
@@ -201,6 +203,7 @@ export default async function EscritorioNoPainel({
                       return (
                         <AcoesDaNotaDaPlataforma
                           faturaId={fatura.id}
+                          lembrete={lembrete}
                           nota={
                             n
                               ? {

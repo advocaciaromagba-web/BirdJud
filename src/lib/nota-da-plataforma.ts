@@ -61,6 +61,19 @@ export function certificadoDaPlataforma(): CertificadoCarregado | null {
   return certificadoEmCache.cert;
 }
 
+/**
+ * Lembrete do percentual de tributos que sai em cada nota.
+ *
+ * Nao e pendencia e nao trava nada: a nota sai, automatica ou manual. Existe
+ * para o administrador conferir, a cada emissao, se o enquadramento no
+ * Simples (anexo, Fator R) continua o mesmo e o percentual ainda vale.
+ */
+export function lembreteDoPercentual(fiscal: Pick<FiscalDaPlataforma, "opSimpNac" | "pTotTribSN"> | null): string | null {
+  if (!fiscal || fiscal.opSimpNac !== 3 || fiscal.pTotTribSN === null || fiscal.pTotTribSN === undefined) return null;
+  const pct = Number(fiscal.pTotTribSN).toFixed(2).replace(".", ",");
+  return `Percentual aproximado de tributos que sai na nota: ${pct}% (Simples Nacional). Confira com o contador se o enquadramento continua o mesmo; mudou, ajuste no cadastro fiscal antes de emitir.`;
+}
+
 /** O que falta para a plataforma emitir. Vazio = pode emitir. */
 export function pendenciasDaPlataforma(
   fiscal: FiscalDaPlataforma | null,

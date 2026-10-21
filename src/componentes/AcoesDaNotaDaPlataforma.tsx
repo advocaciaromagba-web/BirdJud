@@ -33,7 +33,16 @@ async function chamar(corpo: unknown) {
  * A nota da mensalidade de uma fatura, no console: ver, emitir, conferir,
  * reenviar ao escritorio e cancelar.
  */
-export function AcoesDaNotaDaPlataforma({ faturaId, nota }: { faturaId: string; nota: NotaNaTela | null }) {
+export function AcoesDaNotaDaPlataforma({
+  faturaId,
+  nota,
+  lembrete = null,
+}: {
+  faturaId: string;
+  nota: NotaNaTela | null;
+  /** Lembrete do percentual de tributos, mostrado antes de emitir. Nao trava. */
+  lembrete?: string | null;
+}) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(false);
   const [recado, setRecado] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -72,7 +81,8 @@ export function AcoesDaNotaDaPlataforma({ faturaId, nota }: { faturaId: string; 
             className={botao}
             disabled={ocupado}
             onClick={() => {
-              if (window.confirm("Emitir a nota fiscal desta fatura e mandar ao escritório?")) void agir({ acao: "emitir", faturaId });
+              const pergunta = `${lembrete ? `${lembrete}\n\n` : ""}Emitir a nota fiscal desta fatura e mandar ao escritório?`;
+              if (window.confirm(pergunta)) void agir({ acao: "emitir", faturaId });
             }}
           >
             {nota ? "Emitir de novo" : "Emitir nota"}

@@ -125,6 +125,7 @@ Mesmo motor (`src/lib/nfse`), emissor diferente: `src/lib/nota-da-plataforma.ts`
 | | Escritorio -> cliente | Blackbird -> escritorio |
 | --- | --- | --- |
 | Cadastro | `Fiscal` (Notas fiscais > Configurar emissor) | `FiscalDaPlataforma` (console > Notas fiscais) |
+| Lembrete do percentual | — | o percentual de tributos do Simples aparece no console e na confirmacao de cada emissao manual, para o administrador conferir o enquadramento; nao e pendencia e nao segura a automatica |
 | Certificado | enviado pelo escritorio, senha nunca guardada | variaveis `NFSE_PLATAFORMA_PFX` (base64 do .pfx) e `NFSE_PLATAFORMA_SENHA` no Railway |
 | Quem assina | o titular, digitando a senha | o sistema, sozinho |
 | Quando sai | quando o escritorio pede | ao pagamento da fatura (com "automatica" ligada) ou pelo console |

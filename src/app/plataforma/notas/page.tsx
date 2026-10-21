@@ -8,7 +8,7 @@ import { ConfigFiscal } from "@/componentes/ConfigFiscal";
 import { EmissaoAutomatica } from "@/componentes/EmissaoAutomatica";
 import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
 import { fiscalParaTela } from "@/lib/nfse/cadastro";
-import { certificadoDaPlataforma, fiscalDaPlataforma, pendenciasDaPlataforma } from "@/lib/nota-da-plataforma";
+import { certificadoDaPlataforma, fiscalDaPlataforma, lembreteDoPercentual, pendenciasDaPlataforma } from "@/lib/nota-da-plataforma";
 import type { CertificadoCarregado } from "@/lib/nfse/certificado";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,7 @@ export default async function NotasDaPlataforma() {
     erroDoCertificado = (e as Error).message;
   }
   const pendencias = pendenciasDaPlataforma(fiscal, cert);
+  const lembrete = lembreteDoPercentual(fiscal);
   if (erroDoCertificado) pendencias.unshift(`O certificado das variáveis não abriu: ${erroDoCertificado}`);
 
   const notas = await prismaPlataforma().notaDaPlataforma.findMany({ orderBy: { criadoEm: "desc" }, take: 100 });
@@ -68,6 +69,7 @@ export default async function NotasDaPlataforma() {
         ) : (
           <p className="aviso-ok mt-3">Pronto para emitir.</p>
         )}
+        {lembrete ? <p className="aviso-atencao mt-3">{lembrete} A emissão automática não espera esta conferência.</p> : null}
         <div className="mt-4">
           <EmissaoAutomatica ligada={Boolean(fiscal?.automatica)} podeLigar={pendencias.length === 0} />
         </div>
@@ -99,6 +101,7 @@ export default async function NotasDaPlataforma() {
                     ambiente: n.ambiente,
                     enviadaEm: n.enviadaEm ? data(n.enviadaEm) : null,
                   }}
+                  lembrete={lembrete}
                 />
               </li>
             ))}
