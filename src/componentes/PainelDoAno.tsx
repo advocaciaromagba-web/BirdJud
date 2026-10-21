@@ -53,6 +53,8 @@ export function PainelDoAno({
   realizado,
   despesas,
   previsto,
+  mediaMensal,
+  projecao,
   maiorMes,
 }: {
   ano: number;
@@ -63,6 +65,10 @@ export function PainelDoAno({
   realizado: string;
   despesas: string;
   previsto: string;
+  /** Media dos meses fechados; nulo antes de fevereiro. */
+  mediaMensal: string | null;
+  /** Realizado + previsto ate dezembro. */
+  projecao: string;
   maiorMes: number;
 }) {
   const router = useRouter();
@@ -121,6 +127,16 @@ export function PainelDoAno({
           <p className="text-xl font-semibold tabular-nums text-slate-600">
             {previsto}
           </p>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div>
+          <p className="text-xs text-slate-500">Média mensal (meses fechados)</p>
+          <p className="text-lg font-semibold tabular-nums">{mediaMensal ?? "—"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-slate-500">Projeção do ano (recebido + previsto)</p>
+          <p className="text-lg font-semibold tabular-nums">{projecao}</p>
         </div>
       </div>
 

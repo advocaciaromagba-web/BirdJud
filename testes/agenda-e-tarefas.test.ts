@@ -257,6 +257,7 @@ d("o que estava misturado passa para Tarefas", () => {
 
 d("regua do prazo fatal: 4 dias úteis antes, véspera e o dia", () => {
   let escritorio = "";
+  let draId = "";
 
   beforeAll(async () => {
     escritorio = (await prismaPlataforma().escritorio.create({
@@ -266,6 +267,7 @@ d("regua do prazo fatal: 4 dias úteis antes, véspera e o dia", () => {
       const dra = await db.usuario.create({
         data: semEscritorio({ nome: "Dra. Fatal", email: `fatal-${Date.now()}@f.test`, senhaHash: "x", papel: "ADMIN" }),
       });
+      draId = dra.id;
       await db.tarefa.create({
         data: semEscritorio({
           titulo: "Contestação",
@@ -301,10 +303,36 @@ d("regua do prazo fatal: 4 dias úteis antes, véspera e o dia", () => {
     expect(primeiro.assunto).toContain("PRAZO FATAL, faltam 4 dias úteis: 26/10/2026");
   });
 
-  it("na sexta (véspera útil) e na segunda (o dia) avisa de novo", async () => {
+  it("duas tarefas da mesma pessoa no mesmo marco: UMA mensagem, com as duas", async () => {
+    // Segunda tarefa com o mesmo fatal; na quinta (22/10) ela nasce, e so ela
+    // esta pendente de aviso: sai sozinha. Na sexta as duas chegam a vespera
+    // juntas: um aviso so, com a chave das duas.
+    await comEscritorio(escritorio, (db) =>
+      db.tarefa.create({
+        data: semEscritorio({
+          titulo: "Juntar procuração",
+          vencimento: new Date("2026-10-19T12:00:00Z"),
+          prazoFatal: new Date("2026-10-27T02:59:00Z"),
+          responsavelId: draId,
+          criadoPorId: draId,
+        }),
+      }),
+    );
+    expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-22T13:00:00Z"))).toBe(1);
+    const [, segundo] = await avisos();
+    expect(segundo.chave).toContain("FATAL-4du");
+    expect(segundo.chave.includes("|")).toBe(false);
+  });
+
+  it("na sexta (véspera útil) e na segunda (o dia) avisa de novo, uma mensagem por pessoa", async () => {
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-23T13:00:00Z"))).toBe(1);
     expect(await gerarLembretesDeTarefas(escritorio, new Date("2026-10-26T13:00:00Z"))).toBe(1);
-    const chaves = (await avisos()).map((a) => a.chave).sort();
-    expect(chaves.map((c) => c.split(":")[1])).toEqual(["FATAL-1du", "FATAL-4du", "FATAL-hoje"]);
+    const todos = await avisos();
+    const agrupados = todos.filter((a) => a.chave.includes("|"));
+    expect(agrupados).toHaveLength(2);
+    expect(agrupados[0].assunto).toBe("Lembrete: 2 tarefas com prazo chegando");
+    const chaves = todos.flatMap((a) => a.chave.split("|")).map((c) => c.split(":")[1]).sort();
+    expect(chaves).toEqual(["FATAL-1du", "FATAL-1du", "FATAL-4du", "FATAL-4du", "FATAL-hoje", "FATAL-hoje"]);
   });
+
 });

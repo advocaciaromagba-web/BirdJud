@@ -65,6 +65,17 @@ export type AnoDoEscritorio = {
   previstoCentavos: number;
   metaCentavos: number | null;
   ritmo: Ritmo | null;
+  /**
+   * Media do que ENTROU nos meses ja fechados do ano (o mes corrente fica de
+   * fora: pela metade, so puxaria a media para baixo). Nulo antes de fevereiro.
+   */
+  mediaMensalCentavos: number | null;
+  /**
+   * Para onde o ano caminha: o realizado ate aqui mais o que esta previsto
+   * de agora ate dezembro (parcelas de contrato e cobrancas em aberto). Nao
+   * depende de meta cadastrada.
+   */
+  projecaoCentavos: number;
 };
 
 /**
@@ -92,6 +103,7 @@ export async function anoDoEscritorio(
           competencia: true,
           valorCentavos: true,
           pagoEm: true,
+          cobrancaId: true,
         },
       }),
       emAberto: await db.cobranca.findMany({
@@ -99,7 +111,7 @@ export async function anoDoEscritorio(
           status: { in: ["ABERTA", "VENCIDA"] },
           vencimento: { gte: de, lt: ate },
         },
-        select: { vencimento: true, valorCentavos: true },
+        select: { id: true, vencimento: true, valorCentavos: true },
       }),
       meta: await db.meta.findFirst({ where: { ano } }),
     }),
@@ -125,7 +137,13 @@ export async function anoDoEscritorio(
     }
   }
 
+  // Cobranca em aberto que ja e a parcela prevista de um contrato (o
+  // lancamento a receber aponta para ela) nao entra duas vezes no previsto.
+  const jaPrevistas = new Set(
+    lancamentos.filter((l) => l.tipo === "RECEITA" && !l.pagoEm && l.cobrancaId).map((l) => l.cobrancaId),
+  );
   for (const c of emAberto) {
+    if (jaPrevistas.has(c.id)) continue;
     meses[c.vencimento.getUTCMonth()].previstoCentavos += c.valorCentavos;
   }
 
@@ -134,6 +152,17 @@ export async function anoDoEscritorio(
 
   const realizadoCentavos = soma("realizadoCentavos");
   const metaCentavos = meta?.valorCentavos ?? null;
+
+  // Mes corrente (1 a 12) quando o ano e o de hoje; ano passado tem os 12
+  // fechados; ano futuro nao tem nenhum.
+  const anoDeHoje = Number(hojeISO.slice(0, 4));
+  const mesDeHoje = Number(hojeISO.slice(5, 7));
+  const fechados = ano < anoDeHoje ? 12 : ano > anoDeHoje ? 0 : mesDeHoje - 1;
+  const mediaMensalCentavos = fechados > 0
+    ? Math.round(meses.slice(0, fechados).reduce((t, m) => t + m.realizadoCentavos, 0) / fechados)
+    : null;
+  const projecaoCentavos =
+    realizadoCentavos + meses.slice(fechados).reduce((t, m) => t + m.previstoCentavos, 0);
 
   return {
     ano,
@@ -145,5 +174,7 @@ export async function anoDoEscritorio(
     ritmo: metaCentavos
       ? ritmoDaMeta(metaCentavos, realizadoCentavos, ano, hojeISO)
       : null,
+    mediaMensalCentavos,
+    projecaoCentavos,
   };
 }

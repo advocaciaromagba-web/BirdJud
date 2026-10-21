@@ -279,6 +279,8 @@ export default async function PaginaFinanceiro({
             previsto: emReais(m.previstoCentavos),
           }))}
           meta={doAno.metaCentavos ? emReais(doAno.metaCentavos) : null}
+          mediaMensal={doAno.mediaMensalCentavos === null ? null : emReais(doAno.mediaMensalCentavos)}
+          projecao={emReais(doAno.projecaoCentavos)}
           ritmo={
             doAno.ritmo
               ? {

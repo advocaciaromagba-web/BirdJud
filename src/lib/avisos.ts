@@ -1256,7 +1256,13 @@ export async function gerarLembretesDeTarefas(escritorioId: string, agora = new 
   const modelo = modeloDoTipo("LEMBRETE_COMPROMISSO");
   const calendario = await calendarioDoEscritorio(escritorioId);
   const hojeISO = diaEmBrasilia(agora);
-  let criados = 0;
+
+  // UMA mensagem por pessoa, com tudo que venceu o marco nesta rodada —
+  // e nao uma por tarefa (21/10/2026). Cada marco continua com a sua chave,
+  // para nao repetir; a chave do aviso agrupado e a lista das chaves dos
+  // marcos, e "ja avisado" e conferido por marco.
+  type Marco = { chave: string; linha: string; titulo: string; quando: string; rotulo: string; sobre: string };
+  const porPessoa = new Map<string, { responsavel: (typeof tarefas)[number]["responsavel"]; marcos: Marco[] }>();
 
   for (const t of tarefas) {
     if (!t.responsavel.ativo) continue;
@@ -1270,56 +1276,92 @@ export async function gerarLembretesDeTarefas(escritorioId: string, agora = new 
         marcos.push({ qual: `FATAL-${marco.chave}`, quando: t.prazoFatal, rotulo: `PRAZO FATAL, ${marco.rotulo}`, comHora: false });
       }
     }
-
     for (const m of marcos) {
-      const rotulo = m.rotulo;
       const quando = m.comHora ? dataHoraBR.format(m.quando) : dataBR.format(m.quando);
-      const assunto = `Lembrete: ${t.titulo} (${rotulo}: ${quando})`;
-      const corpo = [
-        `No escritório ${banca.nome}: "${t.titulo}" tem ${rotulo}: ${quando}.`,
-        `Sobre: ${sobreATarefa(t)}.`,
-        "",
-        `Abra em ${banca.endereco}/tarefas`,
-      ].join("\n");
-      const chave = `tarefa-lembrete:${m.qual}:${t.id}:${m.quando.toISOString()}:${t.responsavelId}`;
+      const grupo = porPessoa.get(t.responsavelId) ?? { responsavel: t.responsavel, marcos: [] };
+      grupo.marcos.push({
+        chave: `tarefa-lembrete:${m.qual}:${t.id}:${m.quando.toISOString()}:${t.responsavelId}`,
+        linha: `- "${t.titulo}": ${m.rotulo}: ${quando}. Sobre: ${sobreATarefa(t)}.`,
+        titulo: t.titulo,
+        quando,
+        rotulo: m.rotulo,
+        sobre: sobreATarefa(t),
+      });
+      porPessoa.set(t.responsavelId, grupo);
+    }
+  }
+  if (porPessoa.size === 0) return 0;
 
-      if (
-        await criarAviso(escritorioId, {
-          usuarioId: t.responsavelId,
-          canal: "EMAIL",
-          tipo: "LEMBRETE_TAREFA",
-          chave,
-          destino: t.responsavel.email,
-          assunto,
-          corpo,
-        })
-      ) {
-        criados += 1;
-      }
+  // O que ja saiu: a chave de cada marco aparece dentro da chave do aviso
+  // agrupado que o levou.
+  const desde = new Date(agora.getTime() - 30 * 24 * HORA);
+  const anteriores = await comEscritorio(escritorioId, (db) =>
+    db.aviso.findMany({
+      where: { tipo: "LEMBRETE_TAREFA", canal: "EMAIL", criadoEm: { gte: desde } },
+      select: { chave: true },
+    }),
+  );
+  const jaAvisados = new Set(anteriores.flatMap((a) => a.chave.split("|")));
 
-      const telefone = telefoneDoUsuario(t.responsavel, comWhatsapp);
-      if (!telefone || !modelo) continue;
-      if (
-        await criarAviso(escritorioId, {
-          usuarioId: t.responsavelId,
-          canal: "WHATSAPP",
-          tipo: "LEMBRETE_TAREFA",
-          chave: `zap:${chave}`,
-          destino: telefone,
-          assunto,
-          corpo,
-          modelo: modelo.nome,
-          parametros: [
-            limparParametro(banca.nome),
-            limparParametro(t.titulo),
-            limparParametro(`${quando} (${rotulo})`),
-            limparParametro(sobreATarefa(t)),
-            limparParametro(banca.telefone),
-          ],
-        })
-      ) {
-        criados += 1;
-      }
+  let criados = 0;
+  for (const [usuarioId, grupo] of porPessoa) {
+    const novos = grupo.marcos.filter((m) => !jaAvisados.has(m.chave));
+    if (!novos.length) continue;
+    const chave = novos.map((m) => m.chave).join("|");
+    const um = novos.length === 1 ? novos[0] : null;
+    const assunto = um
+      ? `Lembrete: ${um.titulo} (${um.rotulo}: ${um.quando})`
+      : `Lembrete: ${novos.length} tarefas com prazo chegando`;
+    const corpo = [
+      um
+        ? `No escritório ${banca.nome}: "${um.titulo}" tem ${um.rotulo}: ${um.quando}.`
+        : `No escritório ${banca.nome}, ${novos.length} tarefas suas estão com prazo chegando:`,
+      um ? `Sobre: ${um.sobre}.` : "",
+      ...(um ? [] : novos.map((m) => m.linha)),
+      "",
+      `Abra em ${banca.endereco}/tarefas`,
+    ]
+      .filter((l, i, arr) => l !== "" || arr[i - 1] !== "")
+      .join("\n");
+
+    if (
+      await criarAviso(escritorioId, {
+        usuarioId,
+        canal: "EMAIL",
+        tipo: "LEMBRETE_TAREFA",
+        chave,
+        destino: grupo.responsavel.email,
+        assunto,
+        corpo,
+      })
+    ) {
+      criados += 1;
+    }
+
+    const telefone = telefoneDoUsuario(grupo.responsavel, comWhatsapp);
+    if (!telefone || !modelo) continue;
+    if (
+      await criarAviso(escritorioId, {
+        usuarioId,
+        canal: "WHATSAPP",
+        tipo: "LEMBRETE_TAREFA",
+        chave: `zap:${chave}`,
+        destino: telefone,
+        assunto,
+        corpo,
+        modelo: modelo.nome,
+        parametros: [
+          limparParametro(banca.nome),
+          limparParametro(um ? um.titulo : `${novos.length} tarefas`),
+          limparParametro(um ? `${um.quando} (${um.rotulo})` : "prazos próximos"),
+          limparParametro(
+            um ? um.sobre : novos.map((m) => `${m.titulo} (${m.rotulo} ${m.quando})`).join("; ").slice(0, 900),
+          ),
+          limparParametro(banca.telefone),
+        ],
+      })
+    ) {
+      criados += 1;
     }
   }
   return criados;
