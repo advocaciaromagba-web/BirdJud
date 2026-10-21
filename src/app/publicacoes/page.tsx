@@ -81,6 +81,32 @@ export default async function PaginaPublicacoes() {
     })),
   ]);
 
+  // Quem vai aos compromissos ja lancados a partir das publicacoes: a lista
+  // se edita aqui mesmo, com o mesmo seletor da Agenda.
+  const idsDeCompromisso = dados.publicacoes
+    .map((p) => p.triagem?.compromissoId)
+    .filter((id): id is string => Boolean(id));
+  const participantes = idsDeCompromisso.length
+    ? await comEscritorio(contexto.escritorioId, (db) =>
+        db.participanteDeCompromisso.findMany({
+          where: { compromissoId: { in: idsDeCompromisso } },
+          orderBy: { criadoEm: "asc" },
+          include: { cliente: { select: { nome: true } } },
+        }),
+      )
+    : [];
+  const participantesDe = (compromissoId: string | null) =>
+    participantes
+      .filter((x) => x.compromissoId === compromissoId)
+      .map((x) => ({
+        clienteId: x.clienteId,
+        nome: x.clienteId ? "" : (x.nome ?? ""),
+        telefone: x.telefone ?? "",
+        email: x.email ?? "",
+        papel: x.papel ?? "",
+        avisar: x.avisar,
+      }));
+
   const data = dataBR;
 
   const publicacoes: PublicacaoNaTela[] = dados.publicacoes.map((p) => ({
@@ -122,6 +148,8 @@ export default async function PaginaPublicacoes() {
           aceita: p.triagem.aceitaEm !== null,
           aceitaComoTarefa: p.triagem.tarefaId !== null,
           recusada: p.triagem.recusadaEm !== null,
+          compromissoId: p.triagem.compromissoId,
+          participantes: participantesDe(p.triagem.compromissoId),
         }
       : null,
   }));
@@ -205,7 +233,8 @@ export default async function PaginaPublicacoes() {
           nome: `${p.nome} (${p.papel.toLowerCase()})`,
         }))}
         clientes={dados.clientes}
-        />
+        comWhatsapp={modulos.includes("WHATSAPP")}
+      />
     </Estrutura>
   );
 }

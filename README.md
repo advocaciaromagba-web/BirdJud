@@ -254,6 +254,7 @@ pulada — em CI, o banco de teste e obrigatorio.
 | `src/app/api/webhooks/asaas/` | Baixa automatica da fatura da plataforma |
 | `docs/juridico/` | Minutas de contrato, termos, LGPD, SLA e privacidade |
 | `docs/SEGURANCA.md` | O que o sistema faz de seguranca, e o que ainda nao faz |
+| `docs/ESPELHO-DA-ROMA.md` | Como acompanhar as novidades do sistema da Advocacia Roma e reescreve-las aqui, sem dados nem integracao |
 | `src/lib/conectores/` | Um conector por integracao: campos, resumo e teste |
 | `src/lib/integracao.ts` | Credenciais cifradas por escritorio |
 | `src/lib/consumo.ts` | Medicao mensal, franquia e excedente |

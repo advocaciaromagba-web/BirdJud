@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  ParticipantesDoCompromisso,
+  type ParticipanteNaLista,
+} from "./ParticipantesDoCompromisso";
 
 export type TriagemNaTela = {
   id: string;
@@ -23,6 +27,10 @@ export type TriagemNaTela = {
   /** Aceita como tarefa (peca, recurso) e nao como compromisso da agenda. */
   aceitaComoTarefa: boolean;
   recusada: boolean;
+  /** O compromisso que nasceu do aceite, quando foi para a agenda. */
+  compromissoId: string | null;
+  /** Quem vai a esse compromisso. Edita-se aqui, com o seletor da Agenda. */
+  participantes: ParticipanteNaLista[];
 };
 
 export type PublicacaoNaTela = {
@@ -56,10 +64,12 @@ export function ListaPublicacoes({
   publicacoes,
   equipe = [],
   clientes = [],
+  comWhatsapp = false,
 }: {
   publicacoes: PublicacaoNaTela[];
   equipe?: PessoaDaEquipe[];
   clientes?: { id: string; nome: string }[];
+  comWhatsapp?: boolean;
 }) {
   if (publicacoes.length === 0) {
     return (
@@ -78,6 +88,7 @@ export function ListaPublicacoes({
           publicacao={publicacao}
           equipe={equipe}
           clientes={clientes}
+          comWhatsapp={comWhatsapp}
           posicao={i}
         />
       ))}
@@ -110,11 +121,13 @@ function Cartao({
   publicacao,
   equipe,
   clientes,
+  comWhatsapp,
   posicao,
 }: {
   publicacao: PublicacaoNaTela;
   equipe: PessoaDaEquipe[];
   clientes: { id: string; nome: string }[];
+  comWhatsapp: boolean;
   /** Posicao na lista, para escalonar a leitura automatica. */
   posicao: number;
 }) {
@@ -212,7 +225,7 @@ function Cartao({
       setAviso(
         json.aceite?.tarefaId
           ? "Tarefa criada, com a entrega e o prazo fatal. Está em Tarefas."
-          : "Na agenda.",
+          : "Na agenda. Diga abaixo quem vai, para o lembrete chegar a cada um.",
       );
     }
     router.refresh();
@@ -370,9 +383,25 @@ function Cartao({
           ) : null}
 
           {t.aceita ? (
-            <p className="mt-2 text-sm font-semibold text-emerald-800">
-              {t.aceitaComoTarefa ? "Já está em Tarefas." : "Já está na agenda."}
-            </p>
+            <>
+              <p className="mt-2 text-sm font-semibold text-emerald-800">
+                {t.aceitaComoTarefa ? "Já está em Tarefas." : "Já está na agenda."}
+              </p>
+              {!t.aceitaComoTarefa && t.compromissoId ? (
+                <div className="mt-2">
+                  <p className="text-xs text-slate-600">
+                    Quem vai: cliente, testemunha, perito. Cada um recebe o lembrete no contato dele.
+                  </p>
+                  <ParticipantesDoCompromisso
+                    compromissoId={t.compromissoId}
+                    titulo={t.titulo}
+                    clientes={clientes}
+                    comWhatsapp={comWhatsapp}
+                    iniciais={t.participantes}
+                  />
+                </div>
+              ) : null}
+            </>
           ) : (
             <>
               <div className="mt-3 grid gap-2 sm:grid-cols-3">

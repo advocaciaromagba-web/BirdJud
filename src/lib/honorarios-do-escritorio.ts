@@ -19,7 +19,7 @@ import {
 } from "./honorarios";
 
 /** O contrato do banco, do jeito que o modulo puro entende. */
-function comoContrato(c: ContratoDeHonorarios): Contrato {
+export function comoContrato(c: ContratoDeHonorarios): Contrato {
   return {
     tipo: c.tipo as Contrato["tipo"],
     valorCentavos: c.valorCentavos,
