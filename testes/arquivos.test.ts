@@ -180,6 +180,25 @@ d("arquivos por escritório", () => {
     expect(linha?.nome).toBe("fuga.pdf");
   });
 
+  it("anexo de tarefa: fica na tarefa, herda o cliente dela, e tarefa de outro escritório não serve", async () => {
+    const cliente = await comEscritorio(alfa, (db) => db.cliente.create({ data: semEscritorio({ nome: "Cliente da Tarefa" }) }));
+    const tarefa = await comEscritorio(alfa, (db) =>
+      db.tarefa.create({ data: semEscritorio({ titulo: "Contestação", vencimento: new Date(Date.now() + 864e5), responsavelId: usuarioAlfa, clienteId: cliente.id }) }),
+    );
+    const { id } = await guardarArquivo(alfa, { nome: "intimacao.pdf", tipo: "application/pdf", conteudo: pdf("intimacao"), usuarioId: usuarioAlfa, tarefaId: tarefa.id });
+    const linha = await comEscritorio(alfa, (db) => db.arquivo.findUnique({ where: { id } }));
+    expect(linha?.tarefaId).toBe(tarefa.id);
+    expect(linha?.clienteId).toBe(cliente.id);
+    // Mesmo nome de novo: outro arquivo, nada sobrescrito.
+    const { id: outro } = await guardarArquivo(alfa, { nome: "intimacao.pdf", tipo: "application/pdf", conteudo: pdf("segunda"), usuarioId: usuarioAlfa, tarefaId: tarefa.id });
+    expect(outro).not.toBe(id);
+    expect(await comEscritorio(alfa, (db) => db.arquivo.count({ where: { tarefaId: tarefa.id } }))).toBe(2);
+    // Beta nao anexa na tarefa de Alfa.
+    await expect(
+      guardarArquivo(beta, { nome: "x.pdf", tipo: "application/pdf", conteudo: pdf("x"), usuarioId: usuarioBeta, tarefaId: tarefa.id }),
+    ).rejects.toBeInstanceOf(ArquivoRecusado);
+  });
+
   it("recusa tipo fora da lista e arquivo vazio, sem gravar linha nenhuma", async () => {
     const antes = await comEscritorio(alfa, (db) => db.arquivo.count());
 

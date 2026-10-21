@@ -158,8 +158,24 @@ export type PedidoDeArquivo = {
   usuarioId: string;
   clienteId?: string | null;
   processoId?: string | null;
+  /** Anexo de tarefa. Sem clienteId, o arquivo herda o cliente da tarefa. */
+  tarefaId?: string | null;
   descricao?: string | null;
 };
+
+/**
+ * A tarefa e deste escritorio? Devolve o cliente dela, para o anexo cair na
+ * pasta certa (e na nuvem) sem a tela precisar repetir o vinculo.
+ */
+async function conferirTarefa(
+  db: Parameters<Parameters<typeof comEscritorio>[1]>[0],
+  tarefaId: string | null | undefined,
+): Promise<{ clienteId: string | null } | null> {
+  if (!tarefaId) return null;
+  const tarefa = await db.tarefa.findFirst({ where: { id: tarefaId }, select: { clienteId: true } });
+  if (!tarefa) throw new ArquivoRecusado("Tarefa não encontrada neste escritório.", 400);
+  return tarefa;
+}
 
 /**
  * Guarda o arquivo.
@@ -203,6 +219,8 @@ export async function guardarArquivo(
     if (pedido.processoId && !(await db.processo.findFirst({ where: { id: pedido.processoId } }))) {
       throw new ArquivoRecusado("Processo não encontrado neste escritório.", 400);
     }
+    const tarefa = await conferirTarefa(db, pedido.tarefaId);
+    if (tarefa && !pedido.clienteId && tarefa.clienteId) pedido = { ...pedido, clienteId: tarefa.clienteId };
   });
 
   const arquivo = await comEscritorio(escritorioId, (db) =>
@@ -215,6 +233,7 @@ export async function guardarArquivo(
         usuarioId: pedido.usuarioId,
         clienteId: pedido.clienteId ?? null,
         processoId: pedido.processoId ?? null,
+        tarefaId: pedido.tarefaId ?? null,
       }),
     }),
   );
@@ -276,6 +295,8 @@ export async function registrarArquivoDoEnvio(
     if (pedido.processoId && !(await db.processo.findFirst({ where: { id: pedido.processoId } }))) {
       throw new ArquivoRecusado("Processo não encontrado neste escritório.", 400);
     }
+    const tarefa = await conferirTarefa(db, pedido.tarefaId);
+    if (tarefa && !pedido.clienteId && tarefa.clienteId) pedido = { ...pedido, clienteId: tarefa.clienteId };
   });
 
   const arquivo = await comEscritorio(escritorioId, (db) =>
@@ -288,6 +309,7 @@ export async function registrarArquivoDoEnvio(
         usuarioId: pedido.usuarioId,
         clienteId: pedido.clienteId ?? null,
         processoId: pedido.processoId ?? null,
+        tarefaId: pedido.tarefaId ?? null,
       }),
     }),
   );

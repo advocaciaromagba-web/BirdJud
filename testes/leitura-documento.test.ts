@@ -11,6 +11,7 @@ import {
   formatarDocumento,
 } from "../src/lib/documentos";
 import {
+  calcularPrazoDaLeitura,
   completarCadastroFiscal,
   interpretar,
   LeituraIlegivel,
@@ -147,6 +148,32 @@ describe("leitura de documento", () => {
 // especifico e caro — audiencia no dia errado e perda de prazo, nao
 // inconveniente. Por isso data que nao da para entender e recusada, nunca
 // adivinhada.
+describe("várias providências num documento", () => {
+  it("a principal vai nos campos; as outras vêm com os próprios campos e prazo", () => {
+    const leitura = interpretar(
+      "TAREFA",
+      JSON.stringify({
+        campos: { titulo: { valor: "Contestação", confianca: "ALTA" }, dataDoAto: { valor: "2026-10-20" }, prazoDias: { valor: "15" }, contagem: { valor: "UTEIS" } },
+        observacoes: [],
+        outras: [
+          { campos: { titulo: { valor: "Juntar procuração" }, dataDoAto: { valor: "2026-10-20" }, prazoDias: { valor: "5" }, contagem: { valor: "UTEIS" } } },
+          { campos: { descricao: { valor: "sem título: descartada" } } },
+        ],
+      }),
+    );
+    expect(leitura.campos.titulo.valor).toBe("Contestação");
+    expect(leitura.outras?.map((o) => o.campos.titulo.valor)).toEqual(["Juntar procuração"]);
+    const comPrazo = calcularPrazoDaLeitura(leitura, "2026-10-21");
+    expect(comPrazo.campos.prazoFatal?.valor).toMatch(/^2026-11-/);
+    expect(comPrazo.outras?.[0].campos.prazoFatal?.valor).toMatch(/^2026-10-/);
+  });
+
+  it("perfil que não é tarefa ignora as outras", () => {
+    const leitura = interpretar("CLIENTE", JSON.stringify({ campos: { nome: { valor: "Ana" } }, outras: [{ campos: { titulo: { valor: "x" } } }] }));
+    expect(leitura.outras).toBeUndefined();
+  });
+});
+
 describe("leitura para a agenda", () => {
   it("aceita os formatos que aparecem em intimação brasileira", () => {
     expect(normalizarDataHora("2026-11-03T14:30")).toBe("2026-11-03T14:30");

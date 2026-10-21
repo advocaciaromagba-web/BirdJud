@@ -38,6 +38,12 @@ export type Leitura = {
   campos: Record<string, CampoLido>;
   /** O que a IA quis dizer e nao cabia em campo: divergencia, rasura, duvida. */
   observacoes: string[];
+  /**
+   * Tarefa: as OUTRAS providencias do mesmo documento (um despacho que manda
+   * contestar E juntar documento), cada uma com os proprios campos e prazo.
+   * A principal fica em `campos`.
+   */
+  outras?: Leitura[];
 };
 
 const UFS_DO_BRASIL = new Set([
@@ -223,7 +229,8 @@ export function montarInstrucao(perfil: Perfil): string {
           '- "tipoDaData" diz o que é essa data: INTIMACAO (intimação ou ciência pessoal/eletrônica), PUBLICACAO (o texto diz "publicado em") ou DISPONIBILIZACAO (o texto diz "disponibilizado em" / "data de disponibilização" no DJe ou DJEN). Não converta uma na outra: devolva a data como está e diga o tipo;',
           '- "prazoDias" é só o número de dias que o documento da ("15"). Prazo em dobro, em horas ou sem número: não devolva e explique em observações;',
           '- "contagem" é UTEIS ou CORRIDOS. Processo cível e trabalhista conta em dias UTEIS; penal e direito material, CORRIDOS. Na dúvida, UTEIS com confiança MEDIA;',
-          "- audiência, perícia ou reunião NAO são tarefa: se o documento só marca uma delas, diga em observações que aquilo vai na Agenda.",
+          "- audiência, perícia ou reunião NAO são tarefa: se o documento só marca uma delas, diga em observações que aquilo vai na Agenda;",
+          '- se o documento determinar MAIS DE UMA providência (contestar E juntar documento, por exemplo), a principal vai em "campos" e cada uma das demais vai em "outras": [{"campos":{...mesmos campos...}}], no máximo 5.',
         ]
       : []),
     ...(perfil === "AGENDA"
@@ -247,6 +254,7 @@ const esquema = z.object({
     )
     .default({}),
   observacoes: z.array(z.string().max(500)).max(20).default([]),
+  outras: z.array(z.object({ campos: z.record(z.unknown()).default({}) })).max(5).default([]),
 });
 
 /**
@@ -260,10 +268,11 @@ const esquema = z.object({
 export function normalizarDataHora(bruto: string): string | null {
   const texto = bruto.trim();
 
-  const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  // Com ou sem hora: a tarefa pede "aaaa-mm-dd" a IA, e isso tem de passar.
+  const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
   if (iso) {
     const [, a, m, d, h, min] = iso;
-    return valida(a, m, d, h, min);
+    return valida(a, m, d, h ?? "09", min ?? "00");
   }
 
   const br = texto.match(
@@ -338,12 +347,16 @@ export class LeituraIlegivel extends Error {
  * campo continua na tela — as vezes o papel esta errado mesmo, e quem decide
  * e quem le —, mas chega marcado.
  */
-export function interpretar(perfil: Perfil, texto: string): Leitura {
+export function interpretar(perfil: Perfil, texto: string | object): Leitura {
   let cru: unknown;
-  try {
-    cru = JSON.parse(recortarJson(texto));
-  } catch {
-    throw new LeituraIlegivel();
+  if (typeof texto === "object") {
+    cru = texto;
+  } else {
+    try {
+      cru = JSON.parse(recortarJson(texto));
+    } catch {
+      throw new LeituraIlegivel();
+    }
   }
 
   const lido = esquema.safeParse(cru);
@@ -546,7 +559,21 @@ export function interpretar(perfil: Perfil, texto: string): Leitura {
     };
   }
 
-  return { campos, observacoes: observacoes.slice(0, 20) };
+  const leitura: Leitura = { campos, observacoes: observacoes.slice(0, 20) };
+  if (perfil === "TAREFA" && lido.data.outras.length) {
+    // Cada outra providencia passa pela mesma conferencia; a que vier sem
+    // titulo e descartada.
+    leitura.outras = lido.data.outras
+      .map((o) => {
+        try {
+          return interpretar(perfil, { campos: o.campos, observacoes: [] });
+        } catch {
+          return null;
+        }
+      })
+      .filter((o): o is Leitura => Boolean(o?.campos.titulo));
+  }
+  return leitura;
 }
 
 /**
@@ -563,8 +590,9 @@ export function calcularPrazoDaLeitura(
   hojeISO: string,
   calendario?: Calendario,
 ): Leitura {
+  const outras = leitura.outras?.map((o) => calcularPrazoDaLeitura(o, hojeISO, calendario));
   const { dataDoAto, prazoDias, contagem, tipoDaData } = leitura.campos;
-  if (!dataDoAto || !prazoDias) return leitura;
+  if (!dataDoAto || !prazoDias) return outras ? { ...leitura, outras } : leitura;
   // So conta os dois saltos (disponibilizacao -> publicacao -> inicio) quando a
   // leitura DIZ que a data e de disponibilizacao. Na duvida, um salto so: errar
   // para mais cedo avisa antes; errar para mais tarde perde o prazo.
@@ -591,7 +619,7 @@ export function calcularPrazoDaLeitura(
     if (!(erro instanceof PrazoInvalido)) throw erro;
     observacoes.push(`Não deu para calcular o prazo: ${erro.message}`);
   }
-  return { campos, observacoes: observacoes.slice(0, 20) };
+  return { campos, observacoes: observacoes.slice(0, 20), ...(outras ? { outras } : {}) };
 }
 
 function semAcentoMaiusculo(texto: string): string {

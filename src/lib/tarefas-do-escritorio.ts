@@ -93,6 +93,7 @@ export async function tarefasDoEscritorio(
       include: {
         responsavel: { select: { nome: true } },
         cliente: { select: { nome: true } },
+        anexos: { select: { id: true, nome: true, tamanhoBytes: true }, orderBy: { criadoEm: "asc" } },
       },
       orderBy: concluidas ? { concluidaEm: "desc" } : { vencimento: "asc" },
       take: concluidas ? 200 : 500,

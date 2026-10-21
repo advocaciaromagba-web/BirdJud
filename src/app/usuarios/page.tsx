@@ -10,6 +10,7 @@ import { areasDistribuiveis } from "@/lib/areas";
 import { acessoDeTodos } from "@/lib/areas-do-escritorio";
 import { temRemetenteDaPlataforma } from "@/lib/email-plataforma";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
+import { EditarUsuario } from "@/componentes/EditarUsuario";
 
 const PAPEIS = [
   { valor: "ADMIN", rotulo: "Administrador" },
@@ -50,6 +51,8 @@ export default async function PaginaUsuarios() {
         nome: true,
         email: true,
         papel: true,
+        oab: true,
+        telefone: true,
         ativo: true,
         doisFatores: true,
         ultimoAcesso: true,
@@ -131,9 +134,13 @@ export default async function PaginaUsuarios() {
             </p>
             <p className="text-sm text-slate-500">
               {usuario.email} · {usuario.papel}
+              {usuario.oab ? ` · OAB ${usuario.oab}` : ""}
               {usuario.doisFatores ? " · 2FA ativo" : ""}
               {usuario.ativo ? "" : " · inativo"}
             </p>
+            {contexto.papel === "ADMIN" ? (
+              <EditarUsuario pessoa={usuario} ehVoce={usuario.id === contexto.usuarioId} />
+            ) : null}
             {contexto.papel === "ADMIN" ? (
               <AreasDoUsuario
                 usuarioId={usuario.id}

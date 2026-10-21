@@ -29,6 +29,7 @@ export type TarefaNaTela = {
   responsavelId: string;
   nomeDoResponsavel: string;
   atrasada: boolean;
+  anexos: { id: string; nome: string; tamanhoBytes: number }[];
 };
 
 type Pessoa = { id: string; nome: string };
@@ -70,6 +71,7 @@ export function PainelTarefas({
   concluidas,
   mostrandoConcluidas,
   temIA = false,
+  temNuvem = false,
 }: {
   tarefas: TarefaNaTela[];
   equipe: Pessoa[];
@@ -78,6 +80,8 @@ export function PainelTarefas({
   concluidas: number;
   mostrandoConcluidas: boolean;
   temIA?: boolean;
+  /** Anexo de tarefa e arquivo do escritorio: so com o modulo de arquivos. */
+  temNuvem?: boolean;
 }) {
   const router = useRouter();
   const [busca, setBusca] = useState("");
@@ -89,6 +93,29 @@ export function PainelTarefas({
   // o formulario e nao controlado, e assim continua editavel depois.
   const [preenchido, setPreenchido] = useState<Preenchido>({});
   const [chave, setChave] = useState(0);
+  // O documento lido pela IA vira anexo da tarefa criada; as outras
+  // providencias do mesmo documento ficam na fila para criar em seguida.
+  const [anexosPendentes, setAnexosPendentes] = useState<File[]>([]);
+  const [outras, setOutras] = useState<Record<string, string>[]>([]);
+  // Providencia sem prazo no documento: a data e de quem le, nao da IA.
+  const [semPrazo, setSemPrazo] = useState(false);
+
+  function camposDe(leitura: { campos: Record<string, { valor: string }> }): Record<string, string> {
+    return Object.fromEntries(Object.entries(leitura.campos).map(([k, c]) => [k, c.valor]));
+  }
+
+  async function anexar(tarefaId: string, arquivos: File[]) {
+    for (const arquivo of arquivos) {
+      const dados = new FormData();
+      dados.set("arquivo", arquivo);
+      dados.set("tarefaId", tarefaId);
+      const r = await fetch("/api/arquivos", { method: "POST", body: dados });
+      if (!r.ok) {
+        const json = await r.json().catch(() => ({}));
+        throw new Error(`A tarefa foi criada, mas o anexo "${arquivo.name}" não subiu: ${json.erro ?? "tente de novo pela lista"}.`);
+      }
+    }
+  }
 
   function aplicarLeitura(campos: Record<string, string>) {
     const descricao = [
@@ -99,6 +126,7 @@ export function PainelTarefas({
     ]
       .filter(Boolean)
       .join("\n");
+    setSemPrazo(!campos.entrega);
     setPreenchido({
       titulo: campos.titulo,
       descricao: descricao || undefined,
@@ -114,6 +142,8 @@ export function PainelTarefas({
     setCriando(false);
     setEditando(null);
     setPreenchido({});
+    setAnexosPendentes([]);
+    setOutras([]);
   }
 
   const visiveis = useMemo(
@@ -164,13 +194,27 @@ export function PainelTarefas({
           numeroProcesso: String(dados.get("numeroProcesso") ?? "") || null,
           meta: dados.get("meta") === "on",
         };
+        const escolhidos = Array.from(dados.getAll("anexos")).filter(
+          (a): a is File => a instanceof File && a.size > 0,
+        );
         await agir("formulario", async () => {
           if (tarefa) {
             await chamar(`/api/tarefas/${tarefa.id}`, "PATCH", corpo);
-          } else {
-            await chamar("/api/tarefas", "POST", corpo);
+            if (escolhidos.length) await anexar(tarefa.id, escolhidos);
+            fecharFormulario();
+            return;
           }
-          fecharFormulario();
+          const { tarefa: criada } = (await chamar("/api/tarefas", "POST", corpo)) as { tarefa: { id: string } };
+          await anexar(criada.id, [...anexosPendentes, ...escolhidos]);
+          // Sobrou providencia do mesmo documento? Carrega a proxima no
+          // formulario, com o documento ainda pendente de anexo.
+          const [proxima, ...resto] = outras;
+          if (proxima) {
+            aplicarLeitura(proxima);
+            setOutras(resto);
+          } else {
+            fecharFormulario();
+          }
         });
       }}
       className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4"
@@ -287,6 +331,18 @@ export function PainelTarefas({
         <span>É uma meta (não uma tarefa do dia a dia)</span>
       </label>
 
+      {temNuvem ? (
+        <label className="grid gap-1 text-sm">
+          <span className="text-slate-600">Anexos (a intimação, o despacho, o comprovante)</span>
+          <input type="file" name="anexos" multiple className="campo file:mr-3 file:rounded file:border-0 file:bg-slate-200 file:px-3 file:py-1 file:text-sm" />
+          {!tarefa && anexosPendentes.length ? (
+            <span className="ajuda">
+              Vai junto: {anexosPendentes.map((a) => a.name).join(", ")} (o documento lido pela IA).
+            </span>
+          ) : null}
+        </label>
+      ) : null}
+
       <div className="flex gap-2">
         <button
           type="submit"
@@ -335,7 +391,25 @@ export function PainelTarefas({
       </div>
 
       {criando && temIA ? (
-        <LeitorDeDocumentos perfil="TAREFA" aoAplicar={aplicarLeitura} />
+        <LeitorDeDocumentos
+          perfil="TAREFA"
+          aoAplicar={aplicarLeitura}
+          aoLer={(arquivos, leitura) => {
+            setAnexosPendentes(temNuvem ? arquivos : []);
+            setOutras((leitura.outras ?? []).map(camposDe));
+          }}
+        />
+      ) : null}
+      {criando && outras.length ? (
+        <p className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900">
+          O documento determina mais {outras.length} providência{outras.length > 1 ? "s" : ""}:{" "}
+          {outras.map((o) => o.titulo).join("; ")}. Ao salvar esta tarefa, a próxima entra no formulário, com o mesmo documento anexado.
+        </p>
+      ) : null}
+      {criando && semPrazo && Object.keys(preenchido).length > 0 ? (
+        <p className="aviso-atencao text-sm">
+          O documento não diz o prazo desta providência. Informe a data de entrega (e o prazo fatal, se houver) antes de salvar: sem data a tarefa não é criada.
+        </p>
       ) : null}
       {criando && Object.keys(preenchido).length > 0 ? (
         <p className="rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
@@ -425,6 +499,30 @@ export function PainelTarefas({
                           .filter(Boolean)
                           .join(" · ")}
                       </p>
+                    ) : null}
+                    {t.anexos.length ? (
+                      <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                        {t.anexos.map((a) => (
+                          <a key={a.id} href={`/api/arquivos/${a.id}`} className="text-marca underline" title={`${Math.max(1, Math.round(a.tamanhoBytes / 1024))} KB`}>
+                            📎 {a.nome}
+                          </a>
+                        ))}
+                      </p>
+                    ) : null}
+                    {temNuvem ? (
+                      <label className="mt-1 inline-block cursor-pointer text-xs text-slate-600 underline-offset-2 hover:underline">
+                        {ocupado === `${t.id}:anexo` ? "Anexando..." : "Anexar arquivo"}
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const arquivos = Array.from(e.target.files ?? []);
+                            e.target.value = "";
+                            if (arquivos.length) void agir(`${t.id}:anexo`, () => anexar(t.id, arquivos));
+                          }}
+                        />
+                      </label>
                     ) : null}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-slate-700">

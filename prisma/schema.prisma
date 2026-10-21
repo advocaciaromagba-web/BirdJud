@@ -558,6 +558,7 @@ model Tarefa {
   processo    Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
   cliente     Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   responsavel Usuario    @relation("TarefasDoResponsavel", fields: [responsavelId], references: [id], onDelete: Cascade)
+  anexos      Arquivo[]
 
   @@index([escritorioId, situacao, vencimento])
   @@index([escritorioId, responsavelId])
@@ -1000,6 +1001,9 @@ model Arquivo {
   escritorioId String
   clienteId    String?
   processoId   String?
+  /// Anexo de tarefa (a intimacao lida, o comprovante). Some com a tarefa? Nao:
+  /// o arquivo fica, so perde o vinculo.
+  tarefaId     String?
   usuarioId    String? // quem subiu; vira null se a pessoa sai do escritorio
   nome         String
   descricao    String?
@@ -1015,6 +1019,7 @@ model Arquivo {
   escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente     Cliente?     @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   processo    Processo?    @relation(fields: [processoId], references: [id], onDelete: SetNull)
+  tarefa      Tarefa?      @relation(fields: [tarefaId], references: [id], onDelete: SetNull)
   usuario     Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   lancamentos Lancamento[]
 
@@ -1023,6 +1028,7 @@ model Arquivo {
   @@index([escritorioId, criadoEm])
   @@index([escritorioId, processoId])
   @@index([escritorioId, clienteId])
+  @@index([escritorioId, tarefaId])
 }
 
 // ---------------------------------------------------------------------------

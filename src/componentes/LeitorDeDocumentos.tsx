@@ -33,10 +33,17 @@ const TEXTO_DA_CONFIANCA: Record<Confianca, string> = {
 export function LeitorDeDocumentos({
   perfil,
   aoAplicar,
+  aoLer,
   rota = "/api/ia/leitura",
 }: {
   perfil: Perfil;
   aoAplicar: (campos: Record<string, string>) => void;
+  /**
+   * Chamado quando a leitura deu certo, com os arquivos lidos e a leitura
+   * inteira (inclusive as outras providencias, no perfil TAREFA). A tela de
+   * tarefas usa para anexar o documento e para criar as demais.
+   */
+  aoLer?: (arquivos: File[], leitura: Leitura) => void;
   /** Para onde mandar os documentos. O console usa a rota da plataforma. */
   rota?: string;
 }) {
@@ -79,6 +86,10 @@ export function LeitorDeDocumentos({
     }
     setLeitura(json.leitura as Leitura);
     setDescartados(new Set());
+    aoLer?.(
+      dados.getAll("arquivos").filter((a): a is File => a instanceof File && a.size > 0),
+      json.leitura as Leitura,
+    );
   }
 
   function alternar(chave: string) {

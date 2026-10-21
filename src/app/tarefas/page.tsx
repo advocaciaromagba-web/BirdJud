@@ -57,6 +57,7 @@ export default async function PaginaTarefas({
     responsavelId: t.responsavelId,
     nomeDoResponsavel: t.responsavel?.nome ?? "—",
     atrasada: estaAtrasada(t, agora),
+    anexos: t.anexos,
   }));
 
   return (
@@ -78,6 +79,7 @@ export default async function PaginaTarefas({
         concluidas={contagem.concluidas}
         mostrandoConcluidas={concluidas}
         temIA={modulos.includes("IA")}
+        temNuvem={modulos.includes("NUVEM")}
       />
     </Estrutura>
   );

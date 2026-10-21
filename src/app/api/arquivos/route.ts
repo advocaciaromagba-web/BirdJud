@@ -78,9 +78,10 @@ export async function POST(req: Request) {
       descricao: texto("descricao"),
       clienteId: texto("clienteId"),
       processoId: texto("processoId"),
+      tarefaId: texto("tarefaId"),
     });
     // Documento de cliente ganha copia na pasta dele, na nuvem do escritorio.
-    if (texto("clienteId")) await cutucarNuvem(escritorioId);
+    if (texto("clienteId") || texto("tarefaId")) await cutucarNuvem(escritorioId);
     return NextResponse.json({ arquivo }, { status: 201 });
   } catch (erro) {
     if (erro instanceof CorpoGrandeDemais) return NextResponse.json({ erro: "Arquivo grande demais." }, { status: 413 });
