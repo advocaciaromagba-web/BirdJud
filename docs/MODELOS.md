@@ -209,6 +209,21 @@ verdade.
 A CSP precisou de `frame-src 'self' blob:` por causa desse quadro. Nao e
 abertura para terceiro: `blob:` so existe dentro da propria origem.
 
+## Mandar ao cliente pelo WhatsApp ou por e-mail
+
+Da propria conferencia, a peca vai ao cliente sem baixar e reenviar a mao. O
+canal se escolhe na hora: **WhatsApp** (modulo de WhatsApp, pelo numero da
+plataforma, com modelo aprovado de documento) ou **e-mail** (modulo de e-mail,
+pelo remetente que o escritorio conectou em Integracoes, com recado opcional
+no corpo). Nos dois, o contato vem do CADASTRO do cliente, nunca digitado na
+hora; a tela mostra para onde vai antes de mandar e desliga o canal que o
+cadastro nao tem. Vai sempre em PDF, mesmo com Word marcado: .docx no celular
+costuma nao abrir. O recibo com campo em branco nao sai por canal nenhum.
+Cada envio fica registrado como aviso (tipo DOCUMENTO), por canal.
+
+Rota: `POST /api/modelos/[especie]/mandar` com `canal` e, no e-mail, `recado`.
+Codigo: `src/lib/documento-no-whatsapp.ts` e `src/lib/documento-por-email.ts`.
+
 ## Mandar para assinatura
 
 Da propria conferencia, pelo **Autentique**, com o plano do escritorio — a

@@ -95,6 +95,8 @@ export function PecasDoCliente({
   assinaturaLigada = false,
   whatsappLigado = false,
   telefoneDoCliente = null,
+  emailLigado = false,
+  emailDoCliente = null,
   envios = [],
   notaFiscalLigada = false,
 }: {
@@ -109,6 +111,10 @@ export function PecasDoCliente({
   whatsappLigado?: boolean;
   /** Telefone do CADASTRO. Nao ha campo para digitar outro, de proposito. */
   telefoneDoCliente?: string | null;
+  /** Modulo de e-mail contratado (o escritorio manda pelo proprio remetente). */
+  emailLigado?: boolean;
+  /** E-mail do CADASTRO. Mesma regra do telefone. */
+  emailDoCliente?: string | null;
   envios?: EnvioNaTela[];
   /** Modulo NFSE: o recibo oferece preparar a nota fiscal (nunca sozinho). */
   notaFiscalLigada?: boolean;
@@ -122,6 +128,8 @@ export function PecasDoCliente({
   const [aviso, setAviso] = useState<string | null>(null);
   const [conferidas, setConferidas] = useState<Conferida[]>([]);
   const [recibo, setRecibo] = useState({ valor: "", referenteA: "", forma: "", data: "" });
+  // Recado de quem manda por e-mail: "segue para assinatura ate sexta".
+  const [recado, setRecado] = useState("");
   // Vazio significa todos: e assim que esta gravado, e e assim que a tela
   // comeca. Marcar os dez para dizer "todos" seria trabalho sem ganho.
   const [quemAssina, setQuemAssina] = useState<Set<string>>(
@@ -350,16 +358,18 @@ export function PecasDoCliente({
     }
   }
 
-  /** Manda o PDF para o WhatsApp do cliente. */
-  async function mandarNoWhatsapp(c: Conferida) {
-    setEnviando(`zap:${c.chave}`);
+  /** Manda o PDF ao cliente, pelo WhatsApp ou pelo e-mail do cadastro. */
+  async function mandar(c: Conferida, canal: "WHATSAPP" | "EMAIL") {
+    setEnviando(`${canal === "EMAIL" ? "email" : "zap"}:${c.chave}`);
     setErro(null);
     setAviso(null);
     try {
-      const resposta = await fetch(`/api/modelos/${c.chave}/whatsapp`, {
+      const resposta = await fetch(`/api/modelos/${c.chave}/mandar`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
+          canal,
+          recado: canal === "EMAIL" ? recado.trim() || null : null,
           clienteId,
           advogadoIds: [...quemAssina],
           ...(c.chave === "RECIBO"
@@ -377,7 +387,11 @@ export function PecasDoCliente({
         setErro(`${c.rotulo}: ${det?.erro ?? "não consegui mandar."}`);
         return;
       }
-      setAviso(`${c.rotulo} enviada para ${det.mandado.telefone} no WhatsApp.`);
+      setAviso(
+        canal === "EMAIL"
+          ? `${c.rotulo} enviada para ${det.mandado.email} por e-mail.`
+          : `${c.rotulo} enviada para ${det.mandado.telefone} no WhatsApp.`,
+      );
     } catch {
       setErro("Não consegui falar com o servidor.");
     } finally {
@@ -681,9 +695,24 @@ export function PecasDoCliente({
                     ? `Manda o PDF para ${telefoneDoCliente}`
                     : "O cliente está sem telefone no cadastro"
                 }
-                onClick={() => mandarNoWhatsapp(c)}
+                onClick={() => mandar(c, "WHATSAPP")}
               >
                 {enviando === `zap:${c.chave}` ? "mandando..." : "Mandar no WhatsApp"}
+              </button>
+            ) : null}
+            {emailLigado ? (
+              <button
+                type="button"
+                disabled={enviando !== null || !emailDoCliente}
+                className="botao-secundario disabled:opacity-50"
+                title={
+                  emailDoCliente
+                    ? `Manda o PDF para ${emailDoCliente}`
+                    : "O cliente está sem e-mail no cadastro"
+                }
+                onClick={() => mandar(c, "EMAIL")}
+              >
+                {enviando === `email:${c.chave}` ? "mandando..." : "Mandar por e-mail"}
               </button>
             ) : null}
             <a
@@ -702,6 +731,27 @@ export function PecasDoCliente({
                 ? `Vai para ${telefoneDoCliente}, o telefone do cadastro — não há onde digitar outro, de propósito.`
                 : "Sem telefone no cadastro, não dá para mandar: mandar documento de um cliente para o número de outro não se desfaz."}
             </p>
+          ) : null}
+          {emailLigado ? (
+            <div className="mt-1 text-xs text-slate-500">
+              <p>
+                {emailDoCliente
+                  ? `Por e-mail vai para ${emailDoCliente}, o e-mail do cadastro, sempre em PDF, pelo remetente do escritório.`
+                  : "Sem e-mail no cadastro, não dá para mandar por e-mail."}
+              </p>
+              {emailDoCliente ? (
+                <label className="mt-1 block">
+                  Recado no e-mail (opcional)
+                  <input
+                    value={recado}
+                    onChange={(e) => setRecado(e.target.value)}
+                    maxLength={1000}
+                    placeholder="Ex.: assine e devolva até sexta-feira."
+                    className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm text-slate-800"
+                  />
+                </label>
+              ) : null}
+            </div>
           ) : null}
 
           {assinaturaLigada ? (

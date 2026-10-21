@@ -8,6 +8,7 @@ import { tratarErro } from "@/lib/respostas";
 import { ehEspecie } from "@/lib/modelos-do-escritorio";
 import { respostaDoDominio } from "@/lib/modelos-respostas";
 import { NaoDaParaMandar, mandarPecaNoWhatsapp } from "@/lib/documento-no-whatsapp";
+import { mandarPecaPorEmail } from "@/lib/documento-por-email";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,10 @@ const NOME_DA_FORMA: Record<string, string> = {
 };
 
 const pedido = z.object({
+  /** Por onde vai. O canal e escolhido na hora do envio. */
+  canal: z.enum(["WHATSAPP", "EMAIL"]).default("WHATSAPP"),
+  /** Recado de quem manda, opcional. So o e-mail leva texto livre. */
+  recado: z.string().max(1000).nullish(),
   clienteId: z.string().min(1),
   contratoId: z.string().min(1).nullish(),
   processoId: z.string().min(1).nullish(),
@@ -30,17 +35,17 @@ const pedido = z.object({
 });
 
 /**
- * Manda a peca em PDF para o WhatsApp do cliente.
+ * Manda a peca em PDF ao cliente, pelo WhatsApp ou pelo e-mail.
  *
- * O numero vem do CADASTRO, nunca digitado aqui: mandar a procuracao de uma
- * pessoa para o telefone de outra nao da erro nenhum e nao se desfaz.
+ * O numero e o e-mail vem do CADASTRO, nunca digitados aqui: mandar a
+ * procuracao de uma pessoa para o contato de outra nao da erro nenhum e nao
+ * se desfaz.
  */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ especie: string }> },
 ) {
   try {
-    const { escritorioId, usuarioId } = await exigirSessao("WHATSAPP");
     const { especie } = await params;
     if (!ehEspecie(especie)) {
       return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
@@ -50,7 +55,8 @@ export async function POST(
     if (!corpo.success) {
       return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
-    const { clienteId, contratoId, processoId } = corpo.data;
+    const { clienteId, contratoId, processoId, canal } = corpo.data;
+    const { escritorioId, usuarioId } = await exigirSessao(canal);
 
     const cliente = await comEscritorio(escritorioId, (db) =>
       db.cliente.findFirst({ where: { id: clienteId } }),
@@ -171,7 +177,7 @@ export async function POST(
       }
     }
 
-    const mandado = await mandarPecaNoWhatsapp(escritorioId, especie, {
+    const dados = {
       clienteId,
       cliente,
       representantes,
@@ -180,9 +186,13 @@ export async function POST(
       contrato,
       processo,
       recibo,
-    }, usuarioId);
+    };
+    const mandado =
+      canal === "EMAIL"
+        ? await mandarPecaPorEmail(escritorioId, especie, dados, usuarioId, corpo.data.recado ?? null)
+        : await mandarPecaNoWhatsapp(escritorioId, especie, dados, usuarioId);
 
-    return NextResponse.json({ mandado }, { status: 201 });
+    return NextResponse.json({ mandado: { canal, ...mandado } }, { status: 201 });
   } catch (erro) {
     if (erro instanceof NaoDaParaMandar) {
       return NextResponse.json({ erro: erro.message }, { status: erro.status });

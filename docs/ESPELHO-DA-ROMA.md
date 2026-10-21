@@ -14,7 +14,7 @@ novo e como trazer isso para ca do jeito certo.
 | O que | Valor |
 |---|---|
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
-| Ultimo commit revisado | `ed9fd4bab691c1ca4cc297dec7b2c2cef434dab9` (19/10/2026, "Alerta sonoro 1h e 15min antes do compromisso") |
+| Ultimo commit revisado | `819d29d606ba1b08dae9f19085d27fdb87a4d483` (21/10/2026, "Enviar documentos ao cliente pelo WhatsApp ou e-mail") |
 | Revisado em | 21/10/2026 |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
@@ -74,6 +74,8 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Link direto nos avisos (agenda, tarefas, publicacoes, financeiro, cobrancas) | `textos-aviso.ts`, `resumo-do-dia.ts`, `contas-do-escritorio.ts` `rota` |
 | Conciliacao contratos x financeiro | `src/lib/conciliacao-de-contratos.ts`, `/financeiro/contratos` |
 | Publicacoes agendam com o seletor de participantes da Agenda | `ListaPublicacoes.tsx` usa `ParticipantesDoCompromisso` |
+| Enviar documentos ao cliente por WhatsApp ou e-mail, canal escolhido na hora | `src/lib/documento-por-email.ts`, `POST /api/modelos/[especie]/mandar`, `PecasDoCliente.tsx` |
+| Entrevista sem cliente, PDF na pasta do cliente | `Entrevista.clienteId` opcional e `nome` (ja existia; ver `docs/ENTREVISTAS.md`) |
 | Alerta sonoro 1h e 15min antes | `src/lib/alerta-da-agenda.ts`, `AlertaDaAgenda.tsx`, `Usuario.alertaSonoro` |
 | Parcela de contrato no financeiro, com baixa na mesma linha | `src/lib/honorarios-do-escritorio.ts` (ja existia) |
 | Prazo pela lei e aviso antes do fatal; um aviso por vez | `src/lib/prazos*.ts`, `avisos.ts` (ja existia) |

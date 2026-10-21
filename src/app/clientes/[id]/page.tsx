@@ -361,6 +361,8 @@ export default async function FichaCliente({
         assinaturaLigada={assinaturaLigada}
         whatsappLigado={modulos.includes("WHATSAPP")}
         telefoneDoCliente={cliente.telefone}
+        emailLigado={modulos.includes("EMAIL")}
+        emailDoCliente={cliente.email}
         notaFiscalLigada={modulos.includes("NFSE")}
         envios={envios.map((e) => ({
           id: e.id,
