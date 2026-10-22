@@ -271,7 +271,7 @@ export async function emitirNotaDaFatura(
   }
 
   const anual = ehFaturaAnual(fatura.detalhe);
-  const descricao = `${fiscal!.descricaoPadrao} — ${descricaoDaFatura(fatura.competencia, anual).replace(/^BirdJud — /, "")}`;
+  const descricao = `${fiscal!.descricaoPadrao} - ${descricaoDaFatura(fatura.competencia, anual).replace(/^BirdJud — /, "")}`;
   const complementares = [
     `Fatura ${fatura.competencia} do BirdJud.`,
     resumoDosItens(fatura.detalhe),
@@ -362,7 +362,10 @@ export async function emitirNotaDaFatura(
     return await atualizar(nota.id, {
       status: "REJEITADA",
       erros: r.erros as Prisma.InputJsonValue,
-      erro: r.erros.map((e) => `${e.codigo} ${e.descricao}`).join(" | ").slice(0, 1000),
+      erro: r.erros
+        .map((e) => `${e.codigo} ${e.descricao}${e.complemento ? ` (${e.complemento})` : ""}`)
+        .join(" | ")
+        .slice(0, 1000),
     });
   } catch (e) {
     // A conexao caiu depois do envio: a nota pode ter sido gerada la.

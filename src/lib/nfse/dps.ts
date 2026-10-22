@@ -83,8 +83,24 @@ export type DadosDps = {
 
 const so = (t: string | null | undefined) => (t ?? "").replace(/\D/g, "");
 
-export function esc(t: string): string {
+/**
+ * O leiaute so aceita caracteres do Latin-1 (padrao "[!-ÿ]" do XSD): travessao,
+ * aspas curvas e reticencias tipograficas derrubam a DPS com E1235 (falha no
+ * esquema). Troca pelo equivalente simples e descarta o que nao tem.
+ */
+export function latino(t: string): string {
   return t
+    .replace(/[\u2012-\u2015\u2212]/g, "-")
+    .replace(/[\u2018\u2019\u201A]/g, "'")
+    .replace(/[\u201C\u201D\u201E]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/\u00A0/g, " ")
+    .normalize("NFC")
+    .replace(/[^\u0009\u000A\u000D\u0020-\u00FF]/g, "");
+}
+
+export function esc(t: string): string {
+  return latino(t)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")

@@ -101,6 +101,12 @@ describe("leiaute da DPS (Anexo I)", () => {
     expect(xml).toContain("<cTribNac>171401</cTribNac>");
     // Quebra de linha solta nao passa; & e escapado.
     expect(xml).toContain("<xDescServ>Honorarios advocaticios</xDescServ>");
+  });
+
+  it("texto fora do Latin-1 (travessão, aspas curvas) vira o equivalente simples: o XSD recusa com E1235", () => {
+    const { xml } = montarDps(EMISSOR, { ...DADOS, descricao: "Licença de uso — assinatura 10/2026 “anual” …" });
+    expect(xml).toContain("<xDescServ>Licença de uso - assinatura 10/2026 &quot;anual&quot; ...</xDescServ>");
+    expect(xml).not.toMatch(/[\u2014\u201C\u201D\u2026]/);
     expect(xml).toContain("<xNome>Cliente &amp; Cia</xNome>");
     expect(xml).toContain("<CPF>52998224725</CPF>");
     expect(xml).not.toContain("<IBSCBS>");
