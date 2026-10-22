@@ -74,13 +74,13 @@ export function MarcaBirdJud({
           width={512}
           height={522}
           priority
-          className={tamanho === "pequena" ? "h-7 w-auto" : "h-9 w-auto"}
+          className={tamanho === "pequena" ? "h-9 w-auto sm:h-10" : "h-11 w-auto"}
         />
         <span
           className={
             tamanho === "pequena"
-              ? "text-base font-bold tracking-tight"
-              : "text-xl font-bold tracking-tight"
+              ? "text-xl font-bold tracking-tight sm:text-2xl"
+              : "text-2xl font-bold tracking-tight"
           }
           style={{ fontFamily: "var(--fonte-titulo)" }}
         >

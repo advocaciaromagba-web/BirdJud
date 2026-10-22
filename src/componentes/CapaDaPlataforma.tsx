@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CabecalhoPublico } from "./CabecalhoPublico";
 import { MarcaBirdJud } from "./MarcaBirdJud";
+import { WHATSAPP_DA_PLATAFORMA_EM_TEXTO, enderecoDoWhatsapp } from "./BotaoWhatsapp";
 import { Tela } from "./Tela";
 import { Icone, type NomeDeIcone } from "./Icone";
 import { contaDoPlano, PLANO, PLANOS } from "@/lib/planos";
@@ -402,6 +403,21 @@ export function CapaDaPlataforma({
             <p className="mt-3 text-sm text-slate-400">
               BirdJud <span className="destaque">·</span> by Blackbird
             </p>
+            <address className="mt-3 text-sm not-italic leading-6 text-slate-400">
+              Blackbird Soluções Estratégicas Ltda. <span className="destaque">·</span> CNPJ 30.044.017/0001-01
+              <br />
+              R. Rui Barbosa, 1249, Jardim Progresso, Guariba/SP, CEP 14842-042
+              <br />
+              <a href="mailto:contato@blackbirdsolucoes.com.br" className="hover:text-white">
+                contato@blackbirdsolucoes.com.br
+              </a>
+              <span className="destaque"> · </span>
+              <a href={enderecoDoWhatsapp()} target="_blank" rel="noopener noreferrer" className="hover:text-white">
+                WhatsApp {WHATSAPP_DA_PLATAFORMA_EM_TEXTO}
+              </a>
+              <br />
+              Contato, reclamações e devoluções pelo WhatsApp ou pelo e-mail acima.
+            </address>
           </div>
 
           <nav aria-label="Rodapé" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-300">
