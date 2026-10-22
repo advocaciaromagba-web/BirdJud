@@ -208,3 +208,53 @@ do escritorio (`redefinicao.ts`), mais apertadas, em
 - trocar grava `sessoesValidasApos`: toda sessao de operador aberta antes cai
   (`exigirOperador`), e o limite de tentativas de entrada da conta e zerado;
 - so no endereco da plataforma: de dentro de um escritorio a rota recusa.
+
+## Vazamento das variaveis de ambiente do Railway (21 e 22/10/2026)
+
+O Railway comunicou que um terceiro pode ter lido as variaveis de ambiente
+dos clientes, e decifrado parte delas. Tudo que estava em variavel la tem de
+ser tratado como vazado. O que NAO vazou por esse caminho: o banco (nao tem
+proxy publico; a URL interna nao abre de fora), as credenciais dos
+escritorios (cifradas no banco; so abrem com o banco E a chave) e as senhas
+das pessoas (hash).
+
+### O que trocar, em ordem de dano
+
+| Variavel | O que o vazamento permite | Onde se troca |
+|---|---|---|
+| `BACKUP_S3_CHAVE`, `BACKUP_S3_SEGREDO` | baixar os backups cifrados do R2 | Cloudflare > R2 > tokens: revogar e criar; e `BACKUP_CHAVE` nova (`openssl rand -base64 32`), a antiga guardada fora para restaurar backups antigos |
+| `ASAAS_PLATAFORMA_CHAVE` | mexer na conta de cobranca da plataforma, ler dados de pagamento | Asaas > Integracoes > chave de API |
+| `ASAAS_WEBHOOK_TOKEN` | forjar "fatura paga" | Asaas > webhook, token novo |
+| `WHATSAPP_TOKEN`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFICACAO` | mandar mensagem pelo numero da plataforma, forjar retorno | Meta for Developers > app > token de sistema e segredo do app |
+| `RESEND_API_KEY` | mandar e-mail como `envio.birdjud.com.br` | Resend > API keys: criar nova, apagar a antiga |
+| `PLATAFORMA_SMTP_SENHA` | mandar e-mail pela conta Gmail do rele | Google > senhas de app: revogar e criar |
+| `EMAIL_RELE_TOKEN`, `DJEN_RELE_TOKEN` | usar os reles na Vercel | variaveis dos reles na Vercel e aqui, token novo |
+| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` | gastar a conta de IA (o alvo declarado do ataque) | painel de cada provedor: revogar e criar |
+| `MICROSOFT_CLIENT_SECRET`, `GOOGLE_CLIENT_SECRET` | autorizar como o aplicativo da nuvem | Azure > app registration; Google Cloud > credenciais |
+| `NFSE_PLATAFORMA_PFX`, `NFSE_PLATAFORMA_SENHA` | emitir nota como a Blackbird | se ja estavam la: revogar o certificado na AC e emitir outro |
+| `SEGREDO_CHAVE` | abrir as credenciais dos escritorios SE o banco tambem for lido | chave nova + `npm run trocar-segredo-chave` (abaixo) |
+| `NEXTAUTH_SECRET` | forjar sessao | valor novo; toda sessao aberta cai |
+| `DATABASE_URL*` (senhas de `birdjud_app`, `birdjud_owner`, `birdjud_plataforma`) | so de dentro da rede do Railway | `ALTER ROLE ... PASSWORD` por um servico temporario (docs/RAILWAY.md) e URLs novas |
+| `ARQUIVOS_SEGREDO`, `VIGIA_*`, `OPERADOR_SENHA` | so de dentro / senha inicial do operador | valor novo; trocar a senha do operador no console |
+
+A troca so e completa quando a credencial ANTIGA esta revogada na origem:
+variavel nova com a antiga ainda valendo nao fecha nada.
+
+### Trocar a SEGREDO_CHAVE
+
+```sh
+SEGREDO_CHAVE_ANTIGA=<antiga> SEGREDO_CHAVE=<nova> npm run trocar-segredo-chave
+```
+
+Recifra `Integracao.dados` de todos os escritorios (SMTP, Asaas, Autentique,
+WhatsApp, Microsoft, Google, certificado da NFS-e). Idempotente; o que nao
+abre com nenhuma das chaves e listado para o escritorio reconectar. Os links
+assinados das notas da plataforma ja enviados deixam de abrir: reenviar pelo
+console. Depois, apagar `SEGREDO_CHAVE_ANTIGA` do ambiente.
+
+### Depois de trocar
+
+- Conferir os registros de cada servico (Asaas, Meta, Resend, provedores de
+  IA, Cloudflare R2) por uso estranho no periodo.
+- Rodar `npm run conferir-producao` (roda no start) e o vigia externo.
+- Anotar a data da troca nesta pagina.

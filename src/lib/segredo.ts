@@ -8,20 +8,37 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 const ALGORITMO = "aes-256-gcm";
 const TAMANHO_IV = 12;
 
-function chave(): Buffer {
-  const bruta = process.env.SEGREDO_CHAVE;
-  if (!bruta) throw new Error("SEGREDO_CHAVE não definida.");
+/** Le uma chave de 32 bytes em base64 de uma variavel de ambiente. */
+export function chaveDaVariavel(nome: string): Buffer {
+  const bruta = process.env[nome];
+  if (!bruta) throw new Error(`${nome} não definida.`);
   const buf = Buffer.from(bruta, "base64");
   if (buf.length !== 32) {
-    throw new Error("SEGREDO_CHAVE precisa ter 32 bytes em base64.");
+    throw new Error(`${nome} precisa ter 32 bytes em base64.`);
   }
   return buf;
 }
 
+function chave(): Buffer {
+  return chaveDaVariavel("SEGREDO_CHAVE");
+}
+
 /** Formato guardado: [iv (12) | tag (16) | texto cifrado]. */
 export function cifrar(valor: unknown): Buffer {
+  return cifrarCom(valor, chave());
+}
+
+export function decifrar<T = unknown>(pacote: Buffer | Uint8Array): T {
+  return decifrarCom<T>(pacote, chave());
+}
+
+/**
+ * As mesmas operacoes com a chave em maos. Existe para a troca de chave
+ * (scripts/trocar-segredo-chave.ts): decifra com a antiga, cifra com a nova.
+ */
+export function cifrarCom(valor: unknown, chave: Buffer): Buffer {
   const iv = randomBytes(TAMANHO_IV);
-  const cipher = createCipheriv(ALGORITMO, chave(), iv);
+  const cipher = createCipheriv(ALGORITMO, chave, iv);
   const dados = Buffer.concat([
     cipher.update(JSON.stringify(valor), "utf8"),
     cipher.final(),
@@ -29,11 +46,11 @@ export function cifrar(valor: unknown): Buffer {
   return Buffer.concat([iv, cipher.getAuthTag(), dados]);
 }
 
-export function decifrar<T = unknown>(pacote: Buffer | Uint8Array): T {
+export function decifrarCom<T = unknown>(pacote: Buffer | Uint8Array, chave: Buffer): T {
   const buf = Buffer.from(pacote);
   const iv = buf.subarray(0, TAMANHO_IV);
   const tag = buf.subarray(TAMANHO_IV, TAMANHO_IV + 16);
-  const decipher = createDecipheriv(ALGORITMO, chave(), iv);
+  const decipher = createDecipheriv(ALGORITMO, chave, iv);
   decipher.setAuthTag(tag);
   const texto = Buffer.concat([
     decipher.update(buf.subarray(TAMANHO_IV + 16)),
