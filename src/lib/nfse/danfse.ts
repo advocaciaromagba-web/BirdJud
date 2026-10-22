@@ -211,7 +211,7 @@ export async function gerarDanfse(nfseXml: string, opcoes: OpcoesDanfse = {}): P
   campo(ctx, "DATA E HORA DA EMISSÃO DA DPS", dataHora(dps.txt("dhEmi")), 2, 2.96, 1, { rotuloGrande: true });
   campo(ctx, "EMITENTE DA NFS-E", descr("tpEmit", dps.txt("tpEmit")), 0, 3.65, 1, { fundo: true, rotuloGrande: true });
   campo(ctx, "SITUAÇÃO DA NFS-E", descr("cStat", n.txt("cStat")), 1, 3.65, 1, { rotuloGrande: true });
-  campo(ctx, "FINALIDADE", descr("finNFSe", dps.txt("IBSCBS/finNFSe")), 2, 3.65, 1, { rotuloGrande: true });
+  campo(ctx, "FINALIDADE", descr("finNFSe", dps.txt("finNFSe") || dps.txt("IBSCBS/finNFSe")), 2, 3.65, 1, { rotuloGrande: true });
 
   const qr = await QRCode.toBuffer(`https://www.nfse.gov.br/ConsultaPublica/?tpc=1&chave=${chave}`, { margin: 0, width: 300 });
   const qrImg = await pdf.embedPng(qr);

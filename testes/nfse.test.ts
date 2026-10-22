@@ -101,6 +101,8 @@ describe("leiaute da DPS (Anexo I)", () => {
     expect(xml).toContain("<cTribNac>171401</cTribNac>");
     // Quebra de linha solta nao passa; & e escapado.
     expect(xml).toContain("<xDescServ>Honorarios advocaticios</xDescServ>");
+    // Esquema novo da Sefin: a finalidade fica em infDPS, entre tpEmit e cLocEmi.
+    expect(xml).toContain("<tpEmit>1</tpEmit><finNFSe>0</finNFSe><cLocEmi>");
   });
 
   it("texto fora do Latin-1 (travessão, aspas curvas) vira o equivalente simples: o XSD recusa com E1235", () => {
@@ -156,7 +158,7 @@ describe("leiaute da DPS (Anexo I)", () => {
     const ibs = ibsCbsVigente(fiscal, new Date("2027-01-05T12:00:00-03:00"));
     expect(ibs).toEqual({ cIndOp: "100301", cst: "000", cClassTrib: "000001" });
     const { xml } = montarDps({ ...EMISSOR, ibsCbs: ibs }, DADOS);
-    expect(xml).toContain("<IBSCBS><finNFSe>0</finNFSe><cIndOp>100301</cIndOp><indDest>0</indDest>");
+    expect(xml).toContain("<IBSCBS><cIndOp>100301</cIndOp><indDest>0</indDest>");
   });
 
   it("o regime vale pela COMPETENCIA: mudança marcada vira sozinha", () => {

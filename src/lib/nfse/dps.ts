@@ -152,6 +152,12 @@ export function montarDps(emissor: EmissorDps, d: DadosDps): { xml: string; idDp
   tag("nDPS", String(d.numero));
   tag("dCompet", d.dataCompetencia);
   tag("tpEmit", 1);
+  // A Sefin Nacional passou a validar a DPS pelo esquema novo (NT da reforma
+  // tributaria), em que a finalidade da nota fica AQUI, em infDPS, logo
+  // depois de tpEmit (e de cMotivoEmisTI, quando houver) e antes de cLocEmi.
+  // Sem ela: E1235 "invalid child element cLocEmi... expected finNFSe".
+  // 0 = NFS-e regular; credito (1) e debito (2) sao outro fluxo.
+  tag("finNFSe", 0);
   tag("cLocEmi", emissor.codigoMunicipio);
 
   // Prestador — o proprio emitente: so identificacao e regime (nome/endereco vem do cadastro nacional).
@@ -244,9 +250,9 @@ export function montarDps(emissor: EmissorDps, d: DadosDps): { xml: string; idDp
 
   // Grupo IBS/CBS — vem depois de "valores" no leiaute. O emissor so declara
   // a natureza da operacao; aliquotas e valores sao calculados pela Sefin.
+  // (finNFSe saiu daqui: no esquema novo ela mora em infDPS, acima.)
   if (emissor.ibsCbs) {
     t.push("<IBSCBS>");
-    tag("finNFSe", 0); // 0 = NFS-e regular
     tag("cIndOp", emissor.ibsCbs.cIndOp);
     tag("indDest", 0); // o destinatario e o proprio tomador da nota
     t.push("<valores>");
