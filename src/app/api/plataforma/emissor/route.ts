@@ -33,7 +33,7 @@ export async function PATCH(req: Request) {
         // Ligada com pendencia, cada pagamento viraria um trabalho com falha.
         let pendencias: string[];
         try {
-          pendencias = pendenciasDaPlataforma(existente, certificadoDaPlataforma());
+          pendencias = pendenciasDaPlataforma(existente, await certificadoDaPlataforma(existente));
         } catch (e) {
           pendencias = [`O certificado das variáveis não abriu: ${(e as Error).message}`];
         }

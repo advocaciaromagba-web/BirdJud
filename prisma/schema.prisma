@@ -1609,6 +1609,12 @@ model FiscalDaPlataforma {
   ambiente           String    @default("HOMOLOGACAO")
   /// Emitir sozinho quando a fatura e paga.
   automatica         Boolean   @default(false)
+  /// e-CNPJ A1 enviado pelo console: JSON {arquivo, senha} cifrado com a
+  /// SEGREDO_CHAVE. Sem ele, valem as variaveis NFSE_PLATAFORMA_*.
+  certificado          Bytes?
+  certificadoTitular   String?
+  certificadoValidoAte DateTime?
+  certificadoEnviadoEm DateTime?
   atualizadoEm       DateTime  @updatedAt
 }
 

@@ -19,9 +19,13 @@ vi.mock("@/lib/cep", async (original) => ({
 }));
 
 const {
+  CertificadoRecusado,
   NotaInvalida,
   cancelarNotaDaPlataforma,
+  certificadoDaPlataforma,
   emitirNotaDaFatura,
+  guardarCertificadoDaPlataforma,
+  removerCertificadoDaPlataforma,
   tokenConfere,
   tokenDaNota,
 } = await import("../src/lib/nota-da-plataforma");
@@ -209,8 +213,37 @@ d("nota da mensalidade", () => {
     const outraFatura = await prismaPlataforma().fatura.create({
       data: { escritorioId: esc, competencia: "2026-11", valorCentavos: 27_900, vencimento: new Date("2026-11-20T12:00:00Z"), status: "PAGA" },
     });
-    await expect(emitirNotaDaFatura(outraFatura.id, "MANUAL")).rejects.toThrow(/NFSE_PLATAFORMA_PFX/);
+    await expect(emitirNotaDaFatura(outraFatura.id, "MANUAL")).rejects.toThrow(/certificado e-CNPJ/);
     process.env.NFSE_PLATAFORMA_PFX = pfx;
+  });
+
+  it("certificado enviado pelo console vale antes das variáveis, e só entra se for o e-CNPJ certo", async () => {
+    process.env.SEGREDO_CHAVE ??= Buffer.alloc(32, 6).toString("base64");
+    const pfx = Buffer.from(certificado(`BLACKBIRD TECNOLOGIA LTDA:${CNPJ_BLACKBIRD}`), "base64");
+    // Senha errada, e-CPF e outro CNPJ: recusados, nada guardado.
+    await expect(guardarCertificadoDaPlataforma(pfx, "errada")).rejects.toBeInstanceOf(CertificadoRecusado);
+    await expect(
+      guardarCertificadoDaPlataforma(Buffer.from(certificado("FULANO:12345678901"), "base64"), SENHA),
+    ).rejects.toThrow(/e-CPF/);
+    await expect(
+      guardarCertificadoDaPlataforma(Buffer.from(certificado("OUTRA LTDA:99888777000166"), "base64"), SENHA),
+    ).rejects.toThrow(/E0718/);
+    expect((await prismaPlataforma().fiscalDaPlataforma.findUniqueOrThrow({ where: { id: "PLATAFORMA" } })).certificado).toBeNull();
+
+    const r = await guardarCertificadoDaPlataforma(pfx, SENHA);
+    expect(r.titular).toBe("BLACKBIRD TECNOLOGIA LTDA");
+    const f = await prismaPlataforma().fiscalDaPlataforma.findUniqueOrThrow({ where: { id: "PLATAFORMA" } });
+    expect(f.certificadoTitular).toBe("BLACKBIRD TECNOLOGIA LTDA");
+    // Cifrado: o base64 do arquivo nao aparece em claro no banco.
+    expect(Buffer.from(f.certificado!).toString("latin1")).not.toContain(pfx.toString("base64").slice(0, 40));
+
+    // Sem as variaveis, o certificado do banco emite.
+    const pfxEnv = process.env.NFSE_PLATAFORMA_PFX;
+    delete process.env.NFSE_PLATAFORMA_PFX;
+    expect((await certificadoDaPlataforma())?.cnpj).toBe(CNPJ_BLACKBIRD);
+    await removerCertificadoDaPlataforma();
+    expect(await certificadoDaPlataforma()).toBeNull();
+    process.env.NFSE_PLATAFORMA_PFX = pfxEnv;
   });
 
   it("pagamento poe a nota na fila só com a emissão automática ligada", async () => {

@@ -20,9 +20,10 @@
 //   exemplo). O operador tambem cancela e confere nota que ficou pendente.
 //
 // Emitida, vai ao e-mail do escritorio com o link do PDF e do XML.
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import type { FiscalDaPlataforma, NotaDaPlataforma, Prisma } from "@prisma/client";
 import { prismaPlataforma } from "./prisma";
+import { cifrar, decifrar } from "./segredo";
 import { carregarDeBase64, type CertificadoCarregado } from "./nfse/certificado";
 import { assinarXml } from "./nfse/assinar";
 import { consultarDps, consultarNfse, enviarDps, enviarEvento, type Ambiente, type ErroApi } from "./nfse/api";
@@ -49,16 +50,91 @@ export async function fiscalDaPlataforma(): Promise<FiscalDaPlataforma | null> {
 
 let certificadoEmCache: { chave: string; cert: CertificadoCarregado } | null = null;
 
-/** O e-CNPJ da Blackbird, das variaveis do Railway. null sem configuracao. */
-export function certificadoDaPlataforma(): CertificadoCarregado | null {
-  const pfx = process.env.NFSE_PLATAFORMA_PFX?.trim();
-  const senha = process.env.NFSE_PLATAFORMA_SENHA;
-  if (!pfx || !senha) return null;
-  const chave = `${pfx.length}:${pfx.slice(-16)}`;
+type CertificadoGuardadoDaPlataforma = { arquivo: string; senha: string };
+
+function carregarComCache(chave: string, pfx: string, senha: string): CertificadoCarregado {
   if (certificadoEmCache?.chave !== chave) {
     certificadoEmCache = { chave, cert: carregarDeBase64(pfx, senha) };
   }
   return certificadoEmCache.cert;
+}
+
+/**
+ * O e-CNPJ da Blackbird. Primeiro o enviado pelo console (cifrado no banco);
+ * na falta dele, as variaveis NFSE_PLATAFORMA_PFX e NFSE_PLATAFORMA_SENHA.
+ * null sem nenhum dos dois.
+ */
+export async function certificadoDaPlataforma(
+  fiscal?: Pick<FiscalDaPlataforma, "certificado"> | null,
+): Promise<CertificadoCarregado | null> {
+  const f =
+    fiscal === undefined
+      ? await prismaPlataforma().fiscalDaPlataforma.findUnique({ where: { id: ID }, select: { certificado: true } })
+      : fiscal;
+  if (f?.certificado) {
+    const guardado = decifrar<CertificadoGuardadoDaPlataforma>(f.certificado);
+    return carregarComCache(`banco:${createHash("sha256").update(f.certificado).digest("hex")}`, guardado.arquivo, guardado.senha);
+  }
+  const pfx = process.env.NFSE_PLATAFORMA_PFX?.trim();
+  const senha = process.env.NFSE_PLATAFORMA_SENHA;
+  if (!pfx || !senha) return null;
+  return carregarComCache(`ambiente:${pfx.length}:${pfx.slice(-16)}`, pfx, senha);
+}
+
+export class CertificadoRecusado extends Error {
+  readonly status = 400;
+  constructor(motivo: string) {
+    super(motivo);
+    this.name = "CertificadoRecusado";
+  }
+}
+
+/**
+ * Guarda o e-CNPJ enviado pelo console. O arquivo e aberto AGORA com a senha:
+ * so entra se abrir, se for e-CNPJ, se for do CNPJ do cadastro fiscal e se
+ * estiver na validade. A senha fica guardada (cifrada) porque a emissao
+ * automatica assina sem ninguem na tela.
+ */
+export async function guardarCertificadoDaPlataforma(
+  pfx: Buffer,
+  senha: string,
+  agora = new Date(),
+): Promise<{ titular: string; validoAte: Date }> {
+  const fiscal = await fiscalDaPlataforma();
+  if (!fiscal) throw new CertificadoRecusado("Cadastre o emissor (razão social, CNPJ, município) antes do certificado.");
+  let cert: CertificadoCarregado;
+  try {
+    cert = carregarDeBase64(pfx.toString("base64"), senha);
+  } catch (e) {
+    throw new CertificadoRecusado((e as Error).message);
+  }
+  if (!cert.cnpj) throw new CertificadoRecusado("Este é um e-CPF. Para emitir nota é preciso o e-CNPJ da empresa.");
+  if (cert.cnpj !== fiscal.cnpj.replace(/\D/g, "")) {
+    throw new CertificadoRecusado(`Este certificado é do CNPJ ${cert.cnpj}, diferente do cadastro fiscal. A Receita recusa (E0718).`);
+  }
+  if (cert.validoAte < agora) throw new CertificadoRecusado(`Certificado vencido em ${cert.validoAte.toLocaleDateString("pt-BR")}.`);
+  if (cert.validoDesde > agora) throw new CertificadoRecusado("Certificado ainda não está válido.");
+
+  const guardado: CertificadoGuardadoDaPlataforma = { arquivo: pfx.toString("base64"), senha };
+  await prismaPlataforma().fiscalDaPlataforma.update({
+    where: { id: ID },
+    data: {
+      certificado: cifrar(guardado),
+      certificadoTitular: cert.titular,
+      certificadoValidoAte: cert.validoAte,
+      certificadoEnviadoEm: agora,
+    },
+  });
+  certificadoEmCache = null;
+  return { titular: cert.titular, validoAte: cert.validoAte };
+}
+
+export async function removerCertificadoDaPlataforma(): Promise<void> {
+  await prismaPlataforma().fiscalDaPlataforma.update({
+    where: { id: ID },
+    data: { certificado: null, certificadoTitular: null, certificadoValidoAte: null, certificadoEnviadoEm: null },
+  });
+  certificadoEmCache = null;
 }
 
 /**
@@ -82,7 +158,7 @@ export function pendenciasDaPlataforma(
 ): string[] {
   const p: string[] = [];
   if (!fiscal) return ["Cadastrar o emissor (Blackbird) no console: razão social, CNPJ, município e regime."];
-  if (!cert) p.push("Configurar NFSE_PLATAFORMA_PFX e NFSE_PLATAFORMA_SENHA (e-CNPJ da Blackbird) no Railway.");
+  if (!cert) p.push("Enviar o certificado e-CNPJ da Blackbird (arquivo .pfx e senha) aqui no console.");
   if (cert && cert.cnpj !== fiscal.cnpj.replace(/\D/g, "")) {
     p.push("O certificado configurado é de outro CNPJ — a Sefin recusa (E0718).");
   }
@@ -171,7 +247,7 @@ export async function emitirNotaDaFatura(
   if (existente && (existente.status === "EMITIDA" || existente.status === "PROCESSANDO")) return existente;
 
   const fiscal = await fiscalDaPlataforma();
-  const cert = certificadoDaPlataforma();
+  const cert = await certificadoDaPlataforma(fiscal);
   const competencia = competenciaDa(fatura.pagoEm, agora);
   const pendencias = pendenciasDaPlataforma(fiscal, cert, competencia);
   if (pendencias.length) throw new NotaInvalida(pendencias.join(" "), 428);
@@ -333,7 +409,7 @@ export async function verificarNotaDaPlataforma(id: string): Promise<NotaDaPlata
   const nota = await prismaPlataforma().notaDaPlataforma.findUnique({ where: { id } });
   if (!nota) throw new NotaInvalida("Nota não encontrada.", 404);
   if (nota.status !== "PROCESSANDO" || !nota.idDps) return nota;
-  const cert = certificadoDaPlataforma();
+  const cert = await certificadoDaPlataforma();
   if (!cert) throw new NotaInvalida("Certificado da Blackbird não configurado.", 428);
   const recuperada = await recuperarPorDps(nota, cert);
   if (recuperada) return recuperada;
@@ -356,7 +432,7 @@ export async function cancelarNotaDaPlataforma(
   const texto = justificativa.trim();
   if (texto.length < 15) throw new NotaInvalida("Explique o motivo do cancelamento com pelo menos 15 caracteres.");
   const fiscal = await fiscalDaPlataforma();
-  const cert = certificadoDaPlataforma();
+  const cert = await certificadoDaPlataforma(fiscal);
   if (!fiscal || !cert) throw new NotaInvalida("Emissor ou certificado da Blackbird não configurado.", 428);
 
   const ambiente = nota.ambiente as Ambiente;

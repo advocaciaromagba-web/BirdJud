@@ -6,6 +6,7 @@ import { emReais } from "@/lib/dinheiro";
 import { NavegacaoDaPlataforma } from "@/componentes/NavegacaoDaPlataforma";
 import { ConfigFiscal } from "@/componentes/ConfigFiscal";
 import { EmissaoAutomatica } from "@/componentes/EmissaoAutomatica";
+import { CertificadoDaPlataforma } from "@/componentes/CertificadoDaPlataforma";
 import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
 import { fiscalParaTela } from "@/lib/nfse/cadastro";
 import { certificadoDaPlataforma, fiscalDaPlataforma, lembreteDoPercentual, pendenciasDaPlataforma } from "@/lib/nota-da-plataforma";
@@ -29,13 +30,14 @@ export default async function NotasDaPlataforma() {
   let cert: CertificadoCarregado | null = null;
   let erroDoCertificado: string | null = null;
   try {
-    cert = certificadoDaPlataforma();
+    cert = await certificadoDaPlataforma(fiscal);
   } catch (e) {
     erroDoCertificado = (e as Error).message;
   }
   const pendencias = pendenciasDaPlataforma(fiscal, cert);
   const lembrete = lembreteDoPercentual(fiscal);
-  if (erroDoCertificado) pendencias.unshift(`O certificado das variáveis não abriu: ${erroDoCertificado}`);
+  if (erroDoCertificado) pendencias.unshift(`O certificado guardado não abriu: ${erroDoCertificado}`);
+  const origemDoCertificado = fiscal?.certificado ? "console" : cert ? "variáveis do Railway" : null;
 
   const notas = await prismaPlataforma().notaDaPlataforma.findMany({ orderBy: { criadoEm: "desc" }, take: 100 });
 
@@ -56,10 +58,12 @@ export default async function NotasDaPlataforma() {
         </p>
         <p className="mt-1">
           Certificado:{" "}
-          {cert
-            ? `${cert.titular}, válido até ${data(cert.validoAte)}`
-            : "não configurado (variáveis NFSE_PLATAFORMA_PFX e NFSE_PLATAFORMA_SENHA no Railway)"}
+          {cert ? `${cert.titular}, válido até ${data(cert.validoAte)} (${origemDoCertificado})` : "não enviado"}
         </p>
+        <CertificadoDaPlataforma
+          atual={fiscal?.certificado ? { titular: fiscal.certificadoTitular ?? "", validoAte: fiscal.certificadoValidoAte ? data(fiscal.certificadoValidoAte) : "" } : null}
+          temEmissor={Boolean(fiscal)}
+        />
         {pendencias.length ? (
           <ul className="aviso-atencao mt-3 list-disc pl-6">
             {pendencias.map((p) => (
