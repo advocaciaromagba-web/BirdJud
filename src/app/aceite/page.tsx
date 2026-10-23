@@ -28,7 +28,12 @@ export default async function PaginaAceite() {
     <main className="pagina-estreita">
       <p className="sobretitulo">{contexto.marca.nome}</p>
       <h1 className="mt-1">Antes de começar</h1>
-      {contexto.papel === "ADMIN" ? (
+      {contexto.suporte ? (
+        <p className="aviso-atencao mt-3">
+          Este escritório ainda não aceitou a versão vigente dos documentos. O aceite é do administrador do escritório;
+          o acesso de suporte não aceita em nome dele. As outras telas abrem normalmente para o suporte.
+        </p>
+      ) : contexto.papel === "ADMIN" ? (
         <>
           <p className="mt-3 leitura text-slate-700">
             O sistema do escritório está pronto. Falta o aceite dos documentos

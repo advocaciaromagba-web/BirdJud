@@ -33,7 +33,9 @@ export async function contextoDaPagina(
   // Sem o aceite dos documentos vigentes, o sistema nao abre. Vale para
   // todos: o administrador aceita, os outros esperam ele aceitar. Escritorio
   // que se cadastrou sozinho ja aceitou no cadastro e nunca ve esta tela.
-  if ((await documentosPendentes(contexto.escritorioId)).length > 0) redirect("/aceite");
+  // O suporte entra mesmo com o aceite pendente (para ajudar), mas nunca
+  // aceita em nome do escritorio: a rota do aceite recusa a sessao de suporte.
+  if (!contexto.suporte && (await documentosPendentes(contexto.escritorioId)).length > 0) redirect("/aceite");
   return contexto;
 }
 

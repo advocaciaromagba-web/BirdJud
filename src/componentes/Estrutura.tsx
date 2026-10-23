@@ -5,6 +5,7 @@ import { Icone, type NomeDeIcone } from "./Icone";
 import { MenuLateral } from "./MenuLateral";
 import { CampoDeBusca } from "./CampoDeBusca";
 import { AlertaDaAgenda } from "./AlertaDaAgenda";
+import { FaixaDeSuporte } from "./FaixaDeSuporte";
 
 export type Area = {
   href: string;
@@ -182,6 +183,8 @@ export function Estrutura({
       />
 
       <div className="min-w-0 flex-1">
+        {/* Suporte da plataforma dentro do escritorio: faixa em toda tela. */}
+        <FaixaDeSuporte />
         <header className="sticky top-0 z-10 hidden border-b border-slate-200/70 bg-white/75 backdrop-blur-md lg:block">
           {/* So a busca. O cargo e o Sair saiam daqui tambem, e repetidos
               do cartão no pe do menu: duas saídas na mesma tela e uma a

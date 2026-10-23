@@ -59,6 +59,23 @@ export function AcoesDoEscritorio({
   const [codigoDoCupom, setCodigoDoCupom] = useState("");
   const [motivoDoEncerramento, setMotivoDoEncerramento] = useState("");
   const [exclusao, setExclusao] = useState({ aberta: false, confirmacao: "", motivo: "" });
+  const [motivoDoSuporte, setMotivoDoSuporte] = useState("");
+
+  async function entrarComoSuporte() {
+    setOcupado(true);
+    setRecado(null);
+    const { ok, json } = await chamar(`/api/plataforma/escritorios/${escritorioId}/suporte`, {
+      acao: "abrir",
+      motivo: motivoDoSuporte,
+    });
+    setOcupado(false);
+    setRecado({ texto: ok ? (json.detalhe ?? "Acesso registrado.") : (json.erro ?? "Falhou."), ok });
+    if (ok && (json as { url?: string }).url) {
+      window.open((json as { url?: string }).url, "_blank", "noopener,noreferrer");
+      setMotivoDoSuporte("");
+      router.refresh();
+    }
+  }
 
   async function excluir() {
     if (!window.confirm("Excluir definitivamente? Isto não se desfaz.")) return;
@@ -437,6 +454,35 @@ export function AcoesDoEscritorio({
           </>
         )}
       </div>
+
+      {!encerrado ? (
+        <div className="mt-4 border-t border-slate-200 pt-4">
+          <p className="font-semibold">Entrar no escritório como suporte</p>
+          <p className="mt-1 text-slate-600">
+            Abre o sistema do escritório numa aba nova, como o administrador, por 1 hora, com uma faixa visível em toda
+            tela. Fica registrado com você, o motivo e o horário (Termos de Uso, item 5). O financeiro do escritório
+            continua pedindo a senha de administração dele.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              aria-label="Motivo do acesso de suporte"
+              className="campo max-w-md"
+              placeholder="Motivo (ex.: chamado de 23/10, cadastro de clientes)"
+              maxLength={300}
+              value={motivoDoSuporte}
+              onChange={(e) => setMotivoDoSuporte(e.target.value)}
+            />
+            <button
+              type="button"
+              disabled={ocupado || motivoDoSuporte.trim().length < 10}
+              onClick={entrarComoSuporte}
+              className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+            >
+              Entrar como suporte
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-4 border-t border-red-200 pt-4">
         <p className="font-semibold text-red-800">Excluir definitivamente</p>

@@ -13,8 +13,10 @@ import {
   PAPEL_OPERADOR,
   PROVEDOR,
   PROVEDOR_OPERADOR,
+  PROVEDOR_SUPORTE,
   STATUS_QUE_ENTRAM,
 } from "./auth-comum";
+import { usarLinkDeSuporte } from "./acesso-de-suporte";
 import { prismaPlataforma } from "./prisma";
 import { registrarTentativa } from "./limite";
 import { chaveDeOrigem } from "./origem";
@@ -214,12 +216,43 @@ export const opcoesAuth: NextAuthOptions = {
         };
       },
     }),
+    CredentialsProvider({
+      id: PROVEDOR_SUPORTE,
+      name: "Entrada de suporte",
+      credentials: { token: { label: "Token", type: "text" } },
+      /**
+       * Entrada do suporte da plataforma, pelo link de uso unico que o
+       * console gera (src/lib/acesso-de-suporte.ts). Vale so no endereco do
+       * escritorio do link, uma vez, dentro de 2 minutos.
+       */
+      async authorize(credenciais, req) {
+        const token = credenciais?.token ?? "";
+        if (!token) return null;
+        const marca = await escritorioPorSlug(slugDoHost(req?.headers?.host ?? null) ?? "");
+        if (!marca?.id || !marca.status || !STATUS_QUE_ENTRAM.has(marca.status)) return null;
+        const acesso = await usarLinkDeSuporte(token, marca.id);
+        if (!acesso) return null;
+        return comEscritorio(marca.id, async (db) => {
+          const usuario = await db.usuario.findFirst({ where: { id: acesso.usuarioId } });
+          if (!usuario?.ativo) return null;
+          return {
+            id: usuario.id,
+            name: usuario.nome,
+            email: usuario.email,
+            escritorioId: marca.id!,
+            papel: usuario.papel,
+            suporte: { acessoId: acesso.acessoId, ate: acesso.expiraEm.getTime(), operador: acesso.operador },
+          };
+        });
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.escritorioId = user.escritorioId;
         token.papel = user.papel;
+        if (user.suporte) token.suporte = user.suporte;
         // Momento da emissao: e o que permite invalidar sessoes antigas quando
         // a senha muda ou o usuario e desativado.
         token.emitidaEm = Date.now();
@@ -231,6 +264,7 @@ export const opcoesAuth: NextAuthOptions = {
       session.papel = token.papel as string;
       session.usuarioId = token.sub as string;
       session.emitidaEm = (token.emitidaEm as number | undefined) ?? 0;
+      if (token.suporte) session.suporte = token.suporte as { acessoId: string; ate: number; operador: string };
       return session;
     },
   },

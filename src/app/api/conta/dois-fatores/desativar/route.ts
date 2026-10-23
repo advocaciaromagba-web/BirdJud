@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirSessao } from "@/lib/sessao";
+import { exigirSessao, recusarSuporte } from "@/lib/sessao";
 import { conferirSenha } from "@/lib/senhas";
 import { conferirCodigo } from "@/lib/dois-fatores";
 import { tratarErro } from "@/lib/respostas";
@@ -14,7 +14,9 @@ const corpoEsperado = z.object({
 /** Desligar o segundo fator exige senha E um codigo valido. */
 export async function POST(req: Request) {
   try {
-    const { escritorioId, usuarioId } = await exigirSessao();
+    const contexto = await exigirSessao();
+    recusarSuporte(contexto, "Desligar o segundo fator");
+    const { escritorioId, usuarioId } = contexto;
     const corpo = corpoEsperado.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });

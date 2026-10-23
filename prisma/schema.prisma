@@ -830,6 +830,11 @@ model AcessoSuporte {
   motivo       String
   iniciadoEm   DateTime  @default(now())
   encerradoEm  DateTime?
+  /// Entrada no escritorio como suporte: ate quando a sessao vale, como qual
+  /// usuario entra, e quando o link de uso unico foi usado.
+  expiraEm      DateTime?
+  comoUsuarioId String?
+  linkUsadoEm   DateTime?
 
   operador OperadorPlataforma @relation(fields: [operadorId], references: [id])
 

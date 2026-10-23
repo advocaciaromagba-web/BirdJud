@@ -13,3 +13,6 @@ export const PAPEL_OPERADOR = "OPERADOR";
 
 /** Status de escritorio que permitem abrir sessao. */
 export const STATUS_QUE_ENTRAM = new Set(["TESTE", "ATIVO", "INADIMPLENTE"]);
+
+/** Id do provedor da entrada de suporte (link de uso unico vindo do console). */
+export const PROVEDOR_SUPORTE = "suporte";

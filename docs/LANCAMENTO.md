@@ -28,3 +28,5 @@ esta pagina a cada item fechado (data e quem fez).
 - Variaveis de todos os servicos guardadas no Bitwarden (colecao "Variaveis dos sistemas (Railway)").
 - Roteiro para acompanhar as novidades do sistema da Advocacia Roma (`docs/ESPELHO-DA-ROMA.md`).
 - Nota fiscal do escritorio para os clientes dele, provada em producao.
+- Console do operador (23/10): tabela de precos editavel com reajuste, ciclo trimestral, cupons, isencao por prazo, reajuste anual dos contratos com aviso por e-mail, exclusao definitiva e entrada no escritorio como suporte.
+- Chaves trocadas depois do incidente do Railway: `NEXTAUTH_SECRET` e `BACKUP_CHAVE` (23/10, a antiga guardada no Bitwarden para abrir os backups anteriores).

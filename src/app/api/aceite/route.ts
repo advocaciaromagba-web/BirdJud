@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirAdmin } from "@/lib/sessao";
+import { exigirAdmin, recusarSuporte } from "@/lib/sessao";
 import { documentosPendentes, ipDaRequisicao, registrarAceite } from "@/lib/aceite";
 import { VERSAO_DOS_DOCUMENTOS } from "@/lib/juridico";
 import { tratarErro } from "@/lib/respostas";
@@ -20,7 +20,9 @@ const pedido = z.object({
  */
 export async function POST(req: Request) {
   try {
-    const { escritorioId, usuarioId } = await exigirAdmin();
+    const contexto = await exigirAdmin();
+    recusarSuporte(contexto, "O aceite dos documentos");
+    const { escritorioId, usuarioId } = contexto;
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {
       return NextResponse.json({ erro: "E preciso marcar o aceite." }, { status: 400 });

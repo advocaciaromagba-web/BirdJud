@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
+import { AcessosDeSuporte } from "@/componentes/AcessosDeSuporte";
 import { fiscalDaPlataforma, lembreteDoPercentual } from "@/lib/nota-da-plataforma";
 import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { notFound, redirect } from "next/navigation";
@@ -62,6 +63,12 @@ export default async function EscritorioNoPainel({
     notas.find((n) => n.faturaId === faturaId) ?? notas.find((n) => n.faturaOriginalId === faturaId) ?? null;
   const lembrete = lembreteDoPercentual(await fiscalDaPlataforma());
   const tabela = await tabelaVigente();
+  const acessos = await prismaPlataforma().acessoSuporte.findMany({
+    where: { escritorioId: escritorio.id },
+    orderBy: { iniciadoEm: "desc" },
+    take: 15,
+    include: { operador: { select: { nome: true } } },
+  });
 
   const agora = new Date();
 
@@ -163,6 +170,33 @@ export default async function EscritorioNoPainel({
         descontos={{ anual: percentualEmTexto(tabela.descontoAnual), trimestral: percentualEmTexto(tabela.descontoTrimestral) }}
         encerrado={escritorio.status === "ENCERRADO"}
       />
+
+      <section className="mt-6">
+        <h2 className="font-semibold">Acessos de suporte</h2>
+        <p className="ajuda">Registro exigido pelos Termos de Uso (item 5): guardado por 12 meses e mostrado ao escritório quando pedido.</p>
+        <AcessosDeSuporte
+          escritorioId={escritorio.id}
+          acessos={acessos.map((a) => {
+            const aberto = Boolean(a.expiraEm && !a.encerradoEm && a.expiraEm > agora);
+            return {
+              id: a.id,
+              quando: a.iniciadoEm.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+              operador: a.operador.nome,
+              motivo: a.motivo,
+              aberto,
+              situacao: !a.expiraEm
+                ? "ação no console"
+                : aberto
+                  ? a.linkUsadoEm
+                    ? "dentro do escritório agora"
+                    : "link gerado, ainda não usado"
+                  : a.encerradoEm
+                    ? "encerrado"
+                    : "vencido",
+            };
+          })}
+        />
+      </section>
 
       <section className="mt-6">
         <h2 className="font-semibold">Faturas</h2>

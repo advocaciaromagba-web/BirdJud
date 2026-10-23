@@ -258,3 +258,33 @@ console. Depois, apagar `SEGREDO_CHAVE_ANTIGA` do ambiente.
   IA, Cloudflare R2) por uso estranho no periodo.
 - Rodar `npm run conferir-producao` (roda no start) e o vigia externo.
 - Anotar a data da troca nesta pagina.
+
+## Entrar no escritório como suporte (23/10/2026)
+
+Na ficha do escritório, no console: o operador escreve o motivo e clica em
+"Entrar como suporte". O registro de acesso de suporte (Termos de Uso, item
+5) nasce antes da entrada, com operador, escritório, motivo e horário. O
+console recebe um link assinado (HMAC com segredo derivado da
+`NEXTAUTH_SECRET`) que vale 2 minutos e uma vez só, e só no subdomínio
+daquele escritório. A sessão aberta vale 1 hora, como o administrador mais
+antigo, com uma faixa amarela em toda tela e o botão "Encerrar acesso de
+suporte". Cada tela confere no banco se o acesso continua aberto: encerrar
+pela faixa ou pela ficha derruba a sessão na tela seguinte.
+
+O que a sessão de suporte não faz: aceitar os documentos em nome do
+escritório, trocar a senha ou o segundo fator da pessoa, e destravar a área
+de administração (o financeiro do escritório pede a senha de administração
+dele). Código em `src/lib/acesso-de-suporte.ts`; testes em
+`testes/acesso-de-suporte.test.ts`.
+
+## Purga completa e exclusão definitiva (23/10/2026)
+
+A purga por prazo de retenção apagava uma lista feita à mão de 15 tabelas e
+deixava outras 23 com dado do escritório. Agora ela descobre no banco toda
+tabela com `escritorioId` e apaga todas, menos faturas, assinatura, aceites,
+notas da plataforma e o registro de suporte (`TABELAS_QUE_FICAM` em
+`src/lib/encerramento.ts`).
+
+A exclusão definitiva pelo console exige digitar o endereço do escritório e
+o motivo. Sem fatura paga nem nota, some tudo; com histórico fiscal, fica só
+o registro fiscal e a casca marcada como purgada.

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirSessao } from "@/lib/sessao";
+import { exigirSessao, recusarSuporte } from "@/lib/sessao";
 import { conferirSenha, gerarHash } from "@/lib/senhas";
 import { tratarErro } from "@/lib/respostas";
 
@@ -14,7 +14,9 @@ const corpoEsperado = z.object({
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId, usuarioId } = await exigirSessao();
+    const contexto = await exigirSessao();
+    recusarSuporte(contexto, "Trocar a senha");
+    const { escritorioId, usuarioId } = contexto;
     const corpo = corpoEsperado.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json(

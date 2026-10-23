@@ -13,6 +13,7 @@ import { exigirModulo, modulosAtivos, type Modulo } from "./modulos";
 import { SemPermissao, type Papel } from "./papeis";
 import { areaPorChave, mapaDeAcesso } from "./areas";
 import { CABECALHO_SLUG } from "./subdominio";
+import { acessoDeSuporteValido } from "./acesso-de-suporte";
 import {
   COOKIE as COOKIE_ADM,
   SemDestravar,
@@ -46,7 +47,19 @@ export type ContextoRota = {
    */
   acesso: Record<string, boolean>;
   modulos: Modulo[];
+  /** Sessao aberta pelo suporte da plataforma; null na sessao da propria pessoa. */
+  suporte: { acessoId: string; operador: string } | null;
 };
+
+/**
+ * O que o suporte NAO faz em nome do escritorio: aceitar documentos, trocar
+ * a senha ou o segundo fator da pessoa em cujo lugar entrou.
+ */
+export function recusarSuporte(contexto: Pick<ContextoRota, "suporte">, oQue: string): void {
+  if (contexto.suporte) {
+    throw new SemPermissao(`${oQue} é da própria pessoa do escritório; o acesso de suporte não faz isso.`);
+  }
+}
 
 /** Escritorio do endereco atual, sem exigir sessao (tela de login). */
 export async function escritorioDoEndereco(): Promise<Marca | null> {
@@ -78,6 +91,15 @@ export async function exigirSessao(
   // Cookie de um escritorio nao vale no subdominio de outro.
   if (sessao.escritorioId !== marca.id) {
     throw new SemSessao("Sessão de outro escritório.");
+  }
+
+  // Sessao de suporte: vale ate o prazo e enquanto o acesso nao for
+  // encerrado. Conferido a cada tela, no banco: encerrar no console ou na
+  // faixa derruba na hora, sem esperar o JWT de 12 horas vencer.
+  if (sessao.suporte) {
+    if (sessao.suporte.ate < Date.now() || !(await acessoDeSuporteValido(sessao.suporte.acessoId))) {
+      throw new SemSessao("Acesso de suporte encerrado.");
+    }
   }
 
   // O usuario ainda existe, esta ativo, e a sessao foi emitida depois da
@@ -123,6 +145,7 @@ export async function exigirSessao(
     marca,
     acesso,
     modulos,
+    suporte: sessao.suporte ? { acessoId: sessao.suporte.acessoId, operador: sessao.suporte.operador } : null,
   };
 }
 
