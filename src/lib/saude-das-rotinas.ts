@@ -50,3 +50,34 @@ export async function saudeDasRotinas(agora = new Date()): Promise<SaudeDasRotin
   const trabalhadorParado = !recente;
   return { ok: !trabalhadorParado && rotinasFalhando === 0, trabalhadorParado, rotinasFalhando };
 }
+
+export type FalhaDeRotina = {
+  escritorio: string;
+  tipo: string;
+  concluidoEm: Date;
+  tentativas: number;
+  erro: string;
+};
+
+/**
+ * As falhas das ultimas 24 horas, para o painel do console: escritorio,
+ * rotina, hora e a mensagem de erro. O que /api/saude/rotinas esconde de
+ * proposito (e publico) fica aqui, atras do login do operador — e sobrevive
+ * ao redeploy que apaga o log do trabalhador.
+ */
+export async function falhasRecentesDasRotinas(agora = new Date(), horas = 24): Promise<FalhaDeRotina[]> {
+  const desde = new Date(agora.getTime() - horas * 3_600_000);
+  const falhas = await prismaPlataforma().trabalho.findMany({
+    where: { estado: "FALHOU", concluidoEm: { gte: desde } },
+    orderBy: { concluidoEm: "desc" },
+    take: 50,
+    select: { tipo: true, concluidoEm: true, tentativas: true, erro: true, escritorio: { select: { nome: true } } },
+  });
+  return falhas.map((f) => ({
+    escritorio: f.escritorio?.nome ?? "plataforma",
+    tipo: f.tipo,
+    concluidoEm: f.concluidoEm ?? desde,
+    tentativas: f.tentativas,
+    erro: (f.erro ?? "").slice(0, 300) || "sem mensagem",
+  }));
+}

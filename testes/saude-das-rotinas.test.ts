@@ -8,7 +8,7 @@
 // trabalhos dos outros testes nao podem entrar na conta.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prismaPlataforma } from "../src/lib/prisma";
-import { saudeDasRotinas } from "../src/lib/saude-das-rotinas";
+import { falhasRecentesDasRotinas, saudeDasRotinas } from "../src/lib/saude-das-rotinas";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -51,6 +51,20 @@ d("saúde das rotinas", () => {
 
   it("falha seguida de sucesso volta ao normal", async () => {
     await trabalho("LEMBRAR", "CONCLUIDO", 1);
+    expect((await saudeDasRotinas(AGORA)).ok).toBe(true);
+  });
+
+  it("o painel do console lista a falha com escritório, rotina e erro", async () => {
+    await prismaPlataforma().trabalho.create({
+      data: { escritorioId: esc, tipo: "AVISAR", estado: "FALHOU", tentativas: 3, erro: "SMTP recusou: 535 senha", concluidoEm: antes(30), agendadoPara: antes(30) },
+    });
+    const falhas = await falhasRecentesDasRotinas(AGORA);
+    const minha = falhas.find((f) => f.tipo === "AVISAR" && f.escritorio === "Banca da Saúde");
+    expect(minha).toMatchObject({ tentativas: 3, erro: "SMTP recusou: 535 senha" });
+    // A de LEMBRAR tambem aparece: o painel mostra o historico da janela, nao so o estado atual.
+    expect(falhas.some((f) => f.tipo === "LEMBRAR")).toBe(true);
+    // Sucesso depois da falha: o vigia volta ao normal, o painel continua mostrando.
+    await trabalho("AVISAR", "CONCLUIDO", 1);
     expect((await saudeDasRotinas(AGORA)).ok).toBe(true);
   });
 

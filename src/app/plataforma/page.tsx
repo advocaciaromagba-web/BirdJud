@@ -5,6 +5,8 @@ import { exigirOperador, SemOperador } from "@/lib/plataforma";
 import { emReais } from "@/lib/dinheiro";
 import { analisarCarteira, competenciaDe, rotuloDoMes } from "@/lib/painel-plataforma";
 import { NavegacaoDaPlataforma } from "@/componentes/NavegacaoDaPlataforma";
+import { falhasRecentesDasRotinas } from "@/lib/saude-das-rotinas";
+import { dataHoraBR } from "@/lib/datas";
 import { CATEGORICA, Colunas, Numero, ORDINAL, Pizza } from "@/componentes/GraficosDoPainel";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +27,7 @@ export default async function PainelDaPlataforma() {
 
   const agora = new Date();
   const desde = new Date(agora.getTime() - 400 * 24 * 60 * 60 * 1000);
+  const falhas = await falhasRecentesDasRotinas();
   const escritorios = await prismaPlataforma().escritorio.findMany({
     select: {
       id: true, nome: true, status: true, faixa: true, criadoEm: true, encerradoEm: true,
@@ -79,6 +82,25 @@ export default async function PainelDaPlataforma() {
           detalhe={proximo?.testes ? `+ ${emReais(proximo.testes)} se os testes assinarem` : "garantido pelas assinaturas"}
         />
       </div>
+
+      {falhas.length ? (
+        <section className="cartao mt-6 border-amber-300">
+          <h2 className="text-lg font-bold">Rotinas com falha nas últimas 24 horas</h2>
+          <p className="ajuda">
+            O que o vigia externo acusa como "rotinas falhando", com a mensagem. Falha seguida de sucesso da mesma
+            rotina já não conta para o vigia, mas fica aqui até sair da janela.
+          </p>
+          <ul className="mt-3 divide-y divide-slate-200 text-sm">
+            {falhas.map((f, i) => (
+              <li key={i} className="py-2">
+                <span className="font-semibold">{f.tipo}</span> · {f.escritorio} · {dataHoraBR.format(f.concluidoEm)}
+                {f.tentativas > 1 ? ` · ${f.tentativas} tentativas` : ""}
+                <span className="block text-red-700">{f.erro}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="cartao mt-6">
         <h2 className="text-lg font-bold">Análise</h2>
