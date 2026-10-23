@@ -4,8 +4,9 @@ import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
 import { emReais } from "@/lib/dinheiro";
 import { dataBR } from "@/lib/datas";
-import { DESCONTO_ANUAL, opcoesNoCartao, precoDoModulo } from "@/lib/precos";
-import { ehFaturaAnual } from "@/lib/cobranca-plataforma";
+import { opcoesNoCartao, precoDoModulo } from "@/lib/precos";
+import { tabelaVigente } from "@/lib/tabela-de-precos";
+import { ehFaturaAnual, ehFaturaTrimestral } from "@/lib/cobranca-plataforma";
 import { linksDaNota } from "@/lib/nota-da-plataforma";
 import { PagarNoCartao } from "@/componentes/PagarNoCartao";
 import {
@@ -61,7 +62,8 @@ export default async function PaginaDoPlano() {
     (modulo): modulo is Modulo => modulo !== "NUCLEO",
   );
   const plano = planoExato(contratados);
-  const conta = contaMontada(contratados, uso.faixa);
+  const tabela = await tabelaVigente();
+  const conta = contaMontada(contratados, uso.faixa, tabela);
   const faltando = MODULOS_COBRAVEIS.filter(
     (modulo) => !contratados.includes(modulo),
   );
@@ -73,6 +75,8 @@ export default async function PaginaDoPlano() {
     ? assinatura.valorCentavos
     : conta.totalCentavos;
   const anual = assinatura?.ciclo === "ANUAL";
+  const trimestral = assinatura?.ciclo === "TRIMESTRAL";
+  const pct = (f: number) => `${String(Math.round(f * 1000) / 10).replace(".", ",")}%`;
   const emCortesia = Boolean(assinatura?.cortesiaDesde);
   const emTeste = assinatura && !emCortesia
     ? assinatura.fimDoTeste.getTime() > Date.now()
@@ -95,14 +99,22 @@ export default async function PaginaDoPlano() {
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="indicador">
           <p className="indicador-numero">
-            {emCortesia ? "Cortesia" : anual ? emReais(mensalidade * 12 - Math.round(mensalidade * 12 * DESCONTO_ANUAL)) : emReais(mensalidade)}
+            {emCortesia
+              ? "Cortesia"
+              : anual
+                ? emReais(mensalidade * 12 - Math.round(mensalidade * 12 * tabela.descontoAnual))
+                : trimestral
+                  ? emReais(mensalidade * 3 - Math.round(mensalidade * 3 * tabela.descontoTrimestral))
+                  : emReais(mensalidade)}
           </p>
           <p className="indicador-rotulo">
             {emCortesia
               ? "Sem mensalidade"
               : anual
-                ? `Plano anual (${emReais(mensalidade)}/mês com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto)`
-                : "Mensalidade contratada"}
+                ? `Plano anual (${emReais(mensalidade)}/mês com ${pct(tabela.descontoAnual)} de desconto)`
+                : trimestral
+                  ? `Plano trimestral (${emReais(mensalidade)}/mês com ${pct(tabela.descontoTrimestral)} de desconto)`
+                  : "Mensalidade contratada"}
           </p>
         </section>
         <section className="indicador">
@@ -140,11 +152,16 @@ export default async function PaginaDoPlano() {
           <ul className="mt-3 grid gap-3">
             {abertas.map((f) => {
               const anual = ehFaturaAnual(f.detalhe);
+              const deTrimestre = ehFaturaTrimestral(f.detalhe);
               return (
                 <li key={f.id} className="cartao-aperto flex flex-wrap items-center justify-between gap-3">
                   <span>
                     <span className="font-medium">
-                      {anual ? `Plano anual a partir de ${f.competencia.split("-").reverse().join("/")}` : `Mensalidade ${f.competencia.split("-").reverse().join("/")}`}
+                      {anual
+                        ? `Plano anual a partir de ${f.competencia.split("-").reverse().join("/")}`
+                        : deTrimestre
+                          ? `Plano trimestral a partir de ${f.competencia.split("-").reverse().join("/")}`
+                          : `Mensalidade ${f.competencia.split("-").reverse().join("/")}`}
                     </span>
                     <span className="block text-sm text-slate-500">
                       {emReais(f.valorCentavos)} · vence em {dataBR.format(f.vencimento)}
@@ -267,7 +284,7 @@ export default async function PaginaDoPlano() {
               >
                 <span className="font-medium">{ROTULO_DO_MODULO[modulo]}</span>
                 <span className="shrink-0 text-sm text-slate-500">
-                  + {emReais(precoDoModulo(modulo, uso.faixa))}/mes
+                  + {emReais(precoDoModulo(modulo, uso.faixa, tabela))}/mes
                 </span>
               </li>
             ))}

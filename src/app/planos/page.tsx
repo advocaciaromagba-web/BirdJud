@@ -3,6 +3,7 @@ import { escritorioDoEndereco } from "@/lib/sessao";
 import { DIAS_DE_TESTE } from "@/lib/precos";
 import { CabecalhoPublico } from "@/componentes/CabecalhoPublico";
 import { SimuladorDePlanos } from "@/componentes/SimuladorDePlanos";
+import { tabelaVigente } from "@/lib/tabela-de-precos";
 
 export const metadata = {
   title: "Planos — BirdJud",
@@ -45,7 +46,7 @@ export default async function PaginaPlanos() {
         </div>
 
         <div className="mt-10">
-          <SimuladorDePlanos contato={process.env.CONTATO_COMERCIAL} />
+          <SimuladorDePlanos contato={process.env.CONTATO_COMERCIAL} tabela={await tabelaVigente()} />
         </div>
 
         <section className="mt-14 max-w-3xl">

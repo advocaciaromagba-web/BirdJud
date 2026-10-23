@@ -5,6 +5,7 @@ import { WHATSAPP_DA_PLATAFORMA_EM_TEXTO, enderecoDoWhatsapp } from "./BotaoWhat
 import { Tela } from "./Tela";
 import { Icone, type NomeDeIcone } from "./Icone";
 import { contaDoPlano, PLANO, PLANOS } from "@/lib/planos";
+import { TABELA_PADRAO, type TabelaDePrecos } from "@/lib/precos";
 import { FAIXAS_PUBLICADAS, rotuloDoTamanho } from "@/lib/catalogo";
 import { emReais } from "@/lib/dinheiro";
 
@@ -127,9 +128,12 @@ const RECURSOS: { icone: NomeDeIcone; titulo: string; texto: string }[] = [
 export function CapaDaPlataforma({
   dias,
   contato,
+  tabela = TABELA_PADRAO,
 }: {
   dias: number;
   contato?: string;
+  /** A tabela vigente: a vitrine mostra o mesmo preco que a fatura cobra. */
+  tabela?: TabelaDePrecos;
 }) {
   const faixaVitrine = FAIXAS_PUBLICADAS[0];
 
@@ -177,7 +181,7 @@ export function CapaDaPlataforma({
                 <span className="text-sm text-slate-400">
                   {dias} dias de teste, sem cartão. A partir de{" "}
                   {emReais(
-                    contaDoPlano("ESSENCIAL", faixaVitrine).totalCentavos,
+                    contaDoPlano("ESSENCIAL", faixaVitrine, tabela).totalCentavos,
                   )}{" "}
                   por mês.
                 </span>
@@ -280,7 +284,7 @@ export function CapaDaPlataforma({
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {PLANOS.map((plano) => {
-              const conta = contaDoPlano(plano, faixaVitrine);
+              const conta = contaDoPlano(plano, faixaVitrine, tabela);
               return (
                 <Link
                   key={plano}

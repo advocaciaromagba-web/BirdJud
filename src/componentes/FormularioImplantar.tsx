@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PLANO, PLANOS, contaDoPlano, modulosDoPlano, type Plano } from "@/lib/planos";
+import { TABELA_PADRAO, type TabelaDePrecos } from "@/lib/precos";
 import { FAIXAS, LIMITES, type Faixa } from "@/lib/catalogo";
 import { emReais } from "@/lib/dinheiro";
 import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
@@ -24,7 +25,15 @@ export function sugerirEndereco(nome: string): string {
  * Implantar escritorio: o minimo para ele nascer funcionando. O resto (equipe,
  * OABs, integracoes) e feito na tela seguinte, passo a passo e testado.
  */
-export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; diasPadrao: number }) {
+export function FormularioImplantar({
+  dominio,
+  diasPadrao,
+  tabela = TABELA_PADRAO,
+}: {
+  dominio: string;
+  diasPadrao: number;
+  tabela?: TabelaDePrecos;
+}) {
   const router = useRouter();
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
@@ -60,7 +69,7 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
     setLidoPelaIA(true);
   }
 
-  const tabela = useMemo(() => contaDoPlano(plano, faixa).totalCentavos, [plano, faixa]);
+  const daTabela = useMemo(() => contaDoPlano(plano, faixa, tabela).totalCentavos, [plano, faixa, tabela]);
   const endereco = slugMexido ? slug : sugerirEndereco(nome);
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
@@ -213,12 +222,12 @@ export function FormularioImplantar({ dominio, diasPadrao }: { dominio: string; 
           <input
             className="campo"
             inputMode="decimal"
-            placeholder={(tabela / 100).toFixed(2).replace(".", ",")}
+            placeholder={(daTabela / 100).toFixed(2).replace(".", ",")}
             value={valor}
             onChange={(e) => setValor(e.target.value)}
           />
           <span className="ajuda mt-0">
-            Tabela: <strong>{emReais(tabela)}</strong>. Em branco, vale a tabela. Fica gravado no contrato do escritório.
+            Tabela: <strong>{emReais(daTabela)}</strong>. Em branco, vale a tabela. Fica gravado no contrato do escritório.
           </span>
         </label>
         <label className="grid gap-1 text-sm">

@@ -7,7 +7,8 @@ import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { competenciaDe, consumoDoMes, type Metrica } from "./consumo";
 import { ehFaixa } from "./faixas";
 import {
-  ehFaturaAnual,
+  descontoDaFatura,
+  mesesDaFatura,
   emitirCobrancaDaFatura,
   mensagemDaFatura,
   temCobrancaDaPlataforma,
@@ -19,13 +20,15 @@ import {
 import type { Modulo } from "./modulos";
 import { MODULOS } from "./catalogo";
 import {
-  DESCONTO_ANUAL,
   excedentes,
   PRAZO_MINIMO_DIAS,
   REGUA,
   somar,
+  TABELA_PADRAO,
   type ItemDaFatura,
+  type TabelaDePrecos,
 } from "./precos";
+import { tabelaVigente } from "./tabela-de-precos";
 import { contaMontada } from "./planos";
 import { enfileirar } from "./fila";
 import type { Faixa } from "./faixas";
@@ -38,8 +41,8 @@ import type { Faixa } from "./faixas";
  * soma avulsa, mais cara que o plano que a vitrine mostrou. Agora: plano
  * pronto quando cobre e sai mais barato; senao faixa e modulos com o fator.
  */
-export function mensalidadeDaConta(faixa: Faixa, modulos: Modulo[]): ItemDaFatura[] {
-  const conta = contaMontada(modulos, faixa);
+export function mensalidadeDaConta(faixa: Faixa, modulos: Modulo[], tabela: TabelaDePrecos = TABELA_PADRAO): ItemDaFatura[] {
+  const conta = contaMontada(modulos, faixa, tabela);
   if (conta.plano) {
     return [{ descricao: `Plano ${conta.plano} (${faixa})`, valorCentavos: conta.totalCentavos }];
   }
@@ -61,21 +64,61 @@ export function mensalidadeDoEscritorio(
   faixa: Faixa,
   modulos: Modulo[],
   valorFechado: number | null | undefined,
+  tabela: TabelaDePrecos = TABELA_PADRAO,
 ): ItemDaFatura[] {
   if (valorFechado && valorFechado > 0) {
     return [{ descricao: "Mensalidade (valor fechado na assinatura)", valorCentavos: valorFechado }];
   }
-  return mensalidadeDaConta(faixa, modulos);
+  return mensalidadeDaConta(faixa, modulos, tabela);
 }
 
 /** Doze mensalidades, com o desconto do anual em linha propria. */
-export function anuidade(faixa: Faixa, modulos: Modulo[], valorFechado?: number | null): ItemDaFatura[] {
-  const mensal = somar(mensalidadeDoEscritorio(faixa, modulos, valorFechado));
+export function anuidade(
+  faixa: Faixa,
+  modulos: Modulo[],
+  valorFechado?: number | null,
+  tabela: TabelaDePrecos = TABELA_PADRAO,
+): ItemDaFatura[] {
+  const mensal = somar(mensalidadeDoEscritorio(faixa, modulos, valorFechado, tabela));
   const bruto = mensal * 12;
+  const desconto = tabela.descontoAnual;
   return [
     { descricao: `Assinatura anual: 12 x ${(mensal / 100).toFixed(2).replace(".", ",")}`, valorCentavos: bruto },
-    { descricao: `Desconto do plano anual (${Math.round(DESCONTO_ANUAL * 100)}%)`, valorCentavos: -Math.round(bruto * DESCONTO_ANUAL) },
+    { descricao: `Desconto do plano anual (${percentualEmTexto(desconto)})`, valorCentavos: -Math.round(bruto * desconto) },
   ];
+}
+
+/** Quantos meses cada ciclo cobre numa fatura. */
+export const MESES_DO_CICLO = { MENSAL: 1, TRIMESTRAL: 3, ANUAL: 12 } as const;
+export type Ciclo = keyof typeof MESES_DO_CICLO;
+export const CICLOS = Object.keys(MESES_DO_CICLO) as Ciclo[];
+
+export function ehCiclo(valor: unknown): valor is Ciclo {
+  return typeof valor === "string" && valor in MESES_DO_CICLO;
+}
+
+/** Tres mensalidades, com o desconto do trimestral em linha propria. */
+export function trimestralidade(
+  faixa: Faixa,
+  modulos: Modulo[],
+  valorFechado?: number | null,
+  tabela: TabelaDePrecos = TABELA_PADRAO,
+): ItemDaFatura[] {
+  const mensal = somar(mensalidadeDoEscritorio(faixa, modulos, valorFechado, tabela));
+  const bruto = mensal * 3;
+  const desconto = tabela.descontoTrimestral;
+  return [
+    { descricao: `Assinatura trimestral: 3 x ${(mensal / 100).toFixed(2).replace(".", ",")}`, valorCentavos: bruto },
+    ...(desconto > 0
+      ? [{ descricao: `Desconto do plano trimestral (${percentualEmTexto(desconto)})`, valorCentavos: -Math.round(bruto * desconto) }]
+      : []),
+  ];
+}
+
+/** 0.1 -> "10%"; 0.075 -> "7,5%". */
+export function percentualEmTexto(fracao: number): string {
+  const p = Math.round(fracao * 1000) / 10;
+  return `${String(p).replace(".", ",")}%`;
 }
 
 function somarMeses(d: Date, n: number): Date {
@@ -199,17 +242,20 @@ export async function aplicarRegua(
     });
 
     if (!existente) {
-      // Anual: a fatura de 12 meses sai quando o ano pago acaba (ou na
-      // primeira vez); nos meses do meio, so o excedente de consumo, se houver.
-      // O ano ja faturado vale qualquer que seja o ciclo de hoje: quem pagou
-      // o anual e voltou ao mensal nao paga mensalidade ate o ano acabar.
-      const anoEmCurso = Boolean(assinatura.anualAte && assinatura.anualAte > agora);
-      const renovaAnual = assinatura.ciclo === "ANUAL" && !anoEmCurso;
+      // Anual e trimestral: a fatura do periodo (12 ou 3 meses) sai quando o
+      // periodo pago acaba (ou na primeira vez); nos meses do meio, so o
+      // excedente de consumo, se houver. O periodo ja faturado vale qualquer
+      // que seja o ciclo de hoje: quem pagou o anual e voltou ao mensal nao
+      // paga mensalidade ate o ano acabar. (anualAte guarda o fim do periodo
+      // pago, de qualquer ciclo; o nome ficou do tempo em que so havia anual.)
+      const periodoEmCurso = Boolean(assinatura.anualAte && assinatura.anualAte > agora);
+      const ciclo: Ciclo = ehCiclo(assinatura.ciclo) ? assinatura.ciclo : "MENSAL";
+      const renovaPeriodo = ciclo !== "MENSAL" && !periodoEmCurso;
       const itens = await itensDaFatura(
         escritorioId,
         escritorio.faixa,
         competencia,
-        anoEmCurso ? "SO_EXCEDENTE" : renovaAnual ? "ANUAL" : "MENSAL",
+        periodoEmCurso ? "SO_EXCEDENTE" : renovaPeriodo ? ciclo : "MENSAL",
         assinatura.valorCentavos,
       );
       if (somar(itens) > 0) {
@@ -227,7 +273,7 @@ export async function aplicarRegua(
           },
         });
         faturaGerada = fatura.id;
-        if (renovaAnual) {
+        if (renovaPeriodo) {
           // O ano conta de onde o anterior acabou (ou do fim do teste): a
           // regua atrasar uns dias nao encurta o ano de quem pagou. Mas se
           // essa data e antiga (quem foi mensal por meses e so agora passou
@@ -236,7 +282,7 @@ export async function aplicarRegua(
           const inicio = inicioDoAno(assinatura.anualAte ?? assinatura.fimDoTeste, agora);
           await prismaPlataforma().assinatura.update({
             where: { escritorioId },
-            data: { anualAte: somarMeses(inicio, 12) },
+            data: { anualAte: somarMeses(inicio, MESES_DO_CICLO[ciclo]) },
           });
         }
         await cobrarEAvisar(fatura.id);
@@ -274,7 +320,7 @@ export async function itensDaFatura(
   escritorioId: string,
   faixaBruta: string,
   competencia: string,
-  modo: "MENSAL" | "ANUAL" | "SO_EXCEDENTE" = "MENSAL",
+  modo: "MENSAL" | "TRIMESTRAL" | "ANUAL" | "SO_EXCEDENTE" = "MENSAL",
   valorFechado: number | null = null,
 ): Promise<ItemDaFatura[]> {
   const faixa = ehFaixa(faixaBruta) ? faixaBruta : "ATE_3";
@@ -292,10 +338,13 @@ export async function itensDaFatura(
   const doConsumo = excedentes(consumo as { metrica: Metrica; excedente: number }[]);
 
   if (modo === "SO_EXCEDENTE") return doConsumo;
+  const tabela = await tabelaVigente();
   return [
     ...(modo === "ANUAL"
-      ? anuidade(faixa, contratados, valorFechado)
-      : mensalidadeDoEscritorio(faixa, contratados, valorFechado)),
+      ? anuidade(faixa, contratados, valorFechado, tabela)
+      : modo === "TRIMESTRAL"
+        ? trimestralidade(faixa, contratados, valorFechado, tabela)
+        : mensalidadeDoEscritorio(faixa, contratados, valorFechado, tabela)),
     ...doConsumo,
   ];
 }
@@ -421,7 +470,8 @@ async function cobrarEAvisar(faturaId: string): Promise<void> {
     valorCentavos: fatura.valorCentavos,
     vencimento: fatura.vencimento,
     link: emitida.linkPagamento,
-    anual: ehFaturaAnual(fatura.detalhe),
+    meses: mesesDaFatura(fatura.detalhe),
+    desconto: descontoDaFatura(fatura.detalhe),
     enderecoDoPlano: `https://${fatura.escritorio.slug}.${process.env.DOMINIO_PLATAFORMA?.trim() || "birdjud.com.br"}/plano`,
   });
 

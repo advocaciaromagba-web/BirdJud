@@ -31,7 +31,7 @@ import { montarDps, montarPedidoCancelamento, type MotivoDeCancelamento } from "
 import { ibsCbsVigente, pendenciasDoIbsCbs, pendenciasDoRegime, regimeVigente } from "./nfse/regime";
 import { NotaInvalida, tomadorDoCliente } from "./nfse/emissao";
 import { lerNfse } from "./nfse/ler-xml";
-import { descricaoDaFatura, ehFaturaAnual } from "./cobranca-plataforma";
+import { descricaoDaFatura, mesesDaFatura } from "./cobranca-plataforma";
 import { enviarPelaPlataforma, temRemetenteDaPlataforma } from "./email-plataforma";
 
 export { NotaInvalida };
@@ -270,8 +270,7 @@ export async function emitirNotaDaFatura(
     throw new NotaInvalida("O escritório não tem CNPJ cadastrado: a nota precisa identificar o tomador.");
   }
 
-  const anual = ehFaturaAnual(fatura.detalhe);
-  const descricao = `${fiscal!.descricaoPadrao} - ${descricaoDaFatura(fatura.competencia, anual).replace(/^BirdJud — /, "")}`;
+  const descricao = `${fiscal!.descricaoPadrao} - ${descricaoDaFatura(fatura.competencia, mesesDaFatura(fatura.detalhe)).replace(/^BirdJud — /, "")}`;
   const complementares = [
     `Fatura ${fatura.competencia} do BirdJud.`,
     resumoDosItens(fatura.detalhe),

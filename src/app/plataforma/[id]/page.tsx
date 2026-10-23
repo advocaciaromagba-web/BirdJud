@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
 import { fiscalDaPlataforma, lembreteDoPercentual } from "@/lib/nota-da-plataforma";
+import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { notFound, redirect } from "next/navigation";
 import { prismaPlataforma } from "@/lib/prisma";
 import {
@@ -11,7 +12,7 @@ import {
 import { consumoDoMes, competenciaDe } from "@/lib/consumo";
 import { usoDaFaixa } from "@/lib/faixas";
 import { resumoDaBaixa } from "@/lib/referencia-cobranca";
-import { diasDeAtraso } from "@/lib/cobranca";
+import { diasDeAtraso, percentualEmTexto } from "@/lib/cobranca";
 import { emReais } from "@/lib/dinheiro";
 import {
   AcaoDaFatura,
@@ -60,6 +61,7 @@ export default async function EscritorioNoPainel({
   const notaDaFatura = (faturaId: string) =>
     notas.find((n) => n.faturaId === faturaId) ?? notas.find((n) => n.faturaOriginalId === faturaId) ?? null;
   const lembrete = lembreteDoPercentual(await fiscalDaPlataforma());
+  const tabela = await tabelaVigente();
 
   const agora = new Date();
 
@@ -84,11 +86,15 @@ export default async function EscritorioNoPainel({
         <h2 className="font-semibold">Assinatura</h2>
         {escritorio.assinatura ? (
           <p className="mt-2 text-slate-700">
-            {escritorio.assinatura.ciclo === "ANUAL" ? "Anual (10% de desconto) · " : "Mensal · "}
-            {/* O ano faturado vale em qualquer ciclo: quem voltou ao mensal
-                so paga mensalidade quando ele acabar. */}
+            {escritorio.assinatura.ciclo === "ANUAL"
+              ? `Anual (${percentualEmTexto(tabela.descontoAnual)} de desconto) · `
+              : escritorio.assinatura.ciclo === "TRIMESTRAL"
+                ? `Trimestral (${percentualEmTexto(tabela.descontoTrimestral)} de desconto) · `
+                : "Mensal · "}
+            {/* O periodo faturado vale em qualquer ciclo: quem voltou ao
+                mensal so paga mensalidade quando ele acabar. */}
             {escritorio.assinatura.anualAte && escritorio.assinatura.anualAte > new Date()
-              ? `ano pago até ${escritorio.assinatura.anualAte.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} · `
+              ? `período pago até ${escritorio.assinatura.anualAte.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} · `
               : ""}
             {escritorio.assinatura.valorCentavos > 0
               ? `${emReais(escritorio.assinatura.valorCentavos)} por mês (valor fechado)`
@@ -138,6 +144,7 @@ export default async function EscritorioNoPainel({
         ciclo={escritorio.assinatura?.ciclo ?? null}
         valorCentavos={escritorio.assinatura?.valorCentavos ?? 0}
         emTeste={Boolean(escritorio.assinatura && escritorio.assinatura.fimDoTeste > new Date())}
+        descontos={{ anual: percentualEmTexto(tabela.descontoAnual), trimestral: percentualEmTexto(tabela.descontoTrimestral) }}
         encerrado={escritorio.status === "ENCERRADO"}
       />
 

@@ -100,6 +100,12 @@ CREATE POLICY "isolamento_RespostaDeWhatsapp" ON "RespostaDeWhatsapp"
 ALTER TABLE "FiscalDaPlataforma" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "FiscalDaPlataforma" FORCE ROW LEVEL SECURITY;
 
+-- ConfiguracaoComercial: tabela de precos da plataforma. Mesma regra do
+-- FiscalDaPlataforma: so o plano de controle le e escreve; a vitrine le pelo
+-- plano de controle (src/lib/tabela-de-precos.ts).
+ALTER TABLE "ConfiguracaoComercial" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ConfiguracaoComercial" FORCE ROW LEVEL SECURITY;
+
 -- RedefinicaoDoOperador: link de troca da senha da conta que enxerga todos os
 -- escritorios. Mesma regra: a aplicacao nao ve, so o plano de controle.
 ALTER TABLE "RedefinicaoDoOperador" ENABLE ROW LEVEL SECURITY;

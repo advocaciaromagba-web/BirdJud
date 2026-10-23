@@ -1656,3 +1656,14 @@ model NotaDaPlataforma {
 
   @@index([escritorioId])
 }
+
+/// Tabela de precos editada no console. Uma linha so ("PLATAFORMA"). O JSON
+/// guarda a tabela inteira (faixa, planos, modulos, descontos de ciclo);
+/// nulo = vale a padrao do codigo (src/lib/precos.ts). Ver
+/// src/lib/tabela-de-precos.ts.
+model ConfiguracaoComercial {
+  id            String   @id @default("PLATAFORMA")
+  tabela        Json?
+  atualizadaEm  DateTime @default(now()) @updatedAt
+  atualizadaPor String?
+}

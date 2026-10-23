@@ -111,9 +111,41 @@ export const FATOR_DA_FAIXA: Record<Faixa, number> = {
   ATE_50: 6.5,
 };
 
+/**
+ * A tabela de precos inteira, como o console a edita.
+ *
+ * O codigo guarda a tabela padrao (as constantes acima); o operador pode
+ * trocar qualquer numero no console (ConfiguracaoComercial, ver
+ * tabela-de-precos.ts). Toda conta de preco recebe a tabela como parametro,
+ * com a padrao como valor por omissao: assim a vitrine, o cadastro e a
+ * fatura usam a MESMA tabela, e os testes continuam contra a padrao.
+ *
+ * Contrato assinado nao muda com a tabela: o valor fechado de cada
+ * escritorio fica em Assinatura.valorCentavos.
+ */
+export type TabelaDePrecos = {
+  faixa: Record<Faixa, number>;
+  plano: Record<Plano, Record<Faixa, number>>;
+  modulo: Partial<Record<Modulo, number>>;
+  /** Fracao: 0.1 = 10%. */
+  descontoAnual: number;
+  descontoTrimestral: number;
+};
+
+/** Desconto do plano trimestral sobre tres mensalidades. */
+export const DESCONTO_TRIMESTRAL = 0.05;
+
+export const TABELA_PADRAO: TabelaDePrecos = {
+  faixa: PRECO_DA_FAIXA,
+  plano: PRECO_DO_PLANO,
+  modulo: PRECO_DO_MODULO,
+  descontoAnual: 0.1,
+  descontoTrimestral: DESCONTO_TRIMESTRAL,
+};
+
 /** O preco do modulo avulso naquela faixa, arredondado ao real. */
-export function precoDoModulo(modulo: Modulo, faixa: Faixa): number {
-  const base = PRECO_DO_MODULO[modulo];
+export function precoDoModulo(modulo: Modulo, faixa: Faixa, tabela: TabelaDePrecos = TABELA_PADRAO): number {
+  const base = tabela.modulo[modulo];
   if (!base) return 0;
   return Math.round((base * FATOR_DA_FAIXA[faixa]) / 100) * 100;
 }

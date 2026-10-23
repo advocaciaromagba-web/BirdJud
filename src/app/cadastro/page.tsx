@@ -4,6 +4,7 @@ import { FormularioCadastro } from "@/componentes/FormularioCadastro";
 import { CabecalhoPublico } from "@/componentes/CabecalhoPublico";
 import { MODULOS, FAIXAS_PUBLICADAS, type Modulo } from "@/lib/catalogo";
 import { contaMontada, modulosDoPlano } from "@/lib/planos";
+import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { dominioDaPlataforma } from "@/lib/dominio";
 
 export default async function PaginaCadastro({
@@ -40,7 +41,7 @@ export default async function PaginaCadastro({
             (MODULOS as readonly string[]).includes(parte),
           );
   // Todo escritorio novo entra na faixa de entrada; a conta da tela e a dela.
-  const conta = contaMontada(escolhidos, FAIXAS_PUBLICADAS[0]);
+  const conta = contaMontada(escolhidos, FAIXAS_PUBLICADAS[0], await tabelaVigente());
 
   return (
     <>

@@ -10,7 +10,9 @@ import {
   SemOperador,
 } from "@/lib/plataforma";
 import { aplicarRegua } from "@/lib/cobranca";
-import { ehFaturaAnual } from "@/lib/cobranca-plataforma";
+import { mesesDaFatura } from "@/lib/cobranca-plataforma";
+import { percentualEmTexto } from "@/lib/cobranca";
+import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { FAIXAS } from "@/lib/faixas";
 import { MODULOS } from "@/lib/modulos";
 import { contaMontada, modulosDoPlano, PLANO, PLANOS } from "@/lib/planos";
@@ -42,7 +44,7 @@ const acao = z.discriminatedUnion("acao", [
   // captura da madrugada. So poe o trabalho na fila.
   z.object({ acao: z.literal("processos"), refazer: z.boolean().optional() }),
   z.object({ acao: z.literal("nuvem") }),
-  z.object({ acao: z.literal("ciclo"), ciclo: z.enum(["MENSAL", "ANUAL"]) }),
+  z.object({ acao: z.literal("ciclo"), ciclo: z.enum(["MENSAL", "TRIMESTRAL", "ANUAL"]) }),
   // CNPJ pelo console: sem ele o meio de pagamento recusa emitir a fatura, e
   // o escritorio ficaria devendo uma cobranca que nunca lhe foi apresentada.
   // O caminho normal e o proprio escritorio preencher em Administracao; esta
@@ -139,7 +141,7 @@ export async function POST(
 
     if (corpo.data.acao === "plano") {
       const doPlano = modulosDoPlano(corpo.data.plano);
-      const conta = contaMontada(doPlano, faixaAtual);
+      const conta = contaMontada(doPlano, faixaAtual, await tabelaVigente());
       const contratados = new Set<Modulo>(
         conta.modulos.map((linha) => linha.modulo),
       );
@@ -220,17 +222,17 @@ export async function POST(
       // valendo ate acabar (anualAte fica), e so depois volta a fatura mensal.
       const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
       if (!assinatura) return NextResponse.json({ erro: "Escritório sem assinatura." }, { status: 400 });
-      if (corpo.data.ciclo === "MENSAL") {
-        // O ano faturado conta como pago (a regua nao cobra mensal ate ele
-        // acabar). Com a fatura anual ainda em aberto, voltar ao mensal
-        // deixaria o escritorio sem pagar nenhuma das duas.
+      if (corpo.data.ciclo !== assinatura.ciclo) {
+        // O periodo faturado conta como pago (a regua nao cobra de novo ate
+        // ele acabar). Com a fatura do periodo ainda em aberto, trocar de
+        // ciclo deixaria o escritorio sem pagar nenhuma das duas.
         const abertas = await prismaPlataforma().fatura.findMany({
           where: { escritorioId: escritorio.id, status: "ABERTA" },
           select: { detalhe: true },
         });
-        if (abertas.some((f) => ehFaturaAnual(f.detalhe))) {
+        if (abertas.some((f) => mesesDaFatura(f.detalhe) > 1)) {
           return NextResponse.json(
-            { erro: "Há fatura anual em aberto. Ela precisa ser paga ou cancelada (no Asaas e aqui) antes de voltar ao mensal." },
+            { erro: "Há fatura de período (anual ou trimestral) em aberto. Ela precisa ser paga ou cancelada (no Asaas e aqui) antes de trocar o ciclo." },
             { status: 409 },
           );
         }
@@ -240,11 +242,14 @@ export async function POST(
         data: { ciclo: corpo.data.ciclo },
       });
       await registrarAcessoSuporte(operador.operadorId, escritorio.id, `Ciclo da assinatura: ${corpo.data.ciclo}`);
+      const tabela = await tabelaVigente();
       return NextResponse.json({
         detalhe:
           corpo.data.ciclo === "ANUAL"
-            ? "Assinatura anual: a fatura de 12 meses, com 10% de desconto, sai na próxima regua."
-            : "Assinatura mensal.",
+            ? `Assinatura anual: a fatura de 12 meses, com ${percentualEmTexto(tabela.descontoAnual)} de desconto, sai na próxima régua (depois do período já pago, se houver).`
+            : corpo.data.ciclo === "TRIMESTRAL"
+              ? `Assinatura trimestral: a fatura de 3 meses, com ${percentualEmTexto(tabela.descontoTrimestral)} de desconto, sai na próxima régua (depois do período já pago, se houver).`
+              : "Assinatura mensal (depois do período já pago, se houver).",
       });
     }
 

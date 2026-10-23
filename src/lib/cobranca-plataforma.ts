@@ -13,7 +13,7 @@
 // que nunca lhe foi apresentada.
 import type { Prisma } from "@prisma/client";
 import { prismaPlataforma } from "./prisma";
-import { DESCONTO_ANUAL, PARCELAS_DO_ANUAL, pagamentoNoCartao } from "./precos";
+import { PARCELAS_DO_ANUAL, pagamentoNoCartao } from "./precos";
 import { referencia } from "./referencia-cobranca";
 import {
   FalhaNoAsaas,
@@ -52,11 +52,12 @@ function digitos(valor: string): string {
  * Leva a competencia porque o extrato bancario de quem paga mostra so isso —
  * "BirdJud" sozinho, doze vezes por ano, nao diz qual mes foi pago.
  */
-export function descricaoDaFatura(competencia: string, anual = false): string {
+export function descricaoDaFatura(competencia: string, periodo: boolean | number = false): string {
   const [ano, mes] = competencia.split("-");
-  return anual
-    ? `BirdJud — assinatura anual (12 meses) a partir de ${mes}/${ano}`
-    : `BirdJud — assinatura ${mes}/${ano}`;
+  const meses = periodo === true ? 12 : typeof periodo === "number" ? periodo : 1;
+  if (meses === 12) return `BirdJud — assinatura anual (12 meses) a partir de ${mes}/${ano}`;
+  if (meses === 3) return `BirdJud — assinatura trimestral (3 meses) a partir de ${mes}/${ano}`;
+  return `BirdJud — assinatura ${mes}/${ano}`;
 }
 
 /**
@@ -65,8 +66,32 @@ export function descricaoDaFatura(competencia: string, anual = false): string {
  * 10/2026" sobre uma cobranca de doze meses.
  */
 export function ehFaturaAnual(detalhe: unknown): boolean {
+  return linhaQueComeca(detalhe, "Assinatura anual");
+}
+
+/** Fatura do plano trimestral (a linha que `trimestralidade` escreve). */
+export function ehFaturaTrimestral(detalhe: unknown): boolean {
+  return linhaQueComeca(detalhe, "Assinatura trimestral");
+}
+
+/** Quantos meses de assinatura a fatura cobre: 12, 3 ou 1. */
+export function mesesDaFatura(detalhe: unknown): 1 | 3 | 12 {
+  return ehFaturaAnual(detalhe) ? 12 : ehFaturaTrimestral(detalhe) ? 3 : 1;
+}
+
+/** O desconto de ciclo que a fatura levou, como escrito na linha ("10%"). */
+export function descontoDaFatura(detalhe: unknown): string | null {
+  if (!Array.isArray(detalhe)) return null;
+  for (const i of detalhe) {
+    const m = typeof i?.descricao === "string" ? i.descricao.match(/^Desconto do plano \w+ \(([\d,]+%)\)/) : null;
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function linhaQueComeca(detalhe: unknown, inicio: string): boolean {
   return Array.isArray(detalhe) && detalhe.some(
-    (i) => typeof i?.descricao === "string" && i.descricao.startsWith("Assinatura anual"),
+    (i) => typeof i?.descricao === "string" && i.descricao.startsWith(inicio),
   );
 }
 
@@ -199,7 +224,7 @@ export async function emitirCobrancaDaFatura(
       billingType: "BOLETO",
       value: emReaisDecimal(fatura.valorCentavos),
       dueDate: comoDia(fatura.vencimento),
-      description: descricaoDaFatura(fatura.competencia, ehFaturaAnual(fatura.detalhe)),
+      description: descricaoDaFatura(fatura.competencia, mesesDaFatura(fatura.detalhe)),
       // O webhook le este campo para saber qual fatura dar baixa, e a marca
       // do sistema e o que permite separar o nosso pagamento dos outros
       // sistemas que dividem esta conta Asaas. Sem ela, o pagamento chega e
@@ -230,7 +255,10 @@ export function mensagemDaFatura(dados: {
   valorCentavos: number;
   vencimento: Date;
   link: string | null;
-  anual?: boolean;
+  /** Meses que a fatura cobre: 12 (anual), 3 (trimestral) ou 1. */
+  meses?: 1 | 3 | 12;
+  /** O desconto de ciclo, como a linha da fatura escreve ("10%"). */
+  desconto?: string | null;
   /** Tela Plano do escritorio, onde o anual pode ser parcelado. */
   enderecoDoPlano?: string | null;
 }): { assunto: string; texto: string } {
@@ -243,14 +271,17 @@ export function mensagemDaFatura(dados: {
   });
 
   return {
-    assunto: dados.anual
-      ? `BirdJud — fatura do plano anual (vence em ${vence})`
-      : `BirdJud — fatura de ${dados.competencia} (vence em ${vence})`,
+    assunto:
+      dados.meses === 12
+        ? `BirdJud — fatura do plano anual (vence em ${vence})`
+        : dados.meses === 3
+          ? `BirdJud — fatura do plano trimestral (vence em ${vence})`
+          : `BirdJud — fatura de ${dados.competencia} (vence em ${vence})`,
     texto: [
       `${dados.nomeDoEscritorio},`,
       "",
-      dados.anual
-        ? `A fatura do plano anual do BirdJud (12 meses a partir de ${dados.competencia}, com ${Math.round(DESCONTO_ANUAL * 100)}% de desconto) está disponível.`
+      dados.meses === 12 || dados.meses === 3
+        ? `A fatura do plano ${dados.meses === 12 ? "anual" : "trimestral"} do BirdJud (${dados.meses} meses a partir de ${dados.competencia}${dados.desconto ? `, com ${dados.desconto} de desconto` : ""}) está disponível.`
         : `A fatura da assinatura do BirdJud referente a ${dados.competencia} está disponível.`,
       "",
       `Valor: ${valor}`,
@@ -261,7 +292,7 @@ export function mensagemDaFatura(dados: {
       ...(dados.enderecoDoPlano
         ? [
             "",
-            dados.anual
+            dados.meses === 12
               ? `No cartão, à vista ou em até ${PARCELAS_DO_ANUAL}x (com a tarifa do cartão), na tela Plano: ${dados.enderecoDoPlano}`
               : `No cartão (com a tarifa do cartão), na tela Plano: ${dados.enderecoDoPlano}`,
           ]

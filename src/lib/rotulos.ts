@@ -9,7 +9,7 @@ export const ROTULO_DO_MODULO: Record<Modulo, string> = {
   PUBLICACOES_DJEN: "Publicações do DJEN",
   NUVEM: "Arquivos do escritório",
   EMAIL: "Aviso por e-mail",
-  COBRANCAS: "Cobrancas",
+  COBRANCAS: "Cobranças",
   FINANCEIRO: "Financeiro",
   NFSE: "Nota fiscal de serviço",
   IA: "Inteligência artificial",

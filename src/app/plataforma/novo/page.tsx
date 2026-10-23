@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { exigirOperador, SemOperador } from "@/lib/plataforma";
 import { dominioDaPlataforma } from "@/lib/dominio";
 import { DIAS_DE_TESTE } from "@/lib/precos";
@@ -24,7 +25,7 @@ export default async function ImplantarEscritorio() {
         administrador. Na tela seguinte entram a equipe, as OABs e as integrações — cada uma testada
         antes de guardar. O escritório só recebe os convites quando você clicar em Entregar.
       </p>
-      <FormularioImplantar dominio={dominioDaPlataforma()} diasPadrao={DIAS_DE_TESTE} />
+      <FormularioImplantar dominio={dominioDaPlataforma()} diasPadrao={DIAS_DE_TESTE} tabela={await tabelaVigente()} />
     </main>
   );
 }

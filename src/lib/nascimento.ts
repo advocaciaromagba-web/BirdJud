@@ -7,6 +7,7 @@ import { z } from "zod";
 import { prismaPlataforma } from "./prisma";
 import { criarAssinatura } from "./cobranca";
 import { contaMontada } from "./planos";
+import { tabelaVigente } from "./tabela-de-precos";
 import { definirModulos } from "./contratacao";
 import type { Faixa } from "./faixas";
 import type { Modulo } from "./catalogo";
@@ -47,7 +48,7 @@ export async function nascerEscritorio(n: Nascimento) {
   if (ja) throw new EnderecoIndisponivel("Este endereço já está em uso.");
 
   const escolhidos = n.modulos.filter((m): m is Modulo => m !== "NUCLEO");
-  const conta = contaMontada(escolhidos, n.faixa);
+  const conta = contaMontada(escolhidos, n.faixa, await tabelaVigente());
   // A conta pode ter subido para um plano pronto mais barato que a soma: os
   // contratados sao os desse plano, nao so os que foram marcados.
   const contratados = conta.modulos.map((linha) => linha.modulo);

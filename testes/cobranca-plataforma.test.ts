@@ -138,16 +138,26 @@ describe("mensagem da fatura", () => {
   });
 
   it("anual: o e-mail diz que e o plano de 12 meses", () => {
-    const m = mensagemDaFatura({ ...base, valorCentavos: 301_320, link: "https://asaas.test/i/pay_1", anual: true });
+    const m = mensagemDaFatura({ ...base, valorCentavos: 301_320, link: "https://asaas.test/i/pay_1", meses: 12, desconto: "10%" });
     expect(m.assunto).toContain("plano anual");
     expect(m.texto).toContain("12 meses a partir de 2026-10");
     expect(m.texto).toContain("10% de desconto");
     expect(m.texto.replace(/\u00a0/g, " ")).toContain("R$ 3.013,20");
   });
 
+  it("trimestral: o e-mail diz que e o plano de 3 meses, sem parcelamento", () => {
+    const m = mensagemDaFatura({
+      ...base, link: "https://asaas.test/i/pay_1", meses: 3, desconto: "5%",
+      enderecoDoPlano: "https://roma.birdjud.com.br/plano",
+    });
+    expect(m.assunto).toContain("plano trimestral");
+    expect(m.texto).toContain("3 meses a partir de 2026-10, com 5% de desconto");
+    expect(m.texto).not.toContain("6x");
+  });
+
   it("anual: o e-mail oferece o parcelamento, com o endereço da tela Plano", () => {
     const m = mensagemDaFatura({
-      ...base, link: "https://asaas.test/i/pay_1", anual: true,
+      ...base, link: "https://asaas.test/i/pay_1", meses: 12,
       enderecoDoPlano: "https://roma.birdjud.com.br/plano",
     });
     expect(m.texto).toContain("à vista ou em até 6x (com a tarifa do cartão)");

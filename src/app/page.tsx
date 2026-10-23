@@ -9,6 +9,7 @@ import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { emReais } from "@/lib/dinheiro";
 import { DIAS_DE_TESTE } from "@/lib/precos";
 import { CapaDaPlataforma } from "@/componentes/CapaDaPlataforma";
+import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { Estrutura } from "@/componentes/Estrutura";
 import { Icone } from "@/componentes/Icone";
 import { CartaoPrimeirosPassos } from "@/componentes/CartaoPrimeirosPassos";
@@ -28,6 +29,7 @@ export default async function Painel() {
       <CapaDaPlataforma
         dias={DIAS_DE_TESTE}
         contato={process.env.CONTATO_COMERCIAL}
+        tabela={await tabelaVigente()}
       />
     );
 

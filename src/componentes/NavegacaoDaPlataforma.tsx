@@ -5,6 +5,7 @@ const ITENS = [
   { href: "/plataforma", rotulo: "Painel" },
   { href: "/plataforma/escritorios", rotulo: "Escritórios" },
   { href: "/plataforma/novo", rotulo: "Implantar escritório" },
+  { href: "/plataforma/financeiro", rotulo: "Financeiro" },
   { href: "/plataforma/notas", rotulo: "Notas fiscais" },
 ] as const;
 

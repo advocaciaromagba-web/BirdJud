@@ -28,6 +28,7 @@ export function AcoesDoEscritorio({
   ciclo = null,
   valorCentavos = 0,
   emTeste = false,
+  descontos = { anual: "10%", trimestral: "5%" },
 }: {
   escritorioId: string;
   faixaAtual: string;
@@ -42,6 +43,8 @@ export function AcoesDoEscritorio({
   valorCentavos?: number;
   /** Ainda no periodo de teste. */
   emTeste?: boolean;
+  /** Descontos de ciclo da tabela vigente, ja em texto ("10%"). */
+  descontos?: { anual: string; trimestral: string };
 }) {
   const router = useRouter();
   const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
@@ -252,17 +255,33 @@ export function AcoesDoEscritorio({
         <div className="mt-4 border-t border-slate-200 pt-4">
           <p className="font-semibold">Ciclo da assinatura</p>
           <p className="mt-1 text-slate-600">
-            Hoje: {ciclo === "ANUAL" ? "anual, com 10% de desconto" : "mensal"}. No anual sai uma fatura de 12 meses;
-            nos meses do meio, só excedente de consumo.
+            Hoje:{" "}
+            {ciclo === "ANUAL"
+              ? `anual, com ${descontos.anual} de desconto`
+              : ciclo === "TRIMESTRAL"
+                ? `trimestral, com ${descontos.trimestral} de desconto`
+                : "mensal"}
+            . No trimestral e no anual sai uma fatura do período inteiro; nos meses do meio, só excedente de consumo.
           </p>
-          <button
-            type="button"
-            disabled={ocupado}
-            onClick={() => agir({ acao: "ciclo", ciclo: ciclo === "ANUAL" ? "MENSAL" : "ANUAL" })}
-            className="mt-2 rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
-          >
-            {ciclo === "ANUAL" ? "Voltar para mensal" : "Passar para anual (10% de desconto)"}
-          </button>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[
+              { valor: "MENSAL", rotulo: "Mensal" },
+              { valor: "TRIMESTRAL", rotulo: `Trimestral (${descontos.trimestral} de desconto)` },
+              { valor: "ANUAL", rotulo: `Anual (${descontos.anual} de desconto)` },
+            ]
+              .filter((c) => c.valor !== ciclo)
+              .map((c) => (
+                <button
+                  key={c.valor}
+                  type="button"
+                  disabled={ocupado}
+                  onClick={() => agir({ acao: "ciclo", ciclo: c.valor })}
+                  className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+                >
+                  Passar para {c.rotulo.toLowerCase()}
+                </button>
+              ))}
+          </div>
         </div>
       ) : null}
 

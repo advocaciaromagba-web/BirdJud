@@ -9,7 +9,7 @@ import {
   type Faixa,
   type Modulo,
 } from "@/lib/catalogo";
-import { DESCONTO_ANUAL, precoDoModulo } from "@/lib/precos";
+import { TABELA_PADRAO, precoDoModulo, type TabelaDePrecos } from "@/lib/precos";
 import {
   contaDoPlano,
   contaMontada,
@@ -79,7 +79,14 @@ const DESCRICAO_DO_MODULO: Record<
   },
 };
 
-export function SimuladorDePlanos({ contato }: { contato?: string }) {
+export function SimuladorDePlanos({
+  contato,
+  tabela = TABELA_PADRAO,
+}: {
+  contato?: string;
+  /** A tabela vigente, vinda do servidor: a vitrine mostra o que a fatura cobra. */
+  tabela?: TabelaDePrecos;
+}) {
   // Abre na faixa de entrada: e o preco que a pessoa veio ver primeiro.
   const [faixa, setFaixa] = useState<Faixa>(FAIXAS_PUBLICADAS[0]);
   // Acima da maior faixa publicada nao ha preco na tela: ha uma conversa.
@@ -87,7 +94,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
   const [escolhidos, setEscolhidos] = useState<Set<Modulo>>(new Set());
 
   const maiorPublicada = FAIXAS_PUBLICADAS[FAIXAS_PUBLICADAS.length - 1];
-  const conta = contaMontada([...escolhidos], faixa);
+  const conta = contaMontada([...escolhidos], faixa, tabela);
   const equivalente = planoExato([...escolhidos]);
 
   function alternar(modulo: Modulo) {
@@ -145,7 +152,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
 
       <section className="mt-8 grid gap-4 lg:grid-cols-4">
         {PLANOS.map((plano) => {
-          const doPlano = contaDoPlano(plano, faixa);
+          const doPlano = contaDoPlano(plano, faixa, tabela);
           const escolhido = equivalente === plano;
           const top = plano === "COMPLETO";
           return (
@@ -180,9 +187,15 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                       /mês
                     </span>
                   </p>
+                  {tabela.descontoTrimestral > 0 ? (
+                    <p className="ajuda">
+                      No trimestral: {emReais(Math.round(doPlano.totalCentavos * 3 * (1 - tabela.descontoTrimestral)))} a cada 3 meses
+                      ({Math.round(tabela.descontoTrimestral * 1000) / 10}% de desconto).
+                    </p>
+                  ) : null}
                   <p className="ajuda">
-                    No anual: {emReais(Math.round(doPlano.totalCentavos * 12 * (1 - DESCONTO_ANUAL)))} por ano
-                    ({Math.round(DESCONTO_ANUAL * 100)}% de desconto).
+                    No anual: {emReais(Math.round(doPlano.totalCentavos * 12 * (1 - tabela.descontoAnual)))} por ano
+                    ({Math.round(tabela.descontoAnual * 1000) / 10}% de desconto).
                   </p>
                   {doPlano.descontoCentavos > 0 ? (
                     <p className="ajuda">
@@ -267,7 +280,7 @@ export function SimuladorDePlanos({ contato }: { contato?: string }) {
                           {descricao?.rotulo ?? modulo}
                         </span>
                         <span className="text-sm text-slate-500">
-                          + {emReais(precoDoModulo(modulo, faixa))}/mes
+                          + {emReais(precoDoModulo(modulo, faixa, tabela))}/mes
                         </span>
                       </span>
                       <span className="mt-1 block text-sm leading-relaxed text-slate-600">

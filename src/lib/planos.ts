@@ -16,10 +16,10 @@
 // tambem pela tela de simulacao, no navegador.
 import { MODULOS, type Faixa, type Modulo, LIMITES } from "./catalogo";
 import {
-  PRECO_DA_FAIXA,
   PRECO_DO_MODULO,
-  PRECO_DO_PLANO,
+  TABELA_PADRAO,
   precoDoModulo,
+  type TabelaDePrecos,
 } from "./precos";
 
 export const PLANOS = [
@@ -99,9 +99,9 @@ export type Conta = {
   plano: Plano | null;
 };
 
-function somaDos(modulos: Modulo[], faixa: Faixa): number {
+function somaDos(modulos: Modulo[], faixa: Faixa, tabela: TabelaDePrecos): number {
   return modulos.reduce(
-    (total, modulo) => total + precoDoModulo(modulo, faixa),
+    (total, modulo) => total + precoDoModulo(modulo, faixa, tabela),
     0,
   );
 }
@@ -111,25 +111,25 @@ export function modulosDoPlano(plano: Plano): Modulo[] {
   return [...new Set(PLANO[plano].modulos)];
 }
 
-export function contaDoPlano(plano: Plano, faixa: Faixa): Conta {
+export function contaDoPlano(plano: Plano, faixa: Faixa, tabela: TabelaDePrecos = TABELA_PADRAO): Conta {
   const modulos = modulosDoPlano(plano);
-  const modulosCentavos = somaDos(modulos, faixa);
-  const total = PRECO_DO_PLANO[plano][faixa];
+  const modulosCentavos = somaDos(modulos, faixa, tabela);
+  const total = tabela.plano[plano][faixa];
 
   // O preco do pacote e fechado na tabela, e o desconto e o que ele economiza
   // em relacao a comprar os mesmos modulos avulsos. Nessa ordem, e nao ao
   // contrario: pacote se anuncia por numero redondo, nao por percentual.
   return {
     faixa,
-    faixaCentavos: PRECO_DA_FAIXA[faixa],
+    faixaCentavos: tabela.faixa[faixa],
     modulos: modulos.map((modulo) => ({
       modulo,
-      valorCentavos: precoDoModulo(modulo, faixa),
+      valorCentavos: precoDoModulo(modulo, faixa, tabela),
     })),
     modulosCentavos,
     descontoCentavos: Math.max(
       0,
-      PRECO_DA_FAIXA[faixa] + modulosCentavos - total,
+      tabela.faixa[faixa] + modulosCentavos - total,
     ),
     totalCentavos: total,
     plano,
@@ -137,15 +137,15 @@ export function contaDoPlano(plano: Plano, faixa: Faixa): Conta {
 }
 
 /** Os planos prontos que contem todos estes modulos, do mais barato ao mais caro. */
-function planosQueCobrem(modulos: Modulo[], faixa: Faixa): Plano[] {
+function planosQueCobrem(modulos: Modulo[], faixa: Faixa, tabela: TabelaDePrecos): Plano[] {
   const pedidos = new Set(modulos);
   return PLANOS.filter((plano) => {
     const doPlano = new Set(modulosDoPlano(plano));
     return [...pedidos].every((modulo) => doPlano.has(modulo));
   }).sort(
     (a, b) =>
-      contaDoPlano(a, faixa).totalCentavos -
-      contaDoPlano(b, faixa).totalCentavos,
+      contaDoPlano(a, faixa, tabela).totalCentavos -
+      contaDoPlano(b, faixa, tabela).totalCentavos,
   );
 }
 
@@ -157,25 +157,25 @@ function planosQueCobrem(modulos: Modulo[], faixa: Faixa): Plano[] {
  * de brinde. Cobrar a soma quando existe pacote mais barato cobrindo o mesmo
  * seria ganhar do cliente por ele nao conhecer a tabela.
  */
-export function contaMontada(modulos: Modulo[], faixa: Faixa): Conta {
+export function contaMontada(modulos: Modulo[], faixa: Faixa, tabela: TabelaDePrecos = TABELA_PADRAO): Conta {
   const pedidos = [...new Set(modulos)].filter((modulo) => modulo !== "NUCLEO");
   const avulso: Conta = {
     faixa,
-    faixaCentavos: PRECO_DA_FAIXA[faixa],
+    faixaCentavos: tabela.faixa[faixa],
     modulos: pedidos.map((modulo) => ({
       modulo,
-      valorCentavos: precoDoModulo(modulo, faixa),
+      valorCentavos: precoDoModulo(modulo, faixa, tabela),
     })),
-    modulosCentavos: somaDos(pedidos, faixa),
+    modulosCentavos: somaDos(pedidos, faixa, tabela),
     descontoCentavos: 0,
-    totalCentavos: PRECO_DA_FAIXA[faixa] + somaDos(pedidos, faixa),
+    totalCentavos: tabela.faixa[faixa] + somaDos(pedidos, faixa, tabela),
     plano: null,
   };
 
-  const melhor = planosQueCobrem(pedidos, faixa)[0];
+  const melhor = planosQueCobrem(pedidos, faixa, tabela)[0];
   if (!melhor) return avulso;
 
-  const doPlano = contaDoPlano(melhor, faixa);
+  const doPlano = contaDoPlano(melhor, faixa, tabela);
   return doPlano.totalCentavos < avulso.totalCentavos ? doPlano : avulso;
 }
 
@@ -200,8 +200,8 @@ export function ehPlano(valor: string): valor is Plano {
 }
 
 /** Quanto o pacote economiza em relacao a comprar modulo a modulo. */
-export function economiaDoPlano(plano: Plano, faixa: Faixa): number {
-  return contaDoPlano(plano, faixa).descontoCentavos;
+export function economiaDoPlano(plano: Plano, faixa: Faixa, tabela: TabelaDePrecos = TABELA_PADRAO): number {
+  return contaDoPlano(plano, faixa, tabela).descontoCentavos;
 }
 
 export function rotuloDaFaixa(faixa: Faixa): string {
