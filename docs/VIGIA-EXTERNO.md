@@ -53,6 +53,19 @@ Para receber o e-mail, deixe ligadas as notificações de issues do
 repositório em github.com → Settings → Notifications. Para dono do
 repositório, elas vêm ligadas por padrão.
 
+## Cadência dos e-mails (23/10/2026)
+
+O vigia do Railway roda a cada 5 minutos e nao guarda estado. Queda do
+sistema avisa em toda rodada. Backup parado e certificado com problema
+avisam so na primeira rodada de cada hora (`src/lib/vigia-cadencia.ts`):
+em 23/10 um problema de configuracao (o vigia apontava para a conta antiga
+do R2) rendeu um e-mail a cada 5 minutos a madrugada inteira. O codigo de
+saida continua acusando em toda rodada; so o e-mail e que nao se repete.
+
+As variaveis `BACKUP_S3_*` do vigia tem de ser as MESMAS do `cron-backup`:
+sao dois servicos, e mudar a conta do R2 num deles sem mudar no outro faz o
+vigia acusar backup velho com o backup em dia.
+
 ## Cuidados
 
 - O repositório é **público**: a issue de falha fica visível para qualquer

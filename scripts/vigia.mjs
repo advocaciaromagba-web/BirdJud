@@ -36,6 +36,7 @@ import {
   destinoDoAmbiente,
   listarObjetos,
 } from "../src/lib/copia-remota.ts";
+import { cadenciaDoAviso } from "../src/lib/vigia-cadencia.ts";
 
 const ENDERECO =
   process.env.VIGIA_ENDERECO ?? "https://app.birdjud.com.br/api/saude";
@@ -292,6 +293,10 @@ if (process.env.VIGIA_DIAGNOSTICO === "1") {
 // justamente o caso em que o sistema esta fora do ar para quem usa.
 const problemasDeCertificado = await conferirCertificados();
 const problemasDoBackup = await conferirCopiaExterna();
+// Backup e certificado sao problemas lentos: e-mail so na primeira rodada da
+// hora (src/lib/vigia-cadencia.ts). O codigo de saida continua acusando em
+// toda rodada; so o e-mail e que nao se repete.
+const { avisarLentos } = cadenciaDoAviso(new Date(), Number(process.env.VIGIA_INTERVALO_MINUTOS ?? 5));
 
 // Tres batidas antes de acusar: rede tem soluco, e alarme por soluco e o jeito
 // mais rapido de ensinar todo mundo a ignorar o alarme.
@@ -330,7 +335,8 @@ if (problemasDoBackup.length > 0) {
     "BirdJud · vigia automatico",
   ].join("\n");
   console.error(aviso);
-  await avisar("BirdJud: o backup parou de subir", aviso);
+  if (avisarLentos) await avisar("BirdJud: o backup parou de subir", aviso);
+  else console.error("vigia: aviso do backup ja saiu nesta hora; o proximo e-mail e na virada da hora");
 }
 
 if (respondeu && problemasDeCertificado.length === 0) {
@@ -353,7 +359,8 @@ if (respondeu) {
     "BirdJud · vigia automatico",
   ].join("\n");
   console.error(aviso);
-  await avisar("BirdJud sem certificado valido", aviso);
+  if (avisarLentos) await avisar("BirdJud sem certificado valido", aviso);
+  else console.error("vigia: aviso do certificado ja saiu nesta hora; o proximo e-mail e na virada da hora");
   process.exit(1);
 }
 
