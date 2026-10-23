@@ -399,8 +399,37 @@ model Assinatura {
   cortesiaDesde  DateTime?
   cortesiaMotivo String?
   cortesiaPor    String?
+  /// Fim da cortesia: com data, e isencao por prazo; nulo, sem prazo.
+  cortesiaAte    DateTime?
+
+  /// Cupom de desconto aplicado, e ate quando vale (nulo = sempre).
+  cupomId         String?
+  cupomAte        DateTime?
+  cupomAplicadoEm DateTime?
+  /// Ultimo reajuste do valor fechado (contrato: anual, pelo IPCA).
+  reajustadoEm    DateTime?
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cupom      Cupom?     @relation(fields: [cupomId], references: [id], onDelete: SetNull)
+}
+
+/// Cupom de desconto da plataforma. Percentual OU valor fixo por mes, nunca
+/// os dois; por `meses` faturas (nulo = enquanto durar a assinatura).
+model Cupom {
+  id            String    @id @default(cuid())
+  codigo        String    @unique
+  descricao     String?
+  percentual    Int?
+  valorCentavos Int?
+  meses         Int?
+  validoAte     DateTime?
+  maxUsos       Int?
+  usos          Int       @default(0)
+  ativo         Boolean   @default(true)
+  criadoEm      DateTime  @default(now())
+  criadoPor     String?
+
+  assinaturas Assinatura[]
 }
 
 model Fatura {

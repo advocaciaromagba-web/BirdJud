@@ -12,7 +12,7 @@ import {
 import { consumoDoMes, competenciaDe } from "@/lib/consumo";
 import { usoDaFaixa } from "@/lib/faixas";
 import { resumoDaBaixa } from "@/lib/referencia-cobranca";
-import { diasDeAtraso, percentualEmTexto } from "@/lib/cobranca";
+import { diasDeAtraso, emCortesia, percentualEmTexto } from "@/lib/cobranca";
 import { emReais } from "@/lib/dinheiro";
 import {
   AcaoDaFatura,
@@ -35,7 +35,7 @@ export default async function EscritorioNoPainel({
   const escritorio = await prismaPlataforma().escritorio.findUnique({
     where: { id: (await params).id },
     include: {
-      assinatura: true,
+      assinatura: { include: { cupom: true } },
       faturas: { orderBy: { vencimento: "desc" }, take: 24 },
       modulos: { orderBy: { modulo: "asc" } },
     },
@@ -106,10 +106,13 @@ export default async function EscritorioNoPainel({
         ) : (
           <p className="mt-2 text-slate-600">Sem assinatura.</p>
         )}
-        {escritorio.assinatura?.cortesiaDesde ? (
+        {escritorio.assinatura?.cortesiaDesde && emCortesia(escritorio.assinatura) ? (
           <p className="mt-2 font-semibold text-emerald-800">
             Em cortesia desde {escritorio.assinatura.cortesiaDesde.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
-            {escritorio.assinatura.cortesiaPor ? `, por ${escritorio.assinatura.cortesiaPor}` : ""}: nenhuma fatura e gerada.
+            {escritorio.assinatura.cortesiaPor ? `, por ${escritorio.assinatura.cortesiaPor}` : ""}
+            {escritorio.assinatura.cortesiaAte
+              ? `, até ${new Date(escritorio.assinatura.cortesiaAte.getTime() - 1).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}: nenhuma fatura até lá.`
+              : ": nenhuma fatura é gerada."}
             {escritorio.assinatura.cortesiaMotivo ? ` Motivo: ${escritorio.assinatura.cortesiaMotivo}` : ""}
           </p>
         ) : null}
@@ -140,7 +143,20 @@ export default async function EscritorioNoPainel({
           modulo: m.modulo,
           ativo: m.ativo,
         }))}
-        emCortesia={Boolean(escritorio.assinatura?.cortesiaDesde)}
+        emCortesia={emCortesia(escritorio.assinatura)}
+        cupom={
+          escritorio.assinatura?.cupom
+            ? `${escritorio.assinatura.cupom.codigo}, ${
+                escritorio.assinatura.cupom.percentual != null
+                  ? `${escritorio.assinatura.cupom.percentual}%`
+                  : `${emReais(escritorio.assinatura.cupom.valorCentavos ?? 0)} por mês`
+              }${
+                escritorio.assinatura.cupomAte
+                  ? `, até ${escritorio.assinatura.cupomAte.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}`
+                  : ", sem prazo"
+              }`
+            : null
+        }
         ciclo={escritorio.assinatura?.ciclo ?? null}
         valorCentavos={escritorio.assinatura?.valorCentavos ?? 0}
         emTeste={Boolean(escritorio.assinatura && escritorio.assinatura.fimDoTeste > new Date())}

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { CupomInvalido, aplicarCupom, conferirCupom } from "@/lib/cupons";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
 import { DIAS_DE_TESTE } from "@/lib/precos";
@@ -30,6 +31,9 @@ const cadastro = z.object({
   // plano: quem monta o proprio conjunto tambem passa por aqui, e o preco
   // sai da mesma conta nos dois casos.
   modulos: z.array(z.enum(MODULOS)).max(MODULOS.length).optional(),
+  // Cupom de desconto: conferido ANTES de nascer o escritorio, para um
+  // codigo errado nao deixar um escritorio criado pela metade.
+  cupom: z.string().trim().max(40).nullish(),
   aceite: z.literal(true, {
     errorMap: () => ({
       message: "E preciso aceitar os documentos para continuar.",
@@ -86,6 +90,15 @@ export async function POST(req: Request) {
       );
     }
 
+    if (corpo.data.cupom) {
+      try {
+        await conferirCupom(corpo.data.cupom);
+      } catch (erro) {
+        if (erro instanceof CupomInvalido) return NextResponse.json({ erro: erro.message }, { status: 400 });
+        throw erro;
+      }
+    }
+
     // Sem escolha, o teste comeca com tudo ligado: quem esta avaliando
     // precisa ver o sistema inteiro, inclusive a leitura por IA.
     const { escritorio, plano, mensalidadeCentavos } = await nascerEscritorio({
@@ -106,6 +119,14 @@ export async function POST(req: Request) {
         }),
       }),
     );
+    if (corpo.data.cupom) {
+      // Conferido acima; entre la e aqui o limite de usos pode ter acabado
+      // (cadastro concorrente). Nesse caso o escritorio nasce sem o cupom,
+      // e o operador resolve: nao vale desfazer o cadastro por isso.
+      await aplicarCupom(escritorio.id, corpo.data.cupom).catch((e) =>
+        console.error(`cadastro: cupom nao aplicado em ${escritorio.id} — ${(e as Error).message}`),
+      );
+    }
     await registrarAceite(escritorio.id, {
       nome: corpo.data.nome,
       email: corpo.data.email,

@@ -41,6 +41,7 @@ export function FormularioCadastro({
         email: String(dados.get("email") ?? ""),
         senha: String(dados.get("senha") ?? ""),
         modulos,
+        cupom: String(dados.get("cupom") ?? "").trim() || null,
         aceite: dados.get("aceite") === "on",
         versaoAceita: VERSAO_DOS_DOCUMENTOS,
       }),
@@ -162,6 +163,13 @@ export function FormularioCadastro({
           className="campo"
         />
         <p className="ajuda">Mínimo de 10 caracteres.</p>
+      </div>
+      <div>
+        <label htmlFor="cad-cupom" className="rotulo">
+          Cupom de desconto (opcional)
+        </label>
+        <input id="cad-cupom" name="cupom" maxLength={40} autoComplete="off" className="campo uppercase" />
+        <p className="ajuda">O desconto entra na mensalidade quando o teste acabar.</p>
       </div>
       <label className="grid grid-cols-[auto_1fr] items-start gap-2 text-sm">
         <input

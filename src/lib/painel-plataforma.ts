@@ -59,7 +59,7 @@ export type EscritorioNoPainel = {
   faixa: string;
   criadoEm: Date;
   encerradoEm: Date | null;
-  assinatura: { valorCentavos: number; diaVencimento: number; fimDoTeste: Date; canceladaEm: Date | null; cortesiaDesde?: Date | null } | null;
+  assinatura: { valorCentavos: number; diaVencimento: number; fimDoTeste: Date; canceladaEm: Date | null; cortesiaDesde?: Date | null; cortesiaAte?: Date | null } | null;
   faturas: FaturaNoPainel[];
 };
 
@@ -125,8 +125,11 @@ export function analisarCarteira(escritorios: EscritorioNoPainel[], agora = new 
   }));
 
   // Cortesia nao paga: fica fora da receita, do ticket e da previsao.
-  const cobravel = (e: EscritorioNoPainel) => e.assinatura && !e.assinatura.canceladaEm && !e.assinatura.cortesiaDesde;
-  const cortesias = escritorios.filter((e) => e.status !== "ENCERRADO" && e.assinatura?.cortesiaDesde).length;
+  // Cortesia com prazo (isencao) so conta enquanto o prazo corre.
+  const isento = (e: EscritorioNoPainel) =>
+    Boolean(e.assinatura?.cortesiaDesde && (!e.assinatura.cortesiaAte || e.assinatura.cortesiaAte > agora));
+  const cobravel = (e: EscritorioNoPainel) => e.assinatura && !e.assinatura.canceladaEm && !isento(e);
+  const cortesias = escritorios.filter((e) => e.status !== "ENCERRADO" && isento(e)).length;
   const pagantes = escritorios.filter((e) => PAGAM.has(e.status) && cobravel(e));
   const receitaMensal = pagantes.reduce((s, e) => s + e.assinatura!.valorCentavos, 0);
   const emTeste = escritorios.filter((e) => e.status === "TESTE" && cobravel(e));

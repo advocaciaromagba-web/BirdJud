@@ -1,4 +1,4 @@
-import { comEscritorio } from "@/lib/prisma";
+import { comEscritorio, prismaPlataforma } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
@@ -7,6 +7,7 @@ import { dataBR } from "@/lib/datas";
 import { opcoesNoCartao, precoDoModulo } from "@/lib/precos";
 import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { ehFaturaAnual, ehFaturaTrimestral } from "@/lib/cobranca-plataforma";
+import { emCortesia } from "@/lib/cobranca";
 import { linksDaNota } from "@/lib/nota-da-plataforma";
 import { PagarNoCartao } from "@/componentes/PagarNoCartao";
 import {
@@ -77,8 +78,17 @@ export default async function PaginaDoPlano() {
   const anual = assinatura?.ciclo === "ANUAL";
   const trimestral = assinatura?.ciclo === "TRIMESTRAL";
   const pct = (f: number) => `${String(Math.round(f * 1000) / 10).replace(".", ",")}%`;
-  const emCortesia = Boolean(assinatura?.cortesiaDesde);
-  const emTeste = assinatura && !emCortesia
+  const isento = emCortesia(assinatura);
+  // A tabela de cupons e da plataforma (RLS fechado para o escritorio): o
+  // codigo e o desconto vem pelo plano de controle, so do cupom DESTA assinatura.
+  const cupom =
+    assinatura?.cupomId && (!assinatura.cupomAte || assinatura.cupomAte > new Date())
+      ? await prismaPlataforma().cupom.findUnique({
+          where: { id: assinatura.cupomId },
+          select: { codigo: true, percentual: true, valorCentavos: true },
+        })
+      : null;
+  const emTeste = assinatura && !isento
     ? assinatura.fimDoTeste.getTime() > Date.now()
     : false;
 
@@ -99,7 +109,7 @@ export default async function PaginaDoPlano() {
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="indicador">
           <p className="indicador-numero">
-            {emCortesia
+            {isento
               ? "Cortesia"
               : anual
                 ? emReais(mensalidade * 12 - Math.round(mensalidade * 12 * tabela.descontoAnual))
@@ -108,7 +118,7 @@ export default async function PaginaDoPlano() {
                   : emReais(mensalidade)}
           </p>
           <p className="indicador-rotulo">
-            {emCortesia
+            {isento
               ? "Sem mensalidade"
               : anual
                 ? `Plano anual (${emReais(mensalidade)}/mês com ${pct(tabela.descontoAnual)} de desconto)`
@@ -133,9 +143,19 @@ export default async function PaginaDoPlano() {
         </section>
       </div>
 
-      {emCortesia ? (
+      {cupom ? (
         <p className="aviso-ok mt-4">
-          Este escritório está em cortesia: usa o sistema sem custo e nenhuma fatura é gerada.
+          Cupom {cupom.codigo}: {cupom.percentual != null ? `${cupom.percentual}% de desconto` : `${emReais(cupom.valorCentavos ?? 0)} de desconto por mês`} na
+          mensalidade
+          {assinatura?.cupomAte ? `, até ${dataBR.format(assinatura.cupomAte)}` : ""}.
+        </p>
+      ) : null}
+
+      {isento ? (
+        <p className="aviso-ok mt-4">
+          Este escritório está em cortesia
+          {assinatura?.cortesiaAte ? ` até ${dataBR.format(assinatura.cortesiaAte)}` : ""}: usa o sistema sem custo e
+          nenhuma fatura é gerada{assinatura?.cortesiaAte ? " até lá" : ""}.
         </p>
       ) : null}
 

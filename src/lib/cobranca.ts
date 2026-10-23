@@ -29,6 +29,7 @@ import {
   type TabelaDePrecos,
 } from "./precos";
 import { tabelaVigente } from "./tabela-de-precos";
+import { cupomValeEm, linhaDoCupom, type CupomNaConta } from "./cupons";
 import { contaMontada } from "./planos";
 import { enfileirar } from "./fila";
 import type { Faixa } from "./faixas";
@@ -86,6 +87,18 @@ export function anuidade(
     { descricao: `Assinatura anual: 12 x ${(mensal / 100).toFixed(2).replace(".", ",")}`, valorCentavos: bruto },
     { descricao: `Desconto do plano anual (${percentualEmTexto(desconto)})`, valorCentavos: -Math.round(bruto * desconto) },
   ];
+}
+
+/**
+ * A assinatura esta em cortesia (isencao) nesta data? Cortesia sem prazo vale
+ * sempre; com prazo (cortesiaAte), so ate o dia marcado, e depois a regua
+ * volta a cobrar sozinha.
+ */
+export function emCortesia(
+  a: { cortesiaDesde: Date | null; cortesiaAte?: Date | null } | null | undefined,
+  agora = new Date(),
+): boolean {
+  return Boolean(a?.cortesiaDesde && (!a.cortesiaAte || a.cortesiaAte > agora));
 }
 
 /** Quantos meses cada ciclo cobre numa fatura. */
@@ -217,7 +230,7 @@ export async function aplicarRegua(
 ): Promise<ResultadoDaRegua> {
   const escritorio = await prismaPlataforma().escritorio.findUniqueOrThrow({
     where: { id: escritorioId },
-    include: { assinatura: true },
+    include: { assinatura: { include: { cupom: true } } },
   });
 
   let faturaGerada: string | null = null;
@@ -226,7 +239,7 @@ export async function aplicarRegua(
   // Cortesia: usa sem pagar, por tempo indeterminado. Nenhuma fatura e o
   // escritorio fica ATIVO — nem "teste" que nunca acaba, nem inadimplente.
   // Encerrado continua decisao humana.
-  if (assinatura?.cortesiaDesde) {
+  if (emCortesia(assinatura, agora)) {
     const statusNovo = escritorio.status === "ENCERRADO" ? "ENCERRADO" : "ATIVO";
     if (statusNovo !== escritorio.status) {
       await prismaPlataforma().escritorio.update({ where: { id: escritorioId }, data: { status: statusNovo } });
@@ -257,6 +270,16 @@ export async function aplicarRegua(
         competencia,
         periodoEmCurso ? "SO_EXCEDENTE" : renovaPeriodo ? ciclo : "MENSAL",
         assinatura.valorCentavos,
+        {
+          cupom:
+            assinatura.cupom && cupomValeEm(assinatura.cupomAte, agora)
+              ? {
+                  codigo: assinatura.cupom.codigo,
+                  percentual: assinatura.cupom.percentual,
+                  valorCentavos: assinatura.cupom.valorCentavos,
+                }
+              : null,
+        },
       );
       if (somar(itens) > 0) {
         const fatura = await prismaPlataforma().fatura.create({
@@ -322,6 +345,7 @@ export async function itensDaFatura(
   competencia: string,
   modo: "MENSAL" | "TRIMESTRAL" | "ANUAL" | "SO_EXCEDENTE" = "MENSAL",
   valorFechado: number | null = null,
+  opcoes: { cupom?: CupomNaConta | null } = {},
 ): Promise<ItemDaFatura[]> {
   const faixa = ehFaixa(faixaBruta) ? faixaBruta : "ATE_3";
 
@@ -339,14 +363,15 @@ export async function itensDaFatura(
 
   if (modo === "SO_EXCEDENTE") return doConsumo;
   const tabela = await tabelaVigente();
-  return [
-    ...(modo === "ANUAL"
+  const base =
+    modo === "ANUAL"
       ? anuidade(faixa, contratados, valorFechado, tabela)
       : modo === "TRIMESTRAL"
         ? trimestralidade(faixa, contratados, valorFechado, tabela)
-        : mensalidadeDoEscritorio(faixa, contratados, valorFechado, tabela)),
-    ...doConsumo,
-  ];
+        : mensalidadeDoEscritorio(faixa, contratados, valorFechado, tabela);
+  // Cupom: sobre a mensalidade (ou o periodo), nunca sobre o excedente.
+  const doCupom = opcoes.cupom ? linhaDoCupom(opcoes.cupom, base, MESES_DO_CICLO[modo]) : null;
+  return [...base, ...(doCupom ? [doCupom] : []), ...doConsumo];
 }
 
 /** Marca a fatura como paga e devolve o escritorio ao ar, se for o caso. */

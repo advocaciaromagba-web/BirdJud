@@ -32,7 +32,7 @@ export default async function PainelDaPlataforma() {
     select: {
       id: true, nome: true, status: true, faixa: true, criadoEm: true, encerradoEm: true,
       implantadoEm: true, entregueEm: true, slug: true,
-      assinatura: { select: { valorCentavos: true, diaVencimento: true, fimDoTeste: true, canceladaEm: true, cortesiaDesde: true } },
+      assinatura: { select: { valorCentavos: true, diaVencimento: true, fimDoTeste: true, canceladaEm: true, cortesiaDesde: true, cortesiaAte: true } },
       faturas: {
         where: { OR: [{ status: "ABERTA" }, { pagoEm: { gte: desde } }] },
         select: { competencia: true, valorCentavos: true, vencimento: true, status: true, pagoEm: true },

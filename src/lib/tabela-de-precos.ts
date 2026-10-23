@@ -118,7 +118,9 @@ export function esquecerTabela(): void {
  * real. Os descontos de ciclo nao mudam.
  */
 export function reajustarTabela(tabela: TabelaDePrecos, percentual: number): TabelaDePrecos {
-  const r = (v: number) => Math.round((v * (1 + percentual / 100)) / 100) * 100;
+  // Pontos-base inteiros, como no reajuste dos contratos (reajuste.ts).
+  const fator = Math.round((100 + percentual) * 100);
+  const r = (v: number) => Math.round((v * fator) / 1_000_000) * 100;
   const faixas = (o: Record<Faixa, number>) =>
     Object.fromEntries(FAIXAS.map((f) => [f, r(o[f])])) as Record<Faixa, number>;
   return {

@@ -29,6 +29,7 @@ export function AcoesDoEscritorio({
   valorCentavos = 0,
   emTeste = false,
   descontos = { anual: "10%", trimestral: "5%" },
+  cupom = null,
 }: {
   escritorioId: string;
   faixaAtual: string;
@@ -45,6 +46,8 @@ export function AcoesDoEscritorio({
   emTeste?: boolean;
   /** Descontos de ciclo da tabela vigente, ja em texto ("10%"). */
   descontos?: { anual: string; trimestral: string };
+  /** Cupom aplicado na assinatura, ja descrito ("BOASVINDAS, 20%, até 23/01/2027"). */
+  cupom?: string | null;
 }) {
   const router = useRouter();
   const [recado, setRecado] = useState<{ texto: string; ok: boolean } | null>(
@@ -52,6 +55,8 @@ export function AcoesDoEscritorio({
   );
   const [ocupado, setOcupado] = useState(false);
   const [motivo, setMotivo] = useState("");
+  const [isentoAte, setIsentoAte] = useState("");
+  const [codigoDoCupom, setCodigoDoCupom] = useState("");
   const [motivoDoEncerramento, setMotivoDoEncerramento] = useState("");
   const [valor, setValor] = useState(valorCentavos ? (valorCentavos / 100).toFixed(2).replace(".", ",") : "");
   const contratados = new Map(modulos.map((m) => [m.modulo, m.ativo]));
@@ -168,8 +173,8 @@ export function AcoesDoEscritorio({
       <div className="mt-4 border-t border-slate-200 pt-4">
         <p className="font-semibold">Cortesia</p>
         <p className="mt-1 text-slate-600">
-          Usa sem pagar, por tempo indeterminado: nenhuma fatura é gerada, o escritório fica ativo e sai da receita e da
-          previsão do painel.
+          Usa sem pagar, sem prazo ou até uma data (isenção): nenhuma fatura é gerada, o escritório fica ativo e sai da
+          receita e da previsão do painel.
         </p>
         {emCortesia ? (
           <button
@@ -193,14 +198,68 @@ export function AcoesDoEscritorio({
             <button
               type="button"
               disabled={ocupado || !motivo.trim()}
-              onClick={() => agir({ acao: "cortesia", ligar: true, motivo: motivo.trim() })}
+              onClick={() =>
+                agir({ acao: "cortesia", ligar: true, motivo: motivo.trim(), ...(isentoAte ? { ate: isentoAte } : {}) })
+              }
               className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
             >
-              Conceder cortesia
+              {isentoAte ? "Isentar até a data" : "Conceder cortesia sem prazo"}
             </button>
+            <label className="flex items-center gap-1 text-slate-600">
+              até
+              <input
+                type="date"
+                aria-label="Isenção até (opcional)"
+                className="rounded border border-slate-400 px-2 py-1"
+                value={isentoAte}
+                onChange={(e) => setIsentoAte(e.target.value)}
+              />
+            </label>
+            <span className="ajuda w-full">
+              Com data, é isenção por prazo: nenhuma fatura até o dia marcado, e depois a régua volta a cobrar sozinha.
+            </span>
           </div>
         )}
       </div>
+
+      {ciclo ? (
+        <div className="mt-4 border-t border-slate-200 pt-4">
+          <p className="font-semibold">Cupom de desconto</p>
+          {cupom ? (
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <span className="text-slate-700">Aplicado: {cupom}.</span>
+              <button
+                type="button"
+                disabled={ocupado}
+                onClick={() => agir({ acao: "removerCupom" })}
+                className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+              >
+                Retirar o cupom
+              </button>
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                aria-label="Código do cupom"
+                className="campo max-w-xs uppercase"
+                placeholder="Código (criado em Financeiro)"
+                value={codigoDoCupom}
+                maxLength={40}
+                onChange={(e) => setCodigoDoCupom(e.target.value)}
+              />
+              <button
+                type="button"
+                disabled={ocupado || !codigoDoCupom.trim()}
+                onClick={() => agir({ acao: "cupom", codigo: codigoDoCupom.trim() })}
+                className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"
+              >
+                Aplicar cupom
+              </button>
+            </div>
+          )}
+          <p className="ajuda">O desconto vale sobre a mensalidade (ou a fatura do período), nunca sobre o excedente de consumo.</p>
+        </div>
+      ) : null}
 
       {ciclo ? (
         <div className="mt-4 border-t border-slate-200 pt-4">

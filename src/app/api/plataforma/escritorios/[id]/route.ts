@@ -13,6 +13,7 @@ import { aplicarRegua } from "@/lib/cobranca";
 import { mesesDaFatura } from "@/lib/cobranca-plataforma";
 import { percentualEmTexto } from "@/lib/cobranca";
 import { tabelaVigente } from "@/lib/tabela-de-precos";
+import { CupomInvalido, aplicarCupom, removerCupom } from "@/lib/cupons";
 import { FAIXAS } from "@/lib/faixas";
 import { MODULOS } from "@/lib/modulos";
 import { contaMontada, modulosDoPlano, PLANO, PLANOS } from "@/lib/planos";
@@ -35,7 +36,16 @@ const acao = z.discriminatedUnion("acao", [
   z.object({ acao: z.literal("plano"), plano: z.enum(PLANOS) }),
   z.object({ acao: z.literal("regua") }),
   // Cortesia: usa sem pagar, por tempo indeterminado (ver cobranca.ts).
-  z.object({ acao: z.literal("cortesia"), ligar: z.boolean(), motivo: z.string().trim().max(300).optional() }),
+  // Com "ate", e isencao por prazo: a regua volta a cobrar sozinha depois.
+  z.object({
+    acao: z.literal("cortesia"),
+    ligar: z.boolean(),
+    motivo: z.string().trim().max(300).optional(),
+    ate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  }),
+  // Cupom de desconto aplicado pelo operador (ou retirado).
+  z.object({ acao: z.literal("cupom"), codigo: z.string().trim().min(1).max(40) }),
+  z.object({ acao: z.literal("removerCupom") }),
   // Encerrar interrompe o servico e comeca a contar o prazo de retencao
   // (encerramento.ts); reativar desfaz enquanto o prazo corre.
   z.object({ acao: z.literal("encerrar"), motivo: z.string().trim().min(3).max(300) }),
@@ -311,6 +321,23 @@ export async function POST(
       return NextResponse.json({ detalhe: "Escritório reativado." });
     }
 
+    if (corpo.data.acao === "cupom") {
+      try {
+        const cupom = await aplicarCupom(escritorio.id, corpo.data.codigo);
+        await registrarAcessoSuporte(operador.operadorId, escritorio.id, `Cupom aplicado: ${cupom.codigo}`);
+        return NextResponse.json({ detalhe: `Cupom ${cupom.codigo} aplicado: vale a partir da próxima fatura.` });
+      } catch (erro) {
+        if (erro instanceof CupomInvalido) return NextResponse.json({ erro: erro.message }, { status: 400 });
+        throw erro;
+      }
+    }
+
+    if (corpo.data.acao === "removerCupom") {
+      await removerCupom(escritorio.id);
+      await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Cupom retirado");
+      return NextResponse.json({ detalhe: "Cupom retirado: a próxima fatura sai sem o desconto." });
+    }
+
     if (corpo.data.acao === "cortesia") {
       const assinatura = await prismaPlataforma().assinatura.findUnique({ where: { escritorioId: escritorio.id } });
       if (!assinatura) {
@@ -319,22 +346,37 @@ export async function POST(
       if (corpo.data.ligar && !corpo.data.motivo) {
         return NextResponse.json({ erro: "Diga o motivo da cortesia: fica registrado." }, { status: 400 });
       }
+      // Fim da isencao: o fim do dia escolhido, em Brasilia (03h UTC do dia seguinte).
+      const ate = corpo.data.ate ? new Date(`${corpo.data.ate}T03:00:00Z`) : null;
+      if (ate) ate.setUTCDate(ate.getUTCDate() + 1);
+      if (corpo.data.ligar && ate && ate <= new Date()) {
+        return NextResponse.json({ erro: "A data final da isenção tem de ser futura." }, { status: 400 });
+      }
       await prismaPlataforma().assinatura.update({
         where: { escritorioId: escritorio.id },
         data: corpo.data.ligar
-          ? { cortesiaDesde: new Date(), cortesiaMotivo: corpo.data.motivo, cortesiaPor: operador.nome ?? operador.operadorId }
-          : { cortesiaDesde: null, cortesiaMotivo: null, cortesiaPor: null },
+          ? {
+              cortesiaDesde: new Date(),
+              cortesiaAte: ate,
+              cortesiaMotivo: corpo.data.motivo,
+              cortesiaPor: operador.nome ?? operador.operadorId,
+            }
+          : { cortesiaDesde: null, cortesiaAte: null, cortesiaMotivo: null, cortesiaPor: null },
       });
       await registrarAcessoSuporte(
         operador.operadorId,
         escritorio.id,
-        corpo.data.ligar ? `Cortesia concedida: ${corpo.data.motivo}` : "Cortesia retirada",
+        corpo.data.ligar
+          ? `Cortesia concedida${corpo.data.ate ? ` até ${corpo.data.ate.split("-").reverse().join("/")}` : ""}: ${corpo.data.motivo}`
+          : "Cortesia retirada",
       );
       // Na hora, para o status ja refletir (cortesia deixa ATIVO).
       const r = await aplicarRegua(escritorio.id);
       return NextResponse.json({
         detalhe: corpo.data.ligar
-          ? `Cortesia ligada: nenhuma fatura será gerada. Status ${r.statusNovo}.`
+          ? corpo.data.ate
+            ? `Isenção até ${corpo.data.ate.split("-").reverse().join("/")}: nenhuma fatura até lá; depois a régua volta a cobrar sozinha. Status ${r.statusNovo}.`
+            : `Cortesia ligada: nenhuma fatura será gerada. Status ${r.statusNovo}.`
           : `Cortesia retirada: a regua volta a cobrar no próximo vencimento. Status ${r.statusNovo}.`,
       });
     }

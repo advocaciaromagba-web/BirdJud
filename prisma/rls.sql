@@ -106,6 +106,11 @@ ALTER TABLE "FiscalDaPlataforma" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "ConfiguracaoComercial" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "ConfiguracaoComercial" FORCE ROW LEVEL SECURITY;
 
+-- Cupom: cupom de desconto da plataforma. So o plano de controle le e
+-- escreve; o cadastro confere o cupom pelo plano de controle.
+ALTER TABLE "Cupom" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Cupom" FORCE ROW LEVEL SECURITY;
+
 -- RedefinicaoDoOperador: link de troca da senha da conta que enxerga todos os
 -- escritorios. Mesma regra: a aplicacao nao ve, so o plano de controle.
 ALTER TABLE "RedefinicaoDoOperador" ENABLE ROW LEVEL SECURITY;
