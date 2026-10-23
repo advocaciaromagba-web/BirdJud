@@ -8,7 +8,7 @@ esta pagina a cada item fechado (data e quem fez).
 | # | Item | Quem | Estado |
 |---|---|---|---|
 | 1 | Trocar as credenciais vazadas no incidente do Railway de 21/10 nos paineis de origem (R2, Asaas, Meta, Resend, Gmail, OpenAI, Anthropic, reles na Vercel) e depois as internas (`SEGREDO_CHAVE` com `npm run trocar-segredo-chave`, `NEXTAUTH_SECRET`, senhas do banco). Roteiro em `docs/SEGURANCA.md` | operadora, depois o sistema | pendente |
-| 2 | Nota fiscal da assinatura: emitir a nota de teste, conferir o DANFSe, passar o emissor para Producao e ligar a emissao automatica (console > Notas fiscais) | operadora | em andamento (23/10) |
+| 2 | Nota fiscal da assinatura: emitir a nota de teste, conferir o DANFSe, passar o emissor para Producao e ligar a emissao automatica (console > Notas fiscais) | operadora | feito em 23/10: nota 2 em homologacao conferida, codigo de tributacao corrigido para 010501 (licenciamento de software), emissor em Producao |
 | 3 | Causa da rotina que falhou em 23/10 (console > painel > "Rotinas com falha") | sistema | aguardando o bloco no ar |
 
 ## Antes de vender, sem bloquear
