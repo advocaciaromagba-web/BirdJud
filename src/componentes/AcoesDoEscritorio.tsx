@@ -58,6 +58,25 @@ export function AcoesDoEscritorio({
   const [isentoAte, setIsentoAte] = useState("");
   const [codigoDoCupom, setCodigoDoCupom] = useState("");
   const [motivoDoEncerramento, setMotivoDoEncerramento] = useState("");
+  const [exclusao, setExclusao] = useState({ aberta: false, confirmacao: "", motivo: "" });
+
+  async function excluir() {
+    if (!window.confirm("Excluir definitivamente? Isto não se desfaz.")) return;
+    setOcupado(true);
+    setRecado(null);
+    const { ok, json } = await chamar(`/api/plataforma/escritorios/${escritorioId}`, {
+      acao: "excluir",
+      confirmacao: exclusao.confirmacao,
+      motivo: exclusao.motivo,
+    });
+    setOcupado(false);
+    if (!ok) {
+      setRecado({ texto: json.erro ?? "Falhou.", ok: false });
+      return;
+    }
+    window.alert(json.detalhe ?? "Excluído.");
+    router.push("/plataforma/escritorios");
+  }
   const [valor, setValor] = useState(valorCentavos ? (valorCentavos / 100).toFixed(2).replace(".", ",") : "");
   const contratados = new Map(modulos.map((m) => [m.modulo, m.ativo]));
   const ativos = modulos
@@ -416,6 +435,55 @@ export function AcoesDoEscritorio({
               </button>
             </div>
           </>
+        )}
+      </div>
+
+      <div className="mt-4 border-t border-red-200 pt-4">
+        <p className="font-semibold text-red-800">Excluir definitivamente</p>
+        <p className="mt-1 text-slate-600">
+          Sem esperar o prazo de retenção: para escritório de teste, cadastro feito por engano ou pedido de eliminação do
+          titular (LGPD). Sem fatura paga, some tudo e o endereço fica livre. Com fatura paga ou nota emitida, os dados
+          são apagados e ficam só faturas, assinatura, aceites e notas, que são registro fiscal da Blackbird. Não se desfaz.
+        </p>
+        {exclusao.aberta ? (
+          <div className="mt-2 grid gap-2 sm:max-w-md">
+            <input
+              aria-label="Endereço do escritório, para confirmar"
+              className="campo"
+              placeholder="Digite o endereço do escritório para confirmar"
+              value={exclusao.confirmacao}
+              onChange={(e) => setExclusao({ ...exclusao, confirmacao: e.target.value })}
+            />
+            <input
+              aria-label="Motivo da exclusão"
+              className="campo"
+              placeholder="Motivo (fica registrado)"
+              maxLength={300}
+              value={exclusao.motivo}
+              onChange={(e) => setExclusao({ ...exclusao, motivo: e.target.value })}
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={ocupado || !exclusao.confirmacao.trim() || exclusao.motivo.trim().length < 10}
+                onClick={excluir}
+                className="rounded border border-red-400 bg-red-50 px-3 py-1.5 font-semibold text-red-800 disabled:opacity-60"
+              >
+                Excluir definitivamente
+              </button>
+              <button type="button" className="botao-discreto" onClick={() => setExclusao({ aberta: false, confirmacao: "", motivo: "" })}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setExclusao({ ...exclusao, aberta: true })}
+            className="mt-2 rounded border border-red-300 px-3 py-1.5 font-semibold text-red-800"
+          >
+            Quero excluir este escritório
+          </button>
         )}
       </div>
 

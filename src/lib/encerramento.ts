@@ -43,19 +43,74 @@ export type ResultadoDaPurga = {
 };
 
 /**
- * Apaga os dados dos escritorios encerrados ha mais tempo que o prazo.
- *
- * **Vai embora:** usuarios, clientes, processos, agenda, lancamentos,
- * publicacoes, avisos, analises de IA, OABs monitoradas, cobrancas, arquivos
- * (a linha e o byte no disco), integracoes (com as credenciais), consumo,
- * modulos e os trabalhos da fila.
- *
- * **Fica, de proposito:** faturas, assinatura e aceites de termos. Sao registro
- * fiscal e prova de contrato, que a plataforma precisa guardar por obrigacao
- * propria — e por isso o acordo de LGPD diz que ficam, em base separada dos
- * dados do escritorio. Fica tambem a casca do escritorio (id, slug, nome,
- * `purgadoEm`), para constar que a purga aconteceu.
+ * O que fica depois da purga, de proposito: faturas, assinatura, aceites de
+ * termos e as notas fiscais que a PLATAFORMA emitiu para o escritorio. Sao
+ * registro fiscal e prova de contrato da Blackbird, e o acordo de LGPD diz
+ * que ficam, em base separada dos dados do escritorio. O registro de acesso
+ * de suporte tambem fica: tem o proprio expurgo, de 12 meses.
  */
+export const TABELAS_QUE_FICAM = new Set(["Fatura", "Assinatura", "AceiteDeTermos", "NotaDaPlataforma", "AcessoSuporte"]);
+
+export class PurgaIncompleta extends Error {
+  constructor(tabelas: string[]) {
+    super(`A purga nao conseguiu apagar: ${tabelas.join(", ")}.`);
+    this.name = "PurgaIncompleta";
+  }
+}
+
+/**
+ * Apaga todo dado de UM escritorio, menos o que fica (TABELAS_QUE_FICAM), e
+ * marca purgadoEm. Fica a casca do escritorio (id, slug, nome).
+ *
+ * As tabelas sao descobertas no banco (toda tabela com coluna escritorioId),
+ * e nao listadas a mao: a lista a mao parou em 15 de 38 tabelas, e tarefas,
+ * entrevistas, contratos e notas fiscais dos clientes sobreviviam a purga
+ * (corrigido em 23/10/2026). Modulo novo entra sozinho.
+ *
+ * A ordem entre tabelas nao importa: cada exclusao roda num ponto de
+ * salvamento, e a que esbarrar numa chave estrangeira volta para a fila da
+ * proxima rodada. Tudo numa transacao: ou some tudo, ou nao some nada.
+ */
+export async function purgarEscritorio(escritorioId: string, agora = new Date()): Promise<void> {
+  const db = prismaPlataforma();
+  const tabelas = (
+    await db.$queryRaw<{ table_name: string }[]>`
+      SELECT table_name FROM information_schema.columns
+       WHERE column_name = 'escritorioId' AND table_schema = current_schema()`
+  )
+    .map((t) => t.table_name)
+    .filter((t) => !TABELAS_QUE_FICAM.has(t));
+
+  await db.$transaction(
+    async (tx) => {
+      let pendentes = tabelas;
+      for (let rodada = 0; pendentes.length && rodada < tabelas.length; rodada++) {
+        const travadas: string[] = [];
+        for (const tabela of pendentes) {
+          await tx.$executeRawUnsafe("SAVEPOINT purga");
+          try {
+            // Nome vindo do proprio catalogo do banco, entre aspas: nao e entrada de ninguem.
+            await tx.$executeRawUnsafe(`DELETE FROM "${tabela.replace(/"/g, "")}" WHERE "escritorioId" = $1`, escritorioId);
+            await tx.$executeRawUnsafe("RELEASE SAVEPOINT purga");
+          } catch {
+            await tx.$executeRawUnsafe("ROLLBACK TO SAVEPOINT purga");
+            travadas.push(tabela);
+          }
+        }
+        if (travadas.length === pendentes.length) throw new PurgaIncompleta(travadas);
+        pendentes = travadas;
+      }
+      await tx.escritorio.update({ where: { id: escritorioId }, data: { purgadoEm: agora } });
+    },
+    { timeout: 60_000 },
+  );
+
+  // Depois do commit: disco nao participa de transacao, e apagar byte de
+  // escritorio que ja nao tem linha nenhuma e sempre seguro.
+  await apagarTudoDoEscritorio(escritorioId);
+}
+
+/** Apaga os dados dos escritorios encerrados ha mais tempo que o prazo. */
 export async function purgarEncerrados(
   agora = new Date(),
 ): Promise<ResultadoDaPurga> {
@@ -70,71 +125,76 @@ export async function purgarEncerrados(
     select: { id: true, slug: true },
   });
 
-  for (const escritorio of candidatos) {
-    // Em uma transacao: ou some tudo, ou nao some nada.
-    await prismaPlataforma().$transaction([
-      prismaPlataforma().usuario.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().cliente.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().processo.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().compromisso.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().lancamento.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      // Modulos que vieram depois da fase 5. Sem estas linhas, publicacao e
-      // analise de IA sobreviviam a purga — dado de cliente que a LGPD e o
-      // nosso proprio contrato mandam apagar.
-      prismaPlataforma().arquivo.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().cobranca.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().analiseIA.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().aviso.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().publicacao.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().oabMonitorada.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().integracao.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().consumoMensal.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().moduloContratado.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      // Trabalhos da fila carregam payload do escritorio: vao junto.
-      prismaPlataforma().trabalho.deleteMany({
-        where: { escritorioId: escritorio.id },
-      }),
-      prismaPlataforma().escritorio.update({
-        where: { id: escritorio.id },
-        data: { purgadoEm: agora },
-      }),
-    ]);
-
-    // Depois do commit: disco nao participa de transacao, e apagar byte de
-    // escritorio que ja nao tem linha nenhuma e sempre seguro.
-    await apagarTudoDoEscritorio(escritorio.id);
-  }
+  for (const escritorio of candidatos) await purgarEscritorio(escritorio.id, agora);
 
   return {
     apagados: candidatos.length,
     escritorios: candidatos.map((e) => e.slug),
   };
+}
+
+export class ExclusaoRecusada extends Error {
+  readonly status = 400;
+  constructor(motivo: string) {
+    super(motivo);
+    this.name = "ExclusaoRecusada";
+  }
+}
+
+/**
+ * Exclusao definitiva pelo console, sem esperar o prazo de retencao. Para o
+ * escritorio de teste, para o pedido de eliminacao do titular (LGPD) e para
+ * cadastro feito por engano.
+ *
+ *  - sem historico fiscal (nenhuma fatura paga, nenhuma nota da plataforma):
+ *    some tudo, inclusive a casca; o endereco fica livre;
+ *  - com historico fiscal: apaga todos os dados e guarda faturas, assinatura,
+ *    aceites e notas (obrigacao da Blackbird), com a casca marcada como
+ *    purgada.
+ *
+ * Exige digitar o endereco do escritorio e o motivo, que ficam no registro
+ * de suporte antes de qualquer exclusao.
+ */
+export async function excluirEscritorio(
+  escritorioId: string,
+  pedido: { confirmacao: string; motivo: string; operadorId: string },
+  agora = new Date(),
+): Promise<{ modo: "APAGADO" | "PURGADO"; slug: string }> {
+  const db = prismaPlataforma();
+  const escritorio = await db.escritorio.findUnique({ where: { id: escritorioId }, select: { id: true, slug: true, purgadoEm: true } });
+  if (!escritorio) throw new ExclusaoRecusada("Escritório não encontrado.");
+  if (pedido.confirmacao.trim().toLowerCase() !== escritorio.slug) {
+    throw new ExclusaoRecusada(`Para confirmar, digite o endereço do escritório: ${escritorio.slug}`);
+  }
+  if (pedido.motivo.trim().length < 10) throw new ExclusaoRecusada("Explique o motivo com pelo menos 10 caracteres: fica registrado.");
+
+  const [pagas, notas] = await Promise.all([
+    db.fatura.count({ where: { escritorioId, status: "PAGA" } }),
+    db.notaDaPlataforma.count({ where: { escritorioId } }),
+  ]);
+  const temFiscal = pagas > 0 || notas > 0;
+
+  await db.acessoSuporte.create({
+    data: {
+      operadorId: pedido.operadorId,
+      escritorioId,
+      motivo: `Exclusão definitiva (${temFiscal ? "dados apagados, registro fiscal guardado" : "tudo apagado"}): ${pedido.motivo.trim()}`,
+      encerradoEm: agora,
+    },
+  });
+
+  if (!escritorio.purgadoEm) {
+    await db.escritorio.update({ where: { id: escritorioId }, data: { status: "ENCERRADO", encerradoEm: agora } });
+    await purgarEscritorio(escritorioId, agora);
+  }
+  if (temFiscal) return { modo: "PURGADO", slug: escritorio.slug };
+
+  // Sem nada fiscal: some tambem o que ficaria, e a casca.
+  await db.$transaction([
+    db.fatura.deleteMany({ where: { escritorioId } }),
+    db.assinatura.deleteMany({ where: { escritorioId } }),
+    db.aceiteDeTermos.deleteMany({ where: { escritorioId } }),
+    db.escritorio.delete({ where: { id: escritorioId } }),
+  ]);
+  return { modo: "APAGADO", slug: escritorio.slug };
 }

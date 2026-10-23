@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { encerrarEscritorio, reativarEscritorio } from "@/lib/encerramento";
+import { ExclusaoRecusada, encerrarEscritorio, excluirEscritorio, reativarEscritorio } from "@/lib/encerramento";
 import { PRAZO_DE_RETENCAO_DIAS } from "@/lib/juridico";
 import { z } from "zod";
 import { enfileirar } from "@/lib/fila";
@@ -46,6 +46,8 @@ const acao = z.discriminatedUnion("acao", [
   // Cupom de desconto aplicado pelo operador (ou retirado).
   z.object({ acao: z.literal("cupom"), codigo: z.string().trim().min(1).max(40) }),
   z.object({ acao: z.literal("removerCupom") }),
+  // Exclusao definitiva: endereco digitado e motivo (encerramento.ts).
+  z.object({ acao: z.literal("excluir"), confirmacao: z.string().max(80), motivo: z.string().max(300) }),
   // Encerrar interrompe o servico e comeca a contar o prazo de retencao
   // (encerramento.ts); reativar desfaz enquanto o prazo corre.
   z.object({ acao: z.literal("encerrar"), motivo: z.string().trim().min(3).max(300) }),
@@ -319,6 +321,25 @@ export async function POST(
       await prismaPlataforma().assinatura.updateMany({ where: { escritorioId: escritorio.id }, data: { canceladaEm: null } });
       await registrarAcessoSuporte(operador.operadorId, escritorio.id, "Reativado");
       return NextResponse.json({ detalhe: "Escritório reativado." });
+    }
+
+    if (corpo.data.acao === "excluir") {
+      try {
+        const r = await excluirEscritorio(escritorio.id, {
+          confirmacao: corpo.data.confirmacao,
+          motivo: corpo.data.motivo,
+          operadorId: operador.operadorId,
+        });
+        return NextResponse.json({
+          detalhe:
+            r.modo === "APAGADO"
+              ? `${r.slug} excluído por inteiro. O endereço está livre.`
+              : `${r.slug}: dados apagados. Ficaram só faturas, assinatura, aceites e notas (registro fiscal).`,
+        });
+      } catch (erro) {
+        if (erro instanceof ExclusaoRecusada) return NextResponse.json({ erro: erro.message }, { status: 400 });
+        throw erro;
+      }
     }
 
     if (corpo.data.acao === "cupom") {
