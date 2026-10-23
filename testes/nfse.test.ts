@@ -103,6 +103,8 @@ describe("leiaute da DPS (Anexo I)", () => {
     expect(xml).toContain("<xDescServ>Honorarios advocaticios</xDescServ>");
     // Esquema novo da Sefin: a finalidade fica em infDPS, entre tpEmit e cLocEmi.
     expect(xml).toContain("<tpEmit>1</tpEmit><finNFSe>0</finNFSe><cLocEmi>");
+    // E o NBS nao entra em cServ, mesmo cadastrado: a Sefin recusa.
+    expect(xml).not.toContain("<cNBS>");
   });
 
   it("texto fora do Latin-1 (travessão, aspas curvas) vira o equivalente simples: o XSD recusa com E1235", () => {

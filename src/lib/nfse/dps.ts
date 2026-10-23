@@ -211,7 +211,9 @@ export function montarDps(emissor: EmissorDps, d: DadosDps): { xml: string; idDp
   // Ordem do XSD: cTribNac, cTribMun, xDescServ, cNBS, cAtvSN, cIntContrib.
   tag("cTribNac", so(emissor.codigoTributacaoNacional));
   tag("xDescServ", d.descricao);
-  tag("cNBS", so(emissor.codigoNbs) || null);
+  // cNBS NAO vai mais: o esquema novo da Sefin recusa a tag dentro de cServ
+  // (E1235 "invalid child element cNBS", 23/10/2026). O codigo fica no
+  // cadastro para o dia em que o leiaute disser onde ele entra.
   // Idem cAtvSN (NT 009): 14 = prestacao de servicos do Anexo IV (advocacia).
   if (emissor.ibsCbs && emissor.cAtvSN && (emissor.opSimpNac === 3 || emissor.opSimpNac === 4)) tag("cAtvSN", emissor.cAtvSN);
   t.push("</cServ>");

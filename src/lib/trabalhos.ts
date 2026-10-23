@@ -7,7 +7,7 @@ import { conferirEntregas } from "./entrega-do-escritorio";
 import { comEscritorio, prismaPlataforma } from "./prisma";
 import { competenciaDe, definirConsumo } from "./consumo";
 import { moduloAtivo, type Modulo } from "./modulos";
-import { enfileirar } from "./fila";
+import { enfileirar, FalhaTemporaria } from "./fila";
 import { limparLimitesVencidos } from "./limite";
 import { expurgarAcessosDeSuporte } from "./plataforma";
 import { limparPedidosVencidosDeTodos } from "./redefinicao";
@@ -148,8 +148,20 @@ async function capturar({ escritorioId }: Contexto): Promise<void> {
     const nomes = resultado.falhas
       .map((f) => `${f.oab}: ${f.motivo}`)
       .join(" | ");
-    throw new Error(`Falha em ${resultado.falhas.length} OAB(s) — ${nomes}`);
+    const mensagem = `Falha em ${resultado.falhas.length} OAB(s) — ${nomes}`;
+    // DJEN fora do ar (5xx, sem resposta): tentar de novo em 1 minuto e
+    // desistir em 5 e o jeito certo de perder o dia. Espera 90 minutos entre
+    // as tentativas; a captura cobre os dias anteriores, nada se perde.
+    if (resultado.falhas.every((f) => djenIndisponivel(f.motivo))) {
+      throw new FalhaTemporaria(mensagem, 90);
+    }
+    throw new Error(mensagem);
   }
+}
+
+/** O motivo e o DJEN caido, nao um dado nosso. */
+export function djenIndisponivel(motivo: string): boolean {
+  return /DJEN respondeu 5\d\d|fetch failed|ECONNRESET|ECONNREFUSED|ETIMEDOUT|sem resposta|timeout/i.test(motivo);
 }
 
 /**

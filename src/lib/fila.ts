@@ -89,8 +89,30 @@ export async function concluir(id: string): Promise<void> {
 }
 
 /**
+ * Erro que pede para a fila esperar mais antes de tentar de novo: o servico
+ * de fora caiu (DJEN com 500, por exemplo) e 1 minuto depois ele continua
+ * caido. Quem lanca escolhe a espera.
+ */
+export class FalhaTemporaria extends Error {
+  constructor(
+    mensagem: string,
+    readonly adiarMinutos: number,
+  ) {
+    super(mensagem);
+    this.name = "FalhaTemporaria";
+  }
+}
+
+/** A espera antes da proxima tentativa, em minutos. */
+export function esperaDaTentativa(tentativas: number, erro: unknown): number {
+  if (erro instanceof FalhaTemporaria) return erro.adiarMinutos;
+  return tentativas ** 2;
+}
+
+/**
  * Marca a falha. Enquanto houver tentativa sobrando, volta para PENDENTE com
- * espera crescente (1min, 4min, 9min...); depois disso para em FALHOU.
+ * espera crescente (1min, 4min, 9min...) — ou a espera que o erro pediu
+ * (FalhaTemporaria); depois disso para em FALHOU.
  */
 export async function falhar(trabalho: Trabalho, erro: unknown): Promise<void> {
   const mensagem = erro instanceof Error ? erro.message : String(erro);
@@ -104,7 +126,7 @@ export async function falhar(trabalho: Trabalho, erro: unknown): Promise<void> {
           estado: "PENDENTE",
           erro: mensagem,
           agendadoPara: new Date(
-            Date.now() + trabalho.tentativas ** 2 * 60_000,
+            Date.now() + esperaDaTentativa(trabalho.tentativas, erro) * 60_000,
           ),
         },
   });
