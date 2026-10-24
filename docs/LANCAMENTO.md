@@ -9,7 +9,7 @@ esta pagina a cada item fechado (data e quem fez).
 |---|---|---|---|
 | 1 | Trocar as credenciais vazadas no incidente do Railway de 21/10 nos paineis de origem (R2, Asaas, Meta, Resend, Gmail, OpenAI, Anthropic, reles na Vercel) e depois as internas (`SEGREDO_CHAVE` com `npm run trocar-segredo-chave`, `NEXTAUTH_SECRET`, senhas do banco). Roteiro em `docs/SEGURANCA.md` | operadora, depois o sistema | pendente |
 | 2 | Nota fiscal da assinatura: emitir a nota de teste, conferir o DANFSe, passar o emissor para Producao e ligar a emissao automatica (console > Notas fiscais) | operadora | feito em 23/10: nota 2 em homologacao conferida, codigo de tributacao corrigido para 010501 (licenciamento de software), emissor em Producao |
-| 3 | Causa da rotina que falhou em 23/10 (console > painel > "Rotinas com falha") | sistema | aguardando o bloco no ar |
+| 3 | Causa da rotina que falhou em 23/10 (console > painel > "Rotinas com falha") | sistema | feito em 24/10: era a NFS-e recusada por cNBS (corrigida em a0a7537); trabalhador sem erro nas 24 h seguintes, rotinas de 24/10 rodaram |
 
 ## Antes de vender, sem bloquear
 
@@ -29,4 +29,6 @@ esta pagina a cada item fechado (data e quem fez).
 - Roteiro para acompanhar as novidades do sistema da Advocacia Roma (`docs/ESPELHO-DA-ROMA.md`).
 - Nota fiscal do escritorio para os clientes dele, provada em producao.
 - Console do operador (23/10): tabela de precos editavel com reajuste, ciclo trimestral, cupons, isencao por prazo, reajuste anual dos contratos com aviso por e-mail, exclusao definitiva e entrada no escritorio como suporte.
+- Revisão de código antes do lançamento (24/10): 10 achados, todos corrigidos e com teste — sessão de suporte sem criar conta nem definir a senha de administração, cupom contado em meses de fatura e proporcional no trimestral e no anual, exclusão que cancela o boleto no Asaas antes de apagar, editor de preços que aceita ponto e vírgula.
+- Página inicial: "Uma plataforma feita por advogados que entendem a dor dos advogados"; cabeçalho do celular com Entrar e Teste grátis.
 - Chaves trocadas depois do incidente do Railway: `NEXTAUTH_SECRET` e `BACKUP_CHAVE` (23/10, a antiga guardada no Bitwarden para abrir os backups anteriores).
