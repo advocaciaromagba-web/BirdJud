@@ -28,8 +28,10 @@ export function CabecalhoPublico() {
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-          <MarcaBirdJud tamanho="pequena" />
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 lg:gap-4 py-3 sm:px-6">
+          <div className="shrink-0">
+            <MarcaBirdJud tamanho="pequena" />
+          </div>
 
           <nav aria-label="Navegação do site" className="ml-6 hidden flex-1 items-center gap-6 text-sm lg:flex">
             {AREAS.map((area) => (
@@ -60,12 +62,30 @@ export function CabecalhoPublico() {
             </Link>
           </div>
 
+          {/* No celular os dois atalhos ficam a vista, ao lado do menu: sem
+              eles o cabecalho mostrava so a marca e o icone, e quem ja e
+              cliente nao achava por onde entrar. */}
+          <div className="ml-auto flex items-center gap-1 lg:hidden">
+            <Link
+              href="/entrar"
+              className="flex min-h-11 items-center rounded-lg px-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              Entrar
+            </Link>
+            <Link
+              href="/cadastro"
+              className="botao-principal whitespace-nowrap px-3 text-sm max-[379px]:hidden"
+            >
+              Teste grátis
+            </Link>
+          </div>
+
           <button
             type="button"
             onClick={() => setAberto((estava) => !estava)}
             aria-expanded={aberto}
             aria-label="Menu"
-            className="ml-auto grid h-11 w-11 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
+            className="grid h-11 w-11 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
           >
             <svg
               viewBox="0 0 24 24"
@@ -115,5 +135,6 @@ export function CabecalhoPublico() {
         ) : null}
       </header>
       <BotaoWhatsapp />
-    </>  );
+    </>
+  );
 }

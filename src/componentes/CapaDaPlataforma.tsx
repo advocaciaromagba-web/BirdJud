@@ -145,7 +145,7 @@ export function CapaDaPlataforma({
         <section className="faixa-escura overflow-hidden">
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1fr_minmax(0,30rem)] lg:items-center">
             <div>
-              <p className="sobretitulo">
+              <p className="sobretitulo text-left">
                 Gestão jurídica com inteligência artificial
               </p>
               <h1
