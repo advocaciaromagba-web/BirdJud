@@ -160,6 +160,16 @@ export function CapaDaPlataforma({
                 ser o trabalho principal. Seu escritório, sua marca, seus dados
                 isolados.
               </p>
+              <p
+                className="mt-6 max-w-2xl border-l-4 pl-4 text-left text-xl leading-snug text-[color:var(--marca-contraste)]"
+                style={{
+                  borderColor: "var(--marca-secundaria)",
+                  fontFamily: "var(--fonte-titulo)",
+                }}
+              >
+                Uma plataforma feita por advogados que entendem a dor dos
+                advogados.
+              </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link
@@ -320,7 +330,8 @@ export function CapaDaPlataforma({
                 BirdJud, by Blackbird
               </h2>
               <p className="mt-4 leading-relaxed text-slate-600">
-                O BirdJud nasceu dentro de um escritório de advocacia, da rotina
+                O BirdJud é feito por advogados que entendem a dor dos
+                advogados. Nasceu dentro de um escritório de advocacia, da rotina
                 de quem perde a manhã conferindo publicação, redigitando
                 documento e correndo atrás de prazo. Cada função do sistema
                 existe porque alguém, em algum dia de trabalho, precisou dela —
