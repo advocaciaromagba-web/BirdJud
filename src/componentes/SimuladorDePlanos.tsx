@@ -9,7 +9,7 @@ import {
   type Faixa,
   type Modulo,
 } from "@/lib/catalogo";
-import { TABELA_PADRAO, precoDoModulo, type TabelaDePrecos } from "@/lib/precos";
+import { TABELA_PADRAO, percentualEmTexto, precoDoModulo, type TabelaDePrecos } from "@/lib/precos";
 import {
   contaDoPlano,
   contaMontada,
@@ -190,12 +190,12 @@ export function SimuladorDePlanos({
                   {tabela.descontoTrimestral > 0 ? (
                     <p className="ajuda">
                       No trimestral: {emReais(Math.round(doPlano.totalCentavos * 3 * (1 - tabela.descontoTrimestral)))} a cada 3 meses
-                      ({Math.round(tabela.descontoTrimestral * 1000) / 10}% de desconto).
+                      ({percentualEmTexto(tabela.descontoTrimestral)} de desconto).
                     </p>
                   ) : null}
                   <p className="ajuda">
                     No anual: {emReais(Math.round(doPlano.totalCentavos * 12 * (1 - tabela.descontoAnual)))} por ano
-                    ({Math.round(tabela.descontoAnual * 1000) / 10}% de desconto).
+                    ({percentualEmTexto(tabela.descontoAnual)} de desconto).
                   </p>
                   {doPlano.descontoCentavos > 0 ? (
                     <p className="ajuda">

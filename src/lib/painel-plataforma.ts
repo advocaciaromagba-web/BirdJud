@@ -20,6 +20,7 @@
 //                              porque somar promessa com contrato e o jeito
 //                              mais rapido de errar a previsao.
 import { emReais } from "./dinheiro";
+import { emCortesia } from "./cobranca";
 
 export const STATUS = ["ATIVO", "TESTE", "INADIMPLENTE", "SUSPENSO", "ENCERRADO"] as const;
 export const ROTULO_DO_STATUS: Record<string, string> = {
@@ -126,8 +127,7 @@ export function analisarCarteira(escritorios: EscritorioNoPainel[], agora = new 
 
   // Cortesia nao paga: fica fora da receita, do ticket e da previsao.
   // Cortesia com prazo (isencao) so conta enquanto o prazo corre.
-  const isento = (e: EscritorioNoPainel) =>
-    Boolean(e.assinatura?.cortesiaDesde && (!e.assinatura.cortesiaAte || e.assinatura.cortesiaAte > agora));
+  const isento = (e: EscritorioNoPainel) => emCortesia(e.assinatura, agora);
   const cobravel = (e: EscritorioNoPainel) => e.assinatura && !e.assinatura.canceladaEm && !isento(e);
   const cortesias = escritorios.filter((e) => e.status !== "ENCERRADO" && isento(e)).length;
   const pagantes = escritorios.filter((e) => PAGAM.has(e.status) && cobravel(e));

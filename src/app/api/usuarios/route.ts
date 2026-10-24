@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { monitorarOabDoAdvogado } from "@/lib/implantacao";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirAdmin, exigirSessao } from "@/lib/sessao";
+import { exigirAdmin, exigirSessao, recusarSuporte } from "@/lib/sessao";
 import { temRemetenteDaPlataforma } from "@/lib/email-plataforma";
 import { convidarPessoa, incluirPessoa } from "@/lib/equipe";
 import { PAPEIS } from "@/lib/papeis";
@@ -58,6 +58,9 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const contexto = await exigirAdmin();
+    // Uma conta criada pelo suporte continuaria entrando depois que o acesso
+    // acabasse, sem nada que a ligasse ao registro do suporte.
+    recusarSuporte(contexto, "Incluir pessoas na equipe");
     const { escritorioId } = contexto;
     const corpo = novoUsuario.safeParse(await req.json());
     if (!corpo.success) {

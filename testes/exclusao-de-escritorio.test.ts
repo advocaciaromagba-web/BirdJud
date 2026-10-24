@@ -95,4 +95,36 @@ const temBanco = Boolean(process.env.DATABASE_URL);
     expect(await prismaPlataforma().fatura.count({ where: { escritorioId: id } })).toBe(1);
     expect((await prismaPlataforma().escritorio.findUniqueOrThrow({ where: { id } })).status).toBe("ENCERRADO");
   });
+
+  it("boleto em aberto no Asaas que não dá para cancelar: recusa antes de apagar qualquer coisa", async () => {
+    const id = await escritorioCheio("boleto", false);
+    await prismaPlataforma().escritorio.update({ where: { id }, data: { status: "ATIVO" } });
+    await prismaPlataforma().fatura.create({
+      data: { escritorioId: id, competencia: "2026-11", valorCentavos: 10_000, vencimento: new Date(), idExterno: "pay_teste" },
+    });
+    const slug = (await prismaPlataforma().escritorio.findUniqueOrThrow({ where: { id } })).slug;
+    const chave = process.env.ASAAS_PLATAFORMA_CHAVE;
+    delete process.env.ASAAS_PLATAFORMA_CHAVE;
+    try {
+      await expect(excluirEscritorio(id, { confirmacao: slug, motivo: "cadastro de teste do suporte", operadorId })).rejects.toThrow(
+        /nada foi apagado/,
+      );
+    } finally {
+      if (chave !== undefined) process.env.ASAAS_PLATAFORMA_CHAVE = chave;
+    }
+    expect(await restos(id)).toBeGreaterThan(0);
+    expect((await prismaPlataforma().escritorio.findUniqueOrThrow({ where: { id } })).status).toBe("ATIVO");
+    expect((await prismaPlataforma().fatura.findFirstOrThrow({ where: { escritorioId: id } })).status).toBe("ABERTA");
+  });
+
+  it("fatura em aberto sem cobrança no Asaas é cancelada junto com a exclusão", async () => {
+    const id = await escritorioCheio("aberta", true);
+    await prismaPlataforma().fatura.create({
+      data: { escritorioId: id, competencia: "2026-11", valorCentavos: 10_000, vencimento: new Date() },
+    });
+    const slug = (await prismaPlataforma().escritorio.findUniqueOrThrow({ where: { id } })).slug;
+    await excluirEscritorio(id, { confirmacao: slug, motivo: "pedido de eliminação do titular", operadorId });
+    const f = await prismaPlataforma().fatura.findFirstOrThrow({ where: { escritorioId: id, competencia: "2026-11" } });
+    expect(f.status).toBe("CANCELADA");
+  });
 });

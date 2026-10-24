@@ -395,7 +395,7 @@ export async function pagarFaturaNoCartao(
         ? { installmentCount: parcelas, totalValue: emReaisDecimal(conta.totalCentavos) }
         : { value: emReaisDecimal(conta.totalCentavos) }),
       dueDate: comoDia(vencimento),
-      description: `${descricaoDaFatura(fatura.competencia, anual)}, ${forma} (com a tarifa do cartão)`,
+      description: `${descricaoDaFatura(fatura.competencia, mesesDaFatura(fatura.detalhe))}, ${forma} (com a tarifa do cartão)`,
       externalReference: referencia("fatura", fatura.id),
     }),
   });
@@ -430,4 +430,37 @@ export async function pagarFaturaNoCartao(
     },
   });
   return { linkPagamento, parcelas, valorCentavos: conta.totalCentavos };
+}
+
+/**
+ * Cancela no Asaas a cobranca de cada fatura em aberto do escritorio e marca
+ * a fatura CANCELADA. Para a exclusao do escritorio: sem isso o boleto segue
+ * pagavel, o Asaas segue lembrando o cliente, e um pagamento chegaria sem
+ * fatura para dar baixa. Recusa (sem cancelar nada daquela fatura) quando o
+ * Asaas ja a recebeu e a baixa ainda nao chegou. Devolve quantas cancelou.
+ */
+export async function cancelarCobrancasAbertas(escritorioId: string): Promise<number> {
+  const abertas = await prismaPlataforma().fatura.findMany({
+    where: { escritorioId, status: "ABERTA" },
+    select: { id: true, competencia: true, idExterno: true, parcelamentoId: true },
+  });
+  const noAsaas = abertas.filter((f) => f.idExterno || f.parcelamentoId);
+  const chave = chaveDaPlataforma();
+  if (noAsaas.length && !chave) throw new PlataformaSemCobranca();
+
+  for (const fatura of abertas) {
+    if (chave && fatura.idExterno) {
+      const atual = await chamarAsaas(chave, `/payments/${fatura.idExterno}`);
+      if (typeof atual.status === "string" && PAGO_NO_ASAAS.has(atual.status)) {
+        throw new PedidoInvalido(`A fatura de ${fatura.competencia} já foi paga no Asaas e a baixa ainda não chegou. Espere a baixa e tente de novo.`);
+      }
+    }
+    if (chave && fatura.parcelamentoId) {
+      await chamarAsaas(chave, `/installments/${fatura.parcelamentoId}`, { method: "DELETE" });
+    } else if (chave && fatura.idExterno) {
+      await chamarAsaas(chave, `/payments/${fatura.idExterno}`, { method: "DELETE" });
+    }
+    await prismaPlataforma().fatura.update({ where: { id: fatura.id }, data: { status: "CANCELADA" } });
+  }
+  return abertas.length;
 }

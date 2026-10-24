@@ -26,10 +26,11 @@ import {
   somar,
   TABELA_PADRAO,
   type ItemDaFatura,
+  percentualEmTexto,
   type TabelaDePrecos,
 } from "./precos";
 import { tabelaVigente } from "./tabela-de-precos";
-import { cupomValeEm, linhaDoCupom, type CupomNaConta } from "./cupons";
+import { cupomValeEm, linhaDoCupom, mesesCobertos, type CupomNaConta } from "./cupons";
 import { contaMontada } from "./planos";
 import { enfileirar } from "./fila";
 import type { Faixa } from "./faixas";
@@ -95,7 +96,7 @@ export function anuidade(
  * volta a cobrar sozinha.
  */
 export function emCortesia(
-  a: { cortesiaDesde: Date | null; cortesiaAte?: Date | null } | null | undefined,
+  a: { cortesiaDesde?: Date | null; cortesiaAte?: Date | null } | null | undefined,
   agora = new Date(),
 ): boolean {
   return Boolean(a?.cortesiaDesde && (!a.cortesiaAte || a.cortesiaAte > agora));
@@ -128,11 +129,7 @@ export function trimestralidade(
   ];
 }
 
-/** 0.1 -> "10%"; 0.075 -> "7,5%". */
-export function percentualEmTexto(fracao: number): string {
-  const p = Math.round(fracao * 1000) / 10;
-  return `${String(p).replace(".", ",")}%`;
-}
+export { percentualEmTexto };
 
 function somarMeses(d: Date, n: number): Date {
   const r = new Date(d);
@@ -264,11 +261,12 @@ export async function aplicarRegua(
       const periodoEmCurso = Boolean(assinatura.anualAte && assinatura.anualAte > agora);
       const ciclo: Ciclo = ehCiclo(assinatura.ciclo) ? assinatura.ciclo : "MENSAL";
       const renovaPeriodo = ciclo !== "MENSAL" && !periodoEmCurso;
+      const modo = periodoEmCurso ? "SO_EXCEDENTE" : renovaPeriodo ? ciclo : "MENSAL";
       const itens = await itensDaFatura(
         escritorioId,
         escritorio.faixa,
         competencia,
-        periodoEmCurso ? "SO_EXCEDENTE" : renovaPeriodo ? ciclo : "MENSAL",
+        modo,
         assinatura.valorCentavos,
         {
           cupom:
@@ -277,6 +275,7 @@ export async function aplicarRegua(
                   codigo: assinatura.cupom.codigo,
                   percentual: assinatura.cupom.percentual,
                   valorCentavos: assinatura.cupom.valorCentavos,
+                  cobertos: mesesCobertos(assinatura.cupomAte, agora, modo === "SO_EXCEDENTE" ? 1 : MESES_DO_CICLO[modo]),
                 }
               : null,
         },
@@ -370,7 +369,9 @@ export async function itensDaFatura(
         ? trimestralidade(faixa, contratados, valorFechado, tabela)
         : mensalidadeDoEscritorio(faixa, contratados, valorFechado, tabela);
   // Cupom: sobre a mensalidade (ou o periodo), nunca sobre o excedente.
-  const doCupom = opcoes.cupom ? linhaDoCupom(opcoes.cupom, base, MESES_DO_CICLO[modo]) : null;
+  const doCupom = opcoes.cupom
+    ? linhaDoCupom(opcoes.cupom, base, MESES_DO_CICLO[modo], opcoes.cupom.cobertos)
+    : null;
   return [...base, ...(doCupom ? [doCupom] : []), ...doConsumo];
 }
 

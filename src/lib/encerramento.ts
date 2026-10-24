@@ -6,6 +6,7 @@
 import { prismaPlataforma } from "./prisma";
 import { PRAZO_DE_RETENCAO_DIAS } from "./juridico";
 import { apagarTudoDoEscritorio } from "./armazenamento";
+import { cancelarCobrancasAbertas } from "./cobranca-plataforma";
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -161,7 +162,10 @@ export async function excluirEscritorio(
   agora = new Date(),
 ): Promise<{ modo: "APAGADO" | "PURGADO"; slug: string }> {
   const db = prismaPlataforma();
-  const escritorio = await db.escritorio.findUnique({ where: { id: escritorioId }, select: { id: true, slug: true, purgadoEm: true } });
+  const escritorio = await db.escritorio.findUnique({
+    where: { id: escritorioId },
+    select: { id: true, slug: true, purgadoEm: true, status: true, encerradoEm: true },
+  });
   if (!escritorio) throw new ExclusaoRecusada("Escritório não encontrado.");
   if (pedido.confirmacao.trim().toLowerCase() !== escritorio.slug) {
     throw new ExclusaoRecusada(`Para confirmar, digite o endereço do escritório: ${escritorio.slug}`);
@@ -173,20 +177,37 @@ export async function excluirEscritorio(
     db.notaDaPlataforma.count({ where: { escritorioId } }),
   ]);
   const temFiscal = pagas > 0 || notas > 0;
+  const registrar = (oQue: string) =>
+    db.acessoSuporte.create({
+      data: { operadorId: pedido.operadorId, escritorioId, motivo: `${oQue}: ${pedido.motivo.trim()}`, encerradoEm: agora },
+    });
 
-  await db.acessoSuporte.create({
-    data: {
-      operadorId: pedido.operadorId,
-      escritorioId,
-      motivo: `Exclusão definitiva (${temFiscal ? "dados apagados, registro fiscal guardado" : "tudo apagado"}): ${pedido.motivo.trim()}`,
-      encerradoEm: agora,
-    },
-  });
+  // Boleto em aberto no Asaas sai antes de tudo: se o Asaas recusar, nada
+  // foi apagado e o escritorio segue como estava.
+  try {
+    await cancelarCobrancasAbertas(escritorioId);
+  } catch (erro) {
+    throw new ExclusaoRecusada(
+      `Não deu para cancelar as cobranças em aberto no Asaas, e nada foi apagado. ${erro instanceof Error ? erro.message : ""}`.trim(),
+    );
+  }
 
   if (!escritorio.purgadoEm) {
     await db.escritorio.update({ where: { id: escritorioId }, data: { status: "ENCERRADO", encerradoEm: agora } });
-    await purgarEscritorio(escritorioId, agora);
+    try {
+      await purgarEscritorio(escritorioId, agora);
+    } catch (erro) {
+      // A purga e uma transacao so: falhou, nada foi apagado. O escritorio
+      // volta ao ar como estava, e o registro diz que foi tentativa.
+      await db.escritorio.update({
+        where: { id: escritorioId },
+        data: { status: escritorio.status, encerradoEm: escritorio.encerradoEm },
+      });
+      await registrar(`Tentativa de exclusão definitiva, sem sucesso (nada apagado; cobranças em aberto canceladas)`);
+      throw erro;
+    }
   }
+  await registrar(`Exclusão definitiva (${temFiscal ? "dados apagados, registro fiscal guardado" : "tudo apagado"})`);
   if (temFiscal) return { modo: "PURGADO", slug: escritorio.slug };
 
   // Sem nada fiscal: some tambem o que ficaria, e a casca.

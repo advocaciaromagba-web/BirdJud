@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { TabelaDePrecos } from "@/lib/precos";
+import { centavosDoTexto as centavos, type TabelaDePrecos } from "@/lib/precos";
 
 type Linha = { chave: string; rotulo: string };
 
 const reais = (c: number) => (c / 100).toFixed(2).replace(".", ",");
-const centavos = (t: string) => Math.round(Number(t.trim().replace(/\./g, "").replace(",", ".")) * 100);
 const porcento = (f: number) => String(Math.round(f * 1000) / 10).replace(".", ",");
 
 async function chamar(corpo: unknown) {
@@ -74,6 +73,15 @@ export function EditorDaTabela({
       descontoAnual: Number(anual.replace(",", ".")) / 100,
       descontoTrimestral: Number(trimestral.replace(",", ".")) / 100,
     };
+    const valores = [
+      ...Object.values(montada.faixa),
+      ...Object.values(montada.plano).flatMap((f) => Object.values(f)),
+      ...Object.values(montada.modulo),
+    ];
+    if (valores.some((v) => !Number.isFinite(v))) {
+      setRecado({ ok: false, texto: "Há um valor vazio ou inválido na tabela. Use o formato 149,90." });
+      return;
+    }
     void agir(
       { acao: "tabela", tabela: montada },
       "Gravar a tabela? Ela vale para os cadastros novos e para os escritórios sem valor fechado. Contrato com valor fechado não muda.",

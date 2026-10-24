@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirAdmin } from "@/lib/sessao";
+import { exigirAdmin, recusarSuporte } from "@/lib/sessao";
 import { conferirSenha, gerarHash } from "@/lib/senhas";
 import { senhaAceitavel } from "@/lib/administracao";
 import { tratarErro } from "@/lib/respostas";
@@ -18,7 +18,11 @@ const pedido = z.object({
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirAdmin();
+    const contexto = await exigirAdmin();
+    // Sem senha definida, quem chegasse aqui pela sessao de suporte criaria
+    // uma e destravaria o financeiro do escritorio.
+    recusarSuporte(contexto, "Definir a senha de administração");
+    const { escritorioId } = contexto;
     const corpo = pedido.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });

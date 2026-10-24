@@ -10,9 +10,13 @@ import {
   CupomInvalido,
   aplicarCupom,
   criarCupom,
+  fimDoCupom,
   linhaDoCupom,
+  mesesCobertos,
   normalizarCodigo,
+  ultimoMesDoCupom,
 } from "../src/lib/cupons";
+import { centavosDoTexto } from "../src/lib/precos";
 import { aplicarRegua, emCortesia } from "../src/lib/cobranca";
 import { aplicarReajuste, previaDoReajuste, valorReajustado } from "../src/lib/reajuste";
 
@@ -30,6 +34,38 @@ describe("cupom e isenção, sem banco", () => {
     });
     expect(linhaDoCupom({ codigo: "Y", percentual: null, valorCentavos: 5_000 }, base, 3)?.valorCentavos).toBe(-15_000);
     expect(linhaDoCupom({ codigo: "Z", percentual: null, valorCentavos: 50_000 }, base)?.valorCentavos).toBe(-27_900);
+  });
+
+  it("cupom conta meses de fatura, não dias: 1 mês a partir de 20/10 não pega a fatura de 01/11", () => {
+    const fim = fimDoCupom(new Date("2026-10-20T15:00:00Z"), 1);
+    expect(fim.toISOString()).toBe("2026-11-01T00:00:00.000Z");
+    expect(ultimoMesDoCupom(fim)).toBe("10/2026");
+    expect(mesesCobertos(fim, new Date("2026-10-20T15:00:00Z"), 1)).toBe(1);
+    expect(mesesCobertos(fim, new Date("2026-11-01T09:00:00Z"), 1)).toBe(0);
+    expect(mesesCobertos(null, new Date(), 12)).toBe(12);
+    expect(ultimoMesDoCupom(fimDoCupom(new Date("2026-12-05T12:00:00Z"), 1))).toBe("12/2026");
+  });
+
+  it("na fatura anual, cupom curto desconta só os meses que cobre", () => {
+    const ano = [{ descricao: "Assinatura anual", valorCentavos: 120_000 }];
+    // 50% por 1 mes: 1/12 do ano pela metade, e nao o ano inteiro.
+    expect(linhaDoCupom({ codigo: "M", percentual: 50, valorCentavos: null }, ano, 12, 1)).toEqual({
+      descricao: "Cupom M (50%, 1 de 12 meses)",
+      valorCentavos: -5_000,
+    });
+    expect(linhaDoCupom({ codigo: "F", percentual: null, valorCentavos: 5_000 }, ano, 12, 2)?.valorCentavos).toBe(-10_000);
+    expect(linhaDoCupom({ codigo: "F", percentual: null, valorCentavos: 5_000 }, ano, 12, 0)).toBeNull();
+  });
+
+  it("preço digitado no console: vírgula ou ponto decimal; vazio é inválido", () => {
+    expect(centavosDoTexto("99.90")).toBe(9_990);
+    expect(centavosDoTexto("99,90")).toBe(9_990);
+    expect(centavosDoTexto("1.234,56")).toBe(123_456);
+    expect(centavosDoTexto("1.234")).toBe(123_400);
+    expect(centavosDoTexto("R$ 1.299,00")).toBe(129_900);
+    expect(centavosDoTexto("149")).toBe(14_900);
+    expect(centavosDoTexto("")).toBeNaN();
+    expect(centavosDoTexto("abc")).toBeNaN();
   });
 
   it("isenção com data vale até a data; sem data, sempre", () => {
@@ -95,7 +131,11 @@ const temBanco = Boolean(process.env.DATABASE_URL);
     const f = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: r.faturaGerada! } });
     expect(f.valorCentavos).toBe(15_000);
 
-    // Dois meses contados de hoje (o teste ja tinha acabado): em dezembro, ja sem desconto.
+    // Dois meses de fatura contados do mes de hoje (o teste ja tinha
+    // acabado): outubro e novembro com desconto, dezembro sem.
+    const nov = await aplicarRegua(esc, new Date("2026-11-01T09:00:00Z"));
+    const fn = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: nov.faturaGerada! } });
+    expect(fn.valorCentavos).toBe(15_000);
     const dez = await aplicarRegua(esc, new Date("2026-12-15T12:00:00Z"));
     const fd = await prismaPlataforma().fatura.findUniqueOrThrow({ where: { id: dez.faturaGerada! } });
     expect(fd.valorCentavos).toBe(20_000);

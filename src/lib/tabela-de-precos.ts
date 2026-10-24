@@ -18,7 +18,10 @@ const TETO_CENTAVOS = 10_000_000;
 const TETO_DO_DESCONTO = 0.5;
 
 const centavos = z.number().int().min(0).max(TETO_CENTAVOS);
-const porFaixa = z.object(Object.fromEntries(FAIXAS.map((f) => [f, centavos])) as Record<Faixa, typeof centavos>);
+// Mensalidade de plano zerada so por engano (campo apagado): de graca e
+// isencao, que tem prazo e registro, nao preco de tabela.
+const mensalidade = z.number().int().min(100, "Mensalidade de plano de ao menos R$ 1,00.").max(TETO_CENTAVOS);
+const porFaixa = z.object(Object.fromEntries(FAIXAS.map((f) => [f, mensalidade])) as Record<Faixa, typeof mensalidade>);
 
 export const esquemaDaTabela = z.object({
   faixa: porFaixa,

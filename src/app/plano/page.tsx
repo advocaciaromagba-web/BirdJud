@@ -1,4 +1,6 @@
 import { comEscritorio, prismaPlataforma } from "@/lib/prisma";
+import { percentualEmTexto } from "@/lib/precos";
+import { ultimoMesDoCupom } from "@/lib/cupons";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
 import { usoDaFaixa } from "@/lib/faixas";
@@ -77,7 +79,6 @@ export default async function PaginaDoPlano() {
     : conta.totalCentavos;
   const anual = assinatura?.ciclo === "ANUAL";
   const trimestral = assinatura?.ciclo === "TRIMESTRAL";
-  const pct = (f: number) => `${String(Math.round(f * 1000) / 10).replace(".", ",")}%`;
   const isento = emCortesia(assinatura);
   // A tabela de cupons e da plataforma (RLS fechado para o escritorio): o
   // codigo e o desconto vem pelo plano de controle, so do cupom DESTA assinatura.
@@ -121,9 +122,9 @@ export default async function PaginaDoPlano() {
             {isento
               ? "Sem mensalidade"
               : anual
-                ? `Plano anual (${emReais(mensalidade)}/mês com ${pct(tabela.descontoAnual)} de desconto)`
+                ? `Plano anual (${emReais(mensalidade)}/mês com ${percentualEmTexto(tabela.descontoAnual)} de desconto)`
                 : trimestral
-                  ? `Plano trimestral (${emReais(mensalidade)}/mês com ${pct(tabela.descontoTrimestral)} de desconto)`
+                  ? `Plano trimestral (${emReais(mensalidade)}/mês com ${percentualEmTexto(tabela.descontoTrimestral)} de desconto)`
                   : "Mensalidade contratada"}
           </p>
         </section>
@@ -147,14 +148,14 @@ export default async function PaginaDoPlano() {
         <p className="aviso-ok mt-4">
           Cupom {cupom.codigo}: {cupom.percentual != null ? `${cupom.percentual}% de desconto` : `${emReais(cupom.valorCentavos ?? 0)} de desconto por mês`} na
           mensalidade
-          {assinatura?.cupomAte ? `, até ${dataBR.format(assinatura.cupomAte)}` : ""}.
+          {assinatura?.cupomAte ? `, até a fatura de ${ultimoMesDoCupom(assinatura.cupomAte)}` : ""}.
         </p>
       ) : null}
 
       {isento ? (
         <p className="aviso-ok mt-4">
           Este escritório está em cortesia
-          {assinatura?.cortesiaAte ? ` até ${dataBR.format(assinatura.cortesiaAte)}` : ""}: usa o sistema sem custo e
+          {assinatura?.cortesiaAte ? ` até ${dataBR.format(new Date(assinatura.cortesiaAte.getTime() - 1))}` : ""}: usa o sistema sem custo e
           nenhuma fatura é gerada{assinatura?.cortesiaAte ? " até lá" : ""}.
         </p>
       ) : null}

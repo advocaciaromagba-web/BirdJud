@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ultimoMesDoCupom } from "@/lib/cupons";
 import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
 import { AcessosDeSuporte } from "@/componentes/AcessosDeSuporte";
 import { fiscalDaPlataforma, lembreteDoPercentual } from "@/lib/nota-da-plataforma";
@@ -159,7 +160,7 @@ export default async function EscritorioNoPainel({
                   : `${emReais(escritorio.assinatura.cupom.valorCentavos ?? 0)} por mês`
               }${
                 escritorio.assinatura.cupomAte
-                  ? `, até ${escritorio.assinatura.cupomAte.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}`
+                  ? `, até a fatura de ${ultimoMesDoCupom(escritorio.assinatura.cupomAte)}`
                   : ", sem prazo"
               }`
             : null

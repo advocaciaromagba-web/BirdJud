@@ -2,14 +2,22 @@
 //
 // O cupom da desconto na MENSALIDADE (ou na fatura do periodo, no trimestral
 // e no anual), nunca no excedente de consumo: excedente e uso, nao assinatura.
-// Percentual ou valor fixo por mes; por N meses de fatura, contados do fim do
-// teste (nulo = enquanto durar a assinatura). Validade e limite de usos valem
+// Percentual ou valor fixo por mes; por N meses de fatura, contados do mes
+// em que o teste acaba (nulo = enquanto durar a assinatura). Conta em meses
+// de competencia, nao em dias: a fatura sai no comeco do mes, e um prazo em
+// dias (20/10 a 20/11) pegaria a fatura de 01/11 e daria um mes a mais. Validade e limite de usos valem
 // para APLICAR; cupom ja aplicado segue ate o fim do prazo dele, mesmo que
 // o cupom seja desativado depois.
 import { prismaPlataforma } from "./prisma";
 import { somar, type ItemDaFatura } from "./precos";
 
-export type CupomNaConta = { codigo: string; percentual: number | null; valorCentavos: number | null };
+export type CupomNaConta = {
+  codigo: string;
+  percentual: number | null;
+  valorCentavos: number | null;
+  /** Meses da fatura que o cupom cobre; ausente = todos. */
+  cobertos?: number;
+};
 
 export class CupomInvalido extends Error {
   readonly status = 400;
@@ -25,19 +33,28 @@ export function normalizarCodigo(codigo: string): string {
 }
 
 /**
- * A linha de desconto do cupom sobre a mensalidade (ou o periodo). Nunca
- * deixa a mensalidade negativa: valor fixo maior que ela zera, nao credita.
+ * A linha de desconto do cupom sobre a mensalidade (ou o periodo de `meses`
+ * meses). `cobertos` e quantos desses meses o cupom ainda alcanca: um cupom
+ * de 1 mes numa fatura anual desconta 1/12 do ano, nao o ano inteiro. Nunca
+ * deixa a fatura negativa: valor fixo maior que ela zera, nao credita.
  */
-export function linhaDoCupom(cupom: CupomNaConta, base: ItemDaFatura[], meses = 1): ItemDaFatura | null {
+export function linhaDoCupom(
+  cupom: CupomNaConta,
+  base: ItemDaFatura[],
+  meses = 1,
+  cobertos = meses,
+): ItemDaFatura | null {
   const total = somar(base);
-  if (total <= 0) return null;
+  const n = Math.max(0, Math.min(meses, cobertos));
+  if (total <= 0 || n === 0) return null;
   const desconto =
     cupom.percentual != null
-      ? Math.round((total * cupom.percentual) / 100)
-      : Math.min(total, (cupom.valorCentavos ?? 0) * meses);
+      ? Math.round((total * cupom.percentual * n) / (100 * meses))
+      : Math.min(total, (cupom.valorCentavos ?? 0) * n);
   if (desconto <= 0) return null;
   const como = cupom.percentual != null ? `${cupom.percentual}%` : "valor fixo";
-  return { descricao: `Cupom ${cupom.codigo} (${como})`, valorCentavos: -desconto };
+  const parte = n < meses ? `, ${n} de ${meses} meses` : "";
+  return { descricao: `Cupom ${cupom.codigo} (${como}${parte})`, valorCentavos: -desconto };
 }
 
 /** O cupom aplicado ainda vale nesta data? */
@@ -45,10 +62,23 @@ export function cupomValeEm(cupomAte: Date | null | undefined, agora: Date): boo
   return !cupomAte || cupomAte > agora;
 }
 
-function somarMeses(d: Date, n: number): Date {
-  const r = new Date(d);
-  r.setUTCMonth(r.getUTCMonth() + n);
-  return r;
+/** Fim do cupom: o primeiro dia do mes que vem N meses depois do mes de `inicio`. */
+export function fimDoCupom(inicio: Date, meses: number): Date {
+  return new Date(Date.UTC(inicio.getUTCFullYear(), inicio.getUTCMonth() + meses, 1));
+}
+
+/** O ultimo mes de fatura com desconto, "11/2026". */
+export function ultimoMesDoCupom(cupomAte: Date): string {
+  const d = new Date(Date.UTC(cupomAte.getUTCFullYear(), cupomAte.getUTCMonth() - 1, 1));
+  return `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+}
+
+/** Quantos dos `meses` da fatura emitida em `agora` o cupom ainda cobre. */
+export function mesesCobertos(cupomAte: Date | null | undefined, agora: Date, meses: number): number {
+  if (!cupomAte) return meses;
+  const restam =
+    cupomAte.getUTCFullYear() * 12 + cupomAte.getUTCMonth() - (agora.getUTCFullYear() * 12 + agora.getUTCMonth());
+  return Math.max(0, Math.min(meses, restam));
 }
 
 export type NovoCupom = {
@@ -128,7 +158,7 @@ export async function aplicarCupom(escritorioId: string, codigoDigitado: string,
     data: {
       cupomId: cupom.id,
       cupomAplicadoEm: agora,
-      cupomAte: cupom.meses ? somarMeses(inicio, cupom.meses) : null,
+      cupomAte: cupom.meses ? fimDoCupom(inicio, cupom.meses) : null,
     },
   });
   return cupom;

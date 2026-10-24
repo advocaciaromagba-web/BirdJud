@@ -272,9 +272,12 @@ suporte". Cada tela confere no banco se o acesso continua aberto: encerrar
 pela faixa ou pela ficha derruba a sessão na tela seguinte.
 
 O que a sessão de suporte não faz: aceitar os documentos em nome do
-escritório, trocar a senha ou o segundo fator da pessoa, e destravar a área
+escritório, trocar a senha ou o segundo fator da pessoa, destravar a área
 de administração (o financeiro do escritório pede a senha de administração
-dele). Código em `src/lib/acesso-de-suporte.ts`; testes em
+dele) nem definir essa senha quando ela ainda não existe, e incluir ou
+editar pessoas da equipe — uma conta criada, ou um e-mail trocado seguido de
+"esqueci a senha", continuaria entrando depois do fim do acesso (revisão de
+24/10/2026). Código em `src/lib/acesso-de-suporte.ts`; testes em
 `testes/acesso-de-suporte.test.ts`.
 
 ## Purga completa e exclusão definitiva (23/10/2026)
@@ -287,4 +290,7 @@ notas da plataforma e o registro de suporte (`TABELAS_QUE_FICAM` em
 
 A exclusão definitiva pelo console exige digitar o endereço do escritório e
 o motivo. Sem fatura paga nem nota, some tudo; com histórico fiscal, fica só
-o registro fiscal e a casca marcada como purgada.
+o registro fiscal e a casca marcada como purgada. Antes de apagar, as cobranças
+em aberto são canceladas no Asaas (se o Asaas recusar, nada é apagado); se a
+purga falhar, o escritório volta ao status anterior e o registro de suporte
+anota a tentativa.

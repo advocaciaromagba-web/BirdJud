@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { exigirAdmin } from "@/lib/sessao";
+import { exigirAdmin, recusarSuporte } from "@/lib/sessao";
 import { editarPessoa, EdicaoRecusada } from "@/lib/equipe";
 import { monitorarOabDoAdvogado } from "@/lib/implantacao";
 import { PAPEIS } from "@/lib/papeis";
@@ -19,7 +19,11 @@ const edicao = z.object({
 /** Edita uma pessoa da equipe. Regras em equipe.ts (editarPessoa). */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { escritorioId, usuarioId } = await exigirAdmin();
+    const contexto = await exigirAdmin();
+    // Trocar o e-mail de alguem e pedir "esqueci a senha" daria ao suporte
+    // uma entrada que sobrevive ao fim do acesso.
+    recusarSuporte(contexto, "Editar pessoas da equipe");
+    const { escritorioId, usuarioId } = contexto;
     const { id } = await params;
     const corpo = edicao.safeParse(await req.json());
     if (!corpo.success) {

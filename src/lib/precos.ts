@@ -377,3 +377,21 @@ export function excedentes(
 export function somar(itens: ItemDaFatura[]): number {
   return itens.reduce((total, item) => total + item.valorCentavos, 0);
 }
+
+// "1.234,56", "1234,56", "99.90" e "99" valem; vazio ou texto vira NaN, e
+// quem chama recusa. O ponto so e milhar quando ha virgula ou quando nao
+// sobram 1 ou 2 digitos depois dele ("1.234").
+export function centavosDoTexto(t: string): number {
+  const s = t.trim().replace(/\s|R\$/g, "");
+  if (!/^[\d.,]+$/.test(s)) return NaN;
+  const decimalComPonto = !s.includes(",") && /\.\d{1,2}$/.test(s);
+  const normal = decimalComPonto ? s.replace(/\.(?=.*\.)/g, "") : s.replace(/\./g, "").replace(",", ".");
+  const n = Number(normal);
+  return Number.isFinite(n) ? Math.round(n * 100) : NaN;
+}
+
+/** 0.1 -> "10%"; 0.075 -> "7,5%". */
+export function percentualEmTexto(fracao: number): string {
+  const p = Math.round(fracao * 1000) / 10;
+  return `${String(p).replace(".", ",")}%`;
+}
