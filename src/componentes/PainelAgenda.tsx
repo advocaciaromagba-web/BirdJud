@@ -1,5 +1,6 @@
 "use client";
 
+import { rotuloDoPapel } from "@/lib/papeis";
 import { ROTULO_DO_TIPO_DA_AGENDA, TIPOS_DA_AGENDA } from "@/lib/natureza";
 import Link from "next/link";
 import { rotuloDaEntrega } from "@/lib/entrega";
@@ -256,7 +257,7 @@ export function PainelAgenda({
       tipo: "select",
       opcoes: [
         { valor: "", rotulo: "Sem responsável (e do escritório)" },
-        ...equipe.map((p) => ({ valor: p.id, rotulo: `${p.nome} (${p.papel.toLowerCase()})` })),
+        ...equipe.map((p) => ({ valor: p.id, rotulo: `${p.nome} (${rotuloDoPapel(p.papel).toLowerCase()})` })),
       ],
       ajuda:
         "Quem fica com isto recebe o aviso na hora, por e-mail e por WhatsApp. Sem responsável, aparece para todos.",

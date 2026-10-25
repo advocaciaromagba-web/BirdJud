@@ -1,5 +1,6 @@
 "use client";
 
+import { rotuloDoPapel } from "@/lib/papeis";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Passo } from "@/lib/primeiros-passos";
@@ -220,7 +221,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
                       <div className="font-medium text-slate-900">{p.nome}</div>
                       <div className="text-xs text-slate-500">{p.email}</div>
                     </td>
-                    <td>{p.papel === "ADMIN" ? "Administrador" : p.papel === "ADVOGADO" ? "Advogado" : "Apoio"}</td>
+                    <td>{rotuloDoPapel(p.papel)}</td>
                     <td>{p.oab ?? "—"}</td>
                     <td>{p.recebeWhatsapp && p.telefone ? p.telefone : "—"}</td>
                     <td>
@@ -295,6 +296,7 @@ export function PainelImplantacao({ dados }: { dados: DadosDaImplantacao }) {
           <input name="email" required type="email" placeholder="E-mail" className="campo" />
           <select name="papel" className="campo" defaultValue="ADVOGADO">
             <option value="ADVOGADO">Advogado</option>
+            <option value="ESTAGIARIO">Estagiário(a)</option>
             <option value="USUARIO">Apoio</option>
             <option value="ADMIN">Administrador</option>
           </select>

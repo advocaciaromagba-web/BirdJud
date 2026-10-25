@@ -9,6 +9,7 @@
 //
 // Nada aqui derruba a emissao: a nota ja existe na Receita. Falha vira aviso
 // na tela.
+import { motivoDoBloqueio, podeReceber } from "../consentimento-de-envio";
 import { comEscritorio } from "../prisma";
 import { guardarArquivo } from "../arquivos";
 import { cutucarNuvem } from "../avisar-nuvem";
@@ -60,7 +61,8 @@ export async function depoisDeEmitida(escritorioId: string, notaId: string): Pro
   const cliente = nota.cliente;
 
   if (nota.envioCliente.includes("EMAIL")) {
-    if (!cliente.email) entrega.falhas.push("E-mail: cliente não tem e-mail cadastrado.");
+    if (!podeReceber(cliente, "EMAIL")) entrega.falhas.push(motivoDoBloqueio(cliente, "EMAIL"));
+    else if (!cliente.email) entrega.falhas.push("E-mail: cliente não tem e-mail cadastrado.");
     else {
       try {
         const r = await enviarLote(escritorioId, [
@@ -78,7 +80,9 @@ export async function depoisDeEmitida(escritorioId: string, notaId: string): Pro
       }
     }
   }
-  if (nota.envioCliente.includes("WHATSAPP")) {
+  if (nota.envioCliente.includes("WHATSAPP") && !podeReceber(cliente, "WHATSAPP")) {
+    entrega.falhas.push(motivoDoBloqueio(cliente, "WHATSAPP"));
+  } else if (nota.envioCliente.includes("WHATSAPP")) {
     try {
       await mandarArquivoNoWhatsapp(
         escritorioId,

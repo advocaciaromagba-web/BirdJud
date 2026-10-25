@@ -137,6 +137,18 @@ export default async function PaginaAdministracao() {
         </section>
 
         <section className="cartao">
+          <p className="sobretitulo">Comunicação</p>
+          <h2 className="mt-1 text-lg font-bold">Envio automático aos clientes</h2>
+          <p className="mt-2 leitura text-slate-600">
+            Desligar o WhatsApp ou o e-mail de um cliente: o sistema para de mandar avisos, lembretes, cobranças,
+            recibos, notas e documentos por aquele canal, sem apagar o contato do cadastro.
+          </p>
+          <Link className="botao-secundario mt-4 inline-block" href="/administracao/envios">
+            Abrir envios
+          </Link>
+        </section>
+
+        <section className="cartao">
           <p className="sobretitulo">Pessoas</p>
           <h2 className="mt-1 text-lg font-bold">Usuários do escritório</h2>
           <p className="mt-2 leitura text-slate-600">

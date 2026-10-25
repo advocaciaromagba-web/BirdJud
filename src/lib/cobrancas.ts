@@ -176,6 +176,8 @@ type ClienteDoBanco = {
   email: string | null;
   telefone: string | null;
   idNoAsaas: string | null;
+  notificarWhatsapp?: boolean;
+  notificarEmail?: boolean;
 };
 
 /**
@@ -206,6 +208,9 @@ export async function clienteNoAsaas(
       email: cliente.email ?? undefined,
       mobilePhone: cliente.telefone?.replace(/\D/g, "") || undefined,
       externalReference: cliente.id,
+      // O Asaas manda os proprios avisos de cobranca. Com algum canal
+      // desligado no cadastro, ficam desligados la tambem (envio-do-cliente.ts).
+      notificationDisabled: cliente.notificarWhatsapp === false || cliente.notificarEmail === false,
     }),
   });
 

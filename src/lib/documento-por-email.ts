@@ -11,6 +11,7 @@
 //
 // Vai sempre em PDF, mesmo que a tela esteja com Word marcado: .docx no
 // celular costuma nao abrir, e o cliente precisa ler, imprimir e assinar.
+import { motivoDoBloqueio, podeReceber } from "./consentimento-de-envio";
 import type { Prisma } from "@prisma/client";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { moduloAtivo } from "./modulos";
@@ -44,6 +45,9 @@ export async function mandarPecaPorEmail(
 ): Promise<PecaMandadaPorEmail> {
   if (!(await moduloAtivo(escritorioId, "EMAIL"))) {
     throw new NaoDaParaMandar("O módulo de e-mail não está contratado.");
+  }
+  if (!podeReceber(dados.cliente, "EMAIL")) {
+    throw new NaoDaParaMandar(motivoDoBloqueio(dados.cliente, "EMAIL"));
   }
 
   const email = dados.cliente.email?.trim().toLowerCase() ?? "";

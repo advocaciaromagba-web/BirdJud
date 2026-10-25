@@ -11,12 +11,9 @@ import { acessoDeTodos } from "@/lib/areas-do-escritorio";
 import { temRemetenteDaPlataforma } from "@/lib/email-plataforma";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { EditarUsuario } from "@/componentes/EditarUsuario";
+import { OPCOES_DE_PAPEL, rotuloDoPapel } from "@/lib/papeis";
 
-const PAPEIS = [
-  { valor: "ADMIN", rotulo: "Administrador" },
-  { valor: "ADVOGADO", rotulo: "Advogado" },
-  { valor: "USUARIO", rotulo: "Usuário de apoio" },
-];
+const PAPEIS = OPCOES_DE_PAPEL;
 
 export default async function PaginaUsuarios() {
   // Com remetente configurado, o caminho normal e o convite por e-mail.
@@ -56,6 +53,9 @@ export default async function PaginaUsuarios() {
         ativo: true,
         doisFatores: true,
         ultimoAcesso: true,
+        recebeWhatsapp: true,
+        recebeResumo: true,
+        recebeLembretes: true,
       },
     }),
   );
@@ -133,7 +133,10 @@ export default async function PaginaUsuarios() {
               ) : null}
             </p>
             <p className="text-sm text-slate-500">
-              {usuario.email} · {usuario.papel}
+              {usuario.email} · {rotuloDoPapel(usuario.papel)}
+              {!usuario.recebeResumo && !usuario.recebeLembretes ? (
+                <span className="text-red-700"> · não recebe avisos</span>
+              ) : null}
               {usuario.oab ? ` · OAB ${usuario.oab}` : ""}
               {usuario.doisFatores ? " · 2FA ativo" : ""}
               {usuario.ativo ? "" : " · inativo"}

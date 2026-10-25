@@ -3,6 +3,7 @@
 // A regra de quem assina e o protocolo do provedor moram em autentique.ts,
 // puros e testaveis. Aqui se junta o cliente, os advogados e o PDF, se grava o
 // que saiu e se atualiza o que voltou.
+import { motivoDoBloqueio, podeReceber } from "./consentimento-de-envio";
 import type { Prisma } from "@prisma/client";
 import { comEscritorio, semEscritorio } from "./prisma";
 import { obterIntegracao } from "./integracao";
@@ -117,6 +118,12 @@ export async function mandarAssinar(
       }),
     );
     if (aberto) throw new EnvioRepetido(aberto.id, aberto.situacao);
+  }
+
+  // O link de assinatura e um e-mail ao cliente: com o e-mail dele desligado
+  // no cadastro, nao sai — e a tela diz por que.
+  if (quem !== "ESCRITORIO" && !podeReceber(dados.cliente, "EMAIL")) {
+    throw new AutentiqueRecusou(motivoDoBloqueio(dados.cliente, "EMAIL"));
   }
 
   const signatarios = montarSignatarios(

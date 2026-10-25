@@ -1,6 +1,7 @@
 // Entrega das mensagens, no banco: o retorno da Meta, o alerta para quem enviou,
 // o reenvio (automatico ou a pedido) e a lista da tela "Mensagens nao
 // entregues". As regras moram em entrega.ts; ver docs/ENTREGA-DE-MENSAGENS.md.
+import { motivoDoBloqueio, podeReceber, type ChavesDeEnvio } from "./consentimento-de-envio";
 import { Prisma } from "@prisma/client";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { enfileirar } from "./fila";
@@ -297,7 +298,13 @@ export async function conferirEntregas(escritorioId: string, agora = new Date())
 // Reenviar e resolver
 // ---------------------------------------------------------------------------
 
-type ContatoAtual = { telefone: string | null; email: string | null; nome: string | null };
+type ContatoAtual = {
+  telefone: string | null;
+  email: string | null;
+  nome: string | null;
+  /** Chaves de envio do cliente, quando o destinatario e cliente. */
+  chaves?: ChavesDeEnvio | null;
+};
 
 /** O contato de HOJE de quem recebeu: o cadastro corrigido vale no reenvio. */
 async function contatoAtual(
@@ -308,19 +315,25 @@ async function contatoAtual(
     if (a.participanteId) {
       const p = await db.participanteDeCompromisso.findFirst({
         where: { id: a.participanteId },
-        include: { cliente: { select: { nome: true, telefone: true, email: true } } },
+        include: {
+          cliente: { select: { nome: true, telefone: true, email: true, notificarWhatsapp: true, notificarEmail: true } },
+        },
       });
       if (p) {
         return {
           telefone: p.telefone ?? paraE164BR(p.cliente?.telefone ?? null),
           email: p.email ?? p.cliente?.email ?? null,
           nome: p.cliente?.nome ?? p.nome ?? null,
+          chaves: p.cliente,
         };
       }
     }
     if (a.clienteId) {
-      const c = await db.cliente.findFirst({ where: { id: a.clienteId }, select: { nome: true, telefone: true, email: true } });
-      if (c) return { telefone: paraE164BR(c.telefone), email: c.email, nome: c.nome };
+      const c = await db.cliente.findFirst({
+        where: { id: a.clienteId },
+        select: { nome: true, telefone: true, email: true, notificarWhatsapp: true, notificarEmail: true },
+      });
+      if (c) return { telefone: paraE164BR(c.telefone), email: c.email, nome: c.nome, chaves: c };
     }
     if (a.usuarioId) {
       const u = await db.usuario.findFirst({ where: { id: a.usuarioId }, select: { nome: true, telefone: true, email: true } });
@@ -369,6 +382,10 @@ export async function reenviar(
   }
 
   const contato = await contatoAtual(escritorioId, original);
+  const canalDoAviso = original.canal === "WHATSAPP" ? "WHATSAPP" : "EMAIL";
+  if (!podeReceber(contato?.chaves, canalDoAviso)) {
+    throw new NaoDaParaReenviar(motivoDoBloqueio(contato?.chaves, canalDoAviso));
+  }
   const novoDestino =
     (original.canal === "WHATSAPP" ? contato?.telefone : contato?.email?.trim()) || original.destino;
 

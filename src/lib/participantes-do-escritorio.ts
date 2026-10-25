@@ -2,6 +2,7 @@
 //
 // A regra de quem pode entrar na lista mora em participantes.ts, pura e
 // testada. Aqui so se grava e se busca.
+import { podeReceber } from "./consentimento-de-envio";
 import { comEscritorio, semEscritorio } from "./prisma";
 import { moduloAtivo } from "./modulos";
 import { paraE164BR } from "./whatsapp";
@@ -26,6 +27,9 @@ export type ParticipanteNaTela = {
   /** O que a pessoa respondeu ao lembrete pelo WhatsApp. */
   confirmadoEm: Date | null;
   recusadoEm: Date | null;
+  /** Chaves de envio do cliente (avulso nao tem: sempre ligado). */
+  notificarWhatsapp?: boolean;
+  notificarEmail?: boolean;
 };
 
 /**
@@ -131,7 +135,9 @@ export async function participantesDoCompromisso(
     db.participanteDeCompromisso.findMany({
       where: { compromissoId },
       orderBy: { criadoEm: "asc" },
-      include: { cliente: { select: { nome: true, telefone: true, email: true } } },
+      include: {
+        cliente: { select: { nome: true, telefone: true, email: true, notificarWhatsapp: true, notificarEmail: true } },
+      },
     }),
   );
 
@@ -152,6 +158,8 @@ export async function participantesDoCompromisso(
     avisar: p.avisar,
     confirmadoEm: p.confirmadoEm,
     recusadoEm: p.recusadoEm,
+    notificarWhatsapp: p.cliente?.notificarWhatsapp ?? true,
+    notificarEmail: p.cliente?.notificarEmail ?? true,
   }));
 }
 
@@ -178,8 +186,20 @@ export async function paraAvisarNoCompromisso(
   avisar: AvisoAoParticipante[];
   semContato: string[];
   soPorWhatsappDesligado: string[];
+  /** Cliente com o envio automatico desligado no cadastro (todos os canais que tinha). */
+  envioDesligado: string[];
 }> {
-  const lista = await participantesDoCompromisso(escritorioId, compromissoId);
+  // Cliente com um canal desligado entra sem aquele canal — inclusive o
+  // contato proprio digitado no participante, que e o mesmo cliente. Com
+  // tudo desligado, nao entra, e o motivo volta para a tela.
+  const envioDesligado: string[] = [];
+  const lista = (await participantesDoCompromisso(escritorioId, compromissoId)).map((p) => {
+    if (!p.clienteId) return p;
+    const telefone = podeReceber(p, "WHATSAPP") ? p.telefone : null;
+    const email = podeReceber(p, "EMAIL") ? p.email : null;
+    if (p.avisar && (p.telefone || p.email) && !telefone && !email) envioDesligado.push(p.nomeNaTela);
+    return { ...p, telefone, email };
+  });
   const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
 
   const podem = quemAvisar(lista);
@@ -192,7 +212,8 @@ export async function paraAvisarNoCompromisso(
         telefone: p.telefone,
         email: p.email,
       })),
-    semContato: semComoAvisar(lista),
+    semContato: semComoAvisar(lista).filter((nome) => !envioDesligado.includes(nome)),
+    envioDesligado,
     soPorWhatsappDesligado: comWhatsapp
       ? []
       : podem.filter((p) => !p.email && p.telefone).map((p) => p.nome),

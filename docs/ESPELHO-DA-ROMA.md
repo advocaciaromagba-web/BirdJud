@@ -14,8 +14,8 @@ novo e como trazer isso para ca do jeito certo.
 | O que | Valor |
 |---|---|
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
-| Ultimo commit revisado | `819d29d606ba1b08dae9f19085d27fdb87a4d483` (21/10/2026, "Enviar documentos ao cliente pelo WhatsApp ou e-mail") |
-| Revisado em | 21/10/2026 |
+| Ultimo commit revisado | `251cc13a88030023b943b0bf3b7d3bd881516322` (25/10/2026, "Atendimento virtual: avisar antes e gerar a sala depois") |
+| Revisado em | 25/10/2026 |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
 que a ultima funcionalidade entrou. Sem isso a proxima rodada revisa tudo de
@@ -78,6 +78,13 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Entrevista sem cliente, PDF na pasta do cliente | `Entrevista.clienteId` opcional e `nome` (ja existia; ver `docs/ENTREVISTAS.md`) |
 | Alerta sonoro 1h e 15min antes | `src/lib/alerta-da-agenda.ts`, `AlertaDaAgenda.tsx`, `Usuario.alertaSonoro` |
 | Parcela de contrato no financeiro, com baixa na mesma linha | `src/lib/honorarios-do-escritorio.ts` (ja existia) |
+| Estagiario(a) como papel: apoio, sem nada privativo de advogado (faixa, peticao inicial, DJEN por OAB) | `src/lib/papeis.ts` `ESTAGIARIO`, `rotuloDoPapel`; `contaComoAdvogado` em `equipe.ts` |
+| Envio automatico por canal, por cliente, com o motivo na tela e a fila cancelada | `Cliente.notificarWhatsapp`/`notificarEmail` (migracao 72), `src/lib/consentimento-de-envio.ts`, `src/lib/envio-do-cliente.ts`, `/administracao/envios`, ficha do cliente |
+| Administrador liga e desliga os avisos de cada pessoa da equipe | `EditarUsuario.tsx` + `PATCH /api/usuarios/[id]` (`recebeResumo`, `recebeLembretes`, `recebeWhatsapp`) |
+| Entrevista sem cliente; peticao inicial exige cliente cadastrado | ja existia (`entrevista-do-escritorio.ts` `gerarMinuta`) |
+| Restaurador do backup e plano de continuidade | ja existia (`scripts/restaurar-copia.mjs`, `scripts/restaurar-escritorio.ts`, `docs/BACKUP.md`, `docs/RAILWAY.md`) |
+| Modelo da Meta para documento fora da janela de 24 h | ja existia (`src/lib/documento-no-whatsapp.ts`) |
+| Mapa das variaveis para o cofre | ja existia (`docs/RAILWAY.md`, secao 3; valores no Bitwarden) |
 | Prazo pela lei e aviso antes do fatal; um aviso por vez | `src/lib/prazos*.ts`, `avisos.ts` (ja existia) |
 | Processo e cliente cadastrados a partir da publicacao | `CadastrarProcesso.tsx`, `triagem-do-escritorio.ts` (ja existia) |
 
@@ -85,3 +92,9 @@ Ainda nao trazido, por ser maior e pedir decisao do produto:
 
 - Conciliacao dos contratos guardados na pasta do cliente (leitura por IA
   do PDF) com o cadastro de honorarios.
+
+## Nao trazido, de proposito
+
+| Novidade da Roma | Por que |
+|---|---|
+| Atendimento virtual: avisar que o Meet nao sera gerado e gerar a sala depois (25/10/2026) | No BirdJud a sala virtual e colada a mao no compromisso (Teams, Zoom, Webex ou Meet); nao ha geracao automatica pelo Google Agenda, entao o problema que a Roma corrigiu nao existe aqui. Gerar o Meet sozinho seria funcionalidade nova (conectar a agenda Google de cada advogado), a decidir. |

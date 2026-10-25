@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EnvioDoCliente } from "@/componentes/EnvioDoCliente";
 import { notFound } from "next/navigation";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
@@ -280,6 +281,14 @@ export default async function FichaCliente({
         </section>
 
         <aside className="grid gap-6">
+          <EnvioDoCliente
+            clienteId={cliente.id}
+            notificarWhatsapp={cliente.notificarWhatsapp}
+            notificarEmail={cliente.notificarEmail}
+            alteradoEm={cliente.envioAlteradoEm?.toISOString() ?? null}
+            alteradoPor={cliente.envioAlteradoPor}
+            podeMexer={contexto.papel === "ADMIN"}
+          />
           <section className="cartao">
             <h2 className="font-semibold">Pendências do cadastro</h2>
             {pendencias.length === 0 ? (

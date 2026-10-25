@@ -1,5 +1,6 @@
 "use client";
 
+import { OPCOES_DE_PAPEL } from "@/lib/papeis";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -11,13 +12,12 @@ type Pessoa = {
   oab: string | null;
   telefone: string | null;
   ativo: boolean;
+  recebeWhatsapp?: boolean;
+  recebeResumo?: boolean;
+  recebeLembretes?: boolean;
 };
 
-const PAPEIS = [
-  { valor: "ADMIN", rotulo: "Administrador" },
-  { valor: "ADVOGADO", rotulo: "Advogado" },
-  { valor: "USUARIO", rotulo: "Usuário de apoio" },
-];
+const PAPEIS = OPCOES_DE_PAPEL;
 
 /**
  * Edita uma pessoa da equipe, ali mesmo na lista. Senha e segundo fator
@@ -36,6 +36,9 @@ export function EditarUsuario({ pessoa, ehVoce }: { pessoa: Pessoa; ehVoce: bool
     papel: pessoa.papel,
     oab: pessoa.oab ?? "",
     telefone: pessoa.telefone ?? "",
+    recebeWhatsapp: pessoa.recebeWhatsapp ?? false,
+    recebeResumo: pessoa.recebeResumo ?? true,
+    recebeLembretes: pessoa.recebeLembretes ?? true,
   });
 
   async function enviar(corpo: Record<string, unknown>) {
@@ -64,6 +67,9 @@ export function EditarUsuario({ pessoa, ehVoce }: { pessoa: Pessoa; ehVoce: bool
       papel: dados.papel,
       oab: dados.oab || null,
       telefone: dados.telefone || null,
+      recebeWhatsapp: dados.recebeWhatsapp,
+      recebeResumo: dados.recebeResumo,
+      recebeLembretes: dados.recebeLembretes,
     });
     if (ok) {
       setRecado({ texto: "Dados salvos.", erro: false });
@@ -117,6 +123,26 @@ export function EditarUsuario({ pessoa, ehVoce }: { pessoa: Pessoa; ehVoce: bool
             Telefone (WhatsApp)
             <input value={dados.telefone} onChange={(e) => setDados({ ...dados, telefone: e.target.value })} placeholder="(16) 99999-8888" className="rounded border border-slate-300 px-3 py-2" />
           </label>
+          <fieldset className="grid gap-1 sm:col-span-2">
+            <legend className="mb-1 font-medium">Avisos que esta pessoa recebe</legend>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={dados.recebeResumo} onChange={(e) => setDados({ ...dados, recebeResumo: e.target.checked })} />
+              Resumo do dia por e-mail
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={dados.recebeLembretes} onChange={(e) => setDados({ ...dados, recebeLembretes: e.target.checked })} />
+              Lembretes de compromissos e tarefas
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={dados.recebeWhatsapp && Boolean(dados.telefone)}
+                disabled={!dados.telefone}
+                onChange={(e) => setDados({ ...dados, recebeWhatsapp: e.target.checked })}
+              />
+              Avisos também pelo WhatsApp{dados.telefone ? "" : " (precisa de telefone)"}
+            </label>
+          </fieldset>
           <div className="flex items-end gap-2">
             <button type="submit" className="botao-principal" disabled={ocupado}>
               {ocupado ? "Salvando..." : "Salvar"}

@@ -120,6 +120,10 @@ export type EdicaoDePessoa = {
   oab?: string | null;
   telefone?: string | null;
   ativo?: boolean;
+  /** O que a pessoa recebe. O administrador tambem liga e desliga (vindo da Roma). */
+  recebeWhatsapp?: boolean;
+  recebeResumo?: boolean;
+  recebeLembretes?: boolean;
 };
 
 export class EdicaoRecusada extends Error {
@@ -181,8 +185,14 @@ export async function editarPessoa(
         oab,
         telefone,
         ativo,
+        ...(dados.recebeResumo === undefined ? {} : { recebeResumo: dados.recebeResumo }),
+        ...(dados.recebeLembretes === undefined ? {} : { recebeLembretes: dados.recebeLembretes }),
         // Sem telefone nao ha WhatsApp para receber.
-        ...(telefone ? {} : { recebeWhatsapp: false }),
+        ...(telefone
+          ? dados.recebeWhatsapp === undefined
+            ? {}
+            : { recebeWhatsapp: dados.recebeWhatsapp }
+          : { recebeWhatsapp: false }),
         ...(desativando ? { sessoesValidasApos: new Date() } : {}),
       },
       select: { id: true, nome: true, email: true, papel: true, ativo: true },

@@ -1,4 +1,5 @@
 import { comEscritorio } from "@/lib/prisma";
+import { rotuloDoPapel } from "@/lib/papeis";
 import { contextoDaPagina } from "@/lib/pagina";
 import { dataBR } from "@/lib/datas";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
@@ -230,7 +231,7 @@ export default async function PaginaPublicacoes() {
         publicacoes={publicacoes}
         equipe={dados.equipe.map((p) => ({
           id: p.id,
-          nome: `${p.nome} (${p.papel.toLowerCase()})`,
+          nome: `${p.nome} (${rotuloDoPapel(p.papel).toLowerCase()})`,
         }))}
         clientes={dados.clientes}
         comWhatsapp={modulos.includes("WHATSAPP")}

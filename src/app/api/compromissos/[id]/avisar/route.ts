@@ -38,6 +38,9 @@ export async function POST(
       partes.push(`${r.criados} aviso(s) na fila — saem em instantes.`);
     }
     if (r.semContato.length) partes.push(`Sem contato: ${r.semContato.join(", ")}.`);
+    if (r.envioDesligado.length) {
+      partes.push(`Envio automático desligado no cadastro: ${r.envioDesligado.join(", ")}.`);
+    }
     if (r.soPorWhatsappDesligado.length) {
       partes.push(`Só tem telefone, e o WhatsApp não está ligado: ${r.soPorWhatsappDesligado.join(", ")}.`);
     }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exigirAdmin, recusarSuporte } from "@/lib/sessao";
-import { editarPessoa, EdicaoRecusada } from "@/lib/equipe";
+import { contaComoAdvogado, editarPessoa, EdicaoRecusada } from "@/lib/equipe";
 import { monitorarOabDoAdvogado } from "@/lib/implantacao";
 import { PAPEIS } from "@/lib/papeis";
 import { FaixaEsgotada } from "@/lib/faixas";
@@ -14,6 +14,9 @@ const edicao = z.object({
   oab: z.string().max(20).nullable().optional(),
   telefone: z.string().max(40).nullable().optional(),
   ativo: z.boolean().optional(),
+  recebeWhatsapp: z.boolean().optional(),
+  recebeResumo: z.boolean().optional(),
+  recebeLembretes: z.boolean().optional(),
 });
 
 /** Edita uma pessoa da equipe. Regras em equipe.ts (editarPessoa). */
@@ -30,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       return NextResponse.json({ erro: corpo.error.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
     }
     const usuario = await editarPessoa(escritorioId, id, corpo.data, usuarioId);
-    if (usuario.oabMudou) await monitorarOabDoAdvogado(escritorioId, corpo.data.oab).catch(() => false);
+    if (usuario.oabMudou && contaComoAdvogado(usuario.papel)) await monitorarOabDoAdvogado(escritorioId, corpo.data.oab).catch(() => false);
     return NextResponse.json({ usuario });
   } catch (erro) {
     if (erro instanceof EdicaoRecusada || erro instanceof FaixaEsgotada) {

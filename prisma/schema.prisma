@@ -224,6 +224,13 @@ model Cliente {
   nome         String
   documento    String? // CPF/CNPJ
   email        String?
+  /// Envio automatico por canal. Desligado, o sistema nao manda nada por
+  /// aquele canal (aviso, lembrete, cobranca, recibo, nota, documento); o
+  /// contato fica no cadastro. Ver src/lib/consentimento-de-envio.ts.
+  notificarWhatsapp Boolean @default(true)
+  notificarEmail    Boolean @default(true)
+  envioAlteradoEm   DateTime?
+  envioAlteradoPor  String?
   telefone     String?
   endereco     Json?
   /// Qualificacao da pessoa fisica, como entra na procuracao e no contrato.

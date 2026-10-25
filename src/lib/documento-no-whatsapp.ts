@@ -15,6 +15,7 @@
 //  3. Quem pediu para parar de receber nao recebe. O pedido vale para tudo,
 //     nao so para lembrete: documento e a mensagem mais invasiva que o sistema
 //     manda.
+import { motivoDoBloqueio, podeReceber, type ChavesDeEnvio } from "./consentimento-de-envio";
 import type { Prisma } from "@prisma/client";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { registrarConsumo } from "./consumo";
@@ -66,6 +67,9 @@ export async function mandarPecaNoWhatsapp(
 ): Promise<PecaMandada> {
   if (!(await moduloAtivo(escritorioId, "WHATSAPP"))) {
     throw new NaoDaParaMandar("O módulo de WhatsApp não está contratado.");
+  }
+  if (!podeReceber(dados.cliente, "WHATSAPP")) {
+    throw new NaoDaParaMandar(motivoDoBloqueio(dados.cliente, "WHATSAPP"));
   }
 
   const telefone = paraE164BR(dados.cliente.telefone);
@@ -146,11 +150,14 @@ type PdfAoCliente = {
  */
 export async function mandarArquivoNoWhatsapp(
   escritorioId: string,
-  pdf: Omit<PdfAoCliente, "telefone"> & { telefoneDoCadastro: string | null },
+  pdf: Omit<PdfAoCliente, "telefone"> & { telefoneDoCadastro: string | null; chaves?: ChavesDeEnvio | null },
   enviadoPorId: string | null = null,
 ): Promise<PecaMandada> {
   if (!(await moduloAtivo(escritorioId, "WHATSAPP"))) {
     throw new NaoDaParaMandar("O módulo de WhatsApp não está contratado.");
+  }
+  if (!podeReceber(pdf.chaves, "WHATSAPP")) {
+    throw new NaoDaParaMandar(motivoDoBloqueio(pdf.chaves, "WHATSAPP"));
   }
   const telefone = paraE164BR(pdf.telefoneDoCadastro);
   if (!telefone) {

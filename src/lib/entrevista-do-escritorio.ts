@@ -660,7 +660,10 @@ export async function mandarPerguntasNoWhatsapp(
   const e = await entrevistaPorId(escritorioId, id);
   const cliente = e.clienteId
     ? await comEscritorio(escritorioId, (db) =>
-        db.cliente.findFirst({ where: { id: e.clienteId! }, select: { id: true, nome: true, telefone: true } }),
+        db.cliente.findFirst({
+          where: { id: e.clienteId! },
+          select: { id: true, nome: true, telefone: true, notificarWhatsapp: true, notificarEmail: true },
+        }),
       )
     : null;
   const { pdf, nome } = await pdfDasPerguntas(escritorioId, id);
@@ -670,6 +673,7 @@ export async function mandarPerguntasNoWhatsapp(
       clienteId: cliente?.id ?? null,
       nomeDoCliente: cliente?.nome ?? e.nome,
       telefoneDoCadastro: cliente?.telefone?.trim() || e.telefone,
+      chaves: cliente,
       arquivo: Buffer.from(pdf),
       nomeDoArquivo: nome,
       oQueE: "Perguntas para a sua entrevista",

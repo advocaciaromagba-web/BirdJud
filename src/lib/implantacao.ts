@@ -19,7 +19,7 @@
 import { comEscritorio, prismaPlataforma } from "./prisma";
 import { registrarAcessoSuporte } from "./plataforma";
 import { nascerEscritorio, type Nascimento } from "./nascimento";
-import { convidarPessoa, incluirPessoa, type NovaPessoa, type ResultadoDoConvite } from "./equipe";
+import { contaComoAdvogado, convidarPessoa, incluirPessoa, type NovaPessoa, type ResultadoDoConvite } from "./equipe";
 import { salvarDadosDoEscritorio, type DadosDoEscritorio } from "./dados-do-escritorio";
 import { adicionarOab, lerOab } from "./oabs";
 import { moduloAtivo } from "./modulos";
@@ -67,7 +67,8 @@ export async function implantarEscritorio(operador: { operadorId: string }, i: I
 export async function incluirNaEquipe(operadorId: string, escritorioId: string, p: NovaPessoa) {
   await registrarAcessoSuporte(operadorId, escritorioId, `Implantação: pessoa incluida (${p.papel})`);
   const pessoa = await incluirPessoa(escritorioId, p);
-  const oabMonitorada = await monitorarOabDoAdvogado(escritorioId, p.oab);
+  // Estagiario e apoio nao entram no monitoramento: busca no DJEN pela OAB e de advogado.
+  const oabMonitorada = contaComoAdvogado(p.papel) ? await monitorarOabDoAdvogado(escritorioId, p.oab) : false;
   return { pessoa, oabMonitorada };
 }
 

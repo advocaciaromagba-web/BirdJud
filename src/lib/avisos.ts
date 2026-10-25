@@ -985,6 +985,8 @@ export type ResultadoDoAvisoManual = {
   semContato: string[];
   /** Quem so tem telefone, num escritorio sem WhatsApp. */
   soPorWhatsappDesligado: string[];
+  /** Cliente com o envio automatico desligado no cadastro. */
+  envioDesligado: string[];
 };
 
 /**
@@ -1010,7 +1012,7 @@ export async function avisarAgora(
   const banca = await daBanca(escritorioId);
   const comWhatsapp = await moduloAtivo(escritorioId, "WHATSAPP");
   const { dados } = achado;
-  const { avisar, semContato, soPorWhatsappDesligado } =
+  const { avisar, semContato, soPorWhatsappDesligado, envioDesligado } =
     await paraAvisarNoCompromisso(escritorioId, compromissoId);
 
   const marco = MARCOS.find((m) => m.chave === (qual === "LEMBRETE_1H" ? "1h" : "24h"))!;
@@ -1096,7 +1098,7 @@ export async function avisarAgora(
     }
   }
 
-  return { criados, semContato, soPorWhatsappDesligado };
+  return { criados, semContato, soPorWhatsappDesligado, envioDesligado };
 }
 
 // ---------------------------------------------------------------------------

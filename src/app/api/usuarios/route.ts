@@ -4,7 +4,7 @@ import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirAdmin, exigirSessao, recusarSuporte } from "@/lib/sessao";
 import { temRemetenteDaPlataforma } from "@/lib/email-plataforma";
-import { convidarPessoa, incluirPessoa } from "@/lib/equipe";
+import { contaComoAdvogado, convidarPessoa, incluirPessoa } from "@/lib/equipe";
 import { PAPEIS } from "@/lib/papeis";
 import { FaixaEsgotada } from "@/lib/faixas";
 import { ehDuplicado, tratarErro } from "@/lib/respostas";
@@ -85,7 +85,8 @@ export async function POST(req: Request) {
     const usuario = await incluirPessoa(escritorioId, corpo.data);
     // Advogado com OAB: a OAB entra no monitoramento do DJEN e os processos
     // dele (12 meses) sao buscados e cadastrados (processos-do-djen.ts).
-    await monitorarOabDoAdvogado(escritorioId, corpo.data.oab).catch(() => false);
+    // Estagiario e apoio nao: busca no DJEN pela OAB e de advogado.
+    if (contaComoAdvogado(corpo.data.papel)) await monitorarOabDoAdvogado(escritorioId, corpo.data.oab).catch(() => false);
     if (!convidar) return NextResponse.json({ usuario }, { status: 201 });
 
     const quemConvidou = await comEscritorio(escritorioId, (db) =>
