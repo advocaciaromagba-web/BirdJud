@@ -50,6 +50,16 @@ export default async function PaginaLogin() {
             </div>
           </div>
 
+          {marca.status === "SUSPENSO" ? (
+            // Sem isto a pessoa so via "credenciais invalidas" e ia trocar a
+            // senha. O valor nao aparece: a tela de entrada e publica.
+            <p role="alert" className="aviso-erro mt-4">
+              O acesso deste escritório ao sistema está suspenso por pendência financeira com o BirdJud. Os dados
+              estão guardados e nada foi apagado. O link de pagamento foi enviado ao e-mail do administrador do
+              escritório; assim que o pagamento for confirmado, o acesso volta sozinho.
+            </p>
+          ) : null}
+
           <FormularioLogin />
 
           <p className="mt-4 text-center text-sm">

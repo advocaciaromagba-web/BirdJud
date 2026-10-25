@@ -62,6 +62,13 @@ model Escritorio {
   // Encerramento: o prazo de retencao conta a partir daqui, e a purga da LGPD
   // so apaga depois dele.
   encerradoEm  DateTime?
+  /// Suspensao: quando saiu do ar, se foi o operador (a regua nao devolve
+  /// sozinha enquanto houver atraso) e por que. suspensaoAdiadaAte: ate
+  /// quando a regua nao suspende por atraso (pagamento combinado).
+  suspensoEm         DateTime?
+  suspensaoManual    Boolean   @default(false)
+  suspensaoMotivo    String?
+  suspensaoAdiadaAte DateTime?
   purgadoEm    DateTime?
 
   aceites           AceiteDeTermos[]
@@ -105,6 +112,7 @@ model Escritorio {
   entrevistas          Entrevista[]
   tarefas              Tarefa[]
   bloqueiosDeWhatsapp  BloqueioDeWhatsapp[]
+  avisosDeCobranca AvisoDeCobranca[]
 }
 
 model ModuloContratado {
@@ -456,6 +464,8 @@ model Fatura {
   criadaEm      DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  avisos AvisoDeCobranca[]
 
   @@unique([escritorioId, competencia])
   @@index([escritorioId, status])
@@ -1700,4 +1710,24 @@ model ConfiguracaoComercial {
   tabela        Json?
   atualizadaEm  DateTime @default(now()) @updatedAt
   atualizadaPor String?
+}
+
+/// Aviso de cobranca enviado ao escritorio pela plataforma (e-mail ao
+/// administrador). Tabela da plataforma: o escritorio nao le.
+model AvisoDeCobranca {
+  id           String   @id @default(cuid())
+  escritorioId String
+  faturaId     String?
+  /// LEMBRETE | VENCEU | INADIMPLENTE | SUSPENSAO_PROXIMA | SUSPENSO | REATIVADO | MANUAL
+  tipo         String
+  para         String
+  enviadoEm    DateTime @default(now())
+  /// Nome do operador, quando o aviso foi mandado pelo console.
+  porOperador  String?
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  fatura     Fatura?    @relation(fields: [faturaId], references: [id], onDelete: SetNull)
+
+  @@index([escritorioId, enviadoEm])
+  @@index([faturaId, tipo])
 }

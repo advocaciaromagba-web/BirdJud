@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ultimoMesDoCupom } from "@/lib/cupons";
 import { AcoesDaNotaDaPlataforma } from "@/componentes/AcoesDaNotaDaPlataforma";
 import { AcessosDeSuporte } from "@/componentes/AcessosDeSuporte";
+import { AcoesNaLista } from "@/componentes/AcoesNaLista";
+import { ROTULO_DO_AVISO, type TipoDeAviso } from "@/lib/avisos-de-cobranca";
 import { fiscalDaPlataforma, lembreteDoPercentual } from "@/lib/nota-da-plataforma";
 import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { notFound, redirect } from "next/navigation";
@@ -40,6 +42,7 @@ export default async function EscritorioNoPainel({
       assinatura: { include: { cupom: true } },
       faturas: { orderBy: { vencimento: "desc" }, take: 24 },
       modulos: { orderBy: { modulo: "asc" } },
+      avisosDeCobranca: { orderBy: { enviadoEm: "desc" }, take: 20 },
     },
   });
   if (!escritorio) notFound();
@@ -72,6 +75,10 @@ export default async function EscritorioNoPainel({
   });
 
   const agora = new Date();
+  const maisAntigaAberta = escritorio.faturas
+    .filter((f) => f.status === "ABERTA")
+    .sort((a, b) => a.vencimento.getTime() - b.vencimento.getTime())[0];
+  const dia = (d: Date) => d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
   return (
     <main className="mx-auto max-w-3xl p-8">
@@ -89,6 +96,34 @@ export default async function EscritorioNoPainel({
         {escritorio.slug} · {escritorio.status} · faixa {escritorio.faixa} (
         {uso.rotulo})
       </p>
+      <div className="mt-3">
+        <AcoesNaLista
+          naFicha
+          id={escritorio.id}
+          slug={escritorio.slug}
+          status={escritorio.status}
+          atraso={maisAntigaAberta ? diasDeAtraso(maisAntigaAberta.vencimento, agora) : null}
+          temAberta={Boolean(maisAntigaAberta)}
+          dados={{
+            nome: escritorio.nome,
+            razaoSocial: escritorio.razaoSocial,
+            cidade: escritorio.cidade,
+            telefoneAtendimento: escritorio.telefoneAtendimento,
+          }}
+        />
+      </div>
+      {escritorio.status === "SUSPENSO" ? (
+        <p className="aviso-erro mt-3 text-sm">
+          Suspenso{escritorio.suspensoEm ? ` desde ${dia(escritorio.suspensoEm)}` : ""}
+          {escritorio.suspensaoManual ? ` pelo operador: ${escritorio.suspensaoMotivo ?? "sem motivo anotado"}` : " pela régua (15 dias de atraso)"}.
+          A equipe não entra até pagar o que está vencido ou você liberar.
+        </p>
+      ) : null}
+      {escritorio.suspensaoAdiadaAte && escritorio.suspensaoAdiadaAte > agora ? (
+        <p className="aviso-atencao mt-3 text-sm">
+          Suspensão adiada: a régua não suspende até {dia(new Date(escritorio.suspensaoAdiadaAte.getTime() - 1))}.
+        </p>
+      ) : null}
 
       <section className="cartao-aperto mt-6 text-sm">
         <h2 className="font-semibold">Assinatura</h2>
@@ -171,6 +206,31 @@ export default async function EscritorioNoPainel({
         descontos={{ anual: percentualEmTexto(tabela.descontoAnual), trimestral: percentualEmTexto(tabela.descontoTrimestral) }}
         encerrado={escritorio.status === "ENCERRADO"}
       />
+
+      <section className="mt-6">
+        <h2 className="font-semibold">Avisos de cobrança</h2>
+        <p className="ajuda">
+          E-mails da régua ao administrador do escritório: lembrete 3 dias antes do vencimento, fatura vencida, atraso de
+          5 dias com a data da suspensão, 3 dias antes da suspensão, suspensão e volta do acesso.
+        </p>
+        {escritorio.avisosDeCobranca.length === 0 ? (
+          <p className="mt-2 text-sm text-slate-600">Nenhum aviso enviado.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-slate-100 text-sm">
+            {escritorio.avisosDeCobranca.map((a) => (
+              <li key={a.id} className="flex flex-wrap justify-between gap-2 py-1.5">
+                <span>
+                  {ROTULO_DO_AVISO[a.tipo as TipoDeAviso] ?? a.tipo}
+                  {a.porOperador ? <span className="text-slate-500"> · por {a.porOperador}</span> : null}
+                </span>
+                <span className="text-slate-500">
+                  {a.enviadoEm.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} · {a.para}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="mt-6">
         <h2 className="font-semibold">Acessos de suporte</h2>

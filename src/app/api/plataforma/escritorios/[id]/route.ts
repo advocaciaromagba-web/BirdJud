@@ -10,6 +10,7 @@ import {
   SemOperador,
 } from "@/lib/plataforma";
 import { aplicarRegua } from "@/lib/cobranca";
+import { AcaoDeCobrancaRecusada, avisarAgora, suspenderPorAtraso } from "@/lib/avisos-de-cobranca";
 import { mesesDaFatura } from "@/lib/cobranca-plataforma";
 import { percentualEmTexto } from "@/lib/cobranca";
 import { tabelaVigente } from "@/lib/tabela-de-precos";
@@ -51,6 +52,20 @@ const acao = z.discriminatedUnion("acao", [
   // Encerrar interrompe o servico e comeca a contar o prazo de retencao
   // (encerramento.ts); reativar desfaz enquanto o prazo corre.
   z.object({ acao: z.literal("encerrar"), motivo: z.string().trim().min(3).max(300) }),
+  // Inadimplencia: suspender antes da regua, liberar (com prazo opcional, ate
+  // quando a regua nao suspende de novo) e mandar aviso de cobranca agora.
+  z.object({ acao: z.literal("suspender"), motivo: z.string().max(300), avisar: z.boolean() }),
+  z.object({ acao: z.literal("liberar"), ate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }),
+  z.object({ acao: z.literal("avisar") }),
+  // Dados cadastrais. O endereco (slug) nao muda: e o subdominio, e mudar
+  // quebraria links, e-mails ja enviados e a entrada da equipe.
+  z.object({
+    acao: z.literal("dados"),
+    nome: z.string().trim().min(2).max(120),
+    razaoSocial: z.string().trim().max(200).nullable(),
+    cidade: z.string().trim().max(120).nullable(),
+    telefoneAtendimento: z.string().trim().max(30).nullable(),
+  }),
   z.object({ acao: z.literal("reativar") }),
   // Busca dos processos das OABs no DJEN (12 meses) agora, sem esperar a
   // captura da madrugada. So poe o trabalho na fila.
@@ -208,6 +223,73 @@ export async function POST(
           (canceladas.count ? ` ${canceladas.count} fatura(s) não emitida(s) cancelada(s).` : "") +
           (emitidas ? ` Atenção: ${emitidas} fatura(s) já emitida(s) no meio de pagamento continuam abertas — cancele no provedor.` : ""),
       });
+    }
+
+    if (corpo.data.acao === "suspender") {
+      try {
+        const r = await suspenderPorAtraso(escritorio.id, {
+          motivo: corpo.data.motivo,
+          avisar: corpo.data.avisar,
+          operador: operador.nome,
+        });
+        await registrarAcessoSuporte(operador.operadorId, escritorio.id, `Suspenso por atraso: ${corpo.data.motivo.trim()}`);
+        return NextResponse.json({
+          detalhe:
+            "Escritório suspenso: a equipe não entra até pagar o que está vencido ou você liberar." +
+            (corpo.data.avisar ? (r.avisado ? " O aviso foi enviado ao administrador." : " O aviso não saiu (sem remetente ou sem administrador ativo).") : ""),
+        });
+      } catch (erro) {
+        if (erro instanceof AcaoDeCobrancaRecusada) return NextResponse.json({ erro: erro.message }, { status: 400 });
+        throw erro;
+      }
+    }
+
+    if (corpo.data.acao === "liberar") {
+      // Fim do dia escolhido, em Brasilia (como na isencao).
+      const ate = corpo.data.ate ? new Date(`${corpo.data.ate}T03:00:00Z`) : null;
+      if (ate) ate.setUTCDate(ate.getUTCDate() + 1);
+      if (ate && ate <= new Date()) {
+        return NextResponse.json({ erro: "A data do prazo já passou." }, { status: 400 });
+      }
+      await prismaPlataforma().escritorio.update({
+        where: { id: escritorio.id },
+        data: { suspensaoManual: false, suspensaoMotivo: null, suspensaoAdiadaAte: ate },
+      });
+      const r = await aplicarRegua(escritorio.id);
+      await registrarAcessoSuporte(
+        operador.operadorId,
+        escritorio.id,
+        `Suspensão liberada${corpo.data.ate ? ` até ${corpo.data.ate.split("-").reverse().join("/")}` : ""}; status ${r.statusNovo}`,
+      );
+      return NextResponse.json({
+        detalhe:
+          r.statusNovo === "SUSPENSO"
+            ? "A régua suspendeu de novo: o atraso já passou dos 15 dias. Para liberar mesmo assim, informe até quando."
+            : `Liberado. Status agora: ${r.statusNovo}.${corpo.data.ate ? ` A régua não suspende até ${corpo.data.ate.split("-").reverse().join("/")}.` : ""}`,
+      });
+    }
+
+    if (corpo.data.acao === "avisar") {
+      try {
+        const para = await avisarAgora(escritorio.id, operador.nome);
+        return NextResponse.json({ detalhe: `Aviso de cobrança enviado para ${para.join(", ")}.` });
+      } catch (erro) {
+        if (erro instanceof AcaoDeCobrancaRecusada) return NextResponse.json({ erro: erro.message }, { status: 400 });
+        throw erro;
+      }
+    }
+
+    if (corpo.data.acao === "dados") {
+      await prismaPlataforma().escritorio.update({
+        where: { id: escritorio.id },
+        data: {
+          nome: corpo.data.nome,
+          razaoSocial: corpo.data.razaoSocial || null,
+          cidade: corpo.data.cidade || null,
+          telefoneAtendimento: corpo.data.telefoneAtendimento || null,
+        },
+      });
+      return NextResponse.json({ detalhe: "Dados do escritório atualizados." });
     }
 
     if (corpo.data.acao === "processos") {

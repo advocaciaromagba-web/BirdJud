@@ -228,3 +228,27 @@ comecar cego nao ajuda ninguem.
 Fechados em 14/10/2026 (ver o topo). Revisar quando houver escritorios
 pagando e consumo real de IA e mensagens por varios meses: as franquias e o
 excedente sao o que protege a margem.
+
+## Atraso, avisos e suspensão (25/10/2026)
+
+A régua muda o status sozinha: 5 dias de atraso na fatura mais antiga em
+aberto, INADIMPLENTE; 15 dias, SUSPENSO (a equipe não entra; os dados ficam).
+Pagar tudo o que está vencido devolve o escritório ao ar na hora (webhook do
+Asaas → `registrarPagamento` → régua).
+
+Avisos por e-mail a todo administrador ativo do escritório, uma vez por
+fatura, em `src/lib/avisos-de-cobranca.ts`: lembrete 3 dias antes do
+vencimento (pulado se a fatura acabou de sair), vencida (1 dia), em atraso
+com a data da suspensão (5 dias), suspensão em 3 dias (12 dias), acesso
+suspenso e acesso restabelecido. Aviso perdido não sai atrasado: vai só a
+etapa em que a fatura está. Dentro do sistema, uma faixa vermelha em toda
+tela mostra a pendência (com valor e link só para o administrador), e a tela
+de entrada do escritório suspenso explica o motivo.
+
+No console (lista de escritórios e ficha): **Avisar** manda o aviso na hora;
+**Suspender** tira do ar antes dos 15 dias quem tem fatura vencida (o motivo
+fica no registro e não vai ao cliente); **Liberar** devolve o acesso, com um
+prazo opcional até o qual a régua não suspende de novo (pagamento
+combinado). Sem fatura vencida não há suspensão por atraso: para tirar do ar
+por outro motivo, o caminho é encerrar. Testes em
+`testes/suspensao-e-avisos.test.ts`.

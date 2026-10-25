@@ -32,6 +32,7 @@ import {
 import { tabelaVigente } from "./tabela-de-precos";
 import { cupomValeEm, linhaDoCupom, mesesCobertos, type CupomNaConta } from "./cupons";
 import { contaMontada } from "./planos";
+import { avisarCobranca } from "./avisos-de-cobranca";
 import { enfileirar } from "./fila";
 import type { Faixa } from "./faixas";
 
@@ -171,6 +172,7 @@ export function statusPelaRegua(
   statusAtual: string,
   maiorAtraso: number | null,
   testeAcabou = false,
+  suspensao: { manual?: boolean; adiadaAte?: Date | null; agora?: Date } = {},
 ): string {
   // Encerrado e decisao humana: a regua nao reativa nem mexe nele.
   if (statusAtual === "ENCERRADO") return "ENCERRADO";
@@ -183,7 +185,11 @@ export function statusPelaRegua(
     // Sem fatura em atraso: quem estava devendo volta a ATIVO.
     return base === "INADIMPLENTE" || base === "SUSPENSO" ? "ATIVO" : base;
   }
-  if (maiorAtraso >= REGUA.suspenso) return "SUSPENSO";
+  // Suspenso pelo operador: fica fora do ar enquanto houver atraso.
+  if (suspensao.manual && maiorAtraso > 0) return "SUSPENSO";
+  // Adiamento combinado: ate a data, a regua nao suspende (fica inadimplente).
+  const adiada = Boolean(suspensao.adiadaAte && suspensao.adiadaAte > (suspensao.agora ?? new Date()));
+  if (maiorAtraso >= REGUA.suspenso && !adiada) return "SUSPENSO";
   if (maiorAtraso >= REGUA.inadimplente) return "INADIMPLENTE";
   return base === "TESTE" ? "ATIVO" : base;
 }
@@ -321,18 +327,30 @@ export async function aplicarRegua(
   const testeAcabou = Boolean(
     assinatura && !assinatura.canceladaEm && assinatura.fimDoTeste <= agora,
   );
-  const statusNovo = statusPelaRegua(
-    escritorio.status,
-    atraso !== null && atraso > 0 ? atraso : null,
-    testeAcabou,
-  );
+  const emAtraso = atraso !== null && atraso > 0 ? atraso : null;
+  const statusNovo = statusPelaRegua(escritorio.status, emAtraso, testeAcabou, {
+    manual: escritorio.suspensaoManual,
+    adiadaAte: escritorio.suspensaoAdiadaAte,
+    agora,
+  });
 
-  if (statusNovo !== escritorio.status) {
-    await prismaPlataforma().escritorio.update({
-      where: { id: escritorioId },
-      data: { status: statusNovo },
-    });
+  const mudancas: Prisma.EscritorioUpdateInput = {};
+  if (statusNovo !== escritorio.status) mudancas.status = statusNovo;
+  if (statusNovo === "SUSPENSO" && escritorio.status !== "SUSPENSO") mudancas.suspensoEm = agora;
+  if (statusNovo !== "SUSPENSO" && (escritorio.suspensoEm || escritorio.suspensaoManual)) {
+    Object.assign(mudancas, { suspensoEm: null, suspensaoManual: false, suspensaoMotivo: null });
   }
+  // Tudo pago: o adiamento combinado acaba junto.
+  if (emAtraso === null && escritorio.suspensaoAdiadaAte) mudancas.suspensaoAdiadaAte = null;
+  if (Object.keys(mudancas).length) {
+    await prismaPlataforma().escritorio.update({ where: { id: escritorioId }, data: mudancas });
+  }
+
+  // Avisos ao escritorio: a mudanca de status ou a etapa da fatura em atraso.
+  // Um aviso que falha nao derruba a regua.
+  await avisarCobranca(escritorioId, { anterior: escritorio.status, novo: statusNovo }, agora).catch((erro) =>
+    console.error(`regua: avisos do escritório ${escritorioId} falharam — ${(erro as Error).message}`),
+  );
 
   return { faturaGerada, statusAnterior: escritorio.status, statusNovo };
 }
