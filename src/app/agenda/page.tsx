@@ -1,4 +1,5 @@
 import { comEscritorio } from "@/lib/prisma";
+import { atoSemAdvogado } from "@/lib/agenda-tela";
 import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
 import { Estrutura } from "@/componentes/Estrutura";
@@ -26,7 +27,7 @@ export default async function PaginaAgenda() {
         include: {
           processo: { select: { numero: true } },
           cliente: { select: { nome: true } },
-          responsavel: { select: { nome: true } },
+          responsavel: { select: { nome: true, papel: true } },
           participantes: {
             orderBy: { criadoEm: "asc" },
             include: { cliente: { select: { nome: true } } },
@@ -73,6 +74,7 @@ export default async function PaginaAgenda() {
     nomeDoCliente: c.cliente?.nome ?? null,
     responsavelId: c.responsavelId,
     nomeDoResponsavel: c.responsavel?.nome ?? null,
+    atoSemAdvogado: atoSemAdvogado(c.tipo, c.responsavel?.papel),
     participantes: c.participantes.map((p) => ({
       clienteId: p.clienteId,
       // O nome do cliente vem do cadastro, sempre.

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { MenorDeIdade } from "@/componentes/MenorDeIdade";
+import { MenoresDoCliente } from "@/componentes/MenoresDoCliente";
+import { porQuem, regimeEmTexto } from "@/lib/menor";
 import { EnvioDoCliente } from "@/componentes/EnvioDoCliente";
 import { notFound } from "next/navigation";
 import { comEscritorio } from "@/lib/prisma";
@@ -90,6 +93,8 @@ export default async function FichaCliente({
           include: { arquivo: { select: { nome: true } } },
         },
         representantes: { orderBy: { ordem: "asc" } },
+        menores: { orderBy: { nome: "asc" }, select: { id: true, nome: true, nascimento: true } },
+        responsavelCliente: { select: { id: true, nome: true } },
       },
     }),
   );
@@ -142,6 +147,7 @@ export default async function FichaCliente({
       email: r.email ?? "",
       telefone: r.telefone ?? "",
       mesmoEnderecoDaEmpresa: r.mesmoEnderecoDaEmpresa,
+      parentesco: r.parentesco ?? undefined,
       // A qualificacao e montada no servidor, pelo mesmo codigo que a peca vai
       // usar: mostrar na tela um texto diferente do que sai na peca seria pior
       // que nao mostrar nada.
@@ -157,6 +163,7 @@ export default async function FichaCliente({
           mesmoEnderecoDaEmpresa: r.mesmoEnderecoDaEmpresa,
         },
         enderecoDaEmpresa,
+        cliente.menor ? porQuem(r.parentesco).feminino : false,
       ),
     }),
   );
@@ -277,6 +284,14 @@ export default async function FichaCliente({
                 },
               ]}
             />
+            {pessoaJuridica ? null : (
+              <MenorDeIdade
+                clienteId={cliente.id}
+                menor={cliente.menor}
+                regime={regimeEmTexto(cliente.nascimento, new Date())}
+                doCadastroDe={cliente.responsavelCliente}
+              />
+            )}
           </div>
         </section>
 
@@ -331,11 +346,23 @@ export default async function FichaCliente({
         Só para pessoa jurídica: pedir representante legal de pessoa física e
         pedir que alguém invente um dado.
       */}
-      {ehPessoaJuridica(cliente.documento) ? (
+      {ehPessoaJuridica(cliente.documento) || cliente.menor ? (
         <div className="mt-6">
           <RepresentantesDoCliente
             clienteId={cliente.id}
             iniciais={representantes}
+            paraMenor={cliente.menor && !pessoaJuridica ? regimeEmTexto(cliente.nascimento, new Date()) : null}
+          />
+        </div>
+      ) : null}
+
+      {/* O menor nasce do cadastro de quem o representa (menores-do-escritorio.ts). */}
+      {!pessoaJuridica && !cliente.menor ? (
+        <div className="mt-6">
+          <MenoresDoCliente
+            clienteId={cliente.id}
+            nomeDoCliente={cliente.nome}
+            menores={cliente.menores.map((m) => ({ id: m.id, nome: m.nome, regime: regimeEmTexto(m.nascimento, new Date()) }))}
           />
         </div>
       ) : null}

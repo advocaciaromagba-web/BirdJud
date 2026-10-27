@@ -126,9 +126,13 @@ export async function mandarAssinar(
     throw new AutentiqueRecusou(motivoDoBloqueio(dados.cliente, "EMAIL"));
   }
 
+  // Menor nao assina: assina quem o representa, pelo e-mail dele.
+  const pelaParte = dados.cliente.menor
+    ? (dados.representantes ?? []).map((r) => ({ nome: r.nome, email: r.email ?? null }))
+    : { nome: dados.cliente.nome, email: dados.cliente.email };
   const signatarios = montarSignatarios(
     especie,
-    { nome: dados.cliente.nome, email: dados.cliente.email },
+    pelaParte,
     opcoes.advogados ?? [],
     quem,
   );

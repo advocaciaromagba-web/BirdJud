@@ -199,7 +199,7 @@ export function montarInstrucao(perfil: Perfil): string {
       ? [
           "- nome, CPF, RG e nascimento saem do documento de identificação; o endereço sai do comprovante de endereço;",
           "- o comprovante pode estar no nome de outra pessoa (cônjuge, pai, locador): use o ENDERECO dele, nunca o nome, e diga em observações de quem é a conta;",
-          '- "nascimento" sai no formato aaaa-mm-dd;',
+          '- "nascimento" sai no formato aaaa-mm-dd, e é a data de NASCIMENTO: não confunda com a data de expedição do documento, de validade ou de registro (na certidão, é a data em que a pessoa nasceu, não a do registro);',
           '- "rg" é o número do RG ou da CIN com o órgão emissor e a UF quando aparecerem ("12.345.678-9 SSP/SP");',
           '- "cep" só com os 8 dígitos; "uf" só a sigla de 2 letras; "numero" é o número do imóvel (ou "S/N"), não o número da conta nem do medidor;',
           '- "logradouro" é o nome da rua com o tipo ("Rua das Flores"), sem o número, sem o bairro;',

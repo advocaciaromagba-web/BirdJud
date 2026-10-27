@@ -231,6 +231,13 @@ model Cliente {
   notificarEmail    Boolean @default(true)
   envioAlteradoEm   DateTime?
   envioAlteradoPor  String?
+  /// Menor de idade: o documento sai no nome dele, com quem o representa
+  /// (Representante.parentesco). Ver src/lib/menor.ts.
+  menor                Boolean  @default(false)
+  /// O adulto de cujo cadastro o menor nasceu (a mae que chegou como cliente).
+  responsavelClienteId String?
+  responsavelCliente   Cliente? @relation("MenoresDoCliente", fields: [responsavelClienteId], references: [id], onDelete: SetNull)
+  menores              Cliente[] @relation("MenoresDoCliente")
   telefone     String?
   endereco     Json?
   /// Qualificacao da pessoa fisica, como entra na procuracao e no contrato.
@@ -276,6 +283,7 @@ model Cliente {
   @@index([escritorioId])
   @@index([escritorioId, documento])
   pastasNaNuvem PastaNaNuvem[]
+  @@index([responsavelClienteId])
 }
 
 model Processo {
@@ -1532,6 +1540,8 @@ model Representante {
   /// Por onde a assinatura eletronica chega.
   email                  String?
   telefone               String?
+  /// So para cliente menor: GENITORA | GENITOR | TUTORA | TUTOR | RESPONSAVEL.
+  parentesco             String?
   mesmoEnderecoDaEmpresa Boolean  @default(true)
   endereco               Json?
   criadoEm               DateTime @default(now())

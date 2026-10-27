@@ -9,6 +9,7 @@ import { gravar, ler, apagar } from "./armazenamento";
 import { emReais, porExtenso } from "./dinheiro";
 import { formatarDocumento } from "./documentos";
 import { enderecoEmLinha, ehPessoaJuridica, qualificacao } from "./representantes";
+import { clausulaDoMenor, porQuem, problemaDoMenor } from "./menor";
 import { comoSeContrata, percentualEmTexto, planoDoContrato } from "./honorarios";
 import {
   cidadeEData,
@@ -297,6 +298,9 @@ export type RepresentanteDoBanco = {
   profissao: string | null;
   mesmoEnderecoDaEmpresa: boolean;
   endereco: unknown;
+  /** So no cliente menor (menor.ts). */
+  parentesco?: string | null;
+  email?: string | null;
 };
 
 type ParaQualificar = Parameters<typeof qualificacao>[0];
@@ -316,6 +320,8 @@ type Cliente = {
   nacionalidade?: string | null;
   estadoCivil?: string | null;
   profissao?: string | null;
+  /** Menor de idade: sai com quem o representa (menor.ts). */
+  menor?: boolean;
 };
 
 const texto = (v: string | null | undefined) => (v && v.trim() ? v.trim() : null);
@@ -338,6 +344,7 @@ export function nascimentoEmTexto(d: Date | null | undefined): string | null {
 export function qualificacaoDoCliente(
   cliente: Cliente,
   representantes: RepresentanteDoBanco[] = [],
+  hoje: Date = new Date(),
 ): string {
   const doc = cliente.documento ? formatarDocumento(cliente.documento) : null;
   const endereco = enderecoEmLinha((cliente.endereco ?? null) as never);
@@ -358,6 +365,20 @@ export function qualificacaoDoCliente(
   ].filter(Boolean);
 
   const base = partes.length > 0 ? `${cliente.nome}, ${partes.join(", ")}` : cliente.nome;
+
+  // Menor: no nome dele, com quem exerce o poder familiar. O endereco de quem
+  // representa, quando "o mesmo", e o do menor.
+  if (cliente.menor && !pj) {
+    const clausula = clausulaDoMenor(
+      { nascimento: cliente.nascimento, feminino: f },
+      representantes.map((r) => ({
+        parentesco: r.parentesco ?? null,
+        qualificacao: qualificacao(comoRepresentante(r), (cliente.endereco ?? null) as never, porQuem(r.parentesco).feminino),
+      })),
+      hoje,
+    );
+    if (clausula) return `${base}, ${clausula}`;
+  }
 
   if (ehPessoaJuridica(cliente.documento) && representantes.length > 0) {
     const quem = representantes
@@ -429,7 +450,7 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
 
   return {
     "cliente.nome": d.cliente.nome,
-    "cliente.qualificacao": qualificacaoDoCliente(d.cliente, d.representantes ?? []),
+    "cliente.qualificacao": qualificacaoDoCliente(d.cliente, d.representantes ?? [], hoje),
     "cliente.documento": d.cliente.documento ? formatarDocumento(d.cliente.documento) : null,
     "cliente.endereco": enderecoEmLinha((d.cliente.endereco ?? null) as never) || null,
     "cliente.email": d.cliente.email,
@@ -543,6 +564,17 @@ export async function gerarPeca(
   dados: DadosDaPeca,
   formato: Formato = "DOCX",
 ): Promise<PecaPronta> {
+  // Menor sem quem o represente nao sai: ato do absolutamente incapaz sem
+  // representacao e nulo (CC 166, I), e o do relativamente, anulavel.
+  if (dados.cliente.menor) {
+    const problema = problemaDoMenor(dados.cliente.nascimento, dados.hoje ?? new Date());
+    if (problema) throw new ModeloRecusado(problema);
+    if (!(dados.representantes ?? []).length) {
+      throw new ModeloRecusado(
+        "Cliente menor sem quem o represente: cadastre a mãe, o pai ou o responsável legal na ficha antes de gerar o documento.",
+      );
+    }
+  }
   const { conteudo, doEscritorio } = await arquivoDoModelo(escritorioId, especie);
   const valores = valoresDaPeca(dados);
 

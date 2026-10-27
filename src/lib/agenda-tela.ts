@@ -20,6 +20,8 @@ export type CompromissoNaTela = {
   nomeDoCliente: string | null;
   responsavelId: string | null;
   nomeDoResponsavel: string | null;
+  /** Audiencia ou pericia com responsavel que nao e advogado (aviso, nao bloqueio). */
+  atoSemAdvogado?: boolean;
   participantes: ParticipanteNaLista[];
   nomesDosParticipantes: string[];
   respostas: RespostaDoParticipante[];
@@ -64,3 +66,18 @@ export function statusDe(c: CompromissoNaTela, agora = new Date()): string {
   return "Agendado";
 }
 
+/**
+ * Audiencia e pericia sao atos privativos de advogado (EAOAB, art. 1o).
+ * Responsavel de outro papel vira AVISO, nao bloqueio: ha estagiario que
+ * acompanha o ato junto com o advogado, e decidir isso e do escritorio
+ * (vindo do sistema da Advocacia Roma, 27/10/2026).
+ */
+export const ATOS_PRIVATIVOS = new Set(["AUDIENCIA", "PERICIA"]);
+
+export function atoSemAdvogado(tipo: string, papelDoResponsavel: string | null | undefined): boolean {
+  if (!ATOS_PRIVATIVOS.has(tipo) || !papelDoResponsavel) return false;
+  return papelDoResponsavel !== "ADVOGADO" && papelDoResponsavel !== "ADMIN";
+}
+
+export const AVISO_DO_ATO_PRIVATIVO =
+  "Audiência e perícia são atos privativos de advogado (EAOAB, art. 1º): confira se um advogado acompanha.";

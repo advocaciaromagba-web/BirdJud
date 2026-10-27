@@ -14,6 +14,7 @@
  * campos, e a peca sai com um representante a menos.
  */
 import { cpfValido, digitosDe, formatarDocumento } from "./documentos";
+import { ehParentesco } from "./menor";
 
 export type Endereco = {
   rua?: string | null;
@@ -36,6 +37,8 @@ export type RepresentanteEntrada = {
   telefone?: string | null;
   mesmoEnderecoDaEmpresa?: boolean;
   endereco?: Endereco | null;
+  /** So para cliente menor (menor.ts). */
+  parentesco?: string | null;
 };
 
 export type RepresentanteLimpo = {
@@ -50,6 +53,7 @@ export type RepresentanteLimpo = {
   telefone: string | null;
   mesmoEnderecoDaEmpresa: boolean;
   endereco: Endereco | null;
+  parentesco: string | null;
 };
 
 export class RepresentanteInvalido extends Error {
@@ -112,6 +116,7 @@ export function prepararRepresentantes(
       Object.entries(item).some(
         ([chave, v]) =>
           chave !== "mesmoEnderecoDaEmpresa" &&
+          chave !== "parentesco" &&
           typeof v === "string" &&
           v.trim() !== "",
       ) || limparEndereco(item.endereco) !== null;
@@ -164,6 +169,7 @@ export function prepararRepresentantes(
       // contrario deixaria um endereco antigo pendurado, pronto para sair na
       // peca depois que a empresa mudou de sede.
       endereco: mesmoEndereco ? null : limparEndereco(item.endereco),
+      parentesco: ehParentesco(item.parentesco) ? item.parentesco : null,
     });
   }
 
@@ -203,17 +209,20 @@ export function qualificacao(
     | "mesmoEnderecoDaEmpresa"
   >,
   enderecoDaEmpresa: Endereco | null = null,
+  /** No feminino: a genitora e a tutora do menor (menor.ts). */
+  feminino = false,
 ): string {
   const endereco = r.mesmoEnderecoDaEmpresa ? enderecoDaEmpresa : r.endereco;
+  const f = feminino;
   const partes = [
     r.nacionalidade,
     r.estadoCivil,
     r.profissao,
-    r.rg ? `portador do RG nº ${r.rg}` : null,
+    r.rg ? `${f ? "portadora" : "portador"} do RG nº ${r.rg}` : null,
     // Pontuado aqui, nao no cadastro: a peca pede CPF por extenso, e o que
     // foi digitado so com numeros nao pode sair assim em procuracao.
-    `inscrito no CPF sob o nº ${formatarDocumento(r.cpf)}`,
-    enderecoEmLinha(endereco) ? `residente e domiciliado em ${enderecoEmLinha(endereco)}` : null,
+    `${f ? "inscrita" : "inscrito"} no CPF sob o nº ${formatarDocumento(r.cpf)}`,
+    enderecoEmLinha(endereco) ? `${f ? "residente e domiciliada" : "residente e domiciliado"} em ${enderecoEmLinha(endereco)}` : null,
   ].filter(Boolean);
   return `${r.nome}, ${partes.join(", ")}`;
 }

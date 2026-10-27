@@ -75,13 +75,16 @@ type Pessoa = { nome: string; email: string | null };
  */
 export function montarSignatarios(
   especie: Especie,
-  cliente: Pessoa,
+  /** Quem assina pelo cliente: ele mesmo, ou quem representa o menor. */
+  cliente: Pessoa | Pessoa[],
   advogados: Pessoa[],
   quem: "CLIENTE" | "ESCRITORIO" | "AMBOS" = ASSINA_POR_PADRAO[especie],
 ): Signatario[] {
   const lista: Signatario[] = [];
   if (quem === "CLIENTE" || quem === "AMBOS") {
-    lista.push({ nome: cliente.nome, email: (cliente.email ?? "").trim(), acao: "SIGN" });
+    for (const c of Array.isArray(cliente) ? cliente : [cliente]) {
+      lista.push({ nome: c.nome, email: (c.email ?? "").trim(), acao: "SIGN" });
+    }
   }
   if (quem === "ESCRITORIO" || quem === "AMBOS") {
     for (const a of advogados) {

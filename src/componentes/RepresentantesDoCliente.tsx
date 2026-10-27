@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+// Puro, sem banco: pode entrar no navegador.
+import { PARENTESCOS, ROTULO_DO_PARENTESCO } from "@/lib/menor";
 
 export type RepresentanteNaTela = {
   nome: string;
@@ -14,6 +16,8 @@ export type RepresentanteNaTela = {
   telefone: string;
   mesmoEnderecoDaEmpresa: boolean;
   qualificacao: string;
+  /** So no cliente menor. */
+  parentesco?: string;
 };
 
 const VAZIO: RepresentanteNaTela = {
@@ -30,21 +34,27 @@ const VAZIO: RepresentanteNaTela = {
 };
 
 /**
- * Quem assina pela empresa.
+ * Quem assina pela empresa — ou por um cliente menor de idade.
  *
- * Aparece SO para pessoa juridica: pedir representante legal de uma pessoa
- * fisica e pedir que alguem invente um dado.
+ * Aparece so para pessoa juridica e para menor: pedir representante legal de
+ * um adulto e pedir que alguem invente um dado. No menor, cada linha diz o
+ * parentesco ("por sua genitora", "por seu genitor") e o endereco, quando o
+ * mesmo, e o do menor.
  */
 export function RepresentantesDoCliente({
   clienteId,
   iniciais,
+  paraMenor = null,
 }: {
   clienteId: string;
   iniciais: RepresentanteNaTela[];
+  /** Texto do regime do menor ("12 anos — vai representado"), ou nulo para empresa. */
+  paraMenor?: string | null;
 }) {
+  const menor = paraMenor !== null;
   const router = useRouter();
   const [linhas, setLinhas] = useState<RepresentanteNaTela[]>(
-    iniciais.length > 0 ? iniciais : [VAZIO],
+    iniciais.length > 0 ? iniciais : [{ ...VAZIO, parentesco: menor ? "GENITORA" : undefined }],
   );
   const [editando, setEditando] = useState(iniciais.length === 0);
   const [erro, setErro] = useState<string | null>(null);
@@ -82,10 +92,11 @@ export function RepresentantesDoCliente({
     <section className="cartao">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Quem assina pela empresa</h2>
+          <h2 className="font-semibold">{menor ? "Quem representa o menor" : "Quem assina pela empresa"}</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Entra na qualificação da peça e na procuração. Mais de um quando os
-            sócios assinam em conjunto.
+            {menor
+              ? `Quem exerce o poder familiar: entra na qualificação de todo documento do menor e é quem assina. ${paraMenor}.`
+              : "Entra na qualificação da peça e na procuração. Mais de um quando os sócios assinam em conjunto."}
           </p>
         </div>
         <button
@@ -100,14 +111,23 @@ export function RepresentantesDoCliente({
       {!editando ? (
         iniciais.length === 0 ? (
           <p className="mt-3 text-sm text-amber-700">
-            Nenhum representante cadastrado. Sem isso, a qualificação da peça
-            sai incompleta e a procuração não tem quem assine.
+            {menor
+              ? "Ninguém cadastrado. Sem quem represente, nenhum documento do menor é gerado: ato sem representação é nulo ou anulável."
+              : "Nenhum representante cadastrado. Sem isso, a qualificação da peça sai incompleta e a procuração não tem quem assine."}
           </p>
         ) : (
           <ul className="lista mt-3">
             {iniciais.map((r, i) => (
               <li key={`${r.cpf}-${i}`} className="py-2 text-sm">
-                <span className="font-medium">{r.nome}</span>
+                <span className="font-medium">
+                  {r.nome}
+                  {menor && r.parentesco ? (
+                    <span className="font-normal text-slate-500">
+                      {" "}
+                      · {ROTULO_DO_PARENTESCO[r.parentesco as keyof typeof ROTULO_DO_PARENTESCO] ?? r.parentesco}
+                    </span>
+                  ) : null}
+                </span>
                 <span className="block text-xs text-slate-500">
                   {r.qualificacao}
                 </span>
@@ -133,7 +153,7 @@ export function RepresentantesDoCliente({
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold">
-                  {i + 1}º representante
+                  {i + 1}º {menor ? "responsável" : "representante"}
                 </p>
                 {linhas.length > 1 ? (
                   <button
@@ -149,6 +169,25 @@ export function RepresentantesDoCliente({
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {menor ? (
+                  <div className="sm:col-span-2">
+                    <label className="rotulo" htmlFor={`rp-par-${i}`}>
+                      Parentesco
+                    </label>
+                    <select
+                      id={`rp-par-${i}`}
+                      value={linha.parentesco ?? "GENITORA"}
+                      onChange={(e) => mudar(i, "parentesco", e.target.value)}
+                      className="campo"
+                    >
+                      {PARENTESCOS.map((p) => (
+                        <option key={p} value={p}>
+                          {ROTULO_DO_PARENTESCO[p]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
                 <div className="sm:col-span-2">
                   <label className="rotulo" htmlFor={`rp-nome-${i}`}>
                     Nome
@@ -249,10 +288,10 @@ export function RepresentantesDoCliente({
           <div>
             <button
               type="button"
-              onClick={() => setLinhas((antes) => [...antes, { ...VAZIO }])}
+              onClick={() => setLinhas((antes) => [...antes, { ...VAZIO, parentesco: menor ? "GENITOR" : undefined }])}
               className="botao-secundario"
             >
-              Mais um representante
+              {menor ? "Mais um responsável" : "Mais um representante"}
             </button>
           </div>
 

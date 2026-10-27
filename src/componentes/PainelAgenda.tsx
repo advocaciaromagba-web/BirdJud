@@ -23,6 +23,7 @@ import {
   TEXTO_DO_MOTIVO,
 } from "@/lib/agenda-rotulos";
 import {
+  AVISO_DO_ATO_PRIVATIVO,
   ROTULO_DO_TIPO,
   combina,
   statusDe,
@@ -253,14 +254,14 @@ export function PainelAgenda({
     },
     {
       nome: "responsavelId",
-      rotulo: "Advogado(a) responsável",
+      rotulo: "Responsável",
       tipo: "select",
       opcoes: [
         { valor: "", rotulo: "Sem responsável (e do escritório)" },
         ...equipe.map((p) => ({ valor: p.id, rotulo: `${p.nome} (${rotuloDoPapel(p.papel).toLowerCase()})` })),
       ],
       ajuda:
-        "Quem fica com isto recebe o aviso na hora, por e-mail e por WhatsApp. Sem responsável, aparece para todos.",
+        "Quem fica com isto recebe o aviso na hora, por e-mail e por WhatsApp. Atendimento e triagem podem ficar com qualquer pessoa da equipe; audiência e perícia são atos privativos de advogado (EAOAB, art. 1º).",
     },
     {
       nome: "clienteId",
@@ -429,7 +430,14 @@ export function PainelAgenda({
                         <div className="text-xs text-slate-500">{c.numeroProcesso}</div>
                       ) : null}
                     </td>
-                    <td>{c.nomeDoResponsavel ?? "—"}</td>
+                    <td>
+                      {c.nomeDoResponsavel ?? "—"}
+                      {c.atoSemAdvogado ? (
+                        <span className="block text-xs text-amber-700" title={AVISO_DO_ATO_PRIVATIVO}>
+                          ato privativo de advogado
+                        </span>
+                      ) : null}
+                    </td>
                     <td>{nomes}</td>
                     <td>
                       {c.link ? (
@@ -577,7 +585,8 @@ function VerCompromisso({
         <Dado rotulo="Quando" valor={quando.format(new Date(c.inicioISO))} />
         <Dado rotulo="Tipo" valor={ROTULO_DO_TIPO[c.tipo] ?? c.tipo} />
         <Dado rotulo="Status" valor={statusDe(c)} />
-        <Dado rotulo="Advogado(a) responsável" valor={c.nomeDoResponsavel ?? "—"} />
+        <Dado rotulo="Responsável" valor={c.nomeDoResponsavel ?? "—"} />
+        {c.atoSemAdvogado ? <p className="aviso-atencao sm:col-span-3">{AVISO_DO_ATO_PRIVATIVO}</p> : null}
         <Dado rotulo="Cliente" valor={c.nomeDoCliente ?? "—"} />
         {c.numeroProcesso ? <Dado rotulo="Número do processo" valor={c.numeroProcesso} /> : null}
         {c.local ? <Dado rotulo="Local" valor={c.local} /> : null}

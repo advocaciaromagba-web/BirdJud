@@ -38,6 +38,7 @@ const pedido = z.object({
         telefone: z.string().max(20).nullish(),
         mesmoEnderecoDaEmpresa: z.boolean().optional(),
         endereco: umEndereco,
+        parentesco: z.string().max(20).nullish(),
       }),
     )
     .max(20),
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
               telefone: r.telefone,
               mesmoEnderecoDaEmpresa: r.mesmoEnderecoDaEmpresa,
               endereco: (r.endereco ?? undefined) as Prisma.InputJsonValue | undefined,
+              parentesco: r.parentesco,
             }),
           ),
         }),

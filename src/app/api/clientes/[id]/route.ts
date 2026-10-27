@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { problemaDoMenor } from "@/lib/menor";
+import { ehPessoaJuridica } from "@/lib/representantes";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/sessao";
@@ -44,6 +46,8 @@ const edicao = z.object({
       uf: z.string().max(2).optional(),
     })
     .optional(),
+  // Menor de idade: o documento sai com quem o representa (src/lib/menor.ts).
+  menor: z.boolean().optional(),
 });
 
 const UM_EMAIL = z.string().email();
@@ -98,6 +102,24 @@ export async function PATCH(
       }
     }
 
+    // Menor exige data de nascimento e menos de 18 anos, conferidos sobre o
+    // cadastro como fica depois desta edicao — mudar so a data de um menor
+    // tambem passa por aqui.
+    if (corpo.data.menor !== undefined || nascimento !== undefined) {
+      const atual = await comEscritorio(escritorioId, (db) =>
+        db.cliente.findFirst({ where: { id }, select: { menor: true, nascimento: true, documento: true } }),
+      );
+      const menor = corpo.data.menor ?? atual?.menor ?? false;
+      if (menor) {
+        const documento = corpo.data.documento === undefined ? atual?.documento : limpar(corpo.data.documento);
+        if (ehPessoaJuridica(documento)) {
+          return NextResponse.json({ erro: "Empresa não é menor de idade: confira o CNPJ ou desmarque menor." }, { status: 400 });
+        }
+        const problema = problemaDoMenor(nascimento === undefined ? atual?.nascimento : nascimento, new Date());
+        if (problema) return NextResponse.json({ erro: problema }, { status: 400 });
+      }
+    }
+
     // O endereco e um so objeto: o que veio por cima do que havia. Mandar so
     // o numero da casa nao pode apagar a rua.
     let endereco: Record<string, string | null> | undefined;
@@ -135,6 +157,7 @@ export async function PATCH(
       ...opcional("profissao"),
       ...opcional("observacoes"),
       ...(nascimento === undefined ? {} : { nascimento }),
+      ...(corpo.data.menor === undefined ? {} : { menor: corpo.data.menor }),
       ...(endereco === undefined ? {} : { endereco }),
       ...(corpo.data.nome === undefined ? {} : { nome: corpo.data.nome.trim() }),
       ...(corpo.data.documento === undefined
