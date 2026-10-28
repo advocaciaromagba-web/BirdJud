@@ -253,7 +253,7 @@ describe("quem assina a peça", () => {
 
 describe("a numeracao do contrato que já vem no sistema", () => {
   const linhas = MODELO_PADRAO.CONTRATO.map((l) => l.texto);
-  const CLAUSULA = /^CLAUSULA (\d+)ª — /;
+  const CLAUSULA = /^CLÁUSULA (\d+)ª — /;
   const ITEM = /^(\d+)\.(\d+)\. /;
 
   it("as cláusulas vão de 1 a N, sem pular e sem repetir", () => {
@@ -300,7 +300,7 @@ describe("a numeracao do contrato que já vem no sistema", () => {
     // Citar o dispositivo e o que poupa a discussao sobre a classificacao do
     // credito na hora da cobranca.
     const texto = linhas.join("\n");
-    expect(texto).toContain("CLAUSULA 2ª — DA NATUREZA ALIMENTAR DOS HONORARIOS");
+    expect(texto).toContain("CLÁUSULA 2ª — DA NATUREZA ALIMENTAR DOS HONORÁRIOS");
     expect(texto).toContain("Lei nº 15.472, de 21 de julho de 2026");
     expect(texto).toContain("artigo 22, § 9º, da Lei nº 8.906/94");
     expect(texto).toContain("artigo 24 da Lei nº 8.906/94");

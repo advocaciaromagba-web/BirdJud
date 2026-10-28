@@ -29,8 +29,8 @@ export type CompromissoNaTela = {
 
 export const ROTULO_DO_TIPO: Record<string, string> = {
   COMPROMISSO: "Atendimento / reunião",
-  AUDIENCIA: "Audiencia",
-  PERICIA: "Pericia",
+  AUDIENCIA: "Audiência",
+  PERICIA: "Perícia",
   PRAZO: "Prazo",
   TAREFA: "Tarefa",
 };

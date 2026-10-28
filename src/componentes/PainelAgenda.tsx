@@ -400,7 +400,7 @@ export function PainelAgenda({
               <th>Quando</th>
               <th>Tipo</th>
               <th>Título</th>
-              <th>Advogado(a)</th>
+              <th>Responsável</th>
               <th>Cliente</th>
               <th>Sala</th>
               <th>Status</th>
@@ -705,7 +705,7 @@ function ExcluidosDaAgenda({ aoFechar }: { aoFechar: () => void }) {
                 <th>Título</th>
                 <th>Tipo</th>
                 <th>Cliente / quem ia</th>
-                <th>Advogado(a)</th>
+                <th>Responsável</th>
                 <th>Data original</th>
                 <th>Saiu em</th>
                 <th>Por que</th>
@@ -819,7 +819,7 @@ function NotificacoesDaAgenda({ aoFechar }: { aoFechar: () => void }) {
                 <th>Destinatário</th>
                 <th>Compromisso</th>
                 <th>Data do compromisso</th>
-                <th>Advogado(a)</th>
+                <th>Responsável</th>
                 <th>Status</th>
               </tr>
             </thead>

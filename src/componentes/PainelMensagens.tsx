@@ -7,7 +7,7 @@ import type { MensagemNaTela, MensagensDoEscritorio } from "@/lib/entrega-do-esc
 
 const ETIQUETA_DA_CATEGORIA: Record<string, { texto: string; classe: string }> = {
   TEMPORARIO: { texto: "Instabilidade", classe: "etiqueta-atencao" },
-  NUMERO: { texto: "Numero", classe: "etiqueta-erro" },
+  NUMERO: { texto: "Número", classe: "etiqueta-erro" },
   RECUSOU: { texto: "Bloqueou empresas", classe: "etiqueta-erro" },
   PLATAFORMA: { texto: "Plataforma", classe: "etiqueta-atencao" },
   EMAIL: { texto: "E-mail", classe: "etiqueta-erro" },

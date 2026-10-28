@@ -92,7 +92,7 @@ export default async function PaginaIntegracoes({
       nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
-      titulo="Integracoes"
+      titulo="Integrações"
     >
       <p className="mt-1 text-sm text-slate-500">
         Cada escritório conecta as próprias contas. As credenciais ficam

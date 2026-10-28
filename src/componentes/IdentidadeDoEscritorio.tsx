@@ -151,7 +151,7 @@ export function IdentidadeDoEscritorio({
         O sistema e do escritório, não da plataforma: quem entra em{" "}
         <code>{nome}</code> vê a marca dele. Escolha duas cores — o resto da
         paleta é derivado delas, para que os contrastes fechem e nada fique
-        ilegivel.
+        ilegível.
       </p>
 
       <form onSubmit={gravar} className="mt-5 grid gap-5 lg:grid-cols-2">
@@ -197,7 +197,7 @@ export function IdentidadeDoEscritorio({
                 aria-label="Cor de destaque em hexadecimal"
               />
             </div>
-            <p className="ajuda">Reguas, filetes e detalhes.</p>
+            <p className="ajuda">Réguas, filetes e detalhes.</p>
           </div>
 
           <div>

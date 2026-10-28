@@ -65,11 +65,11 @@ export function PainelArquivos({
     <>
       <form onSubmit={enviar} className="cartao-aperto mt-6 grid gap-3">
         <label className="grid gap-1 text-sm">
-          Arquivo (ate {tamanhoMaximoMb} MB)
+          Arquivo (até {tamanhoMaximoMb} MB)
           <input type="file" name="arquivo" required className="campo" />
         </label>
         <label className="grid gap-1 text-sm">
-          Descricao (opcional)
+          Descrição (opcional)
           <input name="descricao" className="campo" />
         </label>
         <div className="grid gap-3 sm:grid-cols-2">

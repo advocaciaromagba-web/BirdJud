@@ -19,8 +19,8 @@ export const TIPOS_DA_AGENDA = ["AUDIENCIA", "PERICIA", "COMPROMISSO"] as const;
 export type TipoDaAgenda = (typeof TIPOS_DA_AGENDA)[number];
 
 export const ROTULO_DO_TIPO_DA_AGENDA: Record<TipoDaAgenda, string> = {
-  AUDIENCIA: "Audiencia",
-  PERICIA: "Pericia",
+  AUDIENCIA: "Audiência",
+  PERICIA: "Perícia",
   COMPROMISSO: "Atendimento / reunião",
 };
 

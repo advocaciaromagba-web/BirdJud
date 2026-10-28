@@ -32,7 +32,7 @@ const ASSINA_CLIENTE: Linha[] = [
 // ---------------------------------------------------------------------------
 
 const PROCURACAO: Linha[] = [
-  TITULO("INSTRUMENTO PARTICULAR DE PROCURACAO"),
+  TITULO("INSTRUMENTO PARTICULAR DE PROCURAÇÃO"),
   T(
     "{{cliente.qualificacao}}, pelo presente instrumento de Procuração, nomeia e " +
       "constitui seu bastante procurador {{escritorio.qualificacao}}, representado " +
@@ -51,13 +51,13 @@ const PROCURACAO: Linha[] = [
 ];
 
 const DECLARACAO: Linha[] = [
-  TITULO("DECLARACAO DE HIPOSSUFICIENCIA"),
+  TITULO("DECLARAÇÃO DE HIPOSSUFICIÊNCIA"),
   T(
     "{{cliente.qualificacao}}, DECLARO, para os devidos fins de direito, " +
       "especialmente para instruir ação judicial, que sou pobre na acepção jurídica " +
       "do termo, não tendo condições de pagar as custas e as despesas do processo sem " +
       "sacrifício do próprio sustento e do de minha família, nos termos do artigo 98 " +
-      "do Código de Processo Civil e do artigo 5º, inciso LXXIV, da Constituicao " +
+      "do Código de Processo Civil e do artigo 5º, inciso LXXIV, da Constituição " +
       "Federal.",
   ),
   T("Por ser a expressão da verdade, assino a presente declaração."),
@@ -67,7 +67,7 @@ const DECLARACAO: Linha[] = [
 ];
 
 const CONTRATO: Linha[] = [
-  TITULO("CONTRATO DE PRESTACAO DE SERVICOS ADVOCATICIOS"),
+  TITULO("CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS"),
 
   SUB("CONTRATADO:"),
   T(
@@ -78,7 +78,7 @@ const CONTRATO: Linha[] = [
   SUB("CONTRATANTE:"),
   T("{{cliente.qualificacao}}, doravante denominado simplesmente CLIENTE."),
 
-  SUB("I — PREAMBULO"),
+  SUB("I — PREÂMBULO"),
   T(
     "A duração da presente ação ou processo administrativo não tem prazo determinado, " +
       "tendo em vista que o seu término se condiciona aos recursos porventura " +
@@ -88,14 +88,14 @@ const CONTRATO: Linha[] = [
   T("Este contrato se refere a atuação em {{honorarios.descricao}}."),
   T(
     "O ADVOGADO, face ao mandato judicial e extrajudicial que lhe foi outorgado, " +
-      "obriga-se a prestar seus servicos profissionais na defesa dos direitos do " +
+      "obriga-se a prestar seus serviços profissionais na defesa dos direitos do " +
       "CLIENTE, em qualquer juízo, instância ou tribunal, desempenhando com zelo a " +
       "atividade do seu cargo.",
   ),
 
-  SUB("II — CLAUSULAS CONTRATUAIS"),
+  SUB("II — CLÁUSULAS CONTRATUAIS"),
 
-  SUB("CLAUSULA 1ª — DOS HONORARIOS ADVOCATICIOS"),
+  SUB("CLÁUSULA 1ª — DOS HONORÁRIOS ADVOCATÍCIOS"),
   T(
     "1.1. Os honorários do presente contrato ficam fixados em {{honorarios.valor}} " +
       "({{honorarios.valor_por_extenso}}), contratados {{honorarios.contratacao}}, " +
@@ -146,10 +146,10 @@ const CONTRATO: Linha[] = [
   // esta escrito no titulo. Uma clausula que ja cita o dispositivo poupa a
   // discussao — e deixa o CLIENTE ciente, desde a assinatura, do regime em que
   // esta entrando.
-  SUB("CLAUSULA 2ª — DA NATUREZA ALIMENTAR DOS HONORARIOS"),
+  SUB("CLÁUSULA 2ª — DA NATUREZA ALIMENTAR DOS HONORÁRIOS"),
   T(
     "2.1. Os honorários ajustados neste instrumento, assim como os fixados ou " +
-      "arbitrados judicialmente e os de sucumbência, tem natureza alimentar e gozam " +
+      "arbitrados judicialmente e os de sucumbência, têm natureza alimentar e gozam " +
       "dos mesmos privilégios dos créditos decorrentes da legislação do trabalho, nos " +
       "termos do artigo 22, § 9º, da Lei nº 8.906/94, com a redação dada pela Lei nº " +
       "15.472, de 21 de julho de 2026, e do artigo 85, § 14, do Código de Processo " +
@@ -157,7 +157,7 @@ const CONTRATO: Linha[] = [
   ),
   T(
     "2.2. Nos termos do artigo 24 da Lei nº 8.906/94, com a redação dada pela Lei nº " +
-      "15.472/2026, o contrato escrito que estipula honorários e título executivo e " +
+      "15.472/2026, o contrato escrito que estipula honorários é título executivo e " +
       "constitui crédito privilegiado na falência, na recuperação judicial e " +
       "extrajudicial, no concurso de credores, na insolvência civil e na liquidação " +
       "extrajudicial.",
@@ -172,9 +172,9 @@ const CONTRATO: Linha[] = [
       "do tratamento privilegiado que a lei lhe confere.",
   ),
 
-  SUB("CLAUSULA 3ª — DA ATUALIZACAO DE ENDERECO E DOS DOCUMENTOS"),
+  SUB("CLÁUSULA 3ª — DA ATUALIZAÇÃO DE ENDEREÇO E DOS DOCUMENTOS"),
   T(
-    "3.1. E de inteira responsabilidade do CLIENTE manter seu endereço e seus contatos " +
+    "3.1. É de inteira responsabilidade do CLIENTE manter seu endereço e seus contatos " +
       "atualizados junto ao escritório contratado.",
   ),
   T(
@@ -192,15 +192,15 @@ const CONTRATO: Linha[] = [
       "processuais e extrajudiciais, dentro dos prazos legais.",
   ),
 
-  SUB("CLAUSULA 4ª — DO COMPARECIMENTO AS AUDIENCIAS"),
+  SUB("CLÁUSULA 4ª — DO COMPARECIMENTO ÀS AUDIÊNCIAS"),
   T(
-    "4.1. E responsabilidade do ADVOGADO informar a data e o horário das audiências " +
+    "4.1. É responsabilidade do ADVOGADO informar a data e o horário das audiências " +
       "designadas, com antecedência mínima de 72 (setenta e duas) horas, por telefone, " +
       "mensagem, correio eletrônico ou via postal.",
   ),
   T(
     "4.2. Fica ressalvado que qualquer prejuízo processual decorrente da falta do " +
-      "CLIENTE as audiências não obriga o ADVOGADO a ressarcir qualquer valor a título " +
+      "CLIENTE às audiências não obriga o ADVOGADO a ressarcir qualquer valor a título " +
       "de indenização.",
   ),
   T(
@@ -210,11 +210,11 @@ const CONTRATO: Linha[] = [
   ),
   T("4.4. A locomoção do CLIENTE até o local das audiências não é responsabilidade do ADVOGADO."),
 
-  SUB("CLAUSULA 5ª — DO SUBSTABELECIMENTO"),
+  SUB("CLÁUSULA 5ª — DO SUBSTABELECIMENTO"),
   T(
     "5.1. Em caso de urgência ou força maior, pode o ADVOGADO substabelecer, com " +
       "reservas de iguais poderes, a presente ação, quando necessária a prática de ato " +
-      "especifico.",
+      "específico.",
   ),
   T(
     "5.2. No caso de substabelecimento definitivo, sem reservas de poderes, o ADVOGADO " +
@@ -223,19 +223,19 @@ const CONTRATO: Linha[] = [
       "cobrados conforme o previsto na Cláusula 1ª.",
   ),
 
-  SUB("CLAUSULA 6ª — DOS GASTOS E DESPESAS COMPLEMENTARES"),
+  SUB("CLÁUSULA 6ª — DOS GASTOS E DESPESAS COMPLEMENTARES"),
   T(
     "6.1. Todos os gastos com perícias, laudos, honorários de contador, extração de " +
       "carta de sentença e congêneres, quando contratados com a aprovação do CLIENTE, " +
       "são de responsabilidade dele, contra a apresentação de comprovantes.",
   ),
   T(
-    "6.2. Eventual multa por litigância de ma-fe decorrente de documentos ou " +
+    "6.2. Eventual multa por litigância de má-fé decorrente de documentos ou " +
       "informações prestadas pelo CLIENTE desobriga o ADVOGADO de qualquer espécie de " +
       "ressarcimento.",
   ),
 
-  SUB("CLAUSULA 7ª — DOS HONORARIOS SUCUMBENCIAIS"),
+  SUB("CLÁUSULA 7ª — DOS HONORÁRIOS SUCUMBENCIAIS"),
   T(
     "7.1. Os honorários advindos da sucumbência pertencem ao ADVOGADO, nos termos do " +
       "artigo 23 da Lei nº 8.906/94.",
@@ -245,10 +245,10 @@ const CONTRATO: Linha[] = [
       "honorários contratados previstos na Cláusula 1ª.",
   ),
 
-  SUB("CLAUSULA 8ª — DO ADITAMENTO"),
+  SUB("CLÁUSULA 8ª — DO ADITAMENTO"),
   T("8.1. As partes, de comum acordo, podem promover o aditamento do presente contrato."),
 
-  SUB("CLAUSULA 9ª — DA RESCISAO E DA ELEICAO DE FORO"),
+  SUB("CLÁUSULA 9ª — DA RESCISÃO E DA ELEIÇÃO DE FORO"),
   T(
     // ATENCAO: o artigo e o 784, III, do CPC de 2015 — "documento particular
     // assinado pelo devedor e por 2 (duas) testemunhas". O artigo 585, II, que
@@ -291,7 +291,7 @@ const CONTRATO: Linha[] = [
 ];
 
 const RECIBO: Linha[] = [
-  TITULO("RECIBO DE PAGAMENTO DE HONORARIOS"),
+  TITULO("RECIBO DE PAGAMENTO DE HONORÁRIOS"),
   T("Valor: {{recibo.valor}} ({{recibo.valor_por_extenso}})"),
   T(
     "Recebi de {{cliente.qualificacao}} a quantia acima, referente a " +

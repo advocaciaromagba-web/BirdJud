@@ -221,7 +221,7 @@ export default async function FichaCliente({
           <h2 className="font-semibold">Cadastro</h2>
           <p className="mt-1 text-sm text-slate-600">
             Só o nome é obrigatório. O que for preenchido entra na qualificação
-            da procuracao e do contrato; o que ficar vazio simplesmente nao
+            da procuração e do contrato; o que ficar vazio simplesmente não
             aparece no papel.
           </p>
           <div className="mt-4">
@@ -267,7 +267,7 @@ export default async function FichaCliente({
                   rotulo: "CEP",
                   valor: enderecoNaFicha.cep ? enderecoNaFicha.cep.replace(/^(\d{5})(\d{3})$/, "$1-$2") : "",
                   placeholder: "Comece pelo CEP: o resto vem sozinho",
-                  grupo: pessoaJuridica ? "Endereço da empresa" : "Endereco",
+                  grupo: pessoaJuridica ? "Endereço da empresa" : "Endereço",
                 },
                 { nome: "endereco.logradouro", rotulo: "Rua / avenida", valor: enderecoNaFicha.logradouro ?? "" },
                 { nome: "endereco.numero", rotulo: "Número", valor: enderecoNaFicha.numero ?? "" },
@@ -280,7 +280,7 @@ export default async function FichaCliente({
                   rotulo: "Observações",
                   valor: cliente.observacoes ?? "",
                   tipo: "textarea",
-                  grupo: "Observacoes",
+                  grupo: "Observações",
                 },
               ]}
             />

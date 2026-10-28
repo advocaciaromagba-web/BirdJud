@@ -79,7 +79,7 @@ export default async function PaginaCobrancas() {
       nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
-      titulo="Cobrancas"
+      titulo="Cobranças"
     >
       <p className="mt-1 text-sm text-slate-500">
         {emReais(emAberto)} em aberto · cobrança na conta Asaas do próprio
@@ -98,7 +98,7 @@ export default async function PaginaCobrancas() {
       {dados.contaConectada === 0 ? (
         <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-4 text-sm">
           A conta Asaas ainda não está conectada. Cadastre a chave de API em
-          Integracoes: sem ela não dá para emitir cobrança.
+          Integrações: sem ela não dá para emitir cobrança.
         </div>
       ) : null}
 

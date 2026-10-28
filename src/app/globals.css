@@ -277,7 +277,7 @@ p.esquerda {
 }
 
 .indicador-rotulo {
-  @apply text-xs font-medium uppercase tracking-wide text-slate-500;
+  @apply text-left text-xs font-medium uppercase tracking-wide text-slate-500;
 }
 
 /*

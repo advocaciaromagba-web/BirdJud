@@ -187,7 +187,7 @@ export function FormularioImplantar({
         {campo("telefoneAtendimento", "Telefone de atendimento", {}, "Vai em toda mensagem que o cliente recebe.")}
         {campo("cep", "CEP da sede", { inputMode: "numeric" })}
         {campo("logradouro", "Rua da sede")}
-        {campo("numero", "Numero")}
+        {campo("numero", "Número")}
         {campo("complemento", "Complemento")}
         {campo("bairro", "Bairro")}
         {campo("cidade", "Cidade")}

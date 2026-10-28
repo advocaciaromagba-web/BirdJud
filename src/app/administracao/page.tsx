@@ -31,7 +31,7 @@ export default async function PaginaAdministracao() {
         logoUrl={base.marca.logoUrl}
         papel={base.papel}
         modulos={ativos}
-        titulo="Administracao"
+        titulo="Administração"
       >
         <PortaDeAdministracao
           tranca={porta.tranca}
@@ -79,10 +79,10 @@ export default async function PaginaAdministracao() {
       nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
-      titulo="Administracao"
+      titulo="Administração"
     >
       <p className="mt-1 leitura text-sm text-slate-500">
-        Área destravada por {MINUTOS_DESTRAVADO} minutos. Depois disso a senha e
+        Área destravada por {MINUTOS_DESTRAVADO} minutos. Depois disso a senha é
         pedida de novo.
       </p>
 

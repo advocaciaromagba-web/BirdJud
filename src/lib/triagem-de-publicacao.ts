@@ -162,9 +162,9 @@ export function tituloPadrao(
 ): string {
   const base =
     tipo === "AUDIENCIA"
-      ? "Audiencia"
+      ? "Audiência"
       : tipo === "PERICIA"
-        ? "Pericia"
+        ? "Perícia"
         : especie === "AGENDAMENTO"
           ? "Compromisso do processo"
           : "Manifestação nos autos";

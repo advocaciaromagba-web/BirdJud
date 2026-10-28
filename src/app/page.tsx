@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ROTULO_DO_TIPO } from "@/lib/agenda-tela";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { dataHoraBR, horaBR } from "@/lib/datas";
@@ -156,7 +157,7 @@ export default async function Painel() {
                       : dataHoraBR.format(compromisso.inicio)}
                   </span>
                   <span className="font-semibold">{compromisso.titulo}</span>
-                  <span className="text-slate-500">{compromisso.tipo}</span>
+                  <span className="text-slate-500">{ROTULO_DO_TIPO[compromisso.tipo] ?? compromisso.tipo}</span>
                   {compromisso.local ? (
                     <span className="text-slate-500">
                       · {compromisso.local}

@@ -182,7 +182,7 @@ export default async function PaginaDoProcesso({
       {ficha.cobrancas.length > 0 ? (
         <section className="mt-8">
           <h2 className="font-semibold">
-            Cobrancas ({ficha.cobrancas.length})
+            Cobranças ({ficha.cobrancas.length})
           </h2>
           <ul className="mt-2 divide-y divide-slate-200 text-sm">
             {ficha.cobrancas.map((cobranca) => (

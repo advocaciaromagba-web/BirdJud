@@ -163,7 +163,7 @@ export default async function PaginaPublicacoes() {
       nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
-      titulo="Publicacoes"
+      titulo="Publicações"
     >
       <p className="mt-1 text-sm text-slate-500">
         {dados.naoLidas} não lida(s) ·{" "}

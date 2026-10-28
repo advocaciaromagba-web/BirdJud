@@ -111,7 +111,7 @@ export function EnderecoComCep({
         />
       </div>
       {campo("logradouro", "Rua / avenida", "col-span-4 sm:col-span-3", { autoComplete: "address-line1" })}
-      {campo("numero", "Numero", "col-span-2 sm:col-span-1")}
+      {campo("numero", "Número", "col-span-2 sm:col-span-1")}
       <div className="col-span-6 -mt-2">
         <RecadoDoCep estado={estado} />
       </div>

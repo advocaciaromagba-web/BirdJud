@@ -183,7 +183,11 @@ export function enderecoEmLinha(endereco: Endereco | null): string {
   // os dois, para nenhum caminho de cadastro perder a rua na peca.
   const logradouro = endereco.rua ?? (endereco as { logradouro?: string | null }).logradouro;
   const rua = [logradouro, endereco.numero].filter(Boolean).join(", ");
-  return [rua, endereco.complemento, endereco.bairro, endereco.cidade, endereco.uf, endereco.cep]
+  // CEP com hifen, como na qualificacao do advogado e do escritorio: "41810000"
+  // no meio de uma procuracao parece numero de documento.
+  const cep = (endereco.cep ?? "").replace(/\D/g, "");
+  const cepEscrito = cep.length === 8 ? `CEP ${cep.slice(0, 5)}-${cep.slice(5)}` : endereco.cep;
+  return [rua, endereco.complemento, endereco.bairro, endereco.cidade, endereco.uf, cepEscrito]
     .map((p) => (p ?? "").trim())
     .filter(Boolean)
     .join(", ");

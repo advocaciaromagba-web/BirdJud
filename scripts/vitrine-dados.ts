@@ -39,12 +39,14 @@ async function main() {
   const escritorio = await prismaPlataforma().escritorio.create({
     data: {
       slug: SLUG,
-      nome: "Escritorio Modelo",
+      nome: "Escritório Modelo",
       status: "ATIVO",
       faixa: "ATE_3",
       corPrimaria: "#0B1F3B",
       corSecundaria: "#D4AF7C",
       cidade: "Salvador",
+      // A vitrine mostra o escritorio em uso, nao o roteiro de configuracao.
+      primeirosPassos: { pulados: {}, dispensadoEm: new Date().toISOString() },
     },
   });
 
@@ -75,9 +77,9 @@ async function main() {
 
     const processos = await Promise.all(
       [
-        { numero: "0801234-56.2026.8.05.0001", tribunal: "TJBA", vara: "3a Vara Civel", area: "Civel", clienteId: clientes[0].id },
-        { numero: "0005678-90.2026.5.05.0003", tribunal: "TRT5", vara: "3a Vara do Trabalho", area: "Trabalhista", clienteId: clientes[1].id },
-        { numero: "1002345-67.2026.4.01.3300", tribunal: "TRF1", vara: "2a Vara Federal", area: "Agrario", clienteId: clientes[2].id },
+        { numero: "0801234-56.2026.8.05.0001", tribunal: "TJBA", vara: "3ª Vara Cível", area: "Cível", clienteId: clientes[0].id },
+        { numero: "0005678-90.2026.5.05.0003", tribunal: "TRT5", vara: "3ª Vara do Trabalho", area: "Trabalhista", clienteId: clientes[1].id },
+        { numero: "1002345-67.2026.4.01.3300", tribunal: "TRF1", vara: "2ª Vara Federal", area: "Agrário", clienteId: clientes[2].id },
       ].map((processo) =>
         db.processo.create({
           data: semEscritorio({ ...processo, numero: numeroParaGravar(processo.numero) }),
@@ -88,27 +90,27 @@ async function main() {
     await db.compromisso.createMany({
       data: [
         {
-          titulo: "Audiencia de instrucao e julgamento",
+          titulo: "Audiência de instrução e julgamento",
           tipo: "AUDIENCIA",
           inicio: daquiA(5 * HORA),
-          local: "Forum Ruy Barbosa — sala 304",
+          local: "Fórum Ruy Barbosa — sala 304",
           processoId: processos[0].id,
         },
         {
-          titulo: "Prazo: contestacao",
+          titulo: "Prazo: contestação",
           tipo: "PRAZO",
           inicio: daquiA(9 * HORA),
           processoId: processos[1].id,
         },
         {
-          titulo: "Reuniao com o cliente sobre acordo",
+          titulo: "Reunião com o cliente sobre acordo",
           tipo: "COMPROMISSO",
           inicio: daquiA(28 * HORA),
-          local: "Escritorio",
+          local: "Escritório",
           processoId: processos[2].id,
         },
         {
-          titulo: "Juntar procuracao atualizada",
+          titulo: "Juntar procuração atualizada",
           tipo: "TAREFA",
           inicio: daquiA(2 * DIA),
           processoId: processos[0].id,
@@ -129,10 +131,10 @@ async function main() {
         numeroProcesso: numeroParaGravar("0005678-90.2026.5.05.0003"),
         processoId: processos[1].id,
         tribunal: "TRT5",
-        orgao: "3a Vara do Trabalho de Salvador",
-        tipoComunicacao: "Intimacao",
+        orgao: "3ª Vara do Trabalho de Salvador",
+        tipoComunicacao: "Intimação",
         texto:
-          "Intimada a parte reclamada para, no prazo de 15 (quinze) dias, apresentar contestacao e documentos, sob pena de revelia e confissao quanto a materia de fato, nos termos do art. 844 da CLT.",
+          "Intimada a parte reclamada para, no prazo de 15 (quinze) dias, apresentar contestação e documentos, sob pena de revelia e confissão quanto à matéria de fato, nos termos do art. 844 da CLT.",
         dataDisponibilizacao: daquiA(-3 * HORA),
         urgente: true,
         prazoDias: 15,
@@ -144,10 +146,10 @@ async function main() {
         numeroProcesso: numeroParaGravar("0801234-56.2026.8.05.0001"),
         processoId: processos[0].id,
         tribunal: "TJBA",
-        orgao: "3a Vara Civel de Salvador",
+        orgao: "3ª Vara Cível de Salvador",
         tipoComunicacao: "Despacho",
         texto:
-          "Designo audiencia de instrucao e julgamento para o dia 30/09/2026, as 14h30, devendo as partes apresentar rol de testemunhas no prazo comum de 10 (dez) dias.",
+          "Designo audiência de instrução e julgamento para o dia 30/09/2026, às 14h30, devendo as partes apresentar rol de testemunhas no prazo comum de 10 (dez) dias.",
         dataDisponibilizacao: daquiA(-5 * HORA),
         urgente: false,
         prazoDias: 10,
@@ -159,10 +161,10 @@ async function main() {
         numeroProcesso: numeroParaGravar("1002345-67.2026.4.01.3300"),
         processoId: processos[2].id,
         tribunal: "TRF1",
-        orgao: "2a Vara Federal de Salvador",
-        tipoComunicacao: "Sentenca",
+        orgao: "2ª Vara Federal de Salvador",
+        tipoComunicacao: "Sentença",
         texto:
-          "Julgo procedente o pedido para declarar a nulidade da clausula de reajuste do contrato de credito rural, condenando a parte re a restituir os valores pagos a maior, com correcao monetaria desde cada desembolso.",
+          "Julgo procedente o pedido para declarar a nulidade da cláusula de reajuste do contrato de crédito rural, condenando a parte ré a restituir os valores pagos a maior, com correção monetária desde cada desembolso.",
         dataDisponibilizacao: daquiA(-28 * HORA),
         urgente: false,
         prazoDias: null,
@@ -183,8 +185,8 @@ async function main() {
             tokensSaida: 0,
             resultado:
               publicacao.idExterno === "vitrine-1"
-                ? "O QUE ACONTECEU: a reclamada foi intimada para contestar.\n\nO QUE FAZER: protocolar contestacao com documentos e rol de testemunhas.\n\nPRAZO: 15 dias corridos a contar da publicacao, com risco de revelia.\n\nATENCAO: confira a data de disponibilizacao nos autos antes de lancar o prazo."
-                : "O QUE ACONTECEU: audiencia de instrucao designada para 30/09/2026, as 14h30.\n\nO QUE FAZER: apresentar rol de testemunhas e confirmar a presenca do cliente.\n\nPRAZO: 10 dias, comum as partes.\n\nATENCAO: prazo comum nao se suspende por pedido de uma das partes.",
+                ? "O QUE ACONTECEU: a reclamada foi intimada para contestar.\n\nO QUE FAZER: protocolar contestação com documentos e rol de testemunhas.\n\nPRAZO: 15 dias úteis a contar da publicação, com risco de revelia.\n\nATENÇÃO: confira a data de disponibilização nos autos antes de lancar o prazo."
+                : "O QUE ACONTECEU: audiência de instrução designada para 30/09/2026, às 14h30.\n\nO QUE FAZER: apresentar rol de testemunhas e confirmar a presença do cliente.\n\nPRAZO: 10 dias, comum às partes.\n\nATENÇÃO: prazo comum não se suspende por pedido de uma das partes.",
           }),
         });
       }
@@ -195,7 +197,7 @@ async function main() {
         {
           clienteId: clientes[0].id,
           processoId: processos[0].id,
-          descricao: "Honorarios contratuais — 2a parcela",
+          descricao: "Honorários contratuais — 2ª parcela",
           valorCentavos: 480_000,
           vencimento: daquiA(-6 * DIA),
           forma: "BOLETO",
@@ -214,7 +216,7 @@ async function main() {
         {
           clienteId: clientes[2].id,
           processoId: processos[2].id,
-          descricao: "Honorarios — acao revisional de credito rural",
+          descricao: "Honorários — ação revisional de crédito rural",
           valorCentavos: 950_000,
           vencimento: daquiA(-20 * DIA),
           forma: "BOLETO",
@@ -232,7 +234,7 @@ async function main() {
           clienteId: clientes[2].id,
           serie: "1",
           numero: 128,
-          descricao: "Honorarios advocaticios — acao revisional",
+          descricao: "Honorários advocatícios — ação revisional",
           valorCentavos: 950_000,
           status: "EMITIDA",
           chaveAcesso: "29260500011222333000181550010000001281234567890",
@@ -242,7 +244,7 @@ async function main() {
           clienteId: clientes[0].id,
           serie: "1",
           numero: 129,
-          descricao: "Honorarios contratuais — 2a parcela",
+          descricao: "Honorários contratuais — 2ª parcela",
           valorCentavos: 480_000,
           status: "RASCUNHO",
         },

@@ -68,7 +68,7 @@ export default async function PaginaUsuarios() {
       nomeUsuario={contexto.nomeUsuario}
       acesso={contexto.acesso}
       modulos={modulos}
-      titulo="Usuarios"
+      titulo="Usuários"
     >
       <p className="chamada esquerda">
         {temConvite

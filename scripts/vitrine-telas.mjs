@@ -25,7 +25,7 @@ const LEITURA_DE_EXEMPLO = {
     nome: {
       valor: "Construtora Aurora Ltda",
       confianca: "ALTA",
-      origem: "cabecalho do contrato social",
+      origem: "cabeçalho do contrato social",
     },
     documento: {
       valor: "11222333000181",
@@ -35,16 +35,16 @@ const LEITURA_DE_EXEMPLO = {
     telefone: {
       valor: "(71) 3000-1122",
       confianca: "MEDIA",
-      origem: "rodape da primeira pagina",
+      origem: "rodapé da primeira página",
     },
     email: {
       valor: "contato@aurora.com.br",
       confianca: "BAIXA",
-      origem: "carimbo, parcialmente ilegivel",
+      origem: "carimbo, parcialmente ilegível",
     },
   },
   observacoes: [
-    "O contrato social esta na 3a alteracao, de marco de 2026. Confirme se e a versao vigente antes de usar em peca.",
+    "O contrato social está na 3ª alteração, de março de 2026. Confirme se é a versão vigente antes de usar em peça.",
   ],
 };
 
@@ -130,11 +130,15 @@ try {
 
   const navegador = await chromium.launch({
     executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
-    args: [`--host-resolver-rules=MAP *.birdjud.com.br 127.0.0.1`],
+    args: ["--lang=pt-BR", `--host-resolver-rules=MAP *.birdjud.com.br 127.0.0.1`],
+    // Sem o idioma do sistema, data e botao de arquivo saem em ingles.
+    env: { ...process.env, LANG: "pt_BR.UTF-8", LANGUAGE: "pt_BR:pt", LC_ALL: "pt_BR.UTF-8" },
   });
   const contexto = await navegador.newContext({
     viewport: { width: 1360, height: 900 },
     deviceScaleFactor: 2,
+    // Campos de data e de arquivo no idioma do escritorio, nao do navegador.
+    locale: "pt-BR",
     baseURL: BASE,
   });
   const pagina = await contexto.newPage();
@@ -143,7 +147,13 @@ try {
   await pagina.fill('input[name="email"]', "helena@modelo.adv.br");
   await pagina.fill('input[name="senha"]', SENHA);
   await pagina.click('button[type="submit"]');
-  await pagina.waitForURL(`${BASE}/`, { timeout: 30000 });
+  await pagina.waitForURL((url) => url.pathname === "/" || url.pathname === "/aceite", { timeout: 30000 });
+  // Escritorio recem-criado passa antes pelo aceite dos documentos.
+  if (new URL(pagina.url()).pathname === "/aceite") {
+    for (const caixa of await pagina.locator('input[type="checkbox"]').all()) await caixa.check();
+    await pagina.locator("button.botao-principal").first().click();
+    await pagina.waitForURL(`${BASE}/`, { timeout: 30000 });
+  }
   await pagina.waitForLoadState("networkidle");
 
   const telas = [
@@ -156,6 +166,11 @@ try {
 
   for (const tela of telas) {
     await pagina.goto(tela.caminho, { waitUntil: "networkidle" });
+    // Notas: o escritorio de demonstracao nao tem certificado, e a tela abre
+    // na configuracao do emissor. Fecha a configuracao para a lista aparecer.
+    if (tela.arquivo === "notas") {
+      await pagina.getByText(/configurar emissor/i).first().click().catch(() => {});
+    }
     await pagina.waitForTimeout(400);
     await pagina.screenshot({ path: `${DESTINO}/${tela.arquivo}.png` });
     console.log("capturada:", tela.arquivo);

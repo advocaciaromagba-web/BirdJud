@@ -81,8 +81,8 @@ const hora = (iso: string) =>
   new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
 const ROTULO: Record<string, string> = {
-  AUDIENCIA: "Audiencia",
-  PERICIA: "Pericia",
+  AUDIENCIA: "Audiência",
+  PERICIA: "Perícia",
   COMPROMISSO: "Atendimento",
 };
 
