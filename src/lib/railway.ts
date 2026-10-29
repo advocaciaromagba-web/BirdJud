@@ -101,3 +101,83 @@ const VOLTAR = `mutation($id:String!){ deploymentRollback(id:$id) }`;
 export async function voltarPara(acesso: Acesso, deployId: string): Promise<void> {
   await chamar(acesso, VOLTAR, { id: deployId });
 }
+
+// ---------------------------------------------------------------------------
+// Metricas dos servicos, para o painel de escalabilidade
+//
+// Le CPU, memoria, rede e disco de cada servico do ambiente. Os ids do projeto
+// e do ambiente o proprio Railway poe no processo (RAILWAY_PROJECT_ID e
+// RAILWAY_ENVIRONMENT_ID); o token e de projeto, como o da guarda — o mesmo
+// serve. Sem token, o painel mostra o resto e diz o que falta.
+// ---------------------------------------------------------------------------
+
+export type AcessoAsMetricas = { token: string; projetoId: string; ambienteId: string };
+
+export function acessoAsMetricas(
+  ambiente: Record<string, string | undefined> = process.env,
+): AcessoAsMetricas | null {
+  const token = (ambiente.RAILWAY_TOKEN_METRICAS || ambiente.RAILWAY_TOKEN_GUARDA)?.trim();
+  const projetoId = (ambiente.RAILWAY_PROJETO_ID || ambiente.RAILWAY_PROJECT_ID)?.trim();
+  const ambienteId = (ambiente.RAILWAY_AMBIENTE_ID || ambiente.RAILWAY_ENVIRONMENT_ID)?.trim();
+  if (!token || !projetoId || !ambienteId) return null;
+  return { token, projetoId, ambienteId };
+}
+
+export const MEDIDAS = [
+  "CPU_USAGE",
+  "CPU_LIMIT",
+  "MEMORY_USAGE_GB",
+  "MEMORY_LIMIT_GB",
+  "NETWORK_TX_GB",
+  "DISK_USAGE_GB",
+] as const;
+export type Medida = (typeof MEDIDAS)[number];
+
+export type SerieDoServico = {
+  servicoId: string;
+  medida: Medida;
+  pontos: Array<{ ts: number; valor: number }>;
+};
+
+const METRICAS = `
+  query($p:String!,$e:String!,$d:DateTime!,$t:Int!){
+    metrics(projectId:$p,environmentId:$e,startDate:$d,sampleRateSeconds:$t,
+            groupBy:[SERVICE_ID],measurements:[${MEDIDAS.join(",")}]){
+      measurement tags{serviceId} values{ts value}
+    }
+  }`;
+
+const SERVICOS = `query($p:String!){ project(id:$p){ services{ edges{ node{ id name } } } } }`;
+
+export async function metricasDosServicos(
+  acesso: AcessoAsMetricas,
+  desde: Date,
+  passoSegundos = 3600,
+): Promise<{ series: SerieDoServico[]; nomes: Record<string, string> }> {
+  const chave = { token: acesso.token, projetoId: acesso.projetoId, ambienteId: acesso.ambienteId, servicoId: "" };
+  const [dados, projeto] = await Promise.all([
+    chamar(chave, METRICAS, {
+      p: acesso.projetoId,
+      e: acesso.ambienteId,
+      d: desde.toISOString(),
+      t: passoSegundos,
+    }) as Promise<{
+      metrics: Array<{ measurement: Medida; tags: { serviceId: string | null }; values: Array<{ ts: number; value: number }> }>;
+    }>,
+    // O nome e so enfeite: sem permissao para ler o projeto, fica o id.
+    (chamar(chave, SERVICOS, { p: acesso.projetoId }) as Promise<{
+      project: { services: { edges: Array<{ node: { id: string; name: string } }> } };
+    }>).catch(() => null),
+  ]);
+  const nomes = Object.fromEntries(
+    (projeto?.project.services.edges ?? []).map(({ node }) => [node.id, node.name]),
+  );
+  const series = dados.metrics
+    .filter((m) => m.tags.serviceId)
+    .map((m) => ({
+      servicoId: m.tags.serviceId!,
+      medida: m.measurement,
+      pontos: m.values.map((v) => ({ ts: v.ts, valor: v.value })),
+    }));
+  return { series, nomes };
+}

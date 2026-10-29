@@ -116,11 +116,16 @@ export function Colunas({
   explicacao,
   meses,
   series,
+  formatar = emReais,
+  rotuloDaColuna = "Mês",
 }: {
   titulo: string;
   explicacao: string;
   meses: { rotulo: string; valores: number[] }[];
   series: { rotulo: string; cor: string }[];
+  /** Como escrever cada valor; em reais se nada for dito. */
+  formatar?: (v: number) => string;
+  rotuloDaColuna?: string;
 }) {
   const L = 640;
   const A = 220;
@@ -174,13 +179,13 @@ export function Colunas({
                   : `M${x},${y + altura} V${y} H${x + largura} V${y + altura} Z`;
                 return (
                   <path key={j} d={d} fill={series[j].cor} className="transition-opacity hover:opacity-80">
-                    <title>{`${m.rotulo} · ${series[j].rotulo}: ${emReais(v)}`}</title>
+                    <title>{`${m.rotulo} · ${series[j].rotulo}: ${formatar(v)}`}</title>
                   </path>
                 );
               })}
               {total > 0 ? (
                 <text x={x + largura / 2} y={y - 6} textAnchor="middle" fontSize="11" fill="#52514e">
-                  {emReais(total).replace(/,00$/, "")}
+                  {formatar(total).replace(/,00$/, "")}
                 </text>
               ) : null}
               <text x={x + largura / 2} y={A - 8} textAnchor="middle" fontSize="12" fill="#898781">
@@ -195,7 +200,7 @@ export function Colunas({
         <table className="tabela mt-2">
           <thead>
             <tr>
-              <th>Mês</th>
+              <th>{rotuloDaColuna}</th>
               {series.map((s) => (
                 <th key={s.rotulo} className="text-right">{s.rotulo}</th>
               ))}
@@ -207,10 +212,10 @@ export function Colunas({
               <tr key={m.rotulo}>
                 <td>{m.rotulo}</td>
                 {m.valores.map((v, j) => (
-                  <td key={j} className="text-right tabular-nums">{emReais(v)}</td>
+                  <td key={j} className="text-right tabular-nums">{formatar(v)}</td>
                 ))}
                 {series.length > 1 ? (
-                  <td className="text-right font-medium tabular-nums">{emReais(m.valores.reduce((s, v) => s + v, 0))}</td>
+                  <td className="text-right font-medium tabular-nums">{formatar(m.valores.reduce((s, v) => s + v, 0))}</td>
                 ) : null}
               </tr>
             ))}
@@ -234,5 +239,133 @@ export function Numero({ rotulo, valor, detalhe, alerta }: { rotulo: string; val
         </p>
       ) : null}
     </div>
+  );
+}
+
+const TOM_DO_NIVEL = { ok: "#1baf7a", atencao: "#eda100", critico: "#c2410c" } as const;
+
+/**
+ * Barra de uso de um recurso: quanto ja foi do limite, com a marca dos 70%
+ * (atencao) e o numero escrito — a cor nunca e o unico sinal.
+ */
+export function BarraDeUso({
+  rotulo,
+  fracao,
+  nivel,
+  usado,
+  detalhe,
+}: {
+  rotulo: string;
+  fracao: number;
+  nivel: keyof typeof TOM_DO_NIVEL;
+  usado: string;
+  detalhe?: string;
+}) {
+  const p = Math.min(100, Math.max(0, fracao * 100));
+  return (
+    <div className="grid gap-1">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+        <span className="font-medium text-slate-800">{rotulo}</span>
+        <span className="tabular-nums text-slate-600">
+          {usado} · <strong className="text-slate-900">{p > 0 && p < 1 ? "<1" : Math.round(p)}%</strong>
+          {nivel !== "ok" ? (
+            <span className="ml-1 font-semibold text-red-700">{nivel === "critico" ? "crítico" : "atenção"}</span>
+          ) : null}
+        </span>
+      </div>
+      <div
+        className="relative h-2.5 rounded-full bg-slate-100"
+        role="meter"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(p)}
+        aria-label={rotulo}
+      >
+        <div className="h-full rounded-full" style={{ width: `${p > 0 ? Math.max(p, 1) : 0}%`, background: TOM_DO_NIVEL[nivel] }} />
+        <span aria-hidden className="absolute -top-[3px] h-4 w-px bg-slate-400" style={{ left: "70%" }} />
+      </div>
+      {detalhe ? <p className="text-xs text-slate-500">{detalhe}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Linha no tempo, uma ou mais series no mesmo eixo. A legenda traz o valor de
+ * agora e o pico de cada serie: o numero nao depende de ler o desenho.
+ */
+export function Linha({
+  titulo,
+  explicacao,
+  series,
+  formatar,
+  rotulosDoEixo,
+}: {
+  titulo: string;
+  explicacao?: string;
+  series: { rotulo: string; cor: string; pontos: number[] }[];
+  formatar: (v: number) => string;
+  /** Rotulo do primeiro e do ultimo ponto (ex.: "24 h atrás", "agora"). */
+  rotulosDoEixo: [string, string];
+}) {
+  const L = 640;
+  const A = 160;
+  const topo = 12;
+  const base = A - 22;
+  const maior = Math.max(0, ...series.flatMap((s) => s.pontos)) * 1.1 || 1;
+  const caminho = (p: number[]) =>
+    p
+      .map((v, i) => {
+        const x = p.length > 1 ? (i / (p.length - 1)) * L : L / 2;
+        const y = base - (v / maior) * (base - topo);
+        return `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+  return (
+    <figure className="cartao m-0">
+      <figcaption>
+        <span className="font-semibold text-slate-900">{titulo}</span>
+        {explicacao ? <span className="mt-1 block text-sm text-slate-500">{explicacao}</span> : null}
+      </figcaption>
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
+        {series.map((s) => (
+          <span key={s.rotulo} className="inline-flex items-center gap-2">
+            <span aria-hidden className="inline-block h-0.5 w-4" style={{ background: s.cor }} />
+            {s.rotulo}
+            <span className="tabular-nums text-slate-500">
+              {s.pontos.length
+                ? `agora ${formatar(s.pontos[s.pontos.length - 1])} · pico ${formatar(Math.max(...s.pontos))}`
+                : "sem dados"}
+            </span>
+          </span>
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${L} ${A}`} className="mt-2 w-full" role="img" aria-label={titulo}>
+        {[0.5, 1].map((f) => {
+          const y = base - (base - topo) * f;
+          return (
+            <g key={f}>
+              <line x1={0} x2={L} y1={y} y2={y} stroke="#e1e0d9" strokeWidth="1" />
+              <text x={2} y={y - 3} fontSize="10" fill="#898781">
+                {formatar((maior * f) / 1.1)}
+              </text>
+            </g>
+          );
+        })}
+        <line x1={0} x2={L} y1={base} y2={base} stroke="#c3c2b7" strokeWidth="1" />
+        {series.map((s) =>
+          s.pontos.length ? (
+            <path key={s.rotulo} d={caminho(s.pontos)} fill="none" stroke={s.cor} strokeWidth="2" strokeLinejoin="round">
+              <title>{s.rotulo}</title>
+            </path>
+          ) : null,
+        )}
+        <text x={0} y={A - 6} fontSize="11" fill="#898781">
+          {rotulosDoEixo[0]}
+        </text>
+        <text x={L} y={A - 6} fontSize="11" fill="#898781" textAnchor="end">
+          {rotulosDoEixo[1]}
+        </text>
+      </svg>
+    </figure>
   );
 }
