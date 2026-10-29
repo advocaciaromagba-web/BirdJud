@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       heapUsedBytes: memory.heapUsed,
       heapTotalBytes: memory.heapTotal,
       externalBytes: memory.external,
-      eventLoopDelayP99Ms,
+      eventLoopDelayP99Ms: eventLoopP99Ms,
     },
     limits: {
       nodeHeapLimitBytes: null,
