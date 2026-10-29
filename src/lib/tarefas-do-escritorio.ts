@@ -92,6 +92,7 @@ export async function tarefasDoEscritorio(
         : { situacao: { not: "CONCLUIDA" } },
       include: {
         responsavel: { select: { nome: true } },
+        solucaoPor: { select: { nome: true } },
         cliente: { select: { nome: true } },
         anexos: { select: { id: true, nome: true, tamanhoBytes: true }, orderBy: { criadoEm: "asc" } },
       },
@@ -131,6 +132,33 @@ export async function mudarSituacao(
         situacao: nova,
         concluidaEm: nova === "CONCLUIDA" ? new Date() : null,
       },
+    }),
+  );
+}
+
+/** O tamanho que cabe num registro de providencia sem virar peca. */
+export const SOLUCAO_MAXIMA = 4000;
+
+/**
+ * Grava o que foi feito para resolver, com quem escreveu e quando. Texto
+ * vazio limpa autor e data junto: assinatura sem conteudo e pior que campo
+ * vazio. Reescrever o mesmo texto nao troca o autor nem a data.
+ */
+export async function registrarSolucao(
+  escritorioId: string,
+  id: string,
+  texto: string | null | undefined,
+  usuarioId: string,
+) {
+  const antes = await exigirTarefa(escritorioId, id);
+  const limpo = (texto ?? "").trim().slice(0, SOLUCAO_MAXIMA) || null;
+  if (limpo === antes.solucao) return antes;
+  return comEscritorio(escritorioId, (db) =>
+    db.tarefa.update({
+      where: { id },
+      data: limpo
+        ? { solucao: limpo, solucaoEm: new Date(), solucaoPorId: usuarioId }
+        : { solucao: null, solucaoEm: null, solucaoPorId: null },
     }),
   );
 }

@@ -204,6 +204,7 @@ model Usuario {
 
   avisos   Aviso[]
   tarefasDesignadas Tarefa[] @relation("TarefasDoResponsavel")
+  solucoesDeTarefa Tarefa[] @relation("SolucoesDeTarefa")
   arquivos Arquivo[]
   criadoEm DateTime  @default(now())
 
@@ -608,7 +609,15 @@ model Tarefa {
   criadaEm     DateTime  @default(now())
   atualizadaEm DateTime  @updatedAt
 
+  /// O que foi feito para resolver: quem foi avisado, o que foi protocolado.
+  /// Com autor e data; apagar o texto apaga os dois (assinatura sem conteudo
+  /// e pior que campo vazio).
+  solucao      String?
+  solucaoEm    DateTime?
+  solucaoPorId String?
+
   escritorio  Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  solucaoPor  Usuario?   @relation("SolucoesDeTarefa", fields: [solucaoPorId], references: [id], onDelete: SetNull)
   processo    Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
   cliente     Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   responsavel Usuario    @relation("TarefasDoResponsavel", fields: [responsavelId], references: [id], onDelete: Cascade)

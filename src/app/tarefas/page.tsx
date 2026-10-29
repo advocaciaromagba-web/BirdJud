@@ -58,6 +58,9 @@ export default async function PaginaTarefas({
     nomeDoResponsavel: t.responsavel?.nome ?? "—",
     atrasada: estaAtrasada(t, agora),
     anexos: t.anexos,
+    solucao: t.solucao,
+    solucaoEmISO: t.solucaoEm?.toISOString() ?? null,
+    solucaoPor: t.solucaoPor?.nome ?? null,
   }));
 
   return (

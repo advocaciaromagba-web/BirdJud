@@ -12,6 +12,7 @@ import {
   criarTarefa,
   editarTarefa,
   mudarSituacao,
+  registrarSolucao,
   tarefasDoEscritorio,
 } from "../src/lib/tarefas-do-escritorio";
 
@@ -101,6 +102,38 @@ d("tarefas do escritório", () => {
     const devolta = await mudarSituacao(escritorio, t.id, "PENDENTE");
     expect(devolta.situacao).toBe("PENDENTE");
     expect(devolta.concluidaEm).toBeNull();
+  });
+
+  it("solucao: grava autor e data, mantem ao reescrever igual, limpa tudo ao apagar", async () => {
+    const t = await nova({ titulo: "Protocolar manifestação" });
+    await mudarSituacao(escritorio, t.id, "CONCLUIDA");
+
+    const com = await registrarSolucao(escritorio, t.id, "  Protocolada em 29/10; cliente avisado.  ", pessoa);
+    expect(com.solucao).toBe("Protocolada em 29/10; cliente avisado.");
+    expect(com.solucaoPorId).toBe(pessoa);
+    expect(com.solucaoEm).not.toBeNull();
+
+    // Salvar de novo sem mudar nada nao troca a assinatura.
+    const igual = await registrarSolucao(escritorio, t.id, "Protocolada em 29/10; cliente avisado.", outraPessoa);
+    expect(igual.solucaoPorId).toBe(pessoa);
+    expect(igual.solucaoEm?.getTime()).toBe(com.solucaoEm?.getTime());
+
+    const outra = await registrarSolucao(escritorio, t.id, "Protocolada e juntado o comprovante.", outraPessoa);
+    expect(outra.solucaoPorId).toBe(outraPessoa);
+
+    const [naLista] = (await tarefasDoEscritorio(escritorio, true)).filter((x) => x.id === t.id);
+    expect(naLista.solucaoPor?.nome).toBeTruthy();
+
+    const vazia = await registrarSolucao(escritorio, t.id, "   ", pessoa);
+    expect(vazia).toMatchObject({ solucao: null, solucaoEm: null, solucaoPorId: null });
+  });
+
+  it("reabrir a tarefa nao apaga a solucao ja registrada", async () => {
+    const t = await nova();
+    await mudarSituacao(escritorio, t.id, "CONCLUIDA");
+    await registrarSolucao(escritorio, t.id, "Feito por telefone.", pessoa);
+    const reaberta = await mudarSituacao(escritorio, t.id, "PENDENTE");
+    expect(reaberta.solucao).toBe("Feito por telefone.");
   });
 
   it("a lista separa ativas de concluidas, e a contagem bate", async () => {

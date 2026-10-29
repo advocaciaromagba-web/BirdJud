@@ -14,8 +14,8 @@ novo e como trazer isso para ca do jeito certo.
 | O que | Valor |
 |---|---|
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
-| Ultimo commit revisado | `6061f2c6f278a374544a96fd7d64c5a49e3c449d` (27/10/2026, "Agenda: qualquer função pode responder por atendimento e triagem") |
-| Revisado em | 27/10/2026 |
+| Ultimo commit revisado | `78e636bdf083b6982548620200842cb14da0dd2b` (28/10/2026, "Campo solução na tarefa: o que foi feito para resolver") |
+| Revisado em | 29/10/2026 |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
 que a ultima funcionalidade entrou. Sem isso a proxima rodada revisa tudo de
@@ -86,6 +86,7 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Modelo da Meta para documento fora da janela de 24 h | ja existia (`src/lib/documento-no-whatsapp.ts`) |
 | Mapa das variaveis para o cofre | ja existia (`docs/RAILWAY.md`, secao 3; valores no Bitwarden) |
 | Cliente menor: documento no nome dele, representado (ate 16) ou assistido (16 a 18) por quem exerce o poder familiar; assina quem representa | `Cliente.menor`, `Representante.parentesco` (migracao 73), `src/lib/menor.ts`, `qualificacaoDoCliente` em `modelos-do-escritorio.ts`, `assinatura-do-escritorio.ts`, `MenorDeIdade.tsx` |
+| Solucao da tarefa: o que foi feito, com autor e data; "Concluir" abre o campo; apagar o texto apaga a assinatura | `Tarefa.solucao`/`solucaoEm`/`solucaoPorId` (migracao 74), `registrarSolucao` em `tarefas-do-escritorio.ts`, `PATCH /api/tarefas/[id]`, `PainelTarefas.tsx` |
 | Menor cadastrado a partir de quem o representa, sem herdar RG e CPF | `Cliente.responsavelClienteId`, `src/lib/menores-do-escritorio.ts`, `POST /api/clientes/[id]/menores`, `MenoresDoCliente.tsx`; nascimento na leitura por IA ja existia (instrucao reforcada) |
 | Audiencia e pericia com responsavel que nao e advogado: aviso, nao bloqueio | `atoSemAdvogado` em `src/lib/agenda-tela.ts`, `PainelAgenda.tsx` |
 | Cobrancas sem a segunda senha; Financeiro com ela | ja era assim (so lancamentos, despesas e metas pedem a senha) |

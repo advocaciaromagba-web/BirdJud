@@ -30,6 +30,10 @@ export type TarefaNaTela = {
   nomeDoResponsavel: string;
   atrasada: boolean;
   anexos: { id: string; nome: string; tamanhoBytes: number }[];
+  /** O que foi feito para resolver, com quem escreveu e quando. */
+  solucao: string | null;
+  solucaoEmISO: string | null;
+  solucaoPor: string | null;
 };
 
 type Pessoa = { id: string; nome: string };
@@ -99,6 +103,9 @@ export function PainelTarefas({
   const [outras, setOutras] = useState<Record<string, string>[]>([]);
   // Providencia sem prazo no documento: a data e de quem le, nao da IA.
   const [semPrazo, setSemPrazo] = useState(false);
+  // "Concluir" abre o campo da solucao: o momento de registrar o que foi
+  // feito e na hora de concluir, nao depois. Em branco continua valendo.
+  const [solucionando, setSolucionando] = useState<{ tarefa: TarefaNaTela; concluir: boolean } | null>(null);
 
   function camposDe(leitura: { campos: Record<string, { valor: string }> }): Record<string, string> {
     return Object.fromEntries(Object.entries(leitura.campos).map(([k, c]) => [k, c.valor]));
@@ -439,7 +446,7 @@ export function PainelTarefas({
               : "text-slate-600 hover:bg-slate-100"
           }`}
         >
-          Concluidas ({concluidas})
+          Concluídas ({concluidas})
         </Link>
       </div>
 
@@ -492,6 +499,33 @@ export function PainelTarefas({
                       <p className="mt-0.5 text-xs text-slate-600">
                         {t.descricao}
                       </p>
+                    ) : null}
+                    {t.solucao ? (
+                      <div className="mt-1.5 rounded border-l-2 border-emerald-500 bg-emerald-50 px-2 py-1 text-xs text-slate-700">
+                        <span className="font-semibold text-emerald-900">Solução: </span>
+                        <span className="whitespace-pre-line">{t.solucao}</span>
+                        <span className="mt-0.5 block text-slate-500">
+                          {[t.solucaoPor, t.solucaoEmISO ? quando.format(new Date(t.solucaoEmISO)) : null]
+                            .filter(Boolean)
+                            .join(" · ")}
+                          {" · "}
+                          <button
+                            type="button"
+                            className="underline-offset-2 hover:underline"
+                            onClick={() => setSolucionando({ tarefa: t, concluir: false })}
+                          >
+                            editar
+                          </button>
+                        </span>
+                      </div>
+                    ) : t.situacao === "CONCLUIDA" ? (
+                      <button
+                        type="button"
+                        className="mt-1 text-xs text-emerald-800 underline-offset-2 hover:underline"
+                        onClick={() => setSolucionando({ tarefa: t, concluir: false })}
+                      >
+                        Registrar solução
+                      </button>
                     ) : null}
                     {t.numeroProcesso || t.nomeDoCliente ? (
                       <p className="mt-0.5 text-xs text-slate-500">
@@ -552,14 +586,11 @@ export function PainelTarefas({
                       <button
                         type="button"
                         onClick={() =>
-                          agir(`${t.id}:situacao`, () =>
-                            chamar(`/api/tarefas/${t.id}`, "PATCH", {
-                              situacao:
-                                t.situacao === "CONCLUIDA"
-                                  ? "PENDENTE"
-                                  : "CONCLUIDA",
-                            }),
-                          )
+                          t.situacao === "CONCLUIDA"
+                            ? agir(`${t.id}:situacao`, () =>
+                                chamar(`/api/tarefas/${t.id}`, "PATCH", { situacao: "PENDENTE" }),
+                              )
+                            : setSolucionando({ tarefa: t, concluir: true })
                         }
                         disabled={ocupado === `${t.id}:situacao`}
                         className="text-slate-700 underline-offset-2 hover:underline"
@@ -603,6 +634,65 @@ export function PainelTarefas({
           </table>
         </div>
       )}
+
+      {solucionando ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSolucionando(null);
+          }}
+        >
+          <form
+            className="grid w-full max-w-lg gap-3 rounded-xl bg-white p-5 shadow-xl"
+            onSubmit={async (evento) => {
+              evento.preventDefault();
+              const texto = String(new FormData(evento.currentTarget).get("solucao") ?? "");
+              const { tarefa, concluir } = solucionando;
+              await agir(`${tarefa.id}:solucao`, () =>
+                chamar(`/api/tarefas/${tarefa.id}`, "PATCH", {
+                  ...(concluir ? { situacao: "CONCLUIDA" } : {}),
+                  // Concluindo sem escrever nada, nao mexe no que ja havia.
+                  ...(concluir && !texto.trim() ? {} : { solucao: texto }),
+                }),
+              );
+              setSolucionando(null);
+            }}
+          >
+            <h2 className="text-lg font-semibold">
+              {solucionando.concluir ? "Concluir tarefa" : "Solução da tarefa"}
+            </h2>
+            <p className="-mt-2 text-sm text-slate-600">{solucionando.tarefa.titulo}</p>
+            <label className="grid gap-1">
+              <span className="rotulo">O que foi feito para resolver</span>
+              <textarea
+                name="solucao"
+                className="campo min-h-28"
+                maxLength={4000}
+                autoFocus
+                defaultValue={solucionando.tarefa.solucao ?? ""}
+                placeholder="Ex.: Protocolada a manifestação em 29/10; cliente avisado por WhatsApp."
+              />
+            </label>
+            <p className="ajuda -mt-1">
+              {solucionando.concluir
+                ? "Opcional: há tarefa que se explica pelo título. Fica registrado quem escreveu e quando."
+                : "Fica registrado quem escreveu e quando. Apagar o texto apaga o registro."}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button type="button" className="botao-discreto" onClick={() => setSolucionando(null)}>
+                Cancelar
+              </button>
+              <button type="submit" className="botao-principal" disabled={ocupado === `${solucionando.tarefa.id}:solucao`}>
+                {ocupado === `${solucionando.tarefa.id}:solucao`
+                  ? "Salvando…"
+                  : solucionando.concluir
+                    ? "Concluir"
+                    : "Salvar"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 }
