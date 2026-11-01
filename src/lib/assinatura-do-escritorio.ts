@@ -8,7 +8,7 @@ import type { Prisma } from "@prisma/client";
 import { comEscritorio, semEscritorio } from "./prisma";
 import { obterIntegracao } from "./integracao";
 import { NOME_DA_ESPECIE, type Especie } from "./modelos";
-import { gerarPeca, type DadosDaPeca } from "./modelos-do-escritorio";
+import { gerarPeca, nomeDoArquivoDaPeca, tituloDaPeca, type DadosDaPeca } from "./modelos-do-escritorio";
 import {
   ASSINA_POR_PADRAO,
   AutentiqueRecusou,
@@ -112,6 +112,9 @@ export async function mandarAssinar(
         where: {
           clienteId: dados.clienteId,
           especie,
+          // Pelo documento, nao pelo tipo: a procuracao da segunda acao nao
+          // e repeticao da primeira.
+          nomeDoArquivo: nomeDoArquivoDaPeca(especie, dados.cliente.nome, dados.acao, "PDF"),
           situacao: { in: ["ENVIADO", "PARCIAL"] },
         },
         orderBy: { criadoEm: "desc" },
@@ -143,7 +146,7 @@ export async function mandarAssinar(
   const peca = await gerarPeca(escritorioId, especie, dados, "PDF");
 
   const documento = await enviarDocumento(token, {
-    nome: `${NOME_DA_ESPECIE[especie]} - ${dados.cliente.nome}`,
+    nome: tituloDaPeca(especie, dados.cliente.nome, dados.acao),
     nomeDoArquivo: peca.nomeDoArquivo,
     arquivo: peca.arquivo,
     signatarios,
@@ -193,4 +196,48 @@ export async function conferirEnvio(
     }),
   );
   return comoEnvio(atualizado);
+}
+
+/**
+ * Confere no Autentique o que ainda espera assinatura (rotina de hora em
+ * hora). Grava o andamento parcial: num contrato com duas assinaturas, o
+ * cliente assinava e a tela continuava dizendo que ele devia assinar — e
+ * ainda oferecia reenviar o link a quem ja tinha assinado.
+ *
+ * So o que foi mandado nos ultimos 90 dias: documento esquecido ha meses nao
+ * vale uma consulta por hora. Sem Autentique conectado, nao faz nada. A falha
+ * de um documento nao para os outros.
+ */
+export async function conferirPendentes(
+  escritorioId: string,
+  agora = new Date(),
+): Promise<{ conferidos: number; mudaram: number; falhas: string[] }> {
+  const desde = new Date(agora.getTime() - 90 * 24 * 3_600_000);
+  const pendentes = await comEscritorio(escritorioId, (db) =>
+    db.envioParaAssinatura.findMany({
+      where: { situacao: { in: ["ENVIADO", "PARCIAL"] }, criadoEm: { gte: desde } },
+      select: { id: true, situacao: true, signatarios: true },
+      orderBy: { criadoEm: "desc" },
+      take: 100,
+    }),
+  );
+  const resultado = { conferidos: 0, mudaram: 0, falhas: [] as string[] };
+  if (!pendentes.length) return resultado;
+  try {
+    await obterIntegracao(escritorioId, "AUTENTIQUE");
+  } catch {
+    return resultado;
+  }
+  for (const p of pendentes) {
+    try {
+      const depois = await conferirEnvio(escritorioId, p.id);
+      resultado.conferidos += 1;
+      if (depois.situacao !== p.situacao || JSON.stringify(depois.signatarios) !== JSON.stringify(p.signatarios)) {
+        resultado.mudaram += 1;
+      }
+    } catch (erro) {
+      resultado.falhas.push(`${p.id}: ${(erro as Error).message}`.slice(0, 160));
+    }
+  }
+  return resultado;
 }

@@ -24,7 +24,11 @@ const FORMATOS = [
 
 /** A peca conferida: o arquivo que acabou de sair, ainda na tela. */
 type Conferida = {
+  /** Unica na tela: "PROCURACAO#2" quando ha uma procuracao por acao. */
   chave: string;
+  especie: string;
+  /** So na procuracao: a acao desta via. */
+  acao: string | null;
   rotulo: string;
   url: string;
   nome: string;
@@ -99,6 +103,7 @@ export function PecasDoCliente({
   emailDoCliente = null,
   envios = [],
   notaFiscalLigada = false,
+  acoesContratadas = [],
 }: {
   clienteId: string;
   /** Quem assina pecas no escritorio. */
@@ -118,6 +123,8 @@ export function PecasDoCliente({
   envios?: EnvioNaTela[];
   /** Modulo NFSE: o recibo oferece preparar a nota fiscal (nunca sozinho). */
   notaFiscalLigada?: boolean;
+  /** Acoes do cadastro: uma procuracao para cada. */
+  acoesContratadas?: string[];
 }) {
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
   // PDF por padrao: e o que se assina, o que se imprime igual em qualquer
@@ -137,7 +144,45 @@ export function PecasDoCliente({
   );
   const [enviados, setEnviados] = useState<EnvioNaTela[]>(envios);
   const [enviando, setEnviando] = useState<string | null>(null);
+  // Reenvio do link a quem nao assinou. O resultado sai na propria linha de
+  // quem foi clicado: escrito no rodape do formulario, ficava fora da tela e
+  // parecia que nada tinha acontecido.
+  const [naLinha, setNaLinha] = useState<Record<string, { ok: boolean; texto: string }>>({});
+  const [lote, setLote] = useState<{ ids: Set<string>; canais: Set<"EMAIL" | "WHATSAPP">; recado: string }>({
+    ids: new Set(),
+    canais: new Set(["EMAIL"]),
+    recado: "",
+  });
+  const [resultadoDoLote, setResultadoDoLote] = useState<{ ok: boolean; texto: string } | null>(null);
   const [assinam, setAssinam] = useState<Record<string, string>>({});
+  // Uma procuracao por acao. A lista fica no cadastro (procuracao costuma ser
+  // refeita depois: substabelecimento, troca de advogado, via perdida); aqui
+  // se marca quais saem agora.
+  const [acoes, setAcoes] = useState<string[]>(acoesContratadas);
+  const [acoesAgora, setAcoesAgora] = useState<Set<string>>(new Set(acoesContratadas));
+  const [novaAcao, setNovaAcao] = useState("");
+  const [gravandoAcoes, setGravandoAcoes] = useState(false);
+
+  async function gravarAcoes(lista: string[]) {
+    setGravandoAcoes(true);
+    setErro(null);
+    try {
+      const r = await fetch(`/api/clientes/${clienteId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ acoesContratadas: lista }),
+      });
+      if (!r.ok) {
+        const det = await r.json().catch(() => null);
+        setErro(det?.erro ?? "Não consegui gravar as ações.");
+        return false;
+      }
+      setAcoes(lista);
+      return true;
+    } finally {
+      setGravandoAcoes(false);
+    }
+  }
 
   const todosAssinam = quemAssina.size === 0;
   function alternarAdvogado(id: string) {
@@ -174,10 +219,11 @@ export function PecasDoCliente({
 
   function corpoDoPedido(
     especie: string,
-    opcoes: { formato: string; guardar: boolean },
+    opcoes: { formato: string; guardar: boolean; acao?: string | null },
   ) {
     return JSON.stringify({
       clienteId,
+      acao: opcoes.acao ?? null,
       formato: opcoes.formato,
       advogadoIds: [...quemAssina],
       // Gravar a escolha so quando a peca sai de verdade, nao na conferencia.
@@ -193,13 +239,25 @@ export function PecasDoCliente({
     });
   }
 
-  const escolhidas = ESPECIES.filter((e) => quer(e.chave));
+  // Cada peca que sai: a procuracao vira uma por acao marcada.
+  const escolhidas = ESPECIES.filter((e) => quer(e.chave)).flatMap((e) => {
+    const marcadasAgora = acoes.filter((a) => acoesAgora.has(a));
+    if (e.chave === "PROCURACAO" && marcadasAgora.length > 0) {
+      return marcadasAgora.map((acao, i) => ({
+        chave: `PROCURACAO#${i + 1}`,
+        especie: "PROCURACAO",
+        acao,
+        rotulo: `Procuração — ${acao}`,
+      }));
+    }
+    return [{ chave: e.chave, especie: e.chave, acao: null as string | null, rotulo: e.rotulo }];
+  });
 
-  async function pedir(especie: string, formato: string, guardar: boolean) {
-    const resposta = await fetch(`/api/modelos/${especie}/peca`, {
+  async function pedir(peca: { especie: string; acao: string | null }, formato: string, guardar: boolean) {
+    const resposta = await fetch(`/api/modelos/${peca.especie}/peca`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: corpoDoPedido(especie, { formato, guardar }),
+      body: corpoDoPedido(peca.especie, { formato, guardar, acao: peca.acao }),
     });
     if (!resposta.ok) {
       const det = await resposta.json().catch(() => null);
@@ -238,14 +296,16 @@ export function PecasDoCliente({
       for (const e of escolhidas) {
         // A conferencia e sempre em PDF: e o unico formato que o navegador
         // mostra. O .docx continua disponivel ao lado.
-        const resposta = await pedir(e.chave, "PDF", false);
+        const resposta = await pedir(e, "PDF", false);
         const lista = (nome: string) =>
           (resposta.headers.get(nome) ?? "").split(",").filter(Boolean);
         achadas.push({
           chave: e.chave,
+          especie: e.especie,
+          acao: e.acao,
           rotulo: e.rotulo,
           url: URL.createObjectURL(await resposta.blob()),
-          nome: nomeDe(resposta, e.chave, "PDF"),
+          nome: nomeDe(resposta, e.especie, "PDF"),
           doEscritorio: resposta.headers.get("x-modelo-do-escritorio") === "1",
           temImagem: resposta.headers.get("x-modelo-tem-imagem") === "1",
           semValor: lista("x-campos-sem-valor"),
@@ -274,9 +334,9 @@ export function PecasDoCliente({
       // para um lugar diferente — uma para assinar, outra para juntar aos autos.
       for (const e of escolhidas) {
         for (const f of FORMATOS.filter((f) => formatos.has(f.chave))) {
-          const resposta = await pedir(e.chave, f.chave, true);
+          const resposta = await pedir(e, f.chave, true);
           const url = URL.createObjectURL(await resposta.blob());
-          baixarBlob(url, nomeDe(resposta, e.chave, f.chave));
+          baixarBlob(url, nomeDe(resposta, e.especie, f.chave));
           URL.revokeObjectURL(url);
           // O navegador ignora downloads disparados juntos demais.
           await new Promise((ok) => setTimeout(ok, 350));
@@ -293,9 +353,9 @@ export function PecasDoCliente({
     setOcupado(true);
     setErro(null);
     try {
-      const resposta = await pedir(c.chave, "DOCX", true);
+      const resposta = await pedir(c, "DOCX", true);
       const url = URL.createObjectURL(await resposta.blob());
-      baixarBlob(url, nomeDe(resposta, c.chave, "DOCX"));
+      baixarBlob(url, nomeDe(resposta, c.especie, "DOCX"));
       URL.revokeObjectURL(url);
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : "não consegui montar.");
@@ -323,13 +383,14 @@ export function PecasDoCliente({
     setEnviando(c.chave);
     setErro(null);
     try {
-      const resposta = await fetch(`/api/modelos/${c.chave}/assinatura`, {
+      const resposta = await fetch(`/api/modelos/${c.especie}/assinatura`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           clienteId,
+          acao: c.acao,
           advogadoIds: [...quemAssina],
-          quemAssina: assinam[c.chave] ?? ASSINA_POR_PADRAO[c.chave],
+          quemAssina: assinam[c.chave] ?? ASSINA_POR_PADRAO[c.especie as keyof typeof ASSINA_POR_PADRAO],
           mesmoAssim,
         }),
       });
@@ -340,7 +401,7 @@ export function PecasDoCliente({
         // mandar de novo manda outro e-mail e custa outro documento.
         const outra = window.confirm(
           `${det.erro}\nO envio anterior esta ${
-            SITUACAO[det.situação]?.rotulo ?? det.situação
+            SITUACAO[det.situacao]?.rotulo ?? det.situacao
           }.\n\nMandar assim mesmo? Sai outro e-mail para o cliente, e o provedor cobra outro documento.`,
         );
         if (outra) await mandarAssinar(c, true);
@@ -364,15 +425,16 @@ export function PecasDoCliente({
     setErro(null);
     setAviso(null);
     try {
-      const resposta = await fetch(`/api/modelos/${c.chave}/mandar`, {
+      const resposta = await fetch(`/api/modelos/${c.especie}/mandar`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           canal,
           recado: canal === "EMAIL" ? recado.trim() || null : null,
           clienteId,
+          acao: c.acao,
           advogadoIds: [...quemAssina],
-          ...(c.chave === "RECIBO"
+          ...(c.especie === "RECIBO"
             ? {
                 reciboValor: recibo.valor || null,
                 reciboReferenteA: recibo.referenteA || null,
@@ -394,6 +456,38 @@ export function PecasDoCliente({
       );
     } catch {
       setErro("Não consegui falar com o servidor.");
+    } finally {
+      setEnviando(null);
+    }
+  }
+
+  /** Junta o que saiu, o que falhou e o que ficou de fora numa frase so. */
+  function resumoDoReenvio(r: { enviados?: string[]; falhas?: string[]; ignorados?: { documento: string; motivo: string }[]; erro?: string }) {
+    if (r.erro) return { ok: false, texto: r.erro };
+    const partes = [
+      ...(r.enviados ?? []).map((e) => `Enviado: ${e}.`),
+      ...(r.falhas ?? []),
+      ...(r.ignorados ?? []).map((i) => `${i.documento}: ${i.motivo}`),
+    ];
+    return { ok: (r.enviados ?? []).length > 0, texto: partes.join(" ") || "Nada para reenviar." };
+  }
+
+  async function reenviar(
+    ids: string[],
+    canais: ("EMAIL" | "WHATSAPP")[],
+    opcoes: { email?: string; recado?: string; chave: string },
+  ) {
+    setEnviando(opcoes.chave);
+    try {
+      const resposta = await fetch("/api/assinaturas/reenviar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, canais, email: opcoes.email ?? null, recado: opcoes.recado ?? null }),
+      });
+      const det = await resposta.json().catch(() => ({ erro: "Não consegui falar com o servidor." }));
+      return resumoDoReenvio(resposta.ok ? det : { erro: det?.erro ?? "Não deu certo." });
+    } catch {
+      return { ok: false, texto: "Não consegui falar com o servidor." };
     } finally {
       setEnviando(null);
     }
@@ -445,6 +539,96 @@ export function PecasDoCliente({
           </label>
         ))}
       </div>
+
+      {quer("PROCURACAO") ? (
+        <div className="mt-3 rounded border border-slate-200 p-3 text-sm">
+          <p className="font-medium">Ações contratadas</p>
+          <p className="ajuda">
+            Uma procuração para cada ação: uma só, com as finalidades misturadas, atrapalha quando uma das ações termina ou é
+            substabelecida. A lista fica no cadastro do cliente. Sem ação marcada, sai uma procuração com a descrição do contrato.
+          </p>
+          <ul className="mt-2 grid gap-1">
+            {acoes.map((a) => (
+              <li key={a} className="flex flex-wrap items-center gap-2">
+                <label className="flex min-w-0 flex-1 items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={acoesAgora.has(a)}
+                    onChange={() => {
+                      const novo = new Set(acoesAgora);
+                      if (novo.has(a)) novo.delete(a);
+                      else novo.add(a);
+                      setAcoesAgora(novo);
+                    }}
+                  />
+                  <span className="break-words">{a}</span>
+                </label>
+                <button
+                  type="button"
+                  className="text-xs underline"
+                  disabled={gravandoAcoes}
+                  onClick={async () => {
+                    const texto = window.prompt("Ação contratada", a)?.trim();
+                    if (!texto || texto === a) return;
+                    if (await gravarAcoes(acoes.map((x) => (x === a ? texto : x)))) {
+                      const novo = new Set(acoesAgora);
+                      if (novo.delete(a)) novo.add(texto);
+                      setAcoesAgora(novo);
+                    }
+                  }}
+                >
+                  editar
+                </button>
+                <button
+                  type="button"
+                  className="text-xs text-red-700 underline"
+                  disabled={gravandoAcoes}
+                  onClick={async () => {
+                    if (!window.confirm(`Tirar "${a}" das ações deste cliente?`)) return;
+                    if (await gravarAcoes(acoes.filter((x) => x !== a))) {
+                      const novo = new Set(acoesAgora);
+                      novo.delete(a);
+                      setAcoesAgora(novo);
+                    }
+                  }}
+                >
+                  remover
+                </button>
+              </li>
+            ))}
+          </ul>
+          <form
+            className="mt-2 flex flex-wrap gap-2"
+            onSubmit={async (ev) => {
+              ev.preventDefault();
+              const texto = novaAcao.trim();
+              if (texto.length < 3 || acoes.includes(texto)) return;
+              if (await gravarAcoes([...acoes, texto])) {
+                setAcoesAgora(new Set([...acoesAgora, texto]));
+                setNovaAcao("");
+              }
+            }}
+          >
+            <input
+              className="campo min-w-0 flex-1"
+              maxLength={300}
+              placeholder="Ex.: ação revisional de contrato de financiamento rural"
+              value={novaAcao}
+              onChange={(ev) => setNovaAcao(ev.target.value)}
+              aria-label="Nova ação contratada"
+            />
+            <button type="submit" className="botao-discreto" disabled={gravandoAcoes || novaAcao.trim().length < 3}>
+              Incluir ação
+            </button>
+          </form>
+          {escolhidas.filter((e) => e.especie === "PROCURACAO").length > 1 ? (
+            <p className="mt-2 text-slate-700">
+              Vão sair {escolhidas.filter((e) => e.especie === "PROCURACAO").length} procurações, uma por ação marcada.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="mt-3 rounded border border-slate-200 p-3">
         <p className="text-sm font-medium">Em que formato</p>
@@ -770,7 +954,7 @@ export function PecasDoCliente({
                 <select
                   id={`assina-${c.chave}`}
                   className="campo w-auto py-1 text-sm"
-                  value={assinam[c.chave] ?? ASSINA_POR_PADRAO[c.chave]}
+                  value={assinam[c.chave] ?? ASSINA_POR_PADRAO[c.especie as keyof typeof ASSINA_POR_PADRAO]}
                   onChange={(e) => setAssinam({ ...assinam, [c.chave]: e.target.value })}
                 >
                   {QUEM_ASSINA.map((q) => (
@@ -801,6 +985,79 @@ export function PecasDoCliente({
       {enviados.length > 0 ? (
         <div className="mt-6 border-t border-slate-200 pt-4">
           <h3 className="text-sm font-semibold">Mandados para assinatura</h3>
+          {enviados.some((e) => e.situacao === "ENVIADO" || e.situacao === "PARCIAL") ? (
+            <details className="mt-2 rounded border border-slate-200 bg-slate-50 p-3 text-sm">
+              <summary className="cursor-pointer font-medium text-marca">Reenviar o que falta assinar</summary>
+              <p className="ajuda">
+                Cada pessoa recebe uma mensagem só, com todos os documentos que faltam ela assinar. Quem já assinou fica de fora.
+              </p>
+              <div className="mt-2 grid gap-1">
+                {enviados
+                  .filter((e) => e.situacao === "ENVIADO" || e.situacao === "PARCIAL")
+                  .map((e) => (
+                    <label key={e.id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={lote.ids.has(e.id)}
+                        onChange={(ev) => {
+                          const ids = new Set(lote.ids);
+                          if (ev.target.checked) ids.add(e.id);
+                          else ids.delete(e.id);
+                          setLote({ ...lote, ids });
+                        }}
+                      />
+                      {ESPECIES.find((x) => x.chave === e.especie)?.rotulo ?? e.especie}
+                      <span className="text-xs text-slate-500">{new Date(e.criadoEm).toLocaleDateString("pt-BR")}</span>
+                    </label>
+                  ))}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-4">
+                {(
+                  [
+                    ["EMAIL", "E-mail", emailLigado],
+                    ["WHATSAPP", "WhatsApp (só o cliente)", whatsappLigado],
+                  ] as const
+                ).map(([canal, rotulo, ligado]) => (
+                  <label key={canal} className={`flex items-center gap-2 ${ligado ? "" : "text-slate-400"}`}>
+                    <input
+                      type="checkbox"
+                      disabled={!ligado}
+                      checked={lote.canais.has(canal)}
+                      onChange={(ev) => {
+                        const canais = new Set(lote.canais);
+                        if (ev.target.checked) canais.add(canal);
+                        else canais.delete(canal);
+                        setLote({ ...lote, canais });
+                      }}
+                    />
+                    {rotulo}
+                  </label>
+                ))}
+              </div>
+              <textarea
+                className="campo mt-2 min-h-16"
+                maxLength={1000}
+                placeholder="Recado opcional (ex.: precisamos até sexta para protocolar)"
+                value={lote.recado}
+                onChange={(ev) => setLote({ ...lote, recado: ev.target.value })}
+              />
+              <button
+                type="button"
+                className="botao-principal mt-2"
+                disabled={enviando !== null || lote.ids.size === 0 || lote.canais.size === 0}
+                onClick={async () =>
+                  setResultadoDoLote(await reenviar([...lote.ids], [...lote.canais], { recado: lote.recado, chave: "lote" }))
+                }
+              >
+                {enviando === "lote" ? "Reenviando…" : "Reenviar"}
+              </button>
+              {resultadoDoLote ? (
+                <p role="status" className={`mt-2 ${resultadoDoLote.ok ? "text-emerald-700" : "text-red-700"}`}>
+                  {resultadoDoLote.texto}
+                </p>
+              ) : null}
+            </details>
+          ) : null}
           <ul className="mt-2 space-y-3">
             {enviados.map((e) => {
               const s = SITUACAO[e.situacao] ?? {
@@ -833,7 +1090,9 @@ export function PecasDoCliente({
                         {a.recusadoEm ? (
                           <span className="text-red-700">recusou</span>
                         ) : a.assinadoEm ? (
-                          <span className="text-emerald-700">assinou</span>
+                          <span className="text-emerald-700">
+                            assinou em {new Date(a.assinadoEm).toLocaleDateString("pt-BR")}
+                          </span>
                         ) : (
                           <span className="text-slate-500">ainda não assinou</span>
                         )}
@@ -846,6 +1105,47 @@ export function PecasDoCliente({
                           >
                             link de assinatura
                           </a>
+                        ) : null}
+                        {/* O reenvio consulta o Autentique na hora: nao depende do link guardado. */}
+                        {!a.assinadoEm && !a.recusadoEm && (e.situacao === "ENVIADO" || e.situacao === "PARCIAL") ? (
+                          <span className="ml-2 inline-flex gap-2">
+                            {(
+                              [
+                                ["EMAIL", "reenviar por e-mail", emailLigado],
+                                [
+                                  "WHATSAPP",
+                                  "por WhatsApp",
+                                  whatsappLigado && !!emailDoCliente && emailDoCliente.trim().toLowerCase() === a.email.trim().toLowerCase(),
+                                ],
+                              ] as const
+                            )
+                              .filter(([, , ligado]) => ligado)
+                              .map(([canal, rotulo]) => {
+                                const chave = `${e.id}:${a.email}:${canal}`;
+                                return (
+                                  <button
+                                    key={canal}
+                                    type="button"
+                                    className="underline disabled:opacity-50"
+                                    disabled={enviando !== null}
+                                    onClick={async () => {
+                                      const r = await reenviar([e.id], [canal], { email: a.email, chave });
+                                      setNaLinha((atual) => ({ ...atual, [`${e.id}:${a.email}`]: r }));
+                                    }}
+                                  >
+                                    {enviando === chave ? "reenviando…" : rotulo}
+                                  </button>
+                                );
+                              })}
+                          </span>
+                        ) : null}
+                        {naLinha[`${e.id}:${a.email}`] ? (
+                          <span
+                            role="status"
+                            className={`mt-0.5 block ${naLinha[`${e.id}:${a.email}`].ok ? "text-emerald-700" : "text-red-700"}`}
+                          >
+                            {naLinha[`${e.id}:${a.email}`].texto}
+                          </span>
                         ) : null}
                       </li>
                     ))}

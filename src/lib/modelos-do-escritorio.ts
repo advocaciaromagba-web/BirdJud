@@ -415,6 +415,11 @@ export type DadosDaPeca = {
     descricao: string | null;
     ativo: boolean;
   } | null;
+  /**
+   * So para a procuracao: a acao desta via. Cliente com varias acoes
+   * contratadas recebe uma procuracao por acao, cada uma com a sua finalidade.
+   */
+  acao?: string | null;
   /** So para o recibo: o que foi recebido. */
   recibo?: {
     valorCentavos: number;
@@ -486,7 +491,7 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     "honorarios.parcelas": c ? String(c.parcelas) : null,
     "honorarios.parcela_valor": primeira ? emReais(primeira.valorCentavos) : null,
     "honorarios.percentual": c?.percentualBp ? percentualEmTexto(c.percentualBp) : null,
-    "honorarios.descricao": c?.descricao ?? null,
+    "honorarios.descricao": d.acao?.trim() || c?.descricao || null,
     "honorarios.primeiro_vencimento": emDia(c?.primeiroVencimento ?? null),
     "honorarios.entrada": c?.entradaCentavos ? emReais(c.entradaCentavos) : null,
     "honorarios.forma": c?.forma ? (NOME_DA_FORMA[c.forma] ?? c.forma) : null,
@@ -510,6 +515,31 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     "data.hoje": porExtensoData(hoje),
     "data.cidade_e_data": cidadeEData(d.escritorio.cidade, hoje),
   };
+}
+
+const paraNomeDeArquivo = (texto: string, tamanho: number) =>
+  texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase()
+    .slice(0, tamanho)
+    .replace(/-$/, "");
+
+/**
+ * Nome do arquivo da peca. A acao entra no nome: duas procuracoes do mesmo
+ * cliente no mesmo dia virariam um arquivo so na nuvem, e a trava de envio
+ * repetido compara por este nome.
+ */
+export function nomeDoArquivoDaPeca(especie: Especie, cliente: string, acao: string | null | undefined, formato: string): string {
+  const partes = [especie.toLowerCase(), acao?.trim() ? paraNomeDeArquivo(acao, 50) : "", paraNomeDeArquivo(cliente, 40) || "cliente"];
+  return `${partes.filter(Boolean).join("-")}.${formato.toLowerCase()}`;
+}
+
+/** Titulo do documento (PDF e Autentique), com a acao quando houver. */
+export function tituloDaPeca(especie: Especie, cliente: string, acao?: string | null): string {
+  return `${NOME_DA_ESPECIE[especie]}${acao?.trim() ? ` (${acao.trim()})` : ""} - ${cliente}`;
 }
 
 /** Em que arquivo a peca sai. */
@@ -591,13 +621,6 @@ export async function gerarPeca(
     r.semValor.forEach((s) => semValor.add(s));
     r.desconhecidos.forEach((d) => desconhecidos.add(d));
   }
-  const limpo = dados.cliente.nome
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .toLowerCase()
-    .slice(0, 40);
 
   const temImagem = Object.values(partes).some((xml) => TEM_IMAGEM.test(xml));
 
@@ -607,13 +630,13 @@ export async function gerarPeca(
   const pdf =
     formato === "PDF"
       ? await montarPdf(estruturaDoDocumento(novas[CAMINHO_DO_TEXTO]), {
-          titulo: `${NOME_DA_ESPECIE[especie]} - ${dados.cliente.nome}`,
+          titulo: tituloDaPeca(especie, dados.cliente.nome, dados.acao),
         })
       : null;
 
   return {
     arquivo: pdf ? pdf.arquivo : await trocarTextos(conteudo, novas),
-    nomeDoArquivo: `${especie.toLowerCase()}-${limpo || "cliente"}.${formato.toLowerCase()}`,
+    nomeDoArquivo: nomeDoArquivoDaPeca(especie, dados.cliente.nome, dados.acao, formato),
     formato,
     doEscritorio,
     semValor: [...semValor].sort(),

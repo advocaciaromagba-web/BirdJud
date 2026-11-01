@@ -129,7 +129,7 @@ do Railway, nao a mao — o que esta aqui e o retrato do que foi criado.
 | `cron-noturno` | `0 3 * * *` (00h de Brasilia) | captura do DJEN, **triagem das publicacoes**, contas a pagar do mes e, em seguida, os avisos — nessa ordem |
 | `cron-diario` | `0 9 * * *` (06h de Brasilia) | consumo, regua de cobranca, sincronizacao de cobrancas, emissao de parcela de honorarios e **arquivamento da agenda** (`ARQUIVAR_AGENDA`, ver docs/AGENDA.md) |
 | `cron-semanal` | `0 6 * * 0` (domingo, 03h de Brasilia) | purga dos escritorios encerrados e `LIMPAR_VENCIDOS` (janelas de limite, pedidos de senha vencidos e acesso de suporte com mais de 12 meses) |
-| `cron-horario` | `7 * * * *` (de hora em hora) | `LEMBRAR`: so os lembretes de compromisso |
+| `cron-horario` | `7 * * * *` (de hora em hora) | `LEMBRAR` (lembretes de compromisso) e, depois, `CONFERIR_ASSINATURAS` (andamento das assinaturas no Autentique) |
 
 **Por que existe um cron de hora em hora.** A regua de lembretes tem um marco
 de UMA HORA antes (ver `src/lib/regua-de-lembretes.ts`), e marco de uma hora

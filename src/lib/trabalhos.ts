@@ -34,6 +34,7 @@ import {
 } from "./avisos";
 import { triarPendentes } from "./triagem-do-escritorio";
 import { emitirNotaDaFatura } from "./nota-da-plataforma";
+import { conferirPendentes } from "./assinatura-do-escritorio";
 
 export type Contexto = { escritorioId: string | null; dados: unknown };
 
@@ -440,6 +441,23 @@ async function organizarNuvem({ escritorioId }: Contexto): Promise<void> {
 }
 
 /**
+ * Andamento das assinaturas no Autentique, de hora em hora: quem ja assinou
+ * aparece na tela sem esperar alguem clicar em "conferir".
+ */
+async function conferirAssinaturas({ escritorioId }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("CONFERIR_ASSINATURAS exige escritório.");
+  const r = await conferirPendentes(escritorioId);
+  if (r.mudaram || r.falhas.length) {
+    console.log(
+      `CONFERIR_ASSINATURAS ${escritorioId}: ${r.conferidos} conferido(s), ${r.mudaram} com novidade` +
+        (r.falhas.length ? `, ${r.falhas.length} falha(s) — ${r.falhas.join(" | ")}` : ""),
+    );
+  }
+  // Todos falharam: o Autentique esta fora. Falha o trabalho para aparecer.
+  if (r.falhas.length && r.conferidos === 0) throw new FalhaTemporaria(`Autentique não respondeu: ${r.falhas[0]}`, 20);
+}
+
+/**
  * Nota fiscal da mensalidade (Blackbird -> escritorio), quando a fatura e
  * paga. Recusada pela Sefin, o trabalho falha: aparece no console, e o
  * operador corrige o cadastro e emite de novo pela ficha do escritorio.
@@ -469,6 +487,7 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   ARQUIVAR_AGENDA: arquivarAgenda,
   ORGANIZAR_NUVEM: organizarNuvem,
   EMITIR_NOTA_DA_PLATAFORMA: emitirNotaDaPlataforma,
+  CONFERIR_ASSINATURAS: conferirAssinaturas,
 };
 
 /** Trabalhos que rodam uma vez para a plataforma toda, nao por escritorio. */
@@ -494,6 +513,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   ARQUIVAR_AGENDA: undefined,
   ORGANIZAR_NUVEM: "NUVEM",
   EMITIR_NOTA_DA_PLATAFORMA: undefined,
+  CONFERIR_ASSINATURAS: "ASSINATURA",
 };
 
 /**

@@ -25,6 +25,8 @@ const pedido = z.object({
   /** Recado de quem manda, opcional. So o e-mail leva texto livre. */
   recado: z.string().max(1000).nullish(),
   clienteId: z.string().min(1),
+  // So para a procuracao: a acao desta via (uma procuracao por acao).
+  acao: z.string().trim().max(300).nullish(),
   contratoId: z.string().min(1).nullish(),
   processoId: z.string().min(1).nullish(),
   advogadoIds: z.array(z.string().min(1)).max(50).optional(),
@@ -179,6 +181,7 @@ export async function POST(
 
     const dados = {
       clienteId,
+      acao: especie === "PROCURACAO" ? (corpo.data.acao ?? null) : null,
       cliente,
       representantes,
       escritorio,

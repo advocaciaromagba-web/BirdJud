@@ -400,6 +400,7 @@ export default async function FichaCliente({
         emailLigado={modulos.includes("EMAIL")}
         emailDoCliente={cliente.email}
         notaFiscalLigada={modulos.includes("NFSE")}
+        acoesContratadas={cliente.acoesContratadas}
         envios={envios.map((e) => ({
           id: e.id,
           especie: e.especie,

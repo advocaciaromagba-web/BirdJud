@@ -260,6 +260,8 @@ model Cliente {
   /// Advogados em nome de quem saem as pecas deste cliente. VAZIO = TODOS os
   /// que assinam. Ver src/lib/qualificacao.ts.
   advogadosIds String[] @default([])
+  /// Acoes contratadas: uma procuracao para cada (finalidade da procuracao).
+  acoesContratadas String[] @default([])
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 

@@ -92,6 +92,9 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Cliente removido no painel do Asaas: o vinculo e conferido e recuperado (duplicado ativo, restaurar, ou criar) | `clienteNoAsaas` e `situacaoDoClienteNoAsaas` em `cobrancas.ts` |
 | Campo de valor em real ("1.500,00") | ja existia (`paraCentavos` em `dinheiro.ts`; nenhum campo de dinheiro usa `type="number"`) |
 | Assinatura concluida nao vira aviso de tarefa | nao se aplica: o BirdJud nao cria aviso de tarefa ao assinar |
+| Reenviar para assinatura o que falta: uma mensagem por pessoa, por e-mail ou WhatsApp (so ao proprio cliente), conferindo antes no Autentique; resultado na linha de quem foi clicado; motivo de cada documento de fora | `src/lib/reenvio-de-assinatura.ts`, `POST /api/assinaturas/reenviar`, `PecasDoCliente.tsx` |
+| Gravar quem ja assinou mesmo com o documento pendente, com data na tela, e conferir sozinho de hora em hora | `conferirPendentes` em `assinatura-do-escritorio.ts`, trabalho `CONFERIR_ASSINATURAS` (cron-horario) |
+| Uma procuracao para cada acao contratada; acoes no cadastro; a acao entra no nome do arquivo e no titulo; trava de envio repetido compara pelo documento | `Cliente.acoesContratadas` (migracao 75), `DadosDaPeca.acao`, `nomeDoArquivoDaPeca`/`tituloDaPeca` em `modelos-do-escritorio.ts`, `PecasDoCliente.tsx` |
 | Menor cadastrado a partir de quem o representa, sem herdar RG e CPF | `Cliente.responsavelClienteId`, `src/lib/menores-do-escritorio.ts`, `POST /api/clientes/[id]/menores`, `MenoresDoCliente.tsx`; nascimento na leitura por IA ja existia (instrucao reforcada) |
 | Audiencia e pericia com responsavel que nao e advogado: aviso, nao bloqueio | `atoSemAdvogado` em `src/lib/agenda-tela.ts`, `PainelAgenda.tsx` |
 | Cobrancas sem a segunda senha; Financeiro com ela | ja era assim (so lancamentos, despesas e metas pedem a senha) |

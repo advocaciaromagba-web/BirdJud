@@ -48,6 +48,8 @@ const edicao = z.object({
     .optional(),
   // Menor de idade: o documento sai com quem o representa (src/lib/menor.ts).
   menor: z.boolean().optional(),
+  // Acoes contratadas: uma procuracao para cada. A lista inteira, sempre.
+  acoesContratadas: z.array(z.string().trim().min(3).max(300)).max(20).optional(),
 });
 
 const UM_EMAIL = z.string().email();
@@ -158,6 +160,9 @@ export async function PATCH(
       ...opcional("observacoes"),
       ...(nascimento === undefined ? {} : { nascimento }),
       ...(corpo.data.menor === undefined ? {} : { menor: corpo.data.menor }),
+      ...(corpo.data.acoesContratadas === undefined
+        ? {}
+        : { acoesContratadas: [...new Set(corpo.data.acoesContratadas.map((a) => a.trim()))] }),
       ...(endereco === undefined ? {} : { endereco }),
       ...(corpo.data.nome === undefined ? {} : { nome: corpo.data.nome.trim() }),
       ...(corpo.data.documento === undefined

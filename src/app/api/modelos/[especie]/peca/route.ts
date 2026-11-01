@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic";
 
 const pedido = z.object({
   clienteId: z.string().min(1),
+  // So para a procuracao: a acao desta via (uma procuracao por acao).
+  acao: z.string().trim().max(300).nullish(),
   contratoId: z.string().min(1).nullish(),
   processoId: z.string().min(1).nullish(),
   // So para o recibo: de qual cobranca paga ele sai. Sem id, a mais recente.
@@ -206,6 +208,7 @@ export async function POST(
     }
 
     const peca = await gerarPeca(escritorioId, especie, {
+      acao: especie === "PROCURACAO" ? (corpo.data.acao ?? null) : null,
       cliente,
       representantes,
       escritorio,

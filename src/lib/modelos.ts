@@ -15,7 +15,7 @@ export type Especie = (typeof ESPECIES)[number];
 
 export const NOME_DA_ESPECIE: Record<Especie, string> = {
   CONTRATO: "Contrato de honorários",
-  PROCURACAO: "Procuracao",
+  PROCURACAO: "Procuração",
   DECLARACAO: "Declaração de hipossuficiência",
   RECIBO: "Recibo de pagamento de honorários",
 };
