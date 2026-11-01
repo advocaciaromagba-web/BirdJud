@@ -7,6 +7,7 @@ import { tratarErro } from "@/lib/respostas";
 import {
   cancelarCobranca,
   conciliarCobranca,
+  completarDocumentoDoCliente,
   ClienteSemDocumento,
   emitirCobranca,
   FalhaNoAsaas,
@@ -29,6 +30,8 @@ const novaCobranca = z.object({
   // Em qual conta do escritorio a cobranca nasce. Quem escolhe e quem emite,
   // sempre na hora — o sistema nunca escolhe por conta propria.
   provedor: z.enum(PROVEDORES).optional(),
+  /** CPF/CNPJ de cliente que ainda nao tem: vai para o cadastro antes de cobrar. */
+  documentoDoCliente: z.string().max(20).optional(),
 });
 
 const acao = z.discriminatedUnion("acao", [
@@ -68,10 +71,22 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId, acesso } = await exigirSessao("COBRANCAS");
     const corpo = novaCobranca.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
+    }
+
+    // Escrever no cadastro continua exigindo a area Clientes: quem so tem
+    // Cobrancas nao passa a editar cliente por este caminho.
+    if (corpo.data.documentoDoCliente?.trim()) {
+      if (acesso.CLIENTES !== true) {
+        return NextResponse.json(
+          { erro: "O cliente está sem CPF/CNPJ e seu acesso a Clientes está fechado. Peça a quem cuida do cadastro." },
+          { status: 403 },
+        );
+      }
+      await completarDocumentoDoCliente(escritorioId, corpo.data.clienteId, corpo.data.documentoDoCliente);
     }
 
     const valorCentavos = paraCentavos(corpo.data.valor);

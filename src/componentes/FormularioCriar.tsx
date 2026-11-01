@@ -6,6 +6,7 @@ import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
 import type { Perfil } from "@/lib/leitura-documento";
 import { consultarCep, estadoDepois, focar, mascararCep, type EstadoDoCep } from "./consultaDeCep";
 import { RecadoDoCep } from "./RecadoDoCep";
+import { SeletorDeCliente } from "./SeletorDeCliente";
 
 export type Campo = {
   nome: string;
@@ -23,6 +24,8 @@ export type Campo = {
     // mandar a pessoa sair para cadastrar antes e o jeito certo de ela nao
     // cadastrar.
     | "cliente"
+    // Cliente da base, com busca, sem a opcao de cadastrar ali (cobranca).
+    | "clienteExistente"
     // CEP: completo, busca o endereco e preenche os campos de `preenche`; o
     // cursor vai para `focoDepois` (o numero). E o primeiro campo do endereco.
     | "cep";
@@ -30,10 +33,16 @@ export type Campo = {
   preenche?: { logradouro?: string; bairro?: string; cidade?: string; uf?: string };
   focoDepois?: string;
   placeholder?: string;
-  opcoes?: { valor: string; rotulo: string }[];
+  opcoes?: { valor: string; rotulo: string; documento?: string | null }[];
   ajuda?: string;
   /** Ocupa a linha inteira na grade de dois campos. */
   largo?: boolean;
+  /**
+   * So aparece quando o cliente escolhido no campo com este nome nao tem
+   * CPF/CNPJ (opcao sem `documento`). Declarativo porque a pagina e do
+   * servidor e nao pode passar funcao para este componente.
+   */
+  seClienteSemDocumento?: string;
 };
 
 /**
@@ -137,6 +146,15 @@ export function FormularioCriar({
     }
   }
 
+  // Campo condicionado ao cliente escolhido estar sem CPF/CNPJ.
+  const semDocumento = (nomeDoCampo: string) => {
+    const escolhido = valores[nomeDoCampo];
+    if (!escolhido) return false;
+    const opcao = campos.find((c) => c.nome === nomeDoCampo)?.opcoes?.find((o) => o.valor === escolhido);
+    return Boolean(opcao) && !opcao!.documento;
+  };
+  const visiveis = campos.filter((c) => !c.seClienteSemDocumento || semDocumento(c.seClienteSemDocumento));
+
   async function enviar(
     evento: React.FormEvent<HTMLFormElement>,
     confirmando = false,
@@ -147,7 +165,7 @@ export function FormularioCriar({
     if (!confirmando) setConfirmavel(null);
 
     const corpo: Record<string, unknown> = {};
-    for (const campo of campos) {
+    for (const campo of visiveis) {
       if (campo.tipo === "cliente") {
         const escolhido = (valores[campo.nome] ?? "").trim();
         if (escolhido === NOVO_CLIENTE) {
@@ -219,7 +237,7 @@ export function FormularioCriar({
       ) : null}
 
       <form onSubmit={enviar} className="grid gap-4 sm:grid-cols-2">
-        {campos.map((campo) => (
+        {visiveis.map((campo) => (
           <div
             key={campo.nome}
             className={
@@ -234,22 +252,33 @@ export function FormularioCriar({
             </label>
             {campo.tipo === "cliente" ? (
               <>
-                <select
-                  id={`campo-${campo.nome}`}
-                  name={campo.nome}
-                  required={campo.obrigatorio}
-                  value={valores[campo.nome] ?? ""}
-                  onChange={(evento) => mudar(campo.nome, evento.target.value)}
-                  className="campo"
-                >
-                  <option value="">—</option>
-                  {campo.opcoes?.map((opcao) => (
-                    <option key={opcao.valor} value={opcao.valor}>
-                      {opcao.rotulo}
-                    </option>
-                  ))}
-                  <option value={NOVO_CLIENTE}>+ Cadastrar cliente novo</option>
-                </select>
+                {valores[campo.nome] === NOVO_CLIENTE ? (
+                  <button
+                    type="button"
+                    className="text-sm text-marca underline-offset-2 hover:underline"
+                    onClick={() => mudar(campo.nome, "")}
+                  >
+                    Escolher um cliente já cadastrado
+                  </button>
+                ) : (
+                  <div className="grid gap-1">
+                    <SeletorDeCliente
+                      clientes={(campo.opcoes ?? []).map((o) => ({ id: o.valor, nome: o.rotulo, documento: o.documento }))}
+                      valor={valores[campo.nome] ?? ""}
+                      aoMudar={(id) => mudar(campo.nome, id ?? "")}
+                      vazio="—"
+                      rotulo={campo.rotulo}
+                      required={campo.obrigatorio}
+                    />
+                    <button
+                      type="button"
+                      className="justify-self-start text-sm text-marca underline-offset-2 hover:underline"
+                      onClick={() => mudar(campo.nome, NOVO_CLIENTE)}
+                    >
+                      + Cadastrar cliente novo
+                    </button>
+                  </div>
+                )}
 
                 {valores[campo.nome] === NOVO_CLIENTE ? (
                   <div className="mt-3 space-y-3 border-l-2 border-slate-200 pl-3">
@@ -315,6 +344,15 @@ export function FormularioCriar({
                   </div>
                 ) : null}
               </>
+            ) : campo.tipo === "clienteExistente" ? (
+              <SeletorDeCliente
+                clientes={(campo.opcoes ?? []).map((o) => ({ id: o.valor, nome: o.rotulo, documento: o.documento }))}
+                valor={valores[campo.nome] ?? ""}
+                aoMudar={(id) => mudar(campo.nome, id ?? "")}
+                vazio="Escolha o cliente"
+                rotulo={campo.rotulo}
+                required={campo.obrigatorio}
+              />
             ) : campo.tipo === "select" ? (
               <select
                 id={`campo-${campo.nome}`}

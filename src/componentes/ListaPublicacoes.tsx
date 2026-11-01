@@ -6,6 +6,7 @@ import {
   ParticipantesDoCompromisso,
   type ParticipanteNaLista,
 } from "./ParticipantesDoCompromisso";
+import { SeletorDeCliente } from "./SeletorDeCliente";
 
 export type TriagemNaTela = {
   id: string;
@@ -582,14 +583,13 @@ function CadastrarProcesso({
       {partes.length > 0 ? (
         <p className="text-xs text-slate-600 sm:col-span-2">Partes intimadas: {partes.join("; ")}</p>
       ) : null}
-      <select className="campo" value={clienteId} onChange={(e) => setClienteId(e.target.value)} aria-label="Cliente do processo">
-        <option value="">Sem cliente por enquanto</option>
-        {clientes.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.nome}
-          </option>
-        ))}
-      </select>
+      <SeletorDeCliente
+        clientes={clientes}
+        valor={clienteId}
+        aoMudar={(id) => setClienteId(id ?? "")}
+        vazio="Sem cliente por enquanto"
+        rotulo="Cliente do processo"
+      />
       <button type="button" className="botao-principal" disabled={ocupado} onClick={cadastrar}>
         {ocupado ? "..." : "Cadastrar"}
       </button>

@@ -12,6 +12,7 @@ import {
   type SituacaoDaTarefa,
 } from "@/lib/tarefas";
 import { LeitorDeDocumentos } from "./LeitorDeDocumentos";
+import { SeletorDeCliente } from "./SeletorDeCliente";
 
 export type TarefaNaTela = {
   id: string;
@@ -319,18 +320,7 @@ export function PainelTarefas({
 
       <label className="grid gap-1 text-sm">
         <span className="text-slate-600">Cliente (opcional)</span>
-        <select
-          name="clienteId"
-          defaultValue={tarefa?.clienteId ?? ""}
-          className="rounded-lg border border-slate-300 px-3 py-2"
-        >
-          <option value="">Nenhum</option>
-          {clientes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
+        <SeletorDeCliente name="clienteId" clientes={clientes} valorInicial={tarefa?.clienteId ?? null} vazio="Nenhum" />
       </label>
 
       <label className="flex items-center gap-2 text-sm text-slate-700">

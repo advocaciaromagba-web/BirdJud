@@ -15,6 +15,8 @@ import { registrarConsumo, competenciaDe } from "./consumo";
 import { ehDuplicado } from "./respostas";
 import { moduloAtivo } from "./modulos";
 import { randomUUID } from "node:crypto";
+import { digitosDe, documentoValido, formatarDocumento } from "./documentos";
+import { ehPessoaJuridica } from "./representantes";
 
 export const FORMAS = ["BOLETO", "PIX", "CARTAO", "QUALQUER"] as const;
 export type Forma = (typeof FORMAS)[number];
@@ -193,9 +195,35 @@ export async function clienteNoAsaas(
   cliente: ClienteDoBanco,
   chave: string,
 ): Promise<string> {
-  if (cliente.idNoAsaas) return cliente.idNoAsaas;
-
   const documento = (cliente.documento ?? "").replace(/\D/g, "");
+  const guardar = async (id: string) => {
+    await comEscritorio(escritorioId, (db) =>
+      db.cliente.update({ where: { id: cliente.id }, data: { idNoAsaas: id } }),
+    );
+    return id;
+  };
+
+  // O id guardado e conferido antes de usar. Se alguem removeu o cliente no
+  // painel do Asaas, toda cobranca falharia com "cliente removido" e o
+  // cadastro daqui continuaria intacto: o que morreu foi so o vinculo. A
+  // recuperacao segue a ordem que menos atrapalha: outro cliente ativo com o
+  // mesmo CPF/CNPJ la (o removido era duplicado), senao restaurar o proprio
+  // removido (as cobrancas dele continuam no mesmo cliente), senao criar.
+  if (cliente.idNoAsaas) {
+    const situacao = await situacaoDoClienteNoAsaas(chave, cliente.idNoAsaas);
+    if (situacao === "ATIVO") return cliente.idNoAsaas;
+    if (documento.length === 11 || documento.length === 14) {
+      const ativo = await clienteAtivoPeloDocumento(chave, documento);
+      if (ativo) return guardar(ativo);
+    }
+    if (situacao === "REMOVIDO") {
+      const restaurado = await chamarAsaas(chave, `/customers/${cliente.idNoAsaas}/restore`, { method: "POST" }).catch(
+        () => null,
+      );
+      if (restaurado && restaurado.deleted !== true) return cliente.idNoAsaas;
+    }
+  }
+
   if (documento.length !== 11 && documento.length !== 14) {
     throw new ClienteSemDocumento(cliente.nome);
   }
@@ -216,11 +244,28 @@ export async function clienteNoAsaas(
 
   const id = typeof criado.id === "string" ? criado.id : null;
   if (!id) throw new FalhaNoAsaas("O Asaas não devolveu o id do cliente.");
+  return guardar(id);
+}
 
-  await comEscritorio(escritorioId, (db) =>
-    db.cliente.update({ where: { id: cliente.id }, data: { idNoAsaas: id } }),
-  );
-  return id;
+/** ATIVO, REMOVIDO (deleted no Asaas) ou INEXISTENTE (404). Outra falha sobe. */
+export async function situacaoDoClienteNoAsaas(
+  chave: string,
+  idNoAsaas: string,
+): Promise<"ATIVO" | "REMOVIDO" | "INEXISTENTE"> {
+  try {
+    const achado = await chamarAsaas(chave, `/customers/${idNoAsaas}`);
+    return achado.deleted === true ? "REMOVIDO" : "ATIVO";
+  } catch (erro) {
+    if (erro instanceof FalhaNoAsaas && erro.definitiva) return "INEXISTENTE";
+    throw erro;
+  }
+}
+
+async function clienteAtivoPeloDocumento(chave: string, documento: string): Promise<string | null> {
+  const lista = await chamarAsaas(chave, `/customers?cpfCnpj=${documento}`).catch(() => null);
+  const dados = Array.isArray(lista?.data) ? (lista!.data as Array<{ id?: unknown; deleted?: unknown }>) : [];
+  const ativo = dados.find((c) => c.deleted !== true && typeof c.id === "string");
+  return ativo ? (ativo.id as string) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -620,4 +665,48 @@ export async function cancelarCobranca(
       data: { status: "CANCELADA", sincronizadoEm: new Date() },
     }),
   );
+}
+
+// ---------------------------------------------------------------------------
+// CPF/CNPJ do cliente informado na hora de cobrar
+// ---------------------------------------------------------------------------
+
+/**
+ * Cliente sem CPF/CNPJ travava a cobranca: era preciso sair, editar o
+ * cadastro e recomecar. O numero entra na propria tela e vai para o cadastro,
+ * valendo para todas as telas, com as conferencias do cadastro: digito
+ * verificador, numero de outro cliente e, para CNPJ, representante legal.
+ *
+ * So completa: cliente que ja tem documento fica como esta. Quem chama confere
+ * se a pessoa pode mexer em Clientes.
+ */
+export async function completarDocumentoDoCliente(
+  escritorioId: string,
+  clienteId: string,
+  documentoDigitado: string,
+): Promise<void> {
+  const digitos = digitosDe(documentoDigitado);
+  if (!documentoValido(digitos)) {
+    throw new PedidoInvalido(digitos.length === 14 ? "CNPJ inválido: confira os números." : "CPF inválido: confira os números.");
+  }
+  await comEscritorio(escritorioId, async (db) => {
+    const cliente = await db.cliente.findFirst({
+      where: { id: clienteId },
+      select: { documento: true, _count: { select: { representantes: true } } },
+    });
+    if (!cliente) throw new PedidoInvalido("Cliente não encontrado.");
+    if (cliente.documento && digitosDe(cliente.documento)) return;
+    const formatado = formatarDocumento(digitos);
+    const outro = await db.cliente.findFirst({
+      where: { id: { not: clienteId }, documento: { in: [digitos, formatado] } },
+      select: { nome: true },
+    });
+    if (outro) throw new PedidoInvalido(`Este número já está no cadastro de ${outro.nome}.`);
+    if (ehPessoaJuridica(digitos) && cliente._count.representantes === 0) {
+      throw new PedidoInvalido(
+        "Empresa precisa do representante legal no cadastro antes da cobrança. Cadastre em Clientes, na ficha da empresa.",
+      );
+    }
+    await db.cliente.updateMany({ where: { id: clienteId }, data: { documento: formatado } });
+  });
 }

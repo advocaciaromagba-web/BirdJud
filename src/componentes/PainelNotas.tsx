@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { SeletorDeCliente } from "./SeletorDeCliente";
 
 export type NotaNaTela = {
   id: string;
@@ -224,14 +225,13 @@ export function PainelNotas({
           <form onSubmit={preparar} className="mt-3 grid gap-4 md:grid-cols-2">
             <label className="grid gap-1 text-sm md:col-span-2">
               Cliente (tomador do serviço)
-              <select className="campo" value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: e.target.value })}>
-                <option value="">Escolha o cliente</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome} {c.documento ? `— ${c.documento}` : "(sem CPF/CNPJ)"}
-                  </option>
-                ))}
-              </select>
+              <SeletorDeCliente
+                clientes={clientes.map((c) => ({ id: c.id, nome: c.nome, documento: c.documento || "sem CPF/CNPJ" }))}
+                valor={form.clienteId}
+                aoMudar={(id) => setForm({ ...form, clienteId: id ?? "" })}
+                vazio="Escolha o cliente"
+                rotulo="Cliente (tomador do serviço)"
+              />
             </label>
             <label className="grid gap-1 text-sm">
               Valor do serviço (R$)

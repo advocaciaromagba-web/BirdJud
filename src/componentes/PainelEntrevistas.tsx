@@ -11,6 +11,7 @@ import { GravadorDeFala } from "./GravadorDeFala";
 import { EnvioDeAudio } from "./EnvioDeAudio";
 import { GravadorOpenAI } from "./GravadorOpenAI";
 import { DocumentosDaEntrevista, type ModeloEmUso } from "./DocumentosDaEntrevista";
+import { SeletorDeCliente } from "./SeletorDeCliente";
 
 export type EntrevistaNaTela = {
   id: string;
@@ -283,24 +284,18 @@ export function PainelEntrevistas({
               <span className="text-slate-600">
                 {tipoNovo === "TRIAGEM" ? "Cliente (quem será ouvido)" : "Cliente (de quem é o caso)"}
               </span>
-              <select
-                value={clienteNovo}
-                onChange={(ev) => {
-                  setClienteNovo(ev.target.value);
+              <SeletorDeCliente
+                clientes={clientes}
+                valor={clienteNovo}
+                aoMudar={(id) => {
+                  setClienteNovo(id ?? "");
                   // Na triagem, quem e ouvido e o proprio cliente.
                   if (tipoNovo === "TRIAGEM") {
-                    setNome(clientes.find((c) => c.id === ev.target.value)?.nome ?? "");
+                    setNome(clientes.find((c) => c.id === id)?.nome ?? "");
                   }
                 }}
-                className="rounded-lg border border-slate-300 px-3 py-2"
-              >
-                <option value="">Pessoa ainda não cadastrada</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
+                vazio="Pessoa ainda não cadastrada"
+              />
               <span className="text-xs text-slate-500">
                 A gravação e o PDF da transcrição vão para a pasta deste cliente.
               </span>
@@ -710,19 +705,14 @@ export function PainelEntrevistas({
                 <section className="grid gap-3 border-t border-slate-100 pt-4">
                   <div className="flex flex-wrap items-center gap-2">
                     {!e.temCliente ? (
-                      <select
-                        defaultValue=""
-                        aria-label="Ligar ao cliente"
-                        onChange={(ev) => ev.target.value && acao(e.id, "cliente", "PUT", { clienteId: ev.target.value })}
-                        className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-                      >
-                        <option value="">Ligar ao cliente...</option>
-                        {clientes.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.nome}
-                          </option>
-                        ))}
-                      </select>
+                      <SeletorDeCliente
+                        clientes={clientes}
+                        valor={null}
+                        aoMudar={(id) => id && acao(e.id, "cliente", "PUT", { clienteId: id })}
+                        vazio="Ligar ao cliente..."
+                        rotulo="Ligar ao cliente"
+                        className="w-64 text-xs"
+                      />
                     ) : null}
                     <button
                       type="button"

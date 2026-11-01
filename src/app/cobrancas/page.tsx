@@ -108,8 +108,8 @@ export default async function PaginaCobrancas() {
             Nova cobrança
           </summary>
           <p className="mt-2 text-sm text-slate-500">
-            O Asaas exige CPF/CNPJ do cliente. Cliente sem documento cadastrado
-            é recusado com essa mensagem.
+            O Asaas exige CPF/CNPJ do cliente. Se o cliente escolhido não tiver,
+            o campo aparece aqui mesmo e o número vai para o cadastro.
             {temInfinitePay
               ? " Na InfinitePay sai um link com Pix e cartão, e quem escolhe é o cliente no checkout — a forma abaixo só vale para o Asaas."
               : ""}
@@ -120,14 +120,22 @@ export default async function PaginaCobrancas() {
               {
                 nome: "clienteId",
                 rotulo: "Cliente",
-                tipo: "select",
+                tipo: "clienteExistente",
                 obrigatorio: true,
+                largo: true,
                 opcoes: dados.clientes.map((cliente) => ({
                   valor: cliente.id,
-                  rotulo: cliente.documento
-                    ? cliente.nome
-                    : `${cliente.nome} (sem CPF/CNPJ)`,
+                  rotulo: cliente.nome,
+                  documento: cliente.documento,
                 })),
+              },
+              {
+                nome: "documentoDoCliente",
+                rotulo: "CPF/CNPJ do cliente",
+                obrigatorio: true,
+                largo: true,
+                seClienteSemDocumento: "clienteId",
+                ajuda: "Este cliente está sem CPF/CNPJ, que o Asaas exige. O número é gravado no cadastro dele e vale para todas as telas.",
               },
               ...(temInfinitePay
                 ? [

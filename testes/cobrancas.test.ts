@@ -15,6 +15,7 @@ import {
   cancelarCobranca,
   ClienteSemDocumento,
   comoDia,
+  completarDocumentoDoCliente,
   emitirCobranca,
   emReaisDecimal,
   FalhaNoAsaas,
@@ -70,12 +71,14 @@ describe("conversoes do módulo", () => {
 type Chamada = {
   metodo: string;
   caminho: string;
+  consulta: string;
   corpo: Record<string, unknown> | null;
 };
 
 let servidor: Server;
 let chamadas: Chamada[] = [];
 let pagamentos: Record<string, Record<string, unknown>> = {};
+let clientesNoAsaas: Record<string, { id: string; cpfCnpj: string; deleted: boolean }> = {};
 let responder: (c: Chamada) => { status: number; json: unknown } = () => ({
   status: 200,
   json: {},
@@ -91,6 +94,7 @@ beforeAll(async () => {
       const chamada: Chamada = {
         metodo: req.method ?? "GET",
         caminho: new URL(req.url ?? "/", "http://local").pathname,
+        consulta: new URL(req.url ?? "/", "http://local").search,
         corpo: cru ? (JSON.parse(cru) as Record<string, unknown>) : null,
       };
       chamadas.push(chamada);
@@ -118,7 +122,20 @@ let proximo = 0;
 function asaasNormal(): (c: Chamada) => { status: number; json: unknown } {
   return (chamada) => {
     if (chamada.metodo === "POST" && chamada.caminho === "/customers") {
-      return { status: 200, json: { id: `cus_${(proximo += 1)}` } };
+      const id = `cus_${(proximo += 1)}`;
+      clientesNoAsaas[id] = { id, cpfCnpj: String(chamada.corpo?.cpfCnpj ?? ""), deleted: false };
+      return { status: 200, json: { id } };
+    }
+    if (chamada.metodo === "GET" && chamada.caminho === "/customers") {
+      const doc = new URLSearchParams(chamada.consulta).get("cpfCnpj");
+      return { status: 200, json: { data: Object.values(clientesNoAsaas).filter((c) => c.cpfCnpj === doc) } };
+    }
+    if (chamada.caminho.startsWith("/customers/")) {
+      const [, , id, acao] = chamada.caminho.split("/");
+      const achado = clientesNoAsaas[id];
+      if (!achado) return { status: 404, json: { errors: [{ description: "Cliente não encontrado." }] } };
+      if (chamada.metodo === "POST" && acao === "restore") achado.deleted = false;
+      return { status: 200, json: achado };
     }
     if (chamada.metodo === "POST" && chamada.caminho === "/payments") {
       const id = `pay_${(proximo += 1)}`;
@@ -309,7 +326,7 @@ d("cobranças por escritório", () => {
       vencimento: amanha(),
       forma: "BOLETO",
     });
-    const criacoes = chamadas.filter((c) => c.caminho === "/customers").length;
+    const criacoes = chamadas.filter((c) => c.metodo === "POST" && c.caminho === "/customers").length;
 
     chamadas = [];
     await emitirCobranca(alfa, {
@@ -320,7 +337,60 @@ d("cobranças por escritório", () => {
       forma: "BOLETO",
     });
     expect(criacoes).toBeLessThanOrEqual(1);
-    expect(chamadas.filter((c) => c.caminho === "/customers")).toHaveLength(0);
+    expect(chamadas.filter((c) => c.metodo === "POST" && c.caminho === "/customers")).toHaveLength(0);
+  });
+
+  it("cliente removido no Asaas: restaura o proprio, usa o duplicado ativo ou cria outro", async () => {
+    const emitir = () =>
+      emitirCobranca(alfa, { clienteId: clienteAlfa, descricao: "Vínculo", valorCentavos: 5_000, vencimento: amanha(), forma: "BOLETO" });
+    const idAtual = async () =>
+      (await prismaPlataforma().cliente.findUniqueOrThrow({ where: { id: clienteAlfa }, select: { idNoAsaas: true } })).idNoAsaas!;
+
+    await emitir();
+    const original = await idAtual();
+
+    // 1. Removido la, sem outro com o mesmo documento: restaura o mesmo.
+    clientesNoAsaas[original].deleted = true;
+    chamadas = [];
+    await emitir();
+    expect(await idAtual()).toBe(original);
+    expect(clientesNoAsaas[original].deleted).toBe(false);
+    expect(chamadas.some((c) => c.caminho === `/customers/${original}/restore`)).toBe(true);
+
+    // 2. Removido, com um duplicado ativo do mesmo CPF/CNPJ: passa a usar o ativo.
+    clientesNoAsaas[original].deleted = true;
+    const duplicado = "cus_duplicado_" + marca;
+    clientesNoAsaas[duplicado] = { id: duplicado, cpfCnpj: clientesNoAsaas[original].cpfCnpj, deleted: false };
+    await emitir();
+    expect(await idAtual()).toBe(duplicado);
+
+    // 3. Sumiu de vez (404) e nenhum outro com o documento: cria um novo.
+    delete clientesNoAsaas[duplicado];
+    delete clientesNoAsaas[original];
+    chamadas = [];
+    await emitir();
+    const novo = await idAtual();
+    expect(novo).not.toBe(duplicado);
+    expect(chamadas.filter((c) => c.metodo === "POST" && c.caminho === "/customers")).toHaveLength(1);
+  });
+
+  it("CPF informado na cobranca vai para o cadastro, com as conferencias do cadastro", async () => {
+    const novo = await prismaPlataforma().cliente.create({ data: { escritorioId: alfa, nome: "Sem Documento Ainda" } });
+    await expect(completarDocumentoDoCliente(alfa, novo.id, "111.111.111-11")).rejects.toThrow(/CPF inválido/);
+    await completarDocumentoDoCliente(alfa, novo.id, "39053344705");
+    const gravado = await prismaPlataforma().cliente.findUniqueOrThrow({ where: { id: novo.id } });
+    expect(gravado.documento).toBe("390.533.447-05");
+
+    // O mesmo numero em outro cliente e recusado, com o nome de quem ja tem.
+    const outro = await prismaPlataforma().cliente.create({ data: { escritorioId: alfa, nome: "Outro Sem Documento" } });
+    await expect(completarDocumentoDoCliente(alfa, outro.id, "390.533.447-05")).rejects.toThrow(/Sem Documento Ainda/);
+
+    // Cliente que ja tem documento fica como esta: o campo so completa.
+    await completarDocumentoDoCliente(alfa, novo.id, "52998224725");
+    expect((await prismaPlataforma().cliente.findUniqueOrThrow({ where: { id: novo.id } })).documento).toBe("390.533.447-05");
+
+    // CNPJ sem representante legal: recusado, com o caminho.
+    await expect(completarDocumentoDoCliente(alfa, outro.id, "11.222.333/0001-81")).rejects.toThrow(/representante legal/);
   });
 
   it("cliente sem CPF/CNPJ e recusado antes de virar cobrança", async () => {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PAPEIS_SUGERIDOS } from "@/lib/papeis-de-participante";
+import { SeletorDeCliente } from "./SeletorDeCliente";
 
 export type ParticipanteNaLista = {
   clienteId: string | null;
@@ -152,18 +153,13 @@ export function ParticipantesDoCompromisso({
               <li key={i} className="grid gap-2 rounded border border-slate-200 bg-white p-2 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="rotulo">Quem</label>
-                  <select
-                    className="campo"
-                    value={p.clienteId ?? ""}
-                    onChange={(e) => mudar(i, "clienteId", e.target.value || null)}
-                  >
-                    <option value="">Alguém de fora (digite o nome)</option>
-                    {clientes.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nome}
-                      </option>
-                    ))}
-                  </select>
+                  <SeletorDeCliente
+                    clientes={clientes}
+                    valor={p.clienteId ?? null}
+                    aoMudar={(id) => mudar(i, "clienteId", id)}
+                    vazio="Alguém de fora (digite o nome)"
+                    rotulo="Quem"
+                  />
                 </div>
 
                 {!p.clienteId ? (

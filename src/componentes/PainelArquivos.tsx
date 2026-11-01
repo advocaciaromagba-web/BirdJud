@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SeletorDeCliente } from "./SeletorDeCliente";
 
 export type ArquivoNaTela = {
   id: string;
@@ -86,14 +87,7 @@ export function PainelArquivos({
           </label>
           <label className="grid gap-1 text-sm">
             Cliente (opcional)
-            <select name="clienteId" className="campo">
-              <option value="">—</option>
-              {clientes.map((c) => (
-                <option key={c.valor} value={c.valor}>
-                  {c.rotulo}
-                </option>
-              ))}
-            </select>
+            <SeletorDeCliente name="clienteId" clientes={clientes.map((c) => ({ id: c.valor, nome: c.rotulo }))} vazio="—" />
           </label>
         </div>
         {erro ? <p className="text-sm text-red-700">{erro}</p> : null}

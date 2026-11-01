@@ -87,6 +87,11 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Mapa das variaveis para o cofre | ja existia (`docs/RAILWAY.md`, secao 3; valores no Bitwarden) |
 | Cliente menor: documento no nome dele, representado (ate 16) ou assistido (16 a 18) por quem exerce o poder familiar; assina quem representa | `Cliente.menor`, `Representante.parentesco` (migracao 73), `src/lib/menor.ts`, `qualificacaoDoCliente` em `modelos-do-escritorio.ts`, `assinatura-do-escritorio.ts`, `MenorDeIdade.tsx` |
 | Solucao da tarefa: o que foi feito, com autor e data; "Concluir" abre o campo; apagar o texto apaga a assinatura | `Tarefa.solucao`/`solucaoEm`/`solucaoPorId` (migracao 74), `registrarSolucao` em `tarefas-do-escritorio.ts`, `PATCH /api/tarefas/[id]`, `PainelTarefas.tsx` |
+| Campo de cliente com busca no lugar do `<select>` que cortava os nomes (busca sem acento e por CPF/CNPJ, botao de limpar) | `SeletorDeCliente.tsx`, `src/lib/busca-de-cliente.ts`; Agenda, Tarefas, Publicacoes, Entrevistas, Notas, Arquivos, Cobrancas |
+| CPF/CNPJ do cliente informado na propria tela de cobranca, gravado no cadastro com as conferencias (digito, duplicado, representante de PJ); exige a area Clientes | `completarDocumentoDoCliente` em `cobrancas.ts`, `POST /api/cobrancas` (`documentoDoCliente`), `FormularioCriar` (`seClienteSemDocumento`) |
+| Cliente removido no painel do Asaas: o vinculo e conferido e recuperado (duplicado ativo, restaurar, ou criar) | `clienteNoAsaas` e `situacaoDoClienteNoAsaas` em `cobrancas.ts` |
+| Campo de valor em real ("1.500,00") | ja existia (`paraCentavos` em `dinheiro.ts`; nenhum campo de dinheiro usa `type="number"`) |
+| Assinatura concluida nao vira aviso de tarefa | nao se aplica: o BirdJud nao cria aviso de tarefa ao assinar |
 | Menor cadastrado a partir de quem o representa, sem herdar RG e CPF | `Cliente.responsavelClienteId`, `src/lib/menores-do-escritorio.ts`, `POST /api/clientes/[id]/menores`, `MenoresDoCliente.tsx`; nascimento na leitura por IA ja existia (instrucao reforcada) |
 | Audiencia e pericia com responsavel que nao e advogado: aviso, nao bloqueio | `atoSemAdvogado` em `src/lib/agenda-tela.ts`, `PainelAgenda.tsx` |
 | Cobrancas sem a segunda senha; Financeiro com ela | ja era assim (so lancamentos, despesas e metas pedem a senha) |
