@@ -7,6 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { salvarIntegracao } from "../src/lib/integracao";
 import { dividirEmParcelas, emitirCobranca, sincronizarCobrancas } from "../src/lib/cobrancas";
+import { desfazerBaixa, registrarBaixaManual, reemitirBoleto } from "../src/lib/baixas-de-cobranca";
 import {
   assinaturasDeFora,
   cicloDoAsaas,
@@ -86,6 +87,20 @@ function responder(metodo: string, caminho: string, busca: URLSearchParams, corp
       return { status: 200, json: criadas[0] };
     }
     return { status: 200, json: novoPagamento({ value: corpo?.value, dueDate: corpo?.dueDate, externalReference: corpo?.externalReference }) };
+  }
+  const acaoNoPagamento = caminho.match(/^\/payments\/([^/]+)\/(receiveInCash|undoReceivedInCash|identificationField)$/);
+  if (acaoNoPagamento) {
+    const p = pagamentos[acaoNoPagamento[1]];
+    if (!p) return { status: 404, json: { errors: [{ description: "não encontrada" }] } };
+    if (acaoNoPagamento[2] === "receiveInCash") Object.assign(p, { status: "RECEIVED_IN_CASH", paymentDate: corpo?.paymentDate });
+    if (acaoNoPagamento[2] === "undoReceivedInCash") Object.assign(p, { status: "PENDING", paymentDate: null });
+    if (acaoNoPagamento[2] === "identificationField") return { status: 200, json: { identificationField: "23793.38128 60000.000003 00000.000400 1 1234" } };
+    return { status: 200, json: p };
+  }
+  if (metodo === "PUT" && caminho.startsWith("/payments/")) {
+    const p = pagamentos[caminho.split("/")[2]];
+    Object.assign(p, corpo, { bankSlipUrl: `https://asaas.exemplo/b/${p.id}?v=2` });
+    return { status: 200, json: p };
   }
   if (metodo === "GET" && caminho === "/payments") {
     const lista = Object.values(pagamentos).filter((p) => !busca.get("installment") || p.installment === busca.get("installment"));
@@ -261,5 +276,78 @@ d("mensalidades e fatura parcelada", () => {
     await expect(
       emitirCobranca(esc, { clienteId: cliente, descricao: "x", valorCentavos: 1_000, vencimento: new Date(`${dia(10)}T12:00:00Z`), forma: "PIX", parcelas: 3 }),
     ).rejects.toThrow(/R\$ 5,00/);
+  });
+
+  it("baixa manual: parcial, depois o resto quita e avisa o Asaas; desfazer volta tudo", async () => {
+    const { id } = await emitirCobranca(esc, {
+      clienteId: cliente,
+      descricao: "Consulta",
+      valorCentavos: 100_000,
+      vencimento: new Date(`${dia(10)}T12:00:00Z`),
+      forma: "BOLETO",
+    });
+    const cob = () => comEscritorio(esc, (db) => db.cobranca.findFirstOrThrow({ where: { id } }));
+    const ontem = new Date(`${dia(-1)}T12:00:00Z`);
+
+    await expect(registrarBaixaManual(esc, id, { valorCentavos: 120_000, data: ontem }, "Helena")).rejects.toThrow(/Falta receber/);
+    const parcial = await registrarBaixaManual(esc, id, { valorCentavos: 40_000, data: ontem, observacao: "dinheiro" }, "Helena");
+    expect(parcial.quitou).toBe(false);
+    expect(await cob()).toMatchObject({ status: "PARCIAL", valorPagoCentavos: 40_000 });
+
+    // Para o Asaas o boleto segue aberto: a sincronizacao nao apaga o parcial.
+    await sincronizarCobrancas(esc);
+    expect((await cob()).status).toBe("PARCIAL");
+
+    const resto = await registrarBaixaManual(esc, id, { valorCentavos: 60_000, data: ontem }, "Helena");
+    expect(resto.quitou).toBe(true);
+    const quitada = await cob();
+    expect(quitada.status).toBe("PAGA");
+    expect(pagamentos[quitada.idNoProvedor].status).toBe("RECEIVED_IN_CASH");
+    const receitas = await comEscritorio(esc, (db) =>
+      db.lancamento.findMany({ where: { descricao: { contains: "Consulta" }, tipo: "RECEITA" }, select: { valorCentavos: true } }),
+    );
+    expect(receitas.map((r) => r.valorCentavos).sort((a, b) => a - b)).toEqual([40_000, 60_000]);
+
+    const baixas = await comEscritorio(esc, (db) => db.baixaDeCobranca.findMany({ where: { cobrancaId: id }, orderBy: { criadoEm: "asc" } }));
+    await desfazerBaixa(esc, id, baixas[1].id);
+    expect(await cob()).toMatchObject({ status: "PARCIAL", valorPagoCentavos: 40_000 });
+    expect(pagamentos[quitada.idNoProvedor].status).toBe("PENDING");
+    await desfazerBaixa(esc, id, baixas[0].id);
+    expect((await cob()).status).toBe("ABERTA");
+    expect(await comEscritorio(esc, (db) => db.lancamento.count({ where: { descricao: { contains: "Consulta" }, tipo: "RECEITA" } }))).toBe(0);
+  });
+
+  it("parcial por aqui e boleto pago inteiro depois: a receita não conta o parcial duas vezes", async () => {
+    const { id } = await emitirCobranca(esc, {
+      clienteId: cliente,
+      descricao: "Parecer",
+      valorCentavos: 80_000,
+      vencimento: new Date(`${dia(10)}T12:00:00Z`),
+      forma: "BOLETO",
+    });
+    await registrarBaixaManual(esc, id, { valorCentavos: 30_000, data: new Date(`${dia(-1)}T12:00:00Z`) }, "Helena");
+    const c = await comEscritorio(esc, (db) => db.cobranca.findFirstOrThrow({ where: { id } }));
+    Object.assign(pagamentos[c.idNoProvedor], { status: "RECEIVED", paymentDate: dia(0) });
+    await sincronizarCobrancas(esc);
+    const receitas = await comEscritorio(esc, (db) =>
+      db.lancamento.findMany({ where: { descricao: { contains: "Parecer" }, tipo: "RECEITA" }, select: { valorCentavos: true } }),
+    );
+    expect(receitas.reduce((t, r) => t + r.valorCentavos, 0)).toBe(80_000);
+  });
+
+  it("reemitir boleto: vencimento novo no Asaas, link e linha digitável de volta, sem avisar o cliente", async () => {
+    const { id } = await emitirCobranca(esc, {
+      clienteId: cliente,
+      descricao: "Boleto vencido",
+      valorCentavos: 50_000,
+      vencimento: new Date(`${dia(1)}T12:00:00Z`),
+      forma: "BOLETO",
+    });
+    const r = await reemitirBoleto(esc, id, { vencimento: new Date(`${dia(15)}T12:00:00Z`) });
+    expect(r.linhaDigitavel).toMatch(/^23793/);
+    expect(r.linkBoleto).toContain("v=2");
+    const c = await comEscritorio(esc, (db) => db.cobranca.findFirstOrThrow({ where: { id } }));
+    expect(c.vencimento.toISOString().slice(0, 10)).toBe(dia(15));
+    expect(pagamentos[c.idNoProvedor].dueDate).toBe(dia(15));
   });
 });

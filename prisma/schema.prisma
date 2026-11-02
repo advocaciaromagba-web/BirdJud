@@ -89,6 +89,7 @@ model Escritorio {
   despesasFixas     DespesaFixa[]
   cobrancas         Cobranca[]
   mensalidades Mensalidade[]
+  baixasDeCobranca BaixaDeCobranca[]
   arquivos          Arquivo[]
   notas             NotaFiscal[]
   fiscal            Fiscal?
@@ -1120,7 +1121,7 @@ model Cobranca {
   valorCentavos     Int // em centavos: dinheiro nunca em ponto flutuante
   vencimento        DateTime
   forma             String // BOLETO | PIX | CARTAO | QUALQUER
-  status            String    @default("ABERTA") // PENDENTE | ABERTA | PAGA | VENCIDA | CANCELADA | ESTORNADA
+  status            String    @default("ABERTA") // PENDENTE | ABERTA | PARCIAL | PAGA | VENCIDA | CANCELADA | ESTORNADA
   // ASAAS | INFINITEPAY. A conta do escritorio em que esta cobranca vive.
   provedor          String    @default("ASAAS")
   // Id da cobranca na conta do provedor. E a chave da sincronizacao.
@@ -1148,6 +1149,7 @@ model Cobranca {
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   mensalidade Mensalidade? @relation(fields: [mensalidadeId], references: [id], onDelete: SetNull)
+  baixas      BaixaDeCobranca[]
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
   contrato   ContratoDeHonorarios? @relation(fields: [contratoId], references: [id], onDelete: SetNull)
 
@@ -1163,6 +1165,31 @@ model Cobranca {
   @@index([escritorioId, provedor])
   @@index([escritorioId, mensalidadeId])
   @@index([escritorioId, parcelamentoId])
+}
+
+// Baixa manual (parcial e retroativa) de cobranca. Ver src/lib/baixas-de-cobranca.ts.
+model BaixaDeCobranca {
+  id            String   @id @default(cuid())
+  escritorioId  String
+  cobrancaId    String
+  valorCentavos Int
+  /// Quando o pagamento de fato aconteceu: pode ser retroativa.
+  data          DateTime
+  /// MANUAL (por enquanto, a unica criada por aqui)
+  origem        String   @default("MANUAL")
+  observacao    String?
+  /// Nome de quem deu a baixa, como texto: sobrevive a pessoa sair da equipe.
+  registradoPor String?
+  /// Receita que esta baixa gerou no livro-caixa; desfazer apaga junto.
+  lancamentoId  String?
+  /// A baixa quitou a cobranca e foi informada ao Asaas (recebido em dinheiro).
+  noProvedor    Boolean  @default(false)
+  criadoEm      DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cobranca   Cobranca   @relation(fields: [cobrancaId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, cobrancaId])
 }
 
 // Mensalidade: cobranca que se repete sem data para acabar (assinatura do

@@ -100,6 +100,9 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Trazer as assinaturas que ja existem no painel do Asaas, reconhecendo o cliente pela conta ou pelo CPF/CNPJ; criar mensalidade recusa quando ja ha uma ativa la | `assinaturasDeFora`, `trazerDoAsaas`, `criarMensalidade` |
 | Historico trazido ja pago nao gera receita no Financeiro (contaria duas vezes) | `Cobranca.semBaixa` (migracao 76), `espelharCobrancaDaMensalidade` |
 | Fatura parcelada: N cobrancas ligadas no Asaas, valor como total ou por parcela, uma linha por parcela | `parcelas`/`valorRefereA` e `espelharParcelas` em `cobrancas.ts`, `Cobranca.parcelamentoId` |
+| Baixa manual parcial e retroativa, com historico (quem, quando, observacao) e desfazer; quitada por aqui, o Asaas da como recebido em dinheiro; parcial + boleto pago depois nao conta o parcial duas vezes | `BaixaDeCobranca` (migracao 77), `src/lib/baixas-de-cobranca.ts`, `/api/cobrancas/[id]/baixa`, `sincronizarCobrancas` (status PARCIAL) |
+| Reemitir boleto sem avisar o cliente: vencimento (e valor) novo, link e linha digitavel na tela | `reemitirBoleto`, `/api/cobrancas/[id]/reemitir` |
+| Cobrancas remodelada: abas A receber / A pagar, resumo (em aberto, vencido, recebido em 30 dias), busca, filtros, agrupada por cliente com atrasado em cima, "parcela 2 de 3" | `PainelCobrancas.tsx`, `src/app/cobrancas/page.tsx`; A pagar so com o Financeiro destrancado (segunda senha) |
 | Menor cadastrado a partir de quem o representa, sem herdar RG e CPF | `Cliente.responsavelClienteId`, `src/lib/menores-do-escritorio.ts`, `POST /api/clientes/[id]/menores`, `MenoresDoCliente.tsx`; nascimento na leitura por IA ja existia (instrucao reforcada) |
 | Audiencia e pericia com responsavel que nao e advogado: aviso, nao bloqueio | `atoSemAdvogado` em `src/lib/agenda-tela.ts`, `PainelAgenda.tsx` |
 | Cobrancas sem a segunda senha; Financeiro com ela | ja era assim (so lancamentos, despesas e metas pedem a senha) |

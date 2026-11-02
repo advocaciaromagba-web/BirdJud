@@ -7,10 +7,10 @@ import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { PainelMensalidades } from "@/componentes/PainelMensalidades";
 import { CICLOS, NOMES_DOS_CICLOS, type Ciclo } from "@/lib/mensalidades";
-import {
-  ListaCobrancas,
-  type CobrancaNaTela,
-} from "@/componentes/ListaCobrancas";
+import { PainelCobrancas, type CobrancaNaTela } from "@/componentes/PainelCobrancas";
+import { ListaFinanceira } from "@/componentes/ListaFinanceira";
+import { contextoProtegido } from "@/lib/pagina";
+import Link from "next/link";
 
 export default async function PaginaCobrancas() {
   let contexto;
@@ -35,8 +35,11 @@ export default async function PaginaCobrancas() {
     comEscritorio(contexto.escritorioId, async (db) => ({
       cobrancas: await db.cobranca.findMany({
         orderBy: [{ vencimento: "asc" }],
-        take: 200,
-        include: { cliente: { select: { nome: true } } },
+        take: 500,
+        include: {
+          cliente: { select: { nome: true } },
+          baixas: { orderBy: { data: "asc" } },
+        },
       }),
       clientes: await db.cliente.findMany({
         orderBy: { nome: "asc" },
@@ -63,19 +66,89 @@ export default async function PaginaCobrancas() {
 
   const cobrancas: CobrancaNaTela[] = dados.cobrancas.map((c) => ({
     id: c.id,
+    clienteId: c.clienteId,
     cliente: c.cliente.nome,
     descricao: c.descricao,
-    valor: emReais(c.valorPagoCentavos ?? c.valorCentavos),
-    vencimento: data.format(c.vencimento),
+    valorCentavos: c.valorCentavos,
+    recebidoCentavos: c.status === "PAGA" ? c.valorCentavos : c.baixas.reduce((t, b) => t + b.valorCentavos, 0),
+    vencimentoISO: c.vencimento.toISOString(),
     forma: c.forma,
     status: c.status,
+    provedor: c.provedor,
     linkPagamento: c.linkPagamento,
     pagoEm: c.pagoEm ? data.format(c.pagoEm) : null,
+    parcela: c.parcelaNumero && c.parcelaTotal ? `parcela ${c.parcelaNumero} de ${c.parcelaTotal}` : null,
+    deMensalidade: Boolean(c.mensalidadeId),
+    baixas: c.baixas.map((b) => ({
+      id: b.id,
+      valor: emReais(b.valorCentavos),
+      data: data.format(b.data),
+      observacao: b.observacao,
+      registradoPor: b.registradoPor,
+    })),
   }));
 
-  const emAberto = dados.cobrancas
-    .filter((c) => c.status === "ABERTA" || c.status === "VENCIDA")
-    .reduce((total, c) => total + c.valorCentavos, 0);
+  const agora = new Date();
+  const faltaDe = (c: (typeof dados.cobrancas)[number]) => c.valorCentavos - c.baixas.reduce((t, b) => t + b.valorCentavos, 0);
+  const abertasAgora = dados.cobrancas.filter((c) => c.status === "ABERTA" || c.status === "VENCIDA" || c.status === "PARCIAL");
+  const emAberto = abertasAgora.reduce((total, c) => total + faltaDe(c), 0);
+  const vencido = abertasAgora.filter((c) => c.vencimento < agora).reduce((total, c) => total + faltaDe(c), 0);
+  const trintaDias = new Date(agora.getTime() - 30 * 86_400_000);
+  const recebido30 =
+    dados.cobrancas.filter((c) => c.status === "PAGA" && c.pagoEm && c.pagoEm >= trintaDias).reduce((t, c) => t + (c.valorPagoCentavos ?? c.valorCentavos), 0) +
+    dados.cobrancas
+      .filter((c) => c.status === "PARCIAL")
+      .flatMap((c) => c.baixas)
+      .filter((b) => b.data >= trintaDias)
+      .reduce((t, b) => t + b.valorCentavos, 0);
+
+  // A pagar mora no Financeiro, atras da segunda senha: a aba aqui mostra o
+  // mesmo conteudo so com a porta destrancada — nunca mais facil de abrir que
+  // a tela de onde ele vem.
+  let aPagar: React.ReactNode;
+  if (!modulos.includes("FINANCEIRO")) {
+    aPagar = <p className="text-sm text-slate-600">Contas a pagar fazem parte do módulo Financeiro, que não está no plano.</p>;
+  } else {
+    const porta = await contextoProtegido("FINANCEIRO").catch(() => null);
+    if (!porta || porta.tranca) {
+      aPagar = (
+        <p className="rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+          As contas a pagar ficam no Financeiro, protegido pela segunda senha.{" "}
+          <Link href="/financeiro" className="text-marca underline">
+            Destrancar o Financeiro
+          </Link>
+          {" "}e voltar: enquanto ele estiver destrancado, as contas aparecem aqui.
+        </p>
+      );
+    } else {
+      const limite = new Date(agora.getTime() + 45 * 86_400_000);
+      const contas = await comEscritorio(contexto.escritorioId, (db) =>
+        db.lancamento.findMany({
+          where: { tipo: "DESPESA", pagoEm: null, OR: [{ vencimento: null }, { vencimento: { lte: limite } }] },
+          orderBy: [{ vencimento: "asc" }],
+          take: 200,
+        }),
+      );
+      aPagar = (
+        <div>
+          <p className="mb-3 text-sm text-slate-600">
+            Despesas em aberto vencidas e dos próximos 45 dias. Lançar despesa nova e custo fixo:{" "}
+            <Link href="/financeiro" className="text-marca underline">
+              Financeiro
+            </Link>
+            .
+          </p>
+          <ListaFinanceira
+            lancamentos={contas.map((l) => ({
+              ...l,
+              vencimento: l.vencimento?.toISOString() ?? null,
+              pagoEm: l.pagoEm?.toISOString() ?? null,
+            }))}
+          />
+        </div>
+      );
+    }
+  }
 
   return (
     <Estrutura
@@ -229,7 +302,7 @@ export default async function PaginaCobrancas() {
         />
       ) : null}
 
-      <ListaCobrancas cobrancas={cobrancas} />
+      <PainelCobrancas cobrancas={cobrancas} resumo={{ emAberto, vencido, recebido30 }} aPagar={aPagar} />
     </Estrutura>
   );
 }

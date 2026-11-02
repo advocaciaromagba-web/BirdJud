@@ -659,7 +659,7 @@ export async function sincronizarCobrancas(
 
   const abertas = await comEscritorio(escritorioId, (db) =>
     db.cobranca.findMany({
-      where: { status: { in: ["ABERTA", "VENCIDA"] } },
+      where: { status: { in: ["ABERTA", "VENCIDA", "PARCIAL"] } },
       orderBy: { vencimento: "asc" },
       take: limite,
     }),
@@ -675,8 +675,11 @@ export async function sincronizarCobrancas(
         chave,
         `/payments/${cobranca.idNoProvedor}`,
       );
-      const status = statusNosso(String(doAsaas.status ?? ""));
+      let status = statusNosso(String(doAsaas.status ?? ""));
       if (!status) continue;
+      // Recebida em parte por aqui: para o Asaas o boleto segue em aberto, e
+      // isso nao pode apagar o parcial ja registrado.
+      if (cobranca.status === "PARCIAL" && (status === "ABERTA" || status === "VENCIDA")) status = "PARCIAL";
 
       const pagouAgora = status === "PAGA" && cobranca.status !== "PAGA";
       const valorPago =
@@ -686,9 +689,20 @@ export async function sincronizarCobrancas(
           ? new Date(`${doAsaas.paymentDate}T12:00:00Z`)
           : new Date();
 
-      const lancamentoId = pagouAgora
-        ? await darBaixa(escritorioId, cobranca, valorPago, quando)
-        : cobranca.lancamentoId;
+      // Parte ja recebida em baixa manual tem a propria receita: aqui entra
+      // so o que faltava. Sem isso, o boleto pago inteiro depois do parcial
+      // contaria o parcial duas vezes.
+      const jaRecebido = pagouAgora
+        ? ((
+            await comEscritorio(escritorioId, (db) =>
+              db.baixaDeCobranca.aggregate({ where: { cobrancaId: cobranca.id }, _sum: { valorCentavos: true } }),
+            )
+          )._sum.valorCentavos ?? 0)
+        : 0;
+      const lancamentoId =
+        pagouAgora && valorPago - jaRecebido > 0
+          ? await darBaixa(escritorioId, cobranca, valorPago - jaRecebido, quando)
+          : cobranca.lancamentoId;
 
       if (status === cobranca.status && !pagouAgora) {
         await comEscritorio(escritorioId, (db) =>
