@@ -282,7 +282,24 @@ export type PedidoDeCobranca = {
   forma: Forma;
   /** Quando a cobranca e parcela de um contrato de honorarios. */
   contrato?: { id: string; numero: number; total: number } | null;
+  /**
+   * Fatura parcelada: 2 ou mais gera N cobrancas ligadas no Asaas, uma a cada
+   * 30 dias. `valorRefereA` diz se o valor e o TOTAL (dividido entre as
+   * parcelas; o Asaas poe a sobra de centavos na ultima) ou o de CADA PARCELA.
+   */
+  parcelas?: number;
+  valorRefereA?: "TOTAL" | "PARCELA";
 };
+
+export const MAXIMO_DE_PARCELAS = 24;
+
+/** Quanto fica cada parcela, como o Asaas divide: a sobra de centavos vai na ultima. */
+export function dividirEmParcelas(valorCentavos: number, parcelas: number, refereA: "TOTAL" | "PARCELA" = "TOTAL"): number[] {
+  const n = Math.max(1, Math.round(parcelas));
+  if (refereA === "PARCELA") return Array.from({ length: n }, () => valorCentavos);
+  const base = Math.floor(valorCentavos / n);
+  return Array.from({ length: n }, (_, i) => (i === n - 1 ? valorCentavos - base * (n - 1) : base));
+}
 
 export class PedidoInvalido extends Error {
   readonly status = 400;
@@ -304,6 +321,16 @@ export async function emitirCobranca(
 ): Promise<{ id: string; linkPagamento: string | null }> {
   if (pedido.valorCentavos <= 0)
     throw new PedidoInvalido("O valor precisa ser maior que zero.");
+  const parcelas = Math.round(pedido.parcelas ?? 1);
+  if (parcelas < 1 || parcelas > MAXIMO_DE_PARCELAS) {
+    throw new PedidoInvalido(`Parcelas: de 1 a ${MAXIMO_DE_PARCELAS}.`);
+  }
+  if (parcelas > 1 && pedido.contrato) {
+    throw new PedidoInvalido("Parcela de contrato já é uma parcela: não se parcela de novo.");
+  }
+  if (parcelas > 1 && dividirEmParcelas(pedido.valorCentavos, parcelas, pedido.valorRefereA)[0] < 500) {
+    throw new PedidoInvalido("Cada parcela precisa ser de pelo menos R$ 5,00, o mínimo do Asaas.");
+  }
 
   const hoje = new Date();
   hoje.setUTCHours(0, 0, 0, 0);
@@ -389,7 +416,13 @@ export async function emitirCobranca(
     body: JSON.stringify({
       customer: idDoCliente,
       billingType: COBRANCA_NO_ASAAS[pedido.forma],
-      value: emReaisDecimal(pedido.valorCentavos),
+      // Avulsa manda value; parcelada manda installmentCount com totalValue
+      // OU installmentValue, nunca os dois (o Asaas recusa).
+      ...(parcelas > 1
+        ? pedido.valorRefereA === "PARCELA"
+          ? { installmentCount: parcelas, installmentValue: emReaisDecimal(pedido.valorCentavos) }
+          : { installmentCount: parcelas, totalValue: emReaisDecimal(pedido.valorCentavos) }
+        : { value: emReaisDecimal(pedido.valorCentavos) }),
       dueDate: comoDia(pedido.vencimento),
       description: pedido.descricao,
       externalReference: existente.id,
@@ -416,7 +449,13 @@ export async function conciliarCobranca(
   // Consulta pelo identificador que foi enviado na criacao. Zero resultados
   // ainda nao prova que o POST anterior falhou: nao repetir automaticamente.
   const lista = await chamarAsaas(chave, `/payments?externalReference=${encodeURIComponent(id)}`);
-  const achadas = Array.isArray(lista.data) ? lista.data : [];
+  let achadas = (Array.isArray(lista.data) ? lista.data : []) as Array<Record<string, unknown>>;
+  // Parcelada: as N parcelas levam a mesma referencia. Vale a primeira; as
+  // outras vem pelo parcelamento.
+  const parcelamentos = new Set(achadas.map((a) => a?.installment).filter(Boolean));
+  if (achadas.length > 1 && parcelamentos.size === 1) {
+    achadas = [...achadas].sort((a, b) => Number(a.installmentNumber ?? 0) - Number(b.installmentNumber ?? 0)).slice(0, 1);
+  }
   if (achadas.length !== 1 || !achadas[0] || typeof achadas[0] !== "object") {
     throw new PedidoInvalido("Emissão pendente de conciliação no Asaas. Confira a conta antes de criar outra cobrança.");
   }
@@ -431,12 +470,14 @@ async function finalizarCobranca(
   const idNoProvedor = typeof criada.id === "string" ? criada.id : null;
   if (!idNoProvedor) throw new FalhaNoAsaas("O Asaas não devolveu o id da cobrança.");
 
+  const parcelamentoId = typeof criada.installment === "string" ? criada.installment : null;
   const cobranca = await comEscritorio(escritorioId, (db) =>
     db.cobranca.update({
       where: { id },
       data: {
         status: statusNosso(String(criada.status ?? "")) ?? "ABERTA",
         idNoProvedor,
+        ...(parcelamentoId ? { parcelamentoId } : {}),
         linkPagamento:
           typeof criada.invoiceUrl === "string" ? criada.invoiceUrl : null,
         linkBoleto:
@@ -446,8 +487,62 @@ async function finalizarCobranca(
     }),
   );
 
-  await registrarConsumo(escritorioId, "COBRANCA_EMITIDA", 1);
+  const emitidas = parcelamentoId ? await espelharParcelas(escritorioId, cobranca.id, parcelamentoId) : 1;
+  await registrarConsumo(escritorioId, "COBRANCA_EMITIDA", emitidas);
   return { id: cobranca.id, linkPagamento: cobranca.linkPagamento };
+}
+
+/**
+ * Fatura parcelada: o Asaas devolve so a PRIMEIRA parcela. As outras sao
+ * buscadas pelo parcelamento e viram linhas aqui — senao a tela mostraria uma
+ * cobranca e o cliente receberia N. Repetir nao duplica (idNoProvedor unico).
+ */
+export async function espelharParcelas(escritorioId: string, primeiraId: string, parcelamentoId: string): Promise<number> {
+  const chave = await chaveDoEscritorio(escritorioId);
+  const todas: Array<Record<string, unknown>> = [];
+  for (let offset = 0; offset < 500; offset += 100) {
+    const pagina = await chamarAsaas(chave, `/payments?installment=${encodeURIComponent(parcelamentoId)}&offset=${offset}&limit=100`);
+    todas.push(...((Array.isArray(pagina.data) ? pagina.data : []) as Array<Record<string, unknown>>));
+    if (!pagina.hasMore) break;
+  }
+  todas.sort((a, b) => Number(a.installmentNumber ?? 0) - Number(b.installmentNumber ?? 0));
+  const total = todas.length;
+  const primeira = await comEscritorio(escritorioId, (db) => db.cobranca.findFirstOrThrow({ where: { id: primeiraId } }));
+  const base = primeira.descricao.replace(/ — parcela \d+\/\d+$/, "");
+
+  for (const p of todas) {
+    const numero = Number(p.installmentNumber ?? 0) || null;
+    const dados = {
+      descricao: numero && total > 1 ? `${base} — parcela ${numero}/${total}` : base,
+      valorCentavos: paraCentavosDoAsaas(p.value) ?? primeira.valorCentavos,
+      vencimento: typeof p.dueDate === "string" ? new Date(`${p.dueDate}T12:00:00Z`) : primeira.vencimento,
+      status: statusNosso(String(p.status ?? "")) ?? "ABERTA",
+      linkPagamento: typeof p.invoiceUrl === "string" ? p.invoiceUrl : null,
+      linkBoleto: typeof p.bankSlipUrl === "string" ? p.bankSlipUrl : null,
+      parcelaNumero: numero,
+      parcelaTotal: total,
+      parcelamentoId,
+      sincronizadoEm: new Date(),
+    };
+    if (p.id === primeira.idNoProvedor) {
+      await comEscritorio(escritorioId, (db) => db.cobranca.update({ where: { id: primeira.id }, data: dados }));
+      continue;
+    }
+    await comEscritorio(escritorioId, (db) =>
+      db.cobranca.upsert({
+        where: { escritorioId_idNoProvedor: { escritorioId, idNoProvedor: String(p.id) } },
+        create: semEscritorio({
+          ...dados,
+          clienteId: primeira.clienteId,
+          processoId: primeira.processoId,
+          forma: primeira.forma,
+          idNoProvedor: String(p.id),
+        }),
+        update: dados,
+      }),
+    );
+  }
+  return Math.max(1, total);
 }
 
 // ---------------------------------------------------------------------------

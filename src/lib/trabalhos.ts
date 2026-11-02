@@ -15,6 +15,7 @@ import { aplicarRegua } from "./cobranca";
 import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
+import { sincronizarMensalidades } from "./mensalidades";
 import { arquivarVencidos, separarAgendaETarefas } from "./agenda-do-escritorio";
 import {
   arquivosParaEspelhar,
@@ -222,8 +223,15 @@ async function sincronizarCobrancasDoEscritorio({
 }: Contexto): Promise<void> {
   if (!escritorioId) throw new Error("SINCRONIZAR_COBRANCAS exige escritório.");
 
+  // Primeiro as mensalidades: o Asaas gera cada boleto delas, e a cobranca
+  // nova tem de existir aqui antes da conferencia de quem pagou.
+  let mensalidades: Awaited<ReturnType<typeof sincronizarMensalidades>> | null = null;
   let resultado;
   try {
+    mensalidades = await sincronizarMensalidades(escritorioId);
+    if (mensalidades.novas) {
+      console.log(`SINCRONIZAR_COBRANCAS ${escritorioId}: ${mensalidades.novas} cobrança(s) nova(s) de mensalidade.`);
+    }
     resultado = await sincronizarCobrancas(escritorioId);
   } catch (erro) {
     if (erro instanceof SemContaDeCobranca) {
@@ -235,12 +243,14 @@ async function sincronizarCobrancasDoEscritorio({
     throw erro;
   }
 
-  if (resultado.falhas.length > 0) {
-    const motivos = resultado.falhas
-      .map((f) => `${f.cobranca}: ${f.motivo}`)
-      .join(" | ");
+  const falhas = [
+    ...resultado.falhas.map((f) => `${f.cobranca}: ${f.motivo}`),
+    ...(mensalidades?.falhas ?? []).map((f) => `mensalidade ${f}`),
+  ];
+  if (falhas.length > 0) {
+    const motivos = falhas.join(" | ");
     throw new Error(
-      `Falha em ${resultado.falhas.length} cobrança(s) — ${motivos}`,
+      `Falha em ${falhas.length} cobrança(s) ou mensalidade(s) — ${motivos}`,
     );
   }
 }

@@ -88,6 +88,7 @@ model Escritorio {
   lancamentos       Lancamento[]
   despesasFixas     DespesaFixa[]
   cobrancas         Cobranca[]
+  mensalidades Mensalidade[]
   arquivos          Arquivo[]
   notas             NotaFiscal[]
   fiscal            Fiscal?
@@ -268,6 +269,7 @@ model Cliente {
   escritorio   Escritorio    @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   processos    Processo[]
   cobrancas    Cobranca[]
+  mensalidades Mensalidade[]
   arquivos     Arquivo[]
   notas        NotaFiscal[]
   compromissos Compromisso[]
@@ -1134,11 +1136,18 @@ model Cobranca {
   contratoId        String?
   parcelaNumero     Int?
   parcelaTotal      Int?
+  /// Mensalidade (assinatura do Asaas) que gerou esta cobranca.
+  mensalidadeId     String?
+  /// Parcelamento do Asaas (fatura parcelada): as N cobrancas tem o mesmo.
+  parcelamentoId    String?
+  /// Chegou ja paga (historico trazido do Asaas): sem receita no livro-caixa.
+  semBaixa          Boolean   @default(false)
   criadoEm          DateTime  @default(now())
   atualizadoEm      DateTime  @updatedAt
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  mensalidade Mensalidade? @relation(fields: [mensalidadeId], references: [id], onDelete: SetNull)
   processo   Processo?  @relation(fields: [processoId], references: [id], onDelete: SetNull)
   contrato   ContratoDeHonorarios? @relation(fields: [contratoId], references: [id], onDelete: SetNull)
 
@@ -1152,6 +1161,41 @@ model Cobranca {
   @@index([escritorioId, vencimento])
   @@index([escritorioId, contratoId])
   @@index([escritorioId, provedor])
+  @@index([escritorioId, mensalidadeId])
+  @@index([escritorioId, parcelamentoId])
+}
+
+// Mensalidade: cobranca que se repete sem data para acabar (assinatura do
+// Asaas). O Asaas gera cada boleto; aqui se espelha. Ver src/lib/mensalidades.ts.
+model Mensalidade {
+  id                 String    @id @default(cuid())
+  escritorioId       String
+  clienteId          String
+  descricao          String
+  valorCentavos      Int
+  /// SEMANAL | QUINZENAL | MENSAL | BIMESTRAL | TRIMESTRAL | SEMESTRAL | ANUAL
+  ciclo              String    @default("MENSAL")
+  forma              String    @default("QUALQUER")
+  proximoVencimento  DateTime
+  /// Id da assinatura no Asaas.
+  idNoProvedor       String
+  /// ATIVA | SUSPENSA | ENCERRADA
+  status             String    @default("ATIVA")
+  /// Trazida do painel do Asaas (ja existia la), nao criada por aqui.
+  importada          Boolean   @default(false)
+  encerradaEm        DateTime?
+  motivoEncerramento String?
+  sincronizadaEm     DateTime?
+  criadoEm           DateTime  @default(now())
+  atualizadoEm       DateTime  @updatedAt
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  cobrancas  Cobranca[]
+
+  @@unique([escritorioId, idNoProvedor])
+  @@index([escritorioId, status])
+  @@index([escritorioId, clienteId])
 }
 
 /// Contrato de honorarios: o que o escritorio combinou de receber, e como.

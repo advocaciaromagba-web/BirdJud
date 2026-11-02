@@ -55,7 +55,8 @@ DECLARE
     'CompromissoExcluido',
     'PastaNaNuvem',
     'ImportacaoDeClientes',
-    'NotaDaPlataforma'
+    'NotaDaPlataforma',
+    'Mensalidade'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

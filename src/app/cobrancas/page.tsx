@@ -5,6 +5,8 @@ import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { emReais } from "@/lib/dinheiro";
 import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
+import { PainelMensalidades } from "@/componentes/PainelMensalidades";
+import { CICLOS, NOMES_DOS_CICLOS, type Ciclo } from "@/lib/mensalidades";
 import {
   ListaCobrancas,
   type CobrancaNaTela,
@@ -39,6 +41,10 @@ export default async function PaginaCobrancas() {
       clientes: await db.cliente.findMany({
         orderBy: { nome: "asc" },
         select: { id: true, nome: true, documento: true },
+      }),
+      mensalidades: await db.mensalidade.findMany({
+        orderBy: [{ status: "asc" }, { proximoVencimento: "asc" }],
+        include: { cliente: { select: { nome: true } } },
       }),
       contaConectada: await db.integracao.count({
         where: { tipo: "ASAAS", status: "OK" },
@@ -83,7 +89,7 @@ export default async function PaginaCobrancas() {
     >
       <p className="mt-1 text-sm text-slate-500">
         {emReais(emAberto)} em aberto · cobrança na conta Asaas do próprio
-        escritorio
+        escritório
         {/* Sem o modulo Financeiro nao ha aba onde a conferencia more. */}
         {!modulos.includes("FINANCEIRO") && contexto.acesso.CONCILIACAO ? (
           <>
@@ -174,6 +180,26 @@ export default async function PaginaCobrancas() {
                   { valor: "CARTAO", rotulo: "Cartão" },
                 ],
               },
+              {
+                nome: "parcelas",
+                rotulo: "Parcelas",
+                tipo: "select",
+                opcoes: Array.from({ length: 24 }, (_, i) => ({
+                  valor: String(i + 1),
+                  rotulo: i === 0 ? "À vista (uma cobrança)" : `${i + 1} parcelas, a cada 30 dias`,
+                })),
+                ajuda: "Parcelada: o Asaas gera uma cobrança por parcela, e cada uma aparece na lista.",
+              },
+              {
+                nome: "valorRefereA",
+                rotulo: "O valor digitado é",
+                tipo: "select",
+                opcoes: [
+                  { valor: "TOTAL", rotulo: "O total (dividido entre as parcelas)" },
+                  { valor: "PARCELA", rotulo: "O de cada parcela" },
+                ],
+                ajuda: "Só vale com mais de uma parcela. No total, a sobra de centavos vai na última.",
+              },
             ]}
             textoBotao="Emitir cobrança"
           />
@@ -183,6 +209,25 @@ export default async function PaginaCobrancas() {
           Cadastre um cliente antes de emitir cobrança.
         </div>
       )}
+
+      {dados.contaConectada > 0 || dados.mensalidades.length > 0 ? (
+        <PainelMensalidades
+          mensalidades={dados.mensalidades.map((m) => ({
+            id: m.id,
+            cliente: m.cliente.nome,
+            descricao: m.descricao,
+            valor: emReais(m.valorCentavos),
+            ciclo: CICLOS[m.ciclo as Ciclo]?.rotulo ?? m.ciclo,
+            proximoVencimento: data.format(m.proximoVencimento),
+            status: m.status,
+            importada: m.importada,
+            motivoEncerramento: m.motivoEncerramento,
+          }))}
+          clientes={dados.clientes.map((c) => ({ id: c.id, nome: c.nome, documento: c.documento }))}
+          ciclos={NOMES_DOS_CICLOS.map((c) => ({ valor: c, rotulo: CICLOS[c].rotulo }))}
+          podeEditarCliente={contexto.acesso.CLIENTES === true}
+        />
+      ) : null}
 
       <ListaCobrancas cobrancas={cobrancas} />
     </Estrutura>

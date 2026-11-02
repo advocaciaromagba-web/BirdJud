@@ -32,6 +32,9 @@ const novaCobranca = z.object({
   provedor: z.enum(PROVEDORES).optional(),
   /** CPF/CNPJ de cliente que ainda nao tem: vai para o cadastro antes de cobrar. */
   documentoDoCliente: z.string().max(20).optional(),
+  // Fatura parcelada (so Asaas). Vem do formulario como texto.
+  parcelas: z.coerce.number().int().min(1).max(24).optional(),
+  valorRefereA: z.enum(["TOTAL", "PARCELA"]).optional(),
 });
 
 const acao = z.discriminatedUnion("acao", [
@@ -97,6 +100,10 @@ export async function POST(req: Request) {
     // Meio-dia UTC para o vencimento nao escorregar de dia por fuso.
     const vencimento = new Date(`${corpo.data.vencimento}T12:00:00Z`);
 
+    if ((corpo.data.parcelas ?? 1) > 1 && corpo.data.provedor === "INFINITEPAY") {
+      return NextResponse.json({ erro: "Fatura parcelada só pelo Asaas." }, { status: 400 });
+    }
+
     const cobranca =
       corpo.data.provedor === "INFINITEPAY"
         ? await emitirNaInfinitePay(escritorioId, {
@@ -115,6 +122,8 @@ export async function POST(req: Request) {
             vencimento,
             forma: corpo.data.forma,
             chaveOperacao: corpo.data.chaveOperacao,
+            parcelas: corpo.data.parcelas,
+            valorRefereA: corpo.data.valorRefereA,
           });
     return NextResponse.json({ cobranca }, { status: 201 });
   } catch (erro) {
