@@ -61,6 +61,7 @@ const AREAS: Area[] = [
     icone: "financeiro",
     modulo: "FINANCEIRO",
   },
+  { href: "/relatorios", rotulo: "Relatórios", icone: "relatorios" },
   { href: "/modelos", rotulo: "Modelos", icone: "modelos" },
   { href: "/arquivos", rotulo: "Arquivos", icone: "arquivos", modulo: "NUVEM" },
   { href: "/usuarios", rotulo: "Equipe", icone: "usuarios", soAdmin: true },

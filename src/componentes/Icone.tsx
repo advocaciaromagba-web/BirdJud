@@ -15,6 +15,7 @@ export type NomeDeIcone =
   | "cobrancas"
   | "notas"
   | "financeiro"
+  | "relatorios"
   | "usuarios"
   | "integracoes"
   | "conta"
@@ -46,6 +47,7 @@ const TRACOS: Record<NomeDeIcone, string> = {
   notas:
     "M6 3h12a1 1 0 0 1 1 1v17l-3.5-2-3.5 2-3.5-2L5 21V4a1 1 0 0 1 1-1Zm3 6h6M9 13h6",
   financeiro: "M4 19V5m0 14h16M8 15V9m4 6v-9m4 9v-5",
+  relatorios: "M6 3h9l3 3v15H6V3Zm9 0v3h3M9 17v-3m3 3v-6m3 6v-4",
   usuarios:
     "M15 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm9 0h4m-2-2v4",
   integracoes:

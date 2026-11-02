@@ -14,8 +14,8 @@ novo e como trazer isso para ca do jeito certo.
 | O que | Valor |
 |---|---|
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
-| Ultimo commit revisado | `78e636bdf083b6982548620200842cb14da0dd2b` (28/10/2026, "Campo solução na tarefa: o que foi feito para resolver") |
-| Revisado em | 29/10/2026 |
+| Ultimo commit revisado | `f8a66eb06df0fa13b25c059eaaf8019e96bfefe4` (30/10/2026, "Gravar quem ja assinou, mesmo com o documento ainda pendente") |
+| Revisado em | 02/11/2026 |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
 que a ultima funcionalidade entrou. Sem isso a proxima rodada revisa tudo de
@@ -103,6 +103,8 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Baixa manual parcial e retroativa, com historico (quem, quando, observacao) e desfazer; quitada por aqui, o Asaas da como recebido em dinheiro; parcial + boleto pago depois nao conta o parcial duas vezes | `BaixaDeCobranca` (migracao 77), `src/lib/baixas-de-cobranca.ts`, `/api/cobrancas/[id]/baixa`, `sincronizarCobrancas` (status PARCIAL) |
 | Reemitir boleto sem avisar o cliente: vencimento (e valor) novo, link e linha digitavel na tela | `reemitirBoleto`, `/api/cobrancas/[id]/reemitir` |
 | Cobrancas remodelada: abas A receber / A pagar, resumo (em aberto, vencido, recebido em 30 dias), busca, filtros, agrupada por cliente com atrasado em cima, "parcela 2 de 3" | `PainelCobrancas.tsx`, `src/app/cobrancas/page.tsx`; A pagar so com o Financeiro destrancado (segunda senha) |
+| Relatorios em PDF por periodo, com graficos: clientes, cobrancas (atraso de cada uma, faixas, inadimplencia em dinheiro), financeiro, caixa e previsoes; permissao por relatorio, os de dinheiro com a segunda senha | `src/lib/relatorios/dados.ts` (blocos neutros), `src/lib/relatorios/pdf.ts` (pdf-lib, A4 deitado), `GET /api/relatorios`, `/relatorios` |
+| Painel de escalabilidade no administrador | ja existia (`/plataforma/escalabilidade`, 29/10/2026). O tempo de resposta por rota da Roma depende do server.js proprio dela; o BirdJud roda `next start` e nao tem esse ponto de medida |
 | Menor cadastrado a partir de quem o representa, sem herdar RG e CPF | `Cliente.responsavelClienteId`, `src/lib/menores-do-escritorio.ts`, `POST /api/clientes/[id]/menores`, `MenoresDoCliente.tsx`; nascimento na leitura por IA ja existia (instrucao reforcada) |
 | Audiencia e pericia com responsavel que nao e advogado: aviso, nao bloqueio | `atoSemAdvogado` em `src/lib/agenda-tela.ts`, `PainelAgenda.tsx` |
 | Cobrancas sem a segunda senha; Financeiro com ela | ja era assim (so lancamentos, despesas e metas pedem a senha) |
