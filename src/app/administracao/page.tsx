@@ -8,6 +8,7 @@ import { TrocaDaSenhaDeAdministracao } from "@/componentes/TrocaDaSenhaDeAdminis
 import { IdentidadeDoEscritorio } from "@/componentes/IdentidadeDoEscritorio";
 import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
 import Link from "next/link";
+import { TesteDoWhatsapp } from "@/componentes/TesteDoWhatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,9 @@ export default async function PaginaAdministracao() {
   ]);
 
   const temNfse = modulos.includes("NFSE");
+  const temCelular = Boolean(
+    (await comEscritorio(contexto.escritorioId, (db) => db.usuario.findFirst({ where: { id: contexto.usuarioId }, select: { telefone: true } })))?.telefone,
+  );
 
   return (
     <Estrutura
@@ -122,6 +126,8 @@ export default async function PaginaAdministracao() {
             </p>
           </section>
         )}
+
+        {modulos.includes("WHATSAPP") ? <TesteDoWhatsapp temCelular={temCelular} /> : null}
 
         <section className="cartao">
           <p className="sobretitulo">Comunicação</p>

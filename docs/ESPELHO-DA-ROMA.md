@@ -14,8 +14,8 @@ novo e como trazer isso para ca do jeito certo.
 | O que | Valor |
 |---|---|
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
-| Ultimo commit revisado | `f8a66eb06df0fa13b25c059eaaf8019e96bfefe4` (30/10/2026, "Gravar quem ja assinou, mesmo com o documento ainda pendente") |
-| Revisado em | 02/11/2026 |
+| Ultimo commit revisado | `8473529e0d16e76187b541529adbcd4bb4bde34f` (02/11/2026, "Botao para testar o envio por WhatsApp em Configuracoes") |
+| Revisado em | 03/11/2026 |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
 que a ultima funcionalidade entrou. Sem isso a proxima rodada revisa tudo de
@@ -111,6 +111,7 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Conferencia das cobrancas do Asaas contra o sistema: o que esta la e nao aqui (trazer marcando uma a uma; o pago entra quitado, com receita opcional), o que diverge (so aponta), pagador sem cadastro e recebido x previsto por cliente; varredura diaria que so conta, para a tela avisar | `src/lib/conferencia-do-asaas.ts`, `/api/cobrancas/conferencia`, `PainelConferenciaAsaas.tsx`, `Escritorio.asaasForaDoSistema` (migracao 79), no `SINCRONIZAR_COBRANCAS` |
 | Fechamento de caixa mensal: foto com totais por forma e por quem recebeu; fecha sozinho todo mes completo que ficou sem foto; o mes nao trava, a tela mostra a diferenca e refazer guarda quem, quando e quantas vezes | `FechamentoDeCaixa` (migracao 79), `src/lib/fechamento-de-caixa.ts`, `/api/fechamento-de-caixa`, `PainelFechamento.tsx` no Financeiro, no `GERAR_CONTAS_A_PAGAR` |
 | Cobrancas por ato: emitir, dar baixa e desfazer como liberacoes separadas (nascem abertas, so valem com Cobrancas aberta); a tela esconde o que nao pode | `COBRANCAS_EMITIR`/`COBRANCAS_BAIXA`/`COBRANCAS_DESFAZER` e `dependeDe` em `areas.ts`; rotas de cobranca, baixa, mensalidade, conferencia e honorarios |
+| Testar o WhatsApp em Configuracoes: vai ao celular de quem clicou e so diz "funcionando" quando a Meta confirma a entrega (aceito nao basta); sem retorno em 5 minutos, avisa | `src/lib/teste-whatsapp.ts` (aviso de tipo `TESTE_WHATSAPP`, que o webhook ja atualiza e a entrega deixa fora de reenvio e alerta), `/api/whatsapp/teste`, `TesteDoWhatsapp.tsx` |
 | Menor cadastrado a partir de quem o representa, sem herdar RG e CPF | `Cliente.responsavelClienteId`, `src/lib/menores-do-escritorio.ts`, `POST /api/clientes/[id]/menores`, `MenoresDoCliente.tsx`; nascimento na leitura por IA ja existia (instrucao reforcada) |
 | Audiencia e pericia com responsavel que nao e advogado: aviso, nao bloqueio | `atoSemAdvogado` em `src/lib/agenda-tela.ts`, `PainelAgenda.tsx` |
 | Cobrancas sem a segunda senha; Financeiro com ela | ja era assim (so lancamentos, despesas e metas pedem a senha) |

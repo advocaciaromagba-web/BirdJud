@@ -30,6 +30,9 @@ const DIA = 24 * HORA;
 
 /** O alerta que vai para a equipe. Ele mesmo nunca gera alerta: seria um laco. */
 export const TIPO_DO_ALERTA = "FALHA_DE_ENTREGA";
+/** Mensagem de teste do canal (Configuracoes): nao se reenvia nem vira alerta. */
+export const TIPO_DO_TESTE = "TESTE_WHATSAPP";
+const FORA_DO_TRATAMENTO = [TIPO_DO_ALERTA, TIPO_DO_TESTE];
 
 export class NaoDaParaReenviar extends Error {
   readonly status = 422;
@@ -117,7 +120,7 @@ export async function depoisDaFalha(escritorioId: string, avisoId: string, agora
       include: { compromisso: { select: { titulo: true, inicio: true, responsavelId: true } } },
     }),
   );
-  if (!aviso || aviso.estado !== "FALHOU" || aviso.tipo === TIPO_DO_ALERTA) return;
+  if (!aviso || aviso.estado !== "FALHOU" || FORA_DO_TRATAMENTO.includes(aviso.tipo)) return;
 
   if (categoriaDaFalha(aviso.canal, aviso.erroCodigo) === "PLATAFORMA") {
     console.error(
@@ -259,7 +262,7 @@ export async function conferirEntregas(escritorioId: string, agora = new Date())
       where: {
         estado: "FALHOU",
         tratadoEm: null,
-        tipo: { not: TIPO_DO_ALERTA },
+        tipo: { notIn: FORA_DO_TRATAMENTO },
         falhouEm: { gte: new Date(agora.getTime() - 7 * DIA) },
       },
       include: { compromisso: { select: { titulo: true, inicio: true, responsavelId: true } } },
@@ -546,7 +549,7 @@ export async function mensagensDoEscritorio(escritorioId: string, agora = new Da
 
   const { falhas, enviados, resolvidas, clientes } = await comEscritorio(escritorioId, async (db) => {
     const falhas = await db.aviso.findMany({
-      where: { estado: "FALHOU", tratadoEm: null, tipo: { not: TIPO_DO_ALERTA } },
+      where: { estado: "FALHOU", tratadoEm: null, tipo: { notIn: FORA_DO_TRATAMENTO } },
       include: incluir,
       orderBy: [{ falhouEm: { sort: "desc", nulls: "last" } }, { criadoEm: "desc" }],
       take: 200,
