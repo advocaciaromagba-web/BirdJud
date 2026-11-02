@@ -3,7 +3,25 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
-export type BaixaNaTela = { id: string; valor: string; data: string; observacao: string | null; registradoPor: string | null };
+export type BaixaNaTela = {
+  id: string;
+  valor: string;
+  data: string;
+  observacao: string | null;
+  registradoPor: string | null;
+  forma: string | null;
+  recebidoPor: string | null;
+};
+
+const FORMAS = [
+  ["DINHEIRO", "Dinheiro"],
+  ["PIX", "Pix"],
+  ["TRANSFERENCIA", "Transferência"],
+  ["CARTAO", "Cartão"],
+  ["BOLETO", "Boleto"],
+  ["CHEQUE", "Cheque"],
+  ["OUTRO", "Outro"],
+] as const;
 
 export type CobrancaNaTela = {
   id: string;
@@ -67,8 +85,11 @@ export function PainelCobrancas({
   cobrancas,
   resumo,
   aPagar,
+  equipe,
 }: {
   cobrancas: CobrancaNaTela[];
+  /** Quem pode ter recebido o dinheiro. */
+  equipe: string[];
   resumo: { emAberto: number; vencido: number; recebido30: number };
   /** Aba "A pagar": o conteudo pronto (ou o aviso de que esta trancado). */
   aPagar: ReactNode;
@@ -80,7 +101,7 @@ export function PainelCobrancas({
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [aberta, setAberta] = useState<{ id: string; acao: "BAIXA" | "REEMITIR" } | null>(null);
-  const [form, setForm] = useState({ valor: "", data: hojeISO(), observacao: "", vencimento: "" });
+  const [form, setForm] = useState({ valor: "", data: hojeISO(), observacao: "", vencimento: "", forma: "", recebidoPor: "" });
   const [recadoDe, setRecadoDe] = useState<Record<string, { ok: boolean; texto: string; link?: string | null; linha?: string | null }>>({});
 
   const grupos = useMemo(() => {
@@ -233,7 +254,9 @@ export function PainelCobrancas({
                               {c.baixas.map((b) => (
                                 <li key={b.id}>
                                   Baixa de {b.valor} em {b.data}
-                                  {b.registradoPor ? ` por ${b.registradoPor}` : ""}
+                                  {b.forma ? ` · ${FORMAS.find(([f]) => f === b.forma)?.[1] ?? b.forma}` : ""}
+                                  {b.recebidoPor ? ` · recebido por ${b.recebidoPor}` : ""}
+                                  {b.registradoPor ? ` · lançado por ${b.registradoPor}` : ""}
                                   {b.observacao ? ` — ${b.observacao}` : ""}{" "}
                                   <button
                                     type="button"
@@ -263,7 +286,7 @@ export function PainelCobrancas({
                                 type="button"
                                 className="underline"
                                 onClick={() => {
-                                  setForm({ ...form, valor: (falta / 100).toFixed(2).replace(".", ","), data: hojeISO(), observacao: "" });
+                                  setForm({ ...form, valor: (falta / 100).toFixed(2).replace(".", ","), data: hojeISO(), observacao: "", forma: "", recebidoPor: "" });
                                   setAberta(aberta?.id === c.id && aberta.acao === "BAIXA" ? null : { id: c.id, acao: "BAIXA" });
                                 }}
                               >
@@ -315,13 +338,23 @@ export function PainelCobrancas({
 
                           {aberta?.id === c.id && aberta.acao === "BAIXA" ? (
                             <form
-                              className="mt-2 grid gap-2 rounded border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[8rem_10rem_1fr_auto] sm:items-end"
+                              className="mt-2 grid gap-2 rounded border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[8rem_10rem_9rem_12rem] lg:grid-cols-[8rem_10rem_9rem_12rem_1fr_auto] sm:items-end"
                               onSubmit={async (e) => {
                                 e.preventDefault();
-                                const r = await chamar(`b:${c.id}`, `/api/cobrancas/${c.id}/baixa`, "POST", { valor: form.valor, data: form.data, observacao: form.observacao || null });
+                                const r = await chamar(`b:${c.id}`, `/api/cobrancas/${c.id}/baixa`, "POST", {
+                                  valor: form.valor,
+                                  data: form.data,
+                                  observacao: form.observacao || null,
+                                  forma: form.forma,
+                                  recebidoPor: form.recebidoPor || null,
+                                });
                                 setRecadoDe({
                                   ...recadoDe,
-                                  [c.id]: { ok: r.ok, texto: r.ok ? (r.json.quitou ? "Baixa registrada: cobrança quitada." : "Baixa parcial registrada.") : (r.json.erro ?? "Não deu certo.") },
+                                  [c.id]: r.ok
+                                    ? r.json.avisoDoAsaas
+                                      ? { ok: false, texto: r.json.avisoDoAsaas }
+                                      : { ok: true, texto: r.json.quitou ? "Baixa registrada: cobrança quitada." : "Baixa parcial registrada." }
+                                    : { ok: false, texto: r.json.erro ?? "Não deu certo." },
                                 });
                                 if (r.ok) {
                                   setAberta(null);
@@ -338,13 +371,35 @@ export function PainelCobrancas({
                                 <input className="campo" type="date" required max={hojeISO()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
                               </label>
                               <label className="grid gap-1">
+                                <span className="rotulo">Forma</span>
+                                <select className="campo" required value={form.forma} onChange={(e) => setForm({ ...form, forma: e.target.value })}>
+                                  <option value="">Escolha</option>
+                                  {FORMAS.map(([f, rotulo]) => (
+                                    <option key={f} value={f}>
+                                      {rotulo}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className="grid gap-1">
+                                <span className="rotulo">Quem recebeu</span>
+                                <select className="campo" value={form.recebidoPor} onChange={(e) => setForm({ ...form, recebidoPor: e.target.value })}>
+                                  <option value="">Não informado</option>
+                                  {equipe.map((nome) => (
+                                    <option key={nome} value={nome}>
+                                      {nome}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <label className="grid gap-1">
                                 <span className="rotulo">Observação</span>
                                 <input className="campo" maxLength={300} placeholder="Ex.: pago em dinheiro no escritório" value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
                               </label>
                               <button type="submit" className="botao-principal" disabled={!!ocupado}>
                                 {ocupado === `b:${c.id}` ? "…" : "Registrar"}
                               </button>
-                              <p className="ajuda sm:col-span-4">
+                              <p className="ajuda sm:col-span-4 lg:col-span-6">
                                 Menos que o total deixa a cobrança paga em parte. Quitada por aqui, o boleto no Asaas é dado como recebido em dinheiro e deixa de valer.
                               </p>
                             </form>

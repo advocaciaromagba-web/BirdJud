@@ -13,6 +13,8 @@ import { DespesasFixas } from "@/componentes/DespesasFixas";
 import { emReais } from "@/lib/dinheiro";
 import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
 import { PainelDoAno } from "@/componentes/PainelDoAno";
+import { ContratosDeExito } from "@/componentes/ContratosDeExito";
+import { contratosDeExito } from "@/lib/honorarios-do-escritorio";
 import { anoDe, anosOferecidos, COMO_ESTA } from "@/lib/metas";
 import { anoDoEscritorio } from "@/lib/metas-do-escritorio";
 import { hojeNoEscritorio } from "@/lib/contas-do-escritorio";
@@ -131,6 +133,7 @@ export default async function PaginaFinanceiro({
   );
 
   const resumo = resumoDoMes(lancamentos, competencia);
+  const deExito = await contratosDeExito(contexto.escritorioId);
   const pendentesDoExtrato = modulos.includes("COBRANCAS")
     ? await comEscritorio(contexto.escritorioId, (db) => db.entradaDeExtrato.count({ where: { situacao: "PENDENTE" } }))
     : 0;
@@ -266,6 +269,8 @@ export default async function PaginaFinanceiro({
           />
         </div>
       </section>
+
+      <ContratosDeExito contratos={deExito} />
 
       <div className="mt-6">
         <PainelDoAno

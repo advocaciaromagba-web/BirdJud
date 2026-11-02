@@ -1178,6 +1178,10 @@ model BaixaDeCobranca {
   /// MANUAL (por enquanto, a unica criada por aqui)
   origem        String   @default("MANUAL")
   observacao    String?
+  /// DINHEIRO | PIX | TRANSFERENCIA | CARTAO | BOLETO | CHEQUE | OUTRO
+  forma         String?
+  /// Quem RECEBEU o dinheiro (nao quem lancou), como texto.
+  recebidoPor   String?
   /// Nome de quem deu a baixa, como texto: sobrevive a pessoa sair da equipe.
   registradoPor String?
   /// Receita que esta baixa gerou no livro-caixa; desfazer apaga junto.

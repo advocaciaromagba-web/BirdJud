@@ -3,6 +3,7 @@ import { PDFDocument } from "pdf-lib";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { diasDeAtraso, mesesDoPeriodo, montarPeriodo, montarRelatorio, type Relatorio } from "../src/lib/relatorios/dados";
 import { gerarPdfDoRelatorio } from "../src/lib/relatorios/pdf";
+import { contratosDeExito } from "../src/lib/honorarios-do-escritorio";
 
 describe("contas dos relatórios", () => {
   it("período em Brasília e meses do período", () => {
@@ -88,5 +89,17 @@ d("relatório de cobranças contra o banco", () => {
     expect(tabela.linhas.some((l) => l.includes("pago com 15 dia(s)"))).toBe(true);
     expect(tabela.linhas.some((l) => l.includes("30 dia(s)"))).toBe(true);
     expect(await gerarPdfDoRelatorio(r)).toBeInstanceOf(Uint8Array);
+  });
+
+  it("contratos de êxito aparecem com o percentual; sem percentual, marcados", async () => {
+    await comEscritorio(esc, async (db) => {
+      const c = await db.cliente.findFirstOrThrow({ where: { nome: "Cliente Em Dia" } });
+      await db.contratoDeHonorarios.create({ data: semEscritorio({ clienteId: c.id, tipo: "PERCENTUAL", percentualBp: 3000, parcelas: 1 }) });
+      await db.contratoDeHonorarios.create({ data: semEscritorio({ clienteId: c.id, tipo: "MISTO", valorCentavos: 100_000, parcelas: 1 }) });
+      await db.contratoDeHonorarios.create({ data: semEscritorio({ clienteId: c.id, tipo: "VALOR", valorCentavos: 100_000, parcelas: 1 }) });
+    });
+    const lista = await contratosDeExito(esc);
+    expect(lista.map((c) => [c.misto, c.percentual])).toEqual(expect.arrayContaining([[false, "30%"], [true, null]]));
+    expect(lista).toHaveLength(2);
   });
 });

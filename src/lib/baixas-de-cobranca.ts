@@ -19,6 +19,18 @@ import { PedidoInvalido, chamarAsaas, chaveDoEscritorio, comoDia, darBaixa, emRe
 
 const ABERTAS = new Set(["ABERTA", "VENCIDA", "PARCIAL"]);
 
+export const FORMAS_DE_RECEBIMENTO = ["DINHEIRO", "PIX", "TRANSFERENCIA", "CARTAO", "BOLETO", "CHEQUE", "OUTRO"] as const;
+export type FormaDeRecebimento = (typeof FORMAS_DE_RECEBIMENTO)[number];
+export const ROTULO_DA_FORMA: Record<FormaDeRecebimento, string> = {
+  DINHEIRO: "Dinheiro",
+  PIX: "Pix",
+  TRANSFERENCIA: "Transferência",
+  CARTAO: "Cartão",
+  BOLETO: "Boleto",
+  CHEQUE: "Cheque",
+  OUTRO: "Outro",
+};
+
 /** Soma das baixas manuais de uma cobranca. */
 export async function somaDasBaixas(escritorioId: string, cobrancaId: string): Promise<number> {
   const r = await comEscritorio(escritorioId, (db) =>
@@ -30,9 +42,16 @@ export async function somaDasBaixas(escritorioId: string, cobrancaId: string): P
 export async function registrarBaixaManual(
   escritorioId: string,
   cobrancaId: string,
-  pedido: { valorCentavos: number; data: Date; observacao?: string | null },
+  pedido: {
+    valorCentavos: number;
+    data: Date;
+    observacao?: string | null;
+    forma?: FormaDeRecebimento | null;
+    /** Quem recebeu o dinheiro. Nao e quem lancou: nunca se presume. */
+    recebidoPor?: string | null;
+  },
   quemRegistrou: string,
-) {
+): Promise<{ baixa: { id: string }; quitou: boolean; avisoDoAsaas: string | null }> {
   const cobranca = await comEscritorio(escritorioId, (db) => db.cobranca.findFirst({ where: { id: cobrancaId } }));
   if (!cobranca) throw new PedidoInvalido("Cobrança não encontrada.");
   if (!ABERTAS.has(cobranca.status)) throw new PedidoInvalido("Só cobrança em aberto, vencida ou paga em parte recebe baixa.");
@@ -51,17 +70,6 @@ export async function registrarBaixaManual(
   // receita; dividida em pedacos, a previsao ficaria pela metade. Inteira.
   if (!quita && cobranca.contratoId) {
     throw new PedidoInvalido("Parcela de contrato de honorários: dê baixa do valor inteiro.");
-  }
-
-  // Quitada por aqui: o Asaas fica sabendo, e o boleto deixa de valer.
-  let noProvedor = false;
-  if (quita && cobranca.provedor === "ASAAS" && !cobranca.idNoProvedor.startsWith("pendente:")) {
-    const chave = await chaveDoEscritorio(escritorioId);
-    await chamarAsaas(chave, `/payments/${cobranca.idNoProvedor}/receiveInCash`, {
-      method: "POST",
-      body: JSON.stringify({ paymentDate: comoDia(pedido.data), value: emReaisDecimal(cobranca.valorCentavos), notifyCustomer: false }),
-    });
-    noProvedor = true;
   }
 
   // Receita no livro-caixa. A baixa que quita sem parcial antes vai pelo
@@ -92,9 +100,10 @@ export async function registrarBaixaManual(
         valorCentavos: pedido.valorCentavos,
         data: pedido.data,
         observacao: pedido.observacao?.trim() || null,
+        forma: pedido.forma ?? null,
+        recebidoPor: pedido.recebidoPor?.trim() || null,
         registradoPor: quemRegistrou,
         lancamentoId,
-        noProvedor,
       }),
     });
     await db.cobranca.update({
@@ -111,7 +120,26 @@ export async function registrarBaixaManual(
     });
     return b;
   });
-  return { baixa, quitou: quita };
+
+  // Quitada por aqui, o Asaas fica sabendo e o boleto deixa de valer — senao
+  // o cliente seguiria cobrado e poderia pagar de novo. Depois de gravar, de
+  // proposito: falha do Asaas nao desfaz a baixa (o dinheiro entrou de
+  // verdade), mas a tela avisa que o boleto ficou aberto la. Parcial nao fecha
+  // nada: o boleto segue valendo pelo restante.
+  let avisoDoAsaas: string | null = null;
+  if (quita && cobranca.provedor === "ASAAS" && !cobranca.idNoProvedor.startsWith("pendente:")) {
+    try {
+      const chave = await chaveDoEscritorio(escritorioId);
+      await chamarAsaas(chave, `/payments/${cobranca.idNoProvedor}/receiveInCash`, {
+        method: "POST",
+        body: JSON.stringify({ paymentDate: comoDia(pedido.data), value: emReaisDecimal(cobranca.valorCentavos), notifyCustomer: false }),
+      });
+      await comEscritorio(escritorioId, (db) => db.baixaDeCobranca.update({ where: { id: baixa.id }, data: { noProvedor: true } }));
+    } catch (erro) {
+      avisoDoAsaas = `A baixa foi registrada, mas o boleto ficou aberto no Asaas (${(erro as Error).message}). Cancele ou dê baixa nele pelo painel do Asaas, para o cliente não pagar de novo.`;
+    }
+  }
+  return { baixa, quitou: quita, avisoDoAsaas };
 }
 
 /**

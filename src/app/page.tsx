@@ -13,6 +13,8 @@ import { CapaDaPlataforma } from "@/componentes/CapaDaPlataforma";
 import { tabelaVigente } from "@/lib/tabela-de-precos";
 import { Estrutura } from "@/componentes/Estrutura";
 import { Icone } from "@/componentes/Icone";
+import { ContratosDeExito } from "@/componentes/ContratosDeExito";
+import { contratosDeExito } from "@/lib/honorarios-do-escritorio";
 import { CartaoPrimeirosPassos } from "@/componentes/CartaoPrimeirosPassos";
 import { roteiroDoEscritorio } from "@/lib/primeiros-passos-do-escritorio";
 
@@ -36,7 +38,7 @@ export default async function Painel() {
 
   const contexto = await contextoDaPagina();
 
-  const [painel, consumo, numeros] = await Promise.all([
+  const [painel, consumo, numeros, deExito] = await Promise.all([
     montarPainel(contexto.escritorioId),
     consumoDoMes(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, async (db) => ({
@@ -46,6 +48,7 @@ export default async function Painel() {
         where: { inicio: { gte: new Date() } },
       }),
     })),
+    contexto.papel === "ADMIN" ? contratosDeExito(contexto.escritorioId) : Promise.resolve([]),
   ]);
 
   // O roteiro e do administrador: e ele quem configura o escritorio.
@@ -232,6 +235,8 @@ export default async function Painel() {
           </Link>
         </section>
       ) : null}
+
+      {contexto.papel === "ADMIN" && deExito.length ? <ContratosDeExito contratos={deExito} /> : null}
 
       {painel.cobrancasVencidas.quantidade > 0 ? (
         <section className="mt-6">

@@ -25,6 +25,7 @@ let proximo = 0;
 let clientes: Record<string, Pag> = {};
 let assinaturas: Record<string, Pag> = {};
 let pagamentos: Record<string, Pag> = {};
+let asaasRecusaRecebimento = false;
 
 const dia = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
@@ -92,6 +93,7 @@ function responder(metodo: string, caminho: string, busca: URLSearchParams, corp
   if (acaoNoPagamento) {
     const p = pagamentos[acaoNoPagamento[1]];
     if (!p) return { status: 404, json: { errors: [{ description: "não encontrada" }] } };
+    if (acaoNoPagamento[2] === "receiveInCash" && asaasRecusaRecebimento) return { status: 503, json: {} };
     if (acaoNoPagamento[2] === "receiveInCash") Object.assign(p, { status: "RECEIVED_IN_CASH", paymentDate: corpo?.paymentDate });
     if (acaoNoPagamento[2] === "undoReceivedInCash") Object.assign(p, { status: "PENDING", paymentDate: null });
     if (acaoNoPagamento[2] === "identificationField") return { status: 200, json: { identificationField: "23793.38128 60000.000003 00000.000400 1 1234" } };
@@ -290,7 +292,14 @@ d("mensalidades e fatura parcelada", () => {
     const ontem = new Date(`${dia(-1)}T12:00:00Z`);
 
     await expect(registrarBaixaManual(esc, id, { valorCentavos: 120_000, data: ontem }, "Helena")).rejects.toThrow(/Falta receber/);
-    const parcial = await registrarBaixaManual(esc, id, { valorCentavos: 40_000, data: ontem, observacao: "dinheiro" }, "Helena");
+    const parcial = await registrarBaixaManual(
+      esc,
+      id,
+      { valorCentavos: 40_000, data: ontem, observacao: "no balcão", forma: "DINHEIRO", recebidoPor: "Rafael Moura" },
+      "Helena",
+    );
+    const gravada = await comEscritorio(esc, (db) => db.baixaDeCobranca.findFirstOrThrow({ where: { cobrancaId: id } }));
+    expect(gravada).toMatchObject({ forma: "DINHEIRO", recebidoPor: "Rafael Moura", registradoPor: "Helena" });
     expect(parcial.quitou).toBe(false);
     expect(await cob()).toMatchObject({ status: "PARCIAL", valorPagoCentavos: 40_000 });
 
@@ -315,6 +324,28 @@ d("mensalidades e fatura parcelada", () => {
     await desfazerBaixa(esc, id, baixas[0].id);
     expect((await cob()).status).toBe("ABERTA");
     expect(await comEscritorio(esc, (db) => db.lancamento.count({ where: { descricao: { contains: "Consulta" }, tipo: "RECEITA" } }))).toBe(0);
+  });
+
+  it("Asaas fora do ar na quitação: a baixa fica (o dinheiro entrou) e volta o aviso do boleto aberto", async () => {
+    const { id } = await emitirCobranca(esc, {
+      clienteId: cliente,
+      descricao: "Asaas fora",
+      valorCentavos: 30_000,
+      vencimento: new Date(`${dia(10)}T12:00:00Z`),
+      forma: "BOLETO",
+    });
+    asaasRecusaRecebimento = true;
+    try {
+      const r = await registrarBaixaManual(esc, id, { valorCentavos: 30_000, data: new Date(`${dia(-1)}T12:00:00Z`), forma: "PIX" }, "Helena");
+      expect(r.quitou).toBe(true);
+      expect(r.avisoDoAsaas).toMatch(/boleto ficou aberto no Asaas/);
+      const c = await comEscritorio(esc, (db) => db.cobranca.findFirstOrThrow({ where: { id } }));
+      expect(c.status).toBe("PAGA");
+      const b = await comEscritorio(esc, (db) => db.baixaDeCobranca.findFirstOrThrow({ where: { cobrancaId: id } }));
+      expect(b.noProvedor).toBe(false);
+    } finally {
+      asaasRecusaRecebimento = false;
+    }
   });
 
   it("parcial por aqui e boleto pago inteiro depois: a receita não conta o parcial duas vezes", async () => {

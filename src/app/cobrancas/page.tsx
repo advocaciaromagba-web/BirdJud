@@ -45,6 +45,7 @@ export default async function PaginaCobrancas() {
         orderBy: { nome: "asc" },
         select: { id: true, nome: true, documento: true },
       }),
+      equipe: await db.usuario.findMany({ where: { ativo: true }, select: { nome: true }, orderBy: { nome: "asc" } }),
       mensalidades: await db.mensalidade.findMany({
         orderBy: [{ status: "asc" }, { proximoVencimento: "asc" }],
         include: { cliente: { select: { nome: true } } },
@@ -85,6 +86,8 @@ export default async function PaginaCobrancas() {
       data: data.format(b.data),
       observacao: b.observacao,
       registradoPor: b.registradoPor,
+      forma: b.forma,
+      recebidoPor: b.recebidoPor,
     })),
   }));
 
@@ -302,7 +305,7 @@ export default async function PaginaCobrancas() {
         />
       ) : null}
 
-      <PainelCobrancas cobrancas={cobrancas} resumo={{ emAberto, vencido, recebido30 }} aPagar={aPagar} />
+      <PainelCobrancas cobrancas={cobrancas} resumo={{ emAberto, vencido, recebido30 }} aPagar={aPagar} equipe={dados.equipe.map((u) => u.nome)} />
     </Estrutura>
   );
 }

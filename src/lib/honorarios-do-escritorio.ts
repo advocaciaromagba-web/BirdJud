@@ -10,6 +10,7 @@ import { moduloAtivo } from "./modulos";
 import {
   impedimentos,
   naJanela,
+  percentualEmTexto,
   planoDoContrato,
   proximaParcela,
   type Contrato,
@@ -303,7 +304,8 @@ export async function salvarContrato(
  *
  * Idempotente e conservadora:
  *  - parcela ja recebida nunca e mexida;
- *  - parcela a receber acompanha o contrato (valor e data editados);
+ *  - parcela a receber acompanha o contrato (valor e data editados), menos a
+ *    que ja tem cobranca emitida: essa fica como esta;
  *  - parcela que saiu do plano (contrato encerrado ou com menos parcelas) so
  *    sai do financeiro se nao tiver cobranca emitida — boleto na rua continua
  *    previsto ate alguem resolver;
@@ -364,7 +366,10 @@ export async function preverRecebimentos(
           }),
         });
         criadas += 1;
-      } else if (!ja.pagoEm) {
+      } else if (!ja.pagoEm && !cobradas.has(p.numero)) {
+        // Com boleto ja emitido, nao muda sozinha: o valor previsto passaria
+        // a dizer uma coisa e o boleto na mao do cliente outra. Acertar e
+        // cancelar e reemitir, decisao de quem cobra.
         await db.lancamento.update({ where: { id: ja.id }, data: dados });
         atualizadas += 1;
       }
@@ -419,4 +424,31 @@ export async function encerrarContrato(
     db.contratoDeHonorarios.findFirst({ where: { id: contratoId }, select: { id: true } }),
   );
   if (!existe) throw new ContratoNaoEncontrado();
+}
+
+/**
+ * Contratos de exito (percentual ou misto) em andamento, com o percentual.
+ *
+ * Exito nao entra na previsao — o valor so existe quando a acao termina —, e
+ * por isso sumia da vista. O percentual e o que permite estimar o que entra
+ * quando a acao ganhar. Sem percentual preenchido, o contrato vem marcado:
+ * e lacuna de cadastro, e sem alguem apontar ninguem descobre ate a hora de
+ * cobrar.
+ */
+export async function contratosDeExito(escritorioId: string) {
+  const contratos = await comEscritorio(escritorioId, (db) =>
+    db.contratoDeHonorarios.findMany({
+      where: { ativo: true, tipo: { in: ["PERCENTUAL", "MISTO"] } },
+      select: { id: true, tipo: true, percentualBp: true, descricao: true, clienteId: true, cliente: { select: { nome: true } } },
+      orderBy: { cliente: { nome: "asc" } },
+    }),
+  );
+  return contratos.map((c) => ({
+    id: c.id,
+    clienteId: c.clienteId,
+    cliente: c.cliente.nome,
+    misto: c.tipo === "MISTO",
+    percentual: c.percentualBp ? percentualEmTexto(c.percentualBp) : null,
+    descricao: c.descricao,
+  }));
 }
