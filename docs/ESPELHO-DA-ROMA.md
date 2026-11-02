@@ -14,7 +14,7 @@ novo e como trazer isso para ca do jeito certo.
 | O que | Valor |
 |---|---|
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
-| Ultimo commit revisado | `8473529e0d16e76187b541529adbcd4bb4bde34f` (02/11/2026, "Botao para testar o envio por WhatsApp em Configuracoes") |
+| Ultimo commit revisado | `8473529e0d16e76187b541529adbcd4bb4bde34f` (02/11/2026, "Acertar as parcelas quando o contrato corrige o cadastro") |
 | Revisado em | 03/11/2026 |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
