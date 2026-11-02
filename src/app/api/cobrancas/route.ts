@@ -58,7 +58,7 @@ function respostaDoDominio(erro: unknown): NextResponse | null {
 
 export async function GET() {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId } = await exigirSessao("COBRANCAS", "COBRANCAS");
     const cobrancas = await comEscritorio(escritorioId, (db) =>
       db.cobranca.findMany({
         orderBy: [{ status: "asc" }, { vencimento: "asc" }],
@@ -74,7 +74,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId, acesso } = await exigirSessao("COBRANCAS");
+    const { escritorioId, acesso } = await exigirSessao("COBRANCAS", "COBRANCAS_EMITIR");
     const corpo = novaCobranca.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
@@ -133,13 +133,16 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId, acesso } = await exigirSessao("COBRANCAS", "COBRANCAS");
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Ação inválida." }, { status: 400 });
     }
 
     if (corpo.data.acao === "CANCELAR") {
+      if (acesso.COBRANCAS_DESFAZER !== true) {
+        return NextResponse.json({ erro: "Cancelar cobrança não está liberado para o seu acesso." }, { status: 403 });
+      }
       await cancelarCobranca(escritorioId, corpo.data.id);
       return NextResponse.json({ ok: true });
     }

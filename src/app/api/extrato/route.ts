@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   try {
     // COBRANCAS porque e a conta do provedor que o extrato le; FINANCEIRO
     // decide se vira linha de livro-caixa, la dentro.
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId } = await exigirSessao("COBRANCAS", "CONCILIACAO");
     const corpo = pedido.safeParse(await req.json().catch(() => null));
     if (!corpo.success || !dataValida(corpo.data.de) || !dataValida(corpo.data.ate)) {
       return NextResponse.json({ erro: "Período inválido." }, { status: 400 });

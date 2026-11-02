@@ -26,7 +26,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId } = await exigirSessao("COBRANCAS", "CONCILIACAO");
     const { id } = await params;
     const corpo = acao.safeParse(await req.json().catch(() => null));
     if (!corpo.success) {

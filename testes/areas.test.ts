@@ -132,3 +132,31 @@ describe("o que o escritório distribui", () => {
     expect(chaves).not.toContain("NOTAS");
   });
 });
+
+describe("atos de Cobranças (emitir, dar baixa, desfazer)", () => {
+  const MODULOS = ["COBRANCAS"] as const;
+  it("nascem abertos, mas só valem com Cobranças aberta", () => {
+    const fechada = mapaDeAcesso("USUARIO", [], [...MODULOS]);
+    expect(fechada.COBRANCAS).toBe(false);
+    expect([fechada.COBRANCAS_EMITIR, fechada.COBRANCAS_BAIXA, fechada.COBRANCAS_DESFAZER]).toEqual([false, false, false]);
+
+    const aberta = mapaDeAcesso("USUARIO", [{ area: "COBRANCAS", permitido: true }], [...MODULOS]);
+    expect([aberta.COBRANCAS_EMITIR, aberta.COBRANCAS_BAIXA, aberta.COBRANCAS_DESFAZER]).toEqual([true, true, true]);
+  });
+
+  it("o balcão: dá baixa, não emite nem desfaz", () => {
+    const balcao = mapaDeAcesso(
+      "USUARIO",
+      [
+        { area: "COBRANCAS", permitido: true },
+        { area: "COBRANCAS_EMITIR", permitido: false },
+        { area: "COBRANCAS_DESFAZER", permitido: false },
+      ],
+      [...MODULOS],
+    );
+    expect(balcao).toMatchObject({ COBRANCAS: true, COBRANCAS_BAIXA: true, COBRANCAS_EMITIR: false, COBRANCAS_DESFAZER: false });
+    // Ato liberado com a area de cima fechada continua fechado.
+    const soAto = mapaDeAcesso("USUARIO", [{ area: "COBRANCAS_BAIXA", permitido: true }], [...MODULOS]);
+    expect(soAto.COBRANCAS_BAIXA).toBe(false);
+  });
+});

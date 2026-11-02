@@ -16,6 +16,8 @@ import { purgarEncerrados } from "./encerramento";
 import { capturarPublicacoes } from "./publicacoes";
 import { sincronizarCobrancas, SemContaDeCobranca } from "./cobrancas";
 import { sincronizarMensalidades } from "./mensalidades";
+import { varrerAsaas } from "./conferencia-do-asaas";
+import { fecharMesesPendentes } from "./fechamento-de-caixa";
 import { arquivarVencidos, separarAgendaETarefas } from "./agenda-do-escritorio";
 import {
   arquivosParaEspelhar,
@@ -233,6 +235,14 @@ async function sincronizarCobrancasDoEscritorio({
       console.log(`SINCRONIZAR_COBRANCAS ${escritorioId}: ${mensalidades.novas} cobrança(s) nova(s) de mensalidade.`);
     }
     resultado = await sincronizarCobrancas(escritorioId);
+    // Conferencia contra o Asaas: so conta o que esta la e nao aqui, para a
+    // tela avisar. Falha nela nao derruba a sincronizacao.
+    try {
+      const deFora = await varrerAsaas(escritorioId);
+      if (deFora) console.log(`SINCRONIZAR_COBRANCAS ${escritorioId}: ${deFora} cobrança(s) no Asaas fora do sistema.`);
+    } catch (erro) {
+      console.error(`SINCRONIZAR_COBRANCAS ${escritorioId}: conferência do Asaas falhou — ${(erro as Error).message}`);
+    }
   } catch (erro) {
     if (erro instanceof SemContaDeCobranca) {
       console.log(
@@ -320,6 +330,14 @@ async function gerarContasAPagar({ escritorioId }: Contexto): Promise<void> {
   const r = await gerarContasDoMes(escritorioId);
   if (r.criados > 0) {
     console.log(`GERAR_CONTAS_A_PAGAR ${escritorioId}: ${r.criados} conta(s) do mes.`);
+  }
+  // Fechamento de caixa: todo mes completo sem foto ganha a sua. Falha aqui
+  // nao derruba as contas do mes, que ja foram geradas.
+  try {
+    const fechados = await fecharMesesPendentes(escritorioId);
+    if (fechados.length) console.log(`GERAR_CONTAS_A_PAGAR ${escritorioId}: caixa fechado de ${fechados.join(", ")}.`);
+  } catch (erro) {
+    console.error(`GERAR_CONTAS_A_PAGAR ${escritorioId}: fechamento de caixa falhou — ${(erro as Error).message}`);
   }
 }
 

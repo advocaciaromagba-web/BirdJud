@@ -6,6 +6,7 @@ import { emReais } from "@/lib/dinheiro";
 import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { PainelMensalidades } from "@/componentes/PainelMensalidades";
+import { PainelConferenciaAsaas } from "@/componentes/PainelConferenciaAsaas";
 import { CICLOS, NOMES_DOS_CICLOS, type Ciclo } from "@/lib/mensalidades";
 import { PainelCobrancas, type CobrancaNaTela } from "@/componentes/PainelCobrancas";
 import { ListaFinanceira } from "@/componentes/ListaFinanceira";
@@ -45,6 +46,7 @@ export default async function PaginaCobrancas() {
         orderBy: { nome: "asc" },
         select: { id: true, nome: true, documento: true },
       }),
+      conferencia: await db.escritorio.findFirst({ where: { id: contexto.escritorioId }, select: { asaasForaDoSistema: true, asaasConferidoEm: true } }),
       equipe: await db.usuario.findMany({ where: { ativo: true }, select: { nome: true }, orderBy: { nome: "asc" } }),
       mensalidades: await db.mensalidade.findMany({
         orderBy: [{ status: "asc" }, { proximoVencimento: "asc" }],
@@ -184,7 +186,7 @@ export default async function PaginaCobrancas() {
         </div>
       ) : null}
 
-      {dados.clientes.length > 0 ? (
+      {!contexto.acesso.COBRANCAS_EMITIR ? null : dados.clientes.length > 0 ? (
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-semibold text-marca">
             Nova cobrança
@@ -302,10 +304,25 @@ export default async function PaginaCobrancas() {
           clientes={dados.clientes.map((c) => ({ id: c.id, nome: c.nome, documento: c.documento }))}
           ciclos={NOMES_DOS_CICLOS.map((c) => ({ valor: c, rotulo: CICLOS[c].rotulo }))}
           podeEditarCliente={contexto.acesso.CLIENTES === true}
+          pode={{ emitir: contexto.acesso.COBRANCAS_EMITIR === true, desfazer: contexto.acesso.COBRANCAS_DESFAZER === true }}
         />
       ) : null}
 
-      <PainelCobrancas cobrancas={cobrancas} resumo={{ emAberto, vencido, recebido30 }} aPagar={aPagar} equipe={dados.equipe.map((u) => u.nome)} />
+      {dados.contaConectada > 0 ? (
+        <PainelConferenciaAsaas
+          foraDoSistema={dados.conferencia?.asaasForaDoSistema ?? null}
+          conferidoEm={dados.conferencia?.asaasConferidoEm ? data.format(dados.conferencia.asaasConferidoEm) : null}
+          podeTrazer={contexto.acesso.COBRANCAS_EMITIR === true}
+        />
+      ) : null}
+
+      <PainelCobrancas cobrancas={cobrancas} resumo={{ emAberto, vencido, recebido30 }} aPagar={aPagar} equipe={dados.equipe.map((u) => u.nome)}
+        pode={{
+          emitir: contexto.acesso.COBRANCAS_EMITIR === true,
+          baixa: contexto.acesso.COBRANCAS_BAIXA === true,
+          desfazer: contexto.acesso.COBRANCAS_DESFAZER === true,
+        }}
+      />
     </Estrutura>
   );
 }

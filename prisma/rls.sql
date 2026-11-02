@@ -57,7 +57,8 @@ DECLARE
     'ImportacaoDeClientes',
     'NotaDaPlataforma',
     'Mensalidade',
-    'BaixaDeCobranca'
+    'BaixaDeCobranca',
+    'FechamentoDeCaixa'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

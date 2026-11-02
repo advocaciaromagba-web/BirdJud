@@ -18,7 +18,7 @@ const TAMANHO_MAXIMO_MB = 5;
  */
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId } = await exigirSessao("COBRANCAS", "CONCILIACAO");
 
     const formulario = await formularioLimitado(
       req,

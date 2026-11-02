@@ -19,7 +19,7 @@ const baixa = z.object({
 /** Baixa manual: parcial ou total, com a data em que o pagamento aconteceu. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { escritorioId, nomeUsuario } = await exigirSessao("COBRANCAS");
+    const { escritorioId, nomeUsuario } = await exigirSessao("COBRANCAS", "COBRANCAS_BAIXA");
     const { id } = await params;
     const corpo = baixa.safeParse(await req.json());
     if (!corpo.success) return NextResponse.json({ erro: "Informe o valor, a data e a forma do pagamento." }, { status: 400 });
@@ -46,7 +46,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 /** Desfaz uma baixa manual (?baixa=<id>). */
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId } = await exigirSessao("COBRANCAS", "COBRANCAS_DESFAZER");
     const { id } = await params;
     const baixaId = new URL(req.url).searchParams.get("baixa");
     if (!baixaId) return NextResponse.json({ erro: "Qual baixa?" }, { status: 400 });

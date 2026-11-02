@@ -21,7 +21,7 @@ export async function POST(
   try {
     // O contrato mora na ficha do cliente: vale com cobrancas OU financeiro.
     // Emitir boleto/Pix continua exigindo o modulo de cobrancas.
-    const { escritorioId } = await exigirSessao();
+    const { escritorioId, acesso } = await exigirSessao();
     const modulos = await modulosAtivos(escritorioId);
     if (!modulos.includes("COBRANCAS") && !modulos.includes("FINANCEIRO")) {
       throw new ModuloNaoContratado("FINANCEIRO");
@@ -38,6 +38,9 @@ export async function POST(
     }
 
     if (!modulos.includes("COBRANCAS")) throw new ModuloNaoContratado("COBRANCAS");
+    if (acesso.COBRANCAS_EMITIR !== true) {
+      return NextResponse.json({ erro: "Emitir cobrança não está liberado para o seu acesso." }, { status: 403 });
+    }
     const r = await gerarProximaParcela(escritorioId, id, {
       forcar: corpo.data.antecipar === true,
     });

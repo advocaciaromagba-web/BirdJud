@@ -29,6 +29,8 @@ export type Area = {
   modulo?: Modulo;
   /** Papel minimo. A permissao de area refina, nunca amplia. */
   soAdmin?: boolean;
+  /** Ato dentro de outra area: so vale para quem ja tem aquela area aberta. */
+  dependeDe?: string;
 };
 
 export const AREAS: Area[] = [
@@ -53,6 +55,15 @@ export const AREAS: Area[] = [
   //
   // Tudo aqui nasce FECHADO: e dinheiro de verdade, e exige alguem dizer sim.
   { chave: "COBRANCAS", nome: "Cobranças e honorários", padrao: false, modulo: "COBRANCAS" },
+  // Os atos de Cobrancas, separados (03/11/2026, vindo da Roma): quem recebe
+  // no balcao precisa dar baixa e so isso. Emitir cobra um cliente de verdade;
+  // desfazer apaga registro de dinheiro que entrou. Nascem ABERTOS de
+  // proposito: so valem para quem ja tem Cobrancas (que nasce fechada), e
+  // quem ja tinha Cobrancas liberado nao pode perder a baixa em silencio no
+  // dia em que isto entrar no ar.
+  { chave: "COBRANCAS_EMITIR", nome: "Cobranças: emitir (cobrança, mensalidade, reemissão)", padrao: true, modulo: "COBRANCAS", dependeDe: "COBRANCAS" },
+  { chave: "COBRANCAS_BAIXA", nome: "Cobranças: dar baixa", padrao: true, modulo: "COBRANCAS", dependeDe: "COBRANCAS" },
+  { chave: "COBRANCAS_DESFAZER", nome: "Cobranças: desfazer baixa, cancelar e encerrar", padrao: true, modulo: "COBRANCAS", dependeDe: "COBRANCAS" },
   { chave: "CONCILIACAO", nome: "Conferir o extrato", padrao: false, modulo: "COBRANCAS" },
   { chave: "FINANCEIRO", nome: "Financeiro (livro-caixa, despesas, metas)", padrao: false, modulo: "FINANCEIRO" },
   { chave: "NOTAS", nome: "Notas fiscais", padrao: false, modulo: "NFSE" },
@@ -137,7 +148,9 @@ export function mapaDeAcesso(
       mapa[a.chave] = false;
       continue;
     }
-    mapa[a.chave] = porArea.has(a.chave) ? porArea.get(a.chave)! : a.padrao;
+    const permitido = porArea.has(a.chave) ? porArea.get(a.chave)! : a.padrao;
+    // O ato so vale com a area de cima aberta (AREAS lista a de cima antes).
+    mapa[a.chave] = permitido && (!a.dependeDe || mapa[a.dependeDe] === true);
   }
   return mapa;
 }

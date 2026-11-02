@@ -14,6 +14,8 @@ import { emReais } from "@/lib/dinheiro";
 import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
 import { PainelDoAno } from "@/componentes/PainelDoAno";
 import { ContratosDeExito } from "@/componentes/ContratosDeExito";
+import { PainelFechamento } from "@/componentes/PainelFechamento";
+import { competenciaDe as competenciaEmBrasilia, fechamentosRecentes, mesAnterior } from "@/lib/fechamento-de-caixa";
 import { contratosDeExito } from "@/lib/honorarios-do-escritorio";
 import { anoDe, anosOferecidos, COMO_ESTA } from "@/lib/metas";
 import { anoDoEscritorio } from "@/lib/metas-do-escritorio";
@@ -134,6 +136,13 @@ export default async function PaginaFinanceiro({
 
   const resumo = resumoDoMes(lancamentos, competencia);
   const deExito = await contratosDeExito(contexto.escritorioId);
+  const fechamentos = await fechamentosRecentes(contexto.escritorioId);
+  const mesPassado = mesAnterior(competenciaEmBrasilia(new Date()));
+  const temMovimentoNoMesPassado = await comEscritorio(contexto.escritorioId, (db) =>
+    db.lancamento.count({ where: { competencia: mesPassado, pagoEm: { not: null } } }),
+  );
+  const quando = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
+  const ordenar = (m: Record<string, number>) => Object.entries(m).sort((a, b) => b[1] - a[1]);
   const pendentesDoExtrato = modulos.includes("COBRANCAS")
     ? await comEscritorio(contexto.escritorioId, (db) => db.entradaDeExtrato.count({ where: { situacao: "PENDENTE" } }))
     : 0;
@@ -269,6 +278,27 @@ export default async function PaginaFinanceiro({
           />
         </div>
       </section>
+
+      <PainelFechamento
+        mesPassadoAberto={
+          temMovimentoNoMesPassado && !fechamentos.some((f) => f.competencia === mesPassado)
+            ? { competencia: mesPassado, rotulo: nomeDaCompetencia(mesPassado) }
+            : null
+        }
+        fechamentos={fechamentos.map((f) => ({
+          competencia: f.competencia,
+          rotulo: nomeDaCompetencia(f.competencia),
+          receita: f.foto.receitaCentavos,
+          despesa: f.foto.despesaCentavos,
+          porForma: ordenar(f.foto.porForma),
+          porQuemRecebeu: ordenar(f.foto.porQuemRecebeu),
+          fechado: `fechado em ${quando.format(f.foto.fechadoEm)}${f.foto.fechadoPor ? ` por ${f.foto.fechadoPor}` : " pela rotina"}`,
+          refeito: f.foto.refeito
+            ? `refeito ${f.foto.refeito}x, a última em ${quando.format(f.foto.refeitoEm!)} por ${f.foto.refeitoPor}`
+            : null,
+          agora: f.mudou ? { receita: f.agora.receitaCentavos, despesa: f.agora.despesaCentavos } : null,
+        }))}
+      />
 
       <ContratosDeExito contratos={deExito} />
 

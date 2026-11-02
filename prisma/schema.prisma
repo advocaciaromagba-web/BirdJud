@@ -64,6 +64,9 @@ model Escritorio {
   encerradoEm  DateTime?
   /// Suspensao: quando saiu do ar, se foi o operador (a regua nao devolve
   /// sozinha enquanto houver atraso) e por que. suspensaoAdiadaAte: ate
+  /// Varredura diaria do Asaas: cobrancas que estao la e nao aqui, e quando.
+  asaasForaDoSistema Int?
+  asaasConferidoEm   DateTime?
   /// quando a regua nao suspende por atraso (pagamento combinado).
   suspensoEm         DateTime?
   suspensaoManual    Boolean   @default(false)
@@ -90,6 +93,7 @@ model Escritorio {
   cobrancas         Cobranca[]
   mensalidades Mensalidade[]
   baixasDeCobranca BaixaDeCobranca[]
+  fechamentosDeCaixa FechamentoDeCaixa[]
   arquivos          Arquivo[]
   notas             NotaFiscal[]
   fiscal            Fiscal?
@@ -1165,6 +1169,30 @@ model Cobranca {
   @@index([escritorioId, provedor])
   @@index([escritorioId, mensalidadeId])
   @@index([escritorioId, parcelamentoId])
+}
+
+// Fechamento de caixa: a foto do mes. Ver src/lib/fechamento-de-caixa.ts.
+model FechamentoDeCaixa {
+  id              String    @id @default(cuid())
+  escritorioId    String
+  competencia     String // "2026-10"
+  receitaCentavos Int
+  despesaCentavos Int
+  lancamentos     Int
+  /// { "PIX": centavos, ... } — so receita
+  porForma        Json
+  /// { "Rafael Moura": centavos, ... } — so receita
+  porQuemRecebeu  Json
+  fechadoEm       DateTime  @default(now())
+  /// Nome de quem fechou; nulo = a rotina automatica.
+  fechadoPor      String?
+  refeito         Int       @default(0)
+  refeitoEm       DateTime?
+  refeitoPor      String?
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, competencia])
 }
 
 // Baixa manual (parcial e retroativa) de cobranca. Ver src/lib/baixas-de-cobranca.ts.

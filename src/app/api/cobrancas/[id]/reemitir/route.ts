@@ -16,7 +16,7 @@ const pedido = z.object({
 /** Vencimento novo no Asaas. O cliente nao e avisado: o link volta para a tela. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId } = await exigirSessao("COBRANCAS", "COBRANCAS_EMITIR");
     const { id } = await params;
     const corpo = pedido.safeParse(await req.json());
     if (!corpo.success) return NextResponse.json({ erro: "Informe o novo vencimento." }, { status: 400 });

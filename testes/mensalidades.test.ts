@@ -8,6 +8,8 @@ import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prism
 import { salvarIntegracao } from "../src/lib/integracao";
 import { dividirEmParcelas, emitirCobranca, sincronizarCobrancas } from "../src/lib/cobrancas";
 import { desfazerBaixa, registrarBaixaManual, reemitirBoleto } from "../src/lib/baixas-de-cobranca";
+import { conferirComOAsaas, trazerCobrancasDoAsaas } from "../src/lib/conferencia-do-asaas";
+import { fecharMes, fecharMesesPendentes, fechamentosRecentes } from "../src/lib/fechamento-de-caixa";
 import {
   assinaturasDeFora,
   cicloDoAsaas,
@@ -380,5 +382,78 @@ d("mensalidades e fatura parcelada", () => {
     const c = await comEscritorio(esc, (db) => db.cobranca.findFirstOrThrow({ where: { id } }));
     expect(c.vencimento.toISOString().slice(0, 10)).toBe(dia(15));
     expect(pagamentos[c.idNoProvedor].dueDate).toBe(dia(15));
+  });
+
+  it("conferência com o Asaas: traz o que falta, aponta o que diverge e o pagador sem cadastro", async () => {
+    const { id } = await emitirCobranca(esc, {
+      clienteId: cliente,
+      descricao: "Emitida aqui",
+      valorCentavos: 70_000,
+      vencimento: new Date(`${dia(5)}T12:00:00Z`),
+      forma: "PIX",
+    });
+    const aqui = await comEscritorio(esc, (db) => db.cobranca.findFirstOrThrow({ where: { id } }));
+    // Alguem mudou o valor direto no painel do Asaas.
+    pagamentos[aqui.idNoProvedor].value = 750;
+    const idDoCliente = (await comEscritorio(esc, (db) => db.cliente.findFirstOrThrow({ where: { id: cliente } }))).idNoAsaas!;
+    const doPainel = novoPagamento({ customer: idDoCliente, value: 400, dueDate: dia(-20), status: "RECEIVED", paymentDate: dia(-18), description: "Criada no painel", billingType: "PIX" });
+    clientes.cus_estranho = { id: "cus_estranho", name: "Pagador Estranho", cpfCnpj: "11444777000161", deleted: false };
+    novoPagamento({ customer: "cus_estranho", value: 100, dueDate: dia(3) });
+
+    const c = await conferirComOAsaas(esc);
+    expect(c.deFora.map((d) => d.idNoProvedor)).toContain(doPainel.id);
+    expect(c.divergentes.find((d) => d.cobrancaId === id)?.diferencas.join()).toMatch(/valor/);
+    expect(c.semCliente.map((x) => x.pagador)).toContain("Pagador Estranho");
+
+    const r = await trazerCobrancasDoAsaas(esc, [doPainel.id as string], { lancarReceita: true });
+    expect(r).toEqual({ trazidas: 1, recusadas: [] });
+    const trazida = await comEscritorio(esc, (db) => db.cobranca.findFirstOrThrow({ where: { idNoProvedor: doPainel.id as string } }));
+    expect(trazida).toMatchObject({ status: "PAGA", valorPagoCentavos: 40_000, semBaixa: false });
+    expect(trazida.lancamentoId).not.toBeNull();
+    // Trazer de novo nao duplica.
+    expect((await trazerCobrancasDoAsaas(esc, [doPainel.id as string], { lancarReceita: true })).trazidas).toBe(0);
+  });
+
+  it("fechamento de caixa: foto do mês por forma e por quem recebeu; mudou depois, aparece; refazer conta", async () => {
+    const agora = new Date("2026-11-15T15:00:00Z");
+    const fecho = await prismaPlataforma().escritorio.create({ data: { slug: `fecho-${marca}`, nome: "Banca do Fechamento" } });
+    try {
+      await comEscritorio(fecho.id, async (db) => {
+        const c = await db.cliente.create({ data: semEscritorio({ nome: "Pagante" }) });
+        const cob = await db.cobranca.create({
+          data: semEscritorio({ clienteId: c.id, descricao: "x", valorCentavos: 30_000, vencimento: new Date("2026-09-10T12:00:00Z"), forma: "PIX", status: "PAGA", idNoProvedor: "manual-1" }),
+        });
+        const l1 = await db.lancamento.create({
+          data: semEscritorio({ descricao: "Recebimento", tipo: "RECEITA", competencia: "2026-09", valorCentavos: 30_000, pagoEm: new Date("2026-09-12T15:00:00Z") }),
+        });
+        await db.baixaDeCobranca.create({
+          data: semEscritorio({ cobrancaId: cob.id, valorCentavos: 30_000, data: new Date("2026-09-12T15:00:00Z"), forma: "DINHEIRO", recebidoPor: "Rafael", lancamentoId: l1.id }),
+        });
+        await db.lancamento.create({
+          data: semEscritorio({ descricao: "Aluguel", tipo: "DESPESA", competencia: "2026-09", valorCentavos: 10_000, pagoEm: new Date("2026-09-05T15:00:00Z") }),
+        });
+      });
+      const feitos = await fecharMesesPendentes(fecho.id, agora);
+      expect(feitos).toEqual(["2026-10", "2026-09"]);
+      let [out, set] = await fechamentosRecentes(fecho.id);
+      expect(out.competencia).toBe("2026-10");
+      expect(set.foto).toMatchObject({ receitaCentavos: 30_000, despesaCentavos: 10_000, porForma: { Dinheiro: 30_000 }, porQuemRecebeu: { Rafael: 30_000 } });
+      expect(set.mudou).toBe(false);
+
+      // Lancamento atrasado de setembro: a foto envelhece e a tela mostra.
+      await comEscritorio(fecho.id, (db) =>
+        db.lancamento.create({ data: semEscritorio({ descricao: "Atrasado", tipo: "RECEITA", competencia: "2026-09", valorCentavos: 5_000, pagoEm: new Date("2026-09-20T15:00:00Z") }) }),
+      );
+      [out, set] = await fechamentosRecentes(fecho.id);
+      expect(set.mudou).toBe(true);
+      const refeito = await fecharMes(fecho.id, "2026-09", "Helena", agora);
+      expect(refeito).toMatchObject({ receitaCentavos: 35_000, refeito: 1, refeitoPor: "Helena" });
+
+      await expect(fecharMes(fecho.id, "2026-11", "Helena", agora)).rejects.toThrow(/não terminou/);
+      // A rotina nao refaz o que ja foi fechado.
+      expect(await fecharMesesPendentes(fecho.id, agora)).toEqual([]);
+    } finally {
+      await prismaPlataforma().escritorio.delete({ where: { id: fecho.id } }).catch(() => {});
+    }
   });
 });

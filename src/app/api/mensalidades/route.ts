@@ -22,7 +22,7 @@ const nova = z.object({
 /** Cria a mensalidade (assinatura no Asaas). Daqui em diante, quem gera os boletos e o Asaas. */
 export async function POST(req: Request) {
   try {
-    const { escritorioId, acesso } = await exigirSessao("COBRANCAS");
+    const { escritorioId, acesso } = await exigirSessao("COBRANCAS", "COBRANCAS_EMITIR");
     const corpo = nova.safeParse(await req.json());
     if (!corpo.success) return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     const valorCentavos = paraCentavos(corpo.data.valor);

@@ -24,11 +24,17 @@ const acao = z.discriminatedUnion("acao", [
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { escritorioId } = await exigirSessao("COBRANCAS");
+    const { escritorioId, acesso } = await exigirSessao("COBRANCAS", "COBRANCAS");
     const { id } = await params;
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) return NextResponse.json({ erro: "Ação inválida." }, { status: 400 });
     const a = corpo.data;
+    // Cada ato pede a sua liberacao: mudar valor e reativar cobram; suspender
+    // e encerrar desfazem.
+    const precisa = a.acao === "VALOR" || a.acao === "REATIVAR" ? "COBRANCAS_EMITIR" : a.acao === "SINCRONIZAR" ? null : "COBRANCAS_DESFAZER";
+    if (precisa && acesso[precisa] !== true) {
+      return NextResponse.json({ erro: "Esta ação não está liberada para o seu acesso." }, { status: 403 });
+    }
     if (a.acao === "SUSPENDER") await suspenderMensalidade(escritorioId, id);
     if (a.acao === "REATIVAR") await reativarMensalidade(escritorioId, id);
     if (a.acao === "ENCERRAR") await encerrarMensalidade(escritorioId, id, a.motivo ?? null);
