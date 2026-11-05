@@ -7,6 +7,7 @@ import { criarTarefa } from "@/lib/tarefas-do-escritorio";
 import { recusaDeTarefa } from "@/lib/natureza";
 import { avisarTarefaDesignada } from "@/lib/avisos";
 import { enfileirar } from "@/lib/fila";
+import { descreverEntrega, quandoAvisarTarefa } from "@/lib/janela-de-avisos";
 import { fimDoDia } from "@/lib/tarefas";
 
 export const dynamic = "force-dynamic";
@@ -46,10 +47,14 @@ export async function POST(req: Request) {
       { ...dados, vencimento: quando, prazoFatal },
       usuarioId,
     );
-    if ((await avisarTarefaDesignada(escritorioId, tarefa.id, usuarioId)) > 0) {
-      await enfileirar("LEMBRAR", escritorioId);
+    const agora = new Date();
+    let aviso: string | null = null;
+    if ((await avisarTarefaDesignada(escritorioId, tarefa.id, usuarioId, agora)) > 0) {
+      const quando = quandoAvisarTarefa(tarefa, agora);
+      if (quando) aviso = `O aviso para quem ficou com a tarefa sai ${descreverEntrega(quando, agora)}.`;
+      else await enfileirar("LEMBRAR", escritorioId);
     }
-    return NextResponse.json({ tarefa });
+    return NextResponse.json({ tarefa, aviso });
   } catch (erro) {
     return tratarErro(erro);
   }

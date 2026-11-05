@@ -94,6 +94,8 @@ export function PainelTarefas({
   const [criando, setCriando] = useState(false);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  // Quando o aviso da tarefa recem-criada sai (entregas das 12h e 18h).
+  const [informe, setInforme] = useState<string | null>(null);
   // A leitura troca os valores iniciais e remonta o formulario (a `chave`):
   // o formulario e nao controlado, e assim continua editavel depois.
   const [preenchido, setPreenchido] = useState<Preenchido>({});
@@ -207,12 +209,17 @@ export function PainelTarefas({
         );
         await agir("formulario", async () => {
           if (tarefa) {
-            await chamar(`/api/tarefas/${tarefa.id}`, "PATCH", corpo);
+            const r = (await chamar(`/api/tarefas/${tarefa.id}`, "PATCH", corpo)) as { aviso?: string | null };
+            setInforme(r.aviso ?? null);
             if (escolhidos.length) await anexar(tarefa.id, escolhidos);
             fecharFormulario();
             return;
           }
-          const { tarefa: criada } = (await chamar("/api/tarefas", "POST", corpo)) as { tarefa: { id: string } };
+          const { tarefa: criada, aviso } = (await chamar("/api/tarefas", "POST", corpo)) as {
+            tarefa: { id: string };
+            aviso?: string | null;
+          };
+          setInforme(aviso ?? null);
           await anexar(criada.id, [...anexosPendentes, ...escolhidos]);
           // Sobrou providencia do mesmo documento? Carrega a proxima no
           // formulario, com o documento ainda pendente de anexo.
@@ -364,6 +371,11 @@ export function PainelTarefas({
       {erro ? (
         <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900">
           {erro}
+        </p>
+      ) : null}
+      {informe ? (
+        <p role="status" className="text-sm text-slate-600">
+          {informe} Os avisos de tarefa saem em duas entregas por dia, às 12h e às 18h; urgente para hoje sai na hora.
         </p>
       ) : null}
 

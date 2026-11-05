@@ -7,6 +7,7 @@
 //
 // Separadas, a rotina pode rodar de novo sem duplicar (a chave de idempotencia
 // resolve), e uma falha de SMTP nao faz o sistema esquecer que devia avisar.
+import { quandoAvisarTarefa } from "./janela-de-avisos";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "./prisma";
 import { enviarLote, SemRemetente, type Mensagem } from "./email";
 import { registrarConsumo } from "./consumo";
@@ -505,6 +506,8 @@ type NovoAviso = {
   participanteId?: string;
   /** Quem do escritorio disparou: recebe o alerta se nao chegar. */
   enviadoPorId?: string | null;
+  /** So sai a partir daqui. Ausente = na hora. */
+  liberarEm?: Date | null;
 };
 
 /** Devolve false quando o aviso ja existia — e o que torna a rotina repetivel. */
@@ -567,6 +570,7 @@ export async function enviarAvisosPendentes(
         estado: "PENDENTE",
         canal: "EMAIL",
         tentativas: { lt: MAX_TENTATIVAS },
+        OR: [{ liberarEm: null }, { liberarEm: { lte: new Date() } }],
       },
       orderBy: { criadoEm: "asc" },
       take: 200,
@@ -660,6 +664,7 @@ export async function enviarAvisosNoWhatsapp(
         estado: "PENDENTE",
         canal: "WHATSAPP",
         tentativas: { lt: MAX_TENTATIVAS },
+        OR: [{ liberarEm: null }, { liberarEm: { lte: new Date() } }],
       },
       orderBy: { criadoEm: "asc" },
       take: 200,
@@ -1136,6 +1141,7 @@ export async function avisarTarefaDesignada(
   escritorioId: string,
   tarefaId: string,
   designadoPor: string | null,
+  agora = new Date(),
 ): Promise<number> {
   const t = await comEscritorio(escritorioId, (db) =>
     db.tarefa.findFirst({
@@ -1166,6 +1172,8 @@ export async function avisarTarefaDesignada(
     .join("\n");
   // A chave leva o responsavel: passar para outra pessoa avisa a nova.
   const chave = `tarefa-designada:${t.id}:${t.responsavelId}`;
+  // Duas entregas por dia (12h e 18h), salvo urgencia: ver janela-de-avisos.ts.
+  const liberarEm = quandoAvisarTarefa(t, agora);
   let criados = 0;
 
   if (
@@ -1178,6 +1186,7 @@ export async function avisarTarefaDesignada(
       assunto,
       corpo,
       enviadoPorId: designadoPor,
+        liberarEm,
     })
   ) {
     criados += 1;
@@ -1196,6 +1205,7 @@ export async function avisarTarefaDesignada(
         assunto,
         corpo,
         enviadoPorId: designadoPor,
+        liberarEm,
         modelo: modelo.nome,
         parametros: [
           limparParametro(banca.nome),
@@ -1210,6 +1220,32 @@ export async function avisarTarefaDesignada(
     }
   }
   return criados;
+}
+
+/**
+ * Mudou a prioridade ou a entrega da tarefa: o aviso que ainda nao saiu e
+ * remarcado. Sem isso, quem cria como MEDIA as 13h e corrige para URGENTE
+ * com entrega hoje ficava com o aviso parado ate as 18h. Devolve quantos
+ * avisos ficaram liberados para sair agora.
+ */
+export async function remarcarAvisoDaTarefa(escritorioId: string, tarefaId: string, agora = new Date()): Promise<number> {
+  return comEscritorio(escritorioId, async (db) => {
+    const t = await db.tarefa.findFirst({ where: { id: tarefaId }, select: { prioridade: true, vencimento: true } });
+    if (!t) return 0;
+    const pendentes = await db.aviso.findMany({
+      where: {
+        estado: "PENDENTE",
+        tipo: "TAREFA_DESIGNADA",
+        liberarEm: { not: null },
+        OR: [{ chave: { startsWith: `tarefa-designada:${tarefaId}:` } }, { chave: { startsWith: `zap:tarefa-designada:${tarefaId}:` } }],
+      },
+      select: { id: true },
+    });
+    if (!pendentes.length) return 0;
+    const liberarEm = quandoAvisarTarefa(t, agora);
+    await db.aviso.updateMany({ where: { id: { in: pendentes.map((p) => p.id) } }, data: { liberarEm } });
+    return liberarEm === null ? pendentes.length : 0;
+  });
 }
 
 const ANTECEDENCIA_DA_TAREFA_HORAS = 24;

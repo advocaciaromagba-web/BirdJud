@@ -1454,6 +1454,9 @@ model Aviso {
   compromissoId String?
 
   estado     String    @default("PENDENTE") // PENDENTE | ENVIADO | FALHOU | CANCELADO
+  /// So sai a partir daqui (aviso de tarefa: entregas das 12h e das 18h,
+  /// ver janela-de-avisos.ts). Nulo = sai na hora.
+  liberarEm  DateTime?
   tentativas Int       @default(0)
   erro       String?
   enviadoEm  DateTime?

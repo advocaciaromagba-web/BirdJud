@@ -12,7 +12,8 @@ import {
   registrarSolucao,
 } from "@/lib/tarefas-do-escritorio";
 import { recusaDeTarefa } from "@/lib/natureza";
-import { avisarTarefaDesignada } from "@/lib/avisos";
+import { avisarTarefaDesignada, remarcarAvisoDaTarefa } from "@/lib/avisos";
+import { descreverEntrega, quandoAvisarTarefa } from "@/lib/janela-de-avisos";
 import { enfileirar } from "@/lib/fila";
 import { fimDoDia } from "@/lib/tarefas";
 
@@ -66,12 +67,20 @@ export async function PATCH(
       ...(prazoFatal !== undefined ? { prazoFatal } : {}),
     });
     // Passou para outra pessoa: a nova e avisada (a chave leva o responsavel).
-    if (dados.responsavelId && (await avisarTarefaDesignada(escritorioId, id, usuarioId)) > 0) {
+    const agora = new Date();
+    let aviso: string | null = null;
+    if (dados.responsavelId && (await avisarTarefaDesignada(escritorioId, id, usuarioId, agora)) > 0) {
+      const quando = quandoAvisarTarefa(tarefa, agora);
+      if (quando) aviso = `O aviso para quem ficou com a tarefa sai ${descreverEntrega(quando, agora)}.`;
+      else await enfileirar("LEMBRAR", escritorioId);
+    }
+    // Mudou a prioridade ou a entrega: o aviso que ainda nao saiu e remarcado.
+    if ((dados.prioridade !== undefined || vencimento) && (await remarcarAvisoDaTarefa(escritorioId, id, agora)) > 0) {
       await enfileirar("LEMBRAR", escritorioId);
     }
     if (situacao) await mudarSituacao(escritorioId, id, situacao);
     if (solucao !== undefined) await registrarSolucao(escritorioId, id, solucao, usuarioId);
-    return NextResponse.json({ tarefa });
+    return NextResponse.json({ tarefa, aviso });
   } catch (erro) {
     if (erro instanceof TarefaNaoEncontrada) {
       return NextResponse.json({ erro: erro.message }, { status: erro.status });
