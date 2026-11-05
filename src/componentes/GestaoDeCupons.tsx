@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { paraCentavos } from "@/lib/dinheiro";
 
 export type CupomNaTela = {
   id: string;
@@ -45,13 +46,12 @@ export function GestaoDeCupons({ cupons }: { cupons: CupomNaTela[] }) {
 
   async function criar(e: React.FormEvent) {
     e.preventDefault();
-    const numero = f.valor.trim().replace(",", ".");
     const ok = await agir({
       acao: "criarCupom",
       codigo: f.codigo,
       descricao: f.descricao || null,
       percentual: f.tipo === "percentual" ? inteiro(f.valor) : null,
-      valorCentavos: f.tipo === "valor" ? Math.round(Number(numero) * 100) : null,
+      valorCentavos: f.tipo === "valor" ? paraCentavos(f.valor) : null,
       meses: inteiro(f.meses),
       validoAte: f.validoAte || null,
       maxUsos: inteiro(f.maxUsos),

@@ -10,11 +10,18 @@
 import { emReais } from "@/lib/dinheiro";
 import type { Fatia } from "@/lib/painel-plataforma";
 
-export const CATEGORICA = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"];
+export const CATEGORICA = [
+  "#2a78d6",
+  "#eb6834",
+  "#1baf7a",
+  "#eda100",
+  "#e87ba4",
+];
 export const ORDINAL = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#104281"];
 
 type Formato = "moeda" | "contagem";
-const formatar = (v: number, f: Formato) => (f === "moeda" ? emReais(v) : String(v));
+const formatar = (v: number, f: Formato) =>
+  f === "moeda" ? emReais(v) : String(v);
 
 function ponto(grau: number, raio: number): [number, number] {
   const r = ((grau - 90) * Math.PI) / 180;
@@ -50,7 +57,12 @@ export function Pizza({
   let angulo = 0;
   const desenhos = fatias.map((f, i) => {
     const graus = total ? (f.valor / total) * 360 : 0;
-    const d = { ...f, cor: cores[i % cores.length], inicio: angulo, fim: angulo + graus };
+    const d = {
+      ...f,
+      cor: cores[i % cores.length],
+      inicio: angulo,
+      fim: angulo + graus,
+    };
     angulo += graus;
     return d;
   });
@@ -63,7 +75,12 @@ export function Pizza({
         <p className="mt-6 text-sm text-slate-500">{vazio}</p>
       ) : (
         <div className="mt-4 flex flex-wrap items-center gap-6">
-          <svg viewBox="0 0 100 100" className="h-40 w-40 shrink-0" role="img" aria-label={titulo}>
+          <svg
+            viewBox="0 0 100 100"
+            className="h-40 w-40 shrink-0"
+            role="img"
+            aria-label={titulo}
+          >
             {visiveis.length === 1 ? (
               <circle cx="50" cy="50" r="46" fill={visiveis[0].cor}>
                 <title>{`${visiveis[0].rotulo}: ${formatar(visiveis[0].valor, formato)} (100%)`}</title>
@@ -89,10 +106,16 @@ export function Pizza({
               {desenhos.map((d) => (
                 <tr key={d.chave}>
                   <td className="py-0.5 pr-2">
-                    <span aria-hidden className="inline-block h-3 w-3 rounded-sm align-middle" style={{ background: d.cor }} />
+                    <span
+                      aria-hidden
+                      className="inline-block h-3 w-3 rounded-sm align-middle"
+                      style={{ background: d.cor }}
+                    />
                   </td>
                   <td className="py-0.5 pr-4 text-slate-700">{d.rotulo}</td>
-                  <td className="py-0.5 pr-3 text-right font-medium tabular-nums text-slate-900">{formatar(d.valor, formato)}</td>
+                  <td className="py-0.5 pr-3 text-right font-medium tabular-nums text-slate-900">
+                    {formatar(d.valor, formato)}
+                  </td>
                   <td className="py-0.5 text-right tabular-nums text-slate-500">
                     {total ? `${Math.round((d.valor / total) * 100)}%` : "—"}
                   </td>
@@ -132,7 +155,10 @@ export function Colunas({
   const margemEsq = 8;
   const topo = 22;
   const base = A - 26;
-  const maior = Math.max(1, ...meses.map((m) => m.valores.reduce((s, v) => s + v, 0)));
+  const maior = Math.max(
+    1,
+    ...meses.map((m) => m.valores.reduce((s, v) => s + v, 0)),
+  );
   const escala = (v: number) => (v / maior) * (base - topo);
   const passo = (L - margemEsq * 2) / meses.length;
   const largura = Math.min(56, passo * 0.56);
@@ -148,17 +174,41 @@ export function Colunas({
         <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-700">
           {series.map((s) => (
             <span key={s.rotulo} className="inline-flex items-center gap-2">
-              <span aria-hidden className="inline-block h-3 w-3 rounded-sm" style={{ background: s.cor }} />
+              <span
+                aria-hidden
+                className="inline-block h-3 w-3 rounded-sm"
+                style={{ background: s.cor }}
+              />
               {s.rotulo}
             </span>
           ))}
         </div>
       ) : null}
-      <svg viewBox={`0 0 ${L} ${A}`} className="mt-3 w-full" role="img" aria-label={titulo}>
+      <svg
+        viewBox={`0 0 ${L} ${A}`}
+        className="mt-3 w-full"
+        role="img"
+        aria-label={titulo}
+      >
         {grades.map((y) => (
-          <line key={y} x1={0} x2={L} y1={y} y2={y} stroke="#e1e0d9" strokeWidth="1" />
+          <line
+            key={y}
+            x1={0}
+            x2={L}
+            y1={y}
+            y2={y}
+            stroke="#e1e0d9"
+            strokeWidth="1"
+          />
         ))}
-        <line x1={0} x2={L} y1={base} y2={base} stroke="#c3c2b7" strokeWidth="1" />
+        <line
+          x1={0}
+          x2={L}
+          y1={base}
+          y2={base}
+          stroke="#c3c2b7"
+          strokeWidth="1"
+        />
         {meses.map((m, i) => {
           const x = margemEsq + passo * i + (passo - largura) / 2;
           let y = base;
@@ -178,17 +228,34 @@ export function Colunas({
                   ? `M${x},${y + altura} V${y + r} Q${x},${y} ${x + r},${y} H${x + largura - r} Q${x + largura},${y} ${x + largura},${y + r} V${y + altura} Z`
                   : `M${x},${y + altura} V${y} H${x + largura} V${y + altura} Z`;
                 return (
-                  <path key={j} d={d} fill={series[j].cor} className="transition-opacity hover:opacity-80">
+                  <path
+                    key={j}
+                    d={d}
+                    fill={series[j].cor}
+                    className="transition-opacity hover:opacity-80"
+                  >
                     <title>{`${m.rotulo} · ${series[j].rotulo}: ${formatar(v)}`}</title>
                   </path>
                 );
               })}
               {total > 0 ? (
-                <text x={x + largura / 2} y={y - 6} textAnchor="middle" fontSize="11" fill="#52514e">
+                <text
+                  x={x + largura / 2}
+                  y={y - 6}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill="#52514e"
+                >
                   {formatar(total).replace(/,00$/, "")}
                 </text>
               ) : null}
-              <text x={x + largura / 2} y={A - 8} textAnchor="middle" fontSize="12" fill="#898781">
+              <text
+                x={x + largura / 2}
+                y={A - 8}
+                textAnchor="middle"
+                fontSize="12"
+                fill="#898781"
+              >
                 {m.rotulo}
               </text>
             </g>
@@ -196,44 +263,72 @@ export function Colunas({
         })}
       </svg>
       <details className="mt-2 text-sm">
-        <summary className="cursor-pointer text-slate-500">Ver em tabela</summary>
-        <table className="tabela mt-2">
-          <thead>
-            <tr>
-              <th>{rotuloDaColuna}</th>
-              {series.map((s) => (
-                <th key={s.rotulo} className="text-right">{s.rotulo}</th>
-              ))}
-              {series.length > 1 ? <th className="text-right">Total</th> : null}
-            </tr>
-          </thead>
-          <tbody>
-            {meses.map((m) => (
-              <tr key={m.rotulo}>
-                <td>{m.rotulo}</td>
-                {m.valores.map((v, j) => (
-                  <td key={j} className="text-right tabular-nums">{formatar(v)}</td>
+        <summary className="cursor-pointer text-slate-500">
+          Ver em tabela
+        </summary>
+        <div className="mt-2 overflow-x-auto">
+          <table className="tabela">
+            <thead>
+              <tr>
+                <th>{rotuloDaColuna}</th>
+                {series.map((s) => (
+                  <th key={s.rotulo} className="text-right">
+                    {s.rotulo}
+                  </th>
                 ))}
                 {series.length > 1 ? (
-                  <td className="text-right font-medium tabular-nums">{formatar(m.valores.reduce((s, v) => s + v, 0))}</td>
+                  <th className="text-right">Total</th>
                 ) : null}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {meses.map((m) => (
+                <tr key={m.rotulo}>
+                  <td>{m.rotulo}</td>
+                  {m.valores.map((v, j) => (
+                    <td key={j} className="text-right tabular-nums">
+                      {formatar(v)}
+                    </td>
+                  ))}
+                  {series.length > 1 ? (
+                    <td className="text-right font-medium tabular-nums">
+                      {formatar(m.valores.reduce((s, v) => s + v, 0))}
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </details>
     </figure>
   );
 }
 
 /** Cartao de numero: o numero e o grafico. */
-export function Numero({ rotulo, valor, detalhe, alerta }: { rotulo: string; valor: string; detalhe?: string; alerta?: boolean }) {
+export function Numero({
+  rotulo,
+  valor,
+  detalhe,
+  alerta,
+}: {
+  rotulo: string;
+  valor: string;
+  detalhe?: string;
+  alerta?: boolean;
+}) {
   return (
     <div className="cartao text-left">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{rotulo}</p>
-      <p className="mt-2 whitespace-nowrap text-2xl font-bold tabular-nums text-slate-900">{valor}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {rotulo}
+      </p>
+      <p className="mt-2 whitespace-nowrap text-2xl font-bold tabular-nums text-slate-900">
+        {valor}
+      </p>
       {detalhe ? (
-        <p className={`mt-1 text-left text-sm ${alerta ? "font-medium text-red-700" : "text-slate-500"}`}>
+        <p
+          className={`mt-1 text-left text-sm ${alerta ? "font-medium text-red-700" : "text-slate-500"}`}
+        >
           {alerta ? "⚠ " : ""}
           {detalhe}
         </p>
@@ -242,7 +337,11 @@ export function Numero({ rotulo, valor, detalhe, alerta }: { rotulo: string; val
   );
 }
 
-const TOM_DO_NIVEL = { ok: "#1baf7a", atencao: "#eda100", critico: "#c2410c" } as const;
+const TOM_DO_NIVEL = {
+  ok: "#1baf7a",
+  atencao: "#eda100",
+  critico: "#c2410c",
+} as const;
 
 /**
  * Barra de uso de um recurso: quanto ja foi do limite, com a marca dos 70%
@@ -267,9 +366,14 @@ export function BarraDeUso({
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
         <span className="font-medium text-slate-800">{rotulo}</span>
         <span className="tabular-nums text-slate-600">
-          {usado} · <strong className="text-slate-900">{p > 0 && p < 1 ? "<1" : Math.round(p)}%</strong>
+          {usado} ·{" "}
+          <strong className="text-slate-900">
+            {p > 0 && p < 1 ? "<1" : Math.round(p)}%
+          </strong>
           {nivel !== "ok" ? (
-            <span className="ml-1 font-semibold text-red-700">{nivel === "critico" ? "crítico" : "atenção"}</span>
+            <span className="ml-1 font-semibold text-red-700">
+              {nivel === "critico" ? "crítico" : "atenção"}
+            </span>
           ) : null}
         </span>
       </div>
@@ -281,8 +385,18 @@ export function BarraDeUso({
         aria-valuenow={Math.round(p)}
         aria-label={rotulo}
       >
-        <div className="h-full rounded-full" style={{ width: `${p > 0 ? Math.max(p, 1) : 0}%`, background: TOM_DO_NIVEL[nivel] }} />
-        <span aria-hidden className="absolute -top-[3px] h-4 w-px bg-slate-400" style={{ left: "70%" }} />
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${p > 0 ? Math.max(p, 1) : 0}%`,
+            background: TOM_DO_NIVEL[nivel],
+          }}
+        />
+        <span
+          aria-hidden
+          className="absolute -top-[3px] h-4 w-px bg-slate-400"
+          style={{ left: "70%" }}
+        />
       </div>
       {detalhe ? <p className="text-xs text-slate-500">{detalhe}</p> : null}
     </div>
@@ -324,12 +438,20 @@ export function Linha({
     <figure className="cartao m-0">
       <figcaption>
         <span className="font-semibold text-slate-900">{titulo}</span>
-        {explicacao ? <span className="mt-1 block text-sm text-slate-500">{explicacao}</span> : null}
+        {explicacao ? (
+          <span className="mt-1 block text-sm text-slate-500">
+            {explicacao}
+          </span>
+        ) : null}
       </figcaption>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
         {series.map((s) => (
           <span key={s.rotulo} className="inline-flex items-center gap-2">
-            <span aria-hidden className="inline-block h-0.5 w-4" style={{ background: s.cor }} />
+            <span
+              aria-hidden
+              className="inline-block h-0.5 w-4"
+              style={{ background: s.cor }}
+            />
             {s.rotulo}
             <span className="tabular-nums text-slate-500">
               {s.pontos.length
@@ -339,22 +461,48 @@ export function Linha({
           </span>
         ))}
       </div>
-      <svg viewBox={`0 0 ${L} ${A}`} className="mt-2 w-full" role="img" aria-label={titulo}>
+      <svg
+        viewBox={`0 0 ${L} ${A}`}
+        className="mt-2 w-full"
+        role="img"
+        aria-label={titulo}
+      >
         {[0.5, 1].map((f) => {
           const y = base - (base - topo) * f;
           return (
             <g key={f}>
-              <line x1={0} x2={L} y1={y} y2={y} stroke="#e1e0d9" strokeWidth="1" />
+              <line
+                x1={0}
+                x2={L}
+                y1={y}
+                y2={y}
+                stroke="#e1e0d9"
+                strokeWidth="1"
+              />
               <text x={2} y={y - 3} fontSize="10" fill="#898781">
                 {formatar((maior * f) / 1.1)}
               </text>
             </g>
           );
         })}
-        <line x1={0} x2={L} y1={base} y2={base} stroke="#c3c2b7" strokeWidth="1" />
+        <line
+          x1={0}
+          x2={L}
+          y1={base}
+          y2={base}
+          stroke="#c3c2b7"
+          strokeWidth="1"
+        />
         {series.map((s) =>
           s.pontos.length ? (
-            <path key={s.rotulo} d={caminho(s.pontos)} fill="none" stroke={s.cor} strokeWidth="2" strokeLinejoin="round">
+            <path
+              key={s.rotulo}
+              d={caminho(s.pontos)}
+              fill="none"
+              stroke={s.cor}
+              strokeWidth="2"
+              strokeLinejoin="round"
+            >
               <title>{s.rotulo}</title>
             </path>
           ) : null,

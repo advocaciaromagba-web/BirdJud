@@ -8,6 +8,7 @@ import { FAIXAS, MODULOS } from "@/lib/catalogo";
 import { PLANO, PLANOS, modulosDoPlano, planoExato } from "@/lib/planos";
 import { ROTULO_DO_MODULO } from "@/lib/rotulos";
 import type { Modulo } from "@/lib/catalogo";
+import { paraCentavos } from "@/lib/dinheiro";
 
 async function chamar(rota: string, corpo: unknown) {
   const resposta = await fetch(rota, {
@@ -317,11 +318,11 @@ export function AcoesDoEscritorio({
             </label>
             <button
               type="button"
-              disabled={ocupado || (valor.trim() !== "" && !/^\d+(,\d{1,2})?$/.test(valor.trim()))}
+              disabled={ocupado || (valor.trim() !== "" && paraCentavos(valor) === null)}
               onClick={() =>
                 agir({
                   acao: "valor",
-                  valorCentavos: valor.trim() ? Math.round(Number(valor.trim().replace(",", ".")) * 100) : 0,
+                  valorCentavos: valor.trim() ? (paraCentavos(valor) ?? 0) : 0,
                 })
               }
               className="rounded border border-slate-400 px-3 py-1.5 font-semibold disabled:opacity-60"

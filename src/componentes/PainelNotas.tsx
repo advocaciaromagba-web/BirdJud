@@ -212,7 +212,7 @@ export function PainelNotas({
   );
 
   return (
-    <div className="mt-6 grid gap-6">
+    <div className="mt-6 grid gap-6 [&>*]:min-w-0">
       <section className="cartao">
         <h2 className="font-semibold">Preparar nota fiscal</h2>
         <p className="mt-1 text-xs text-slate-500">

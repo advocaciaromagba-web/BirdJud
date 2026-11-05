@@ -257,7 +257,7 @@ export default async function Painel() {
       {consumo.length > 0 ? (
         <section className="mt-8">
           <h2>Consumo de {competenciaDe()}</h2>
-          <div className="cartao mt-3 p-0">
+          <div className="cartao mt-3 overflow-x-auto p-0">
             <table className="tabela">
               <thead>
                 <tr>

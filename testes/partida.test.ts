@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import { esperasDe, tentar } from "../scripts/lib/tentar.mjs";
 
 const conferencia = readFileSync("scripts/conferir-producao.mjs", "utf8");
-const partida = JSON.parse(readFileSync("railway.json", "utf8"));
+const partida = JSON.parse(readFileSync("scripts/railway-esperado.json", "utf8"));
 
 describe("repetir com espera crescente", () => {
   it("espera uma vez a menos que o número de tentativas", () => {

@@ -351,8 +351,8 @@ export function ImportadorDeClientes({ rota, importacoes }: { rota: string; impo
       ) : null}
 
       {importacoes.length ? (
-        <section className="cartao">
-          <h2 className="text-lg font-bold">Importacoes anteriores</h2>
+        <section className="cartao overflow-x-auto">
+          <h2 className="text-lg font-bold">Importações anteriores</h2>
           <table className="tabela mt-3">
             <thead>
               <tr>

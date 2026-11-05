@@ -114,7 +114,7 @@ export default async function PaginaContratosNoFinanceiro() {
       {emDia.length > 0 ? (
         <section className="mt-8">
           <h2>Em dia ({emDia.length})</h2>
-          <div className="cartao mt-3 p-0">
+          <div className="cartao mt-3 overflow-x-auto p-0">
             <table className="tabela">
               <thead>
                 <tr>

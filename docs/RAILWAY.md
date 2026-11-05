@@ -70,11 +70,19 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 ## 4. Deploy
 
-`railway.json` ja define tudo:
+A configuracao de deploy mora **no painel de cada servico** (Settings), nao em
+arquivo do repositorio. O `railway.json` foi removido em 05/11/2026: o Railway
+o descontinuou (deixa de ler em 01/12/2026) e os deploys daqui ja nao o liam
+(`railwayConfigFile` vazio, builder RAILPACK). Ver a secao "Configuracao no
+painel" mais abaixo.
 
-- **build**: `npm run build` (`prisma generate` + `next build`);
-- **start**: `npm run start:producao`, que roda `prisma migrate deploy` como
-  dono, aplica `prisma/rls.sql` (idempotente) e so entao sobe o Next.
+- **build**: o padrao do Railpack, `npm run build` (`prisma generate` +
+  `next build`);
+- **start** (aplicacao): `npm run esperar-banco && npm run migrar && npm run
+  rls:aplicar && npm run conferir-producao && exec node_modules/.bin/next start`
+  — migra como dono, aplica `prisma/rls.sql` (idempotente) e so entao sobe o
+  Next;
+- **healthcheck**: `/api/saude`, 300s; reinicio ON_FAILURE.
 
 Se a migracao ou o RLS falharem, o processo morre e o Railway nao promove a
 versao — de proposito: **nunca** subir a aplicacao com o RLS desatualizado.
@@ -448,17 +456,27 @@ engasgada passam sozinhos. Falha de verdade — migracao quebrada, senha
 errada — falha nas seis tentativas e continua falhando, que e o desejado. O
 `healthcheckTimeout` subiu para 300s para caber essa espera.
 
-### railway.json nao manda sozinho
+### Configuracao no painel (antes: railway.json nao mandava sozinho)
 
-`startCommand` gravado no servico pela API **tem precedencia sobre o
+Historico: `startCommand` gravado no servico pela API **tinha precedencia sobre o
 `railway.json`**. Em 07/10/2026 o comando de partida foi mudado no arquivo,
 o deploy passou SUCCESS, e o `esperar-banco` simplesmente nao rodou — o
 Railway usou o comando antigo, do servico. O `healthcheckTimeout` do mesmo
 commit pegou, porque esse nunca tinha sido gravado por API; so a linha
 sobrescrita ficou para tras.
 
-Entao: ao mexer no comando de partida, **mude nos dois lugares** e confira
-no log do deploy que a primeira etapa apareceu.
+Hoje quem manda e so o servico. `scripts/railway-esperado.json` guarda o que
+ele tem de ter (e o teste de partida confere esse registro); a Railway nao le
+o arquivo. Ao mexer no comando de partida, mude no
+painel (ou pela API abaixo) e confira no log do deploy que a primeira etapa
+apareceu.
+
+Por que nao o "infraestrutura como codigo" de arquivo unico que o Railway
+oferece no lugar (`.railway/railway.ts`): ele apaga do projeto o que nao
+estiver listado no arquivo — banco, crons, volumes. Um esquecimento derruba
+producao. Fica o painel, conferido pela API.
+(https://docs.railway.com/deploy/config-as-code,
+https://docs.railway.com/infrastructure-as-code)
 
 ```
 serviceInstance(environmentId: ..., serviceId: ...) { startCommand }
@@ -604,11 +622,9 @@ Com o npm no topo, o `exec` la dentro nao adianta nada: quem recebe o sinal
 e o npm, que morre pelo sinal e sai 143 do mesmo jeito. A cadeia tem de
 estar inteira no `startCommand`, sem npm envolvendo o passo final.
 
-E atencao a precedencia: o `startCommand` gravado NO SERVICO ganha do
-`railway.json`. Mudar so o arquivo do repositorio nao muda nada em producao
-— foi o que aconteceu na primeira tentativa desta correcao. Os dois precisam
-dizer a mesma coisa; o `railway.json` fica como registro do que o servico
-deve ter.
+E atencao: o que vale e o `startCommand` gravado NO SERVICO. Na primeira
+tentativa desta correcao mudou-se so o `railway.json` (hoje removido) e nada
+mudou em producao.
 
 Nota: o `trabalhador` ainda sobe por `npm run trabalhador` e sai 143 na
 troca. Ele nao dispara e-mail hoje, mas tem uma questao maior e separada —
