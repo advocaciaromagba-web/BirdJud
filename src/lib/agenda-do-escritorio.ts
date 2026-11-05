@@ -69,7 +69,7 @@ export async function editarCompromisso(
   escritorioId: string,
   id: string,
   campos: CamposEditaveis,
-): Promise<{ mudouAData: boolean }> {
+): Promise<{ mudouAData: boolean; responsaveis: (string | null)[] }> {
   return comEscritorio(escritorioId, async (db) => {
     const atual = await db.compromisso.findFirst({ where: { id } });
     if (!atual) throw new CompromissoNaoEncontrado();
@@ -100,7 +100,9 @@ export async function editarCompromisso(
     // e o compromisso, nao a data, entao e preciso soltar a chave velha.
     if (mudouAData) await cancelarLembretesPendentes(db, id, "data alterada");
 
-    return { mudouAData };
+    // Quem tinha e quem tem o horario agora: o NetLead dos dois muda.
+    const responsaveis = [atual.responsavelId, campos.responsavelId === undefined ? atual.responsavelId : campos.responsavelId];
+    return { mudouAData, responsaveis };
   });
 }
 
@@ -144,8 +146,8 @@ export async function excluirCompromisso(
   escritorioId: string,
   id: string,
   quem: { usuarioId: string | null; nome: string | null },
-): Promise<void> {
-  await comEscritorio(escritorioId, async (db) => {
+): Promise<string | null> {
+  return comEscritorio(escritorioId, async (db) => {
     const c = await db.compromisso.findFirst({ where: { id }, include: COM_TUDO });
     if (!c) throw new CompromissoNaoEncontrado();
 
@@ -159,6 +161,7 @@ export async function excluirCompromisso(
       }),
     });
     await db.compromisso.delete({ where: { id } });
+    return c.responsavelId;
   });
 }
 

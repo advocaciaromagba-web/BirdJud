@@ -94,6 +94,7 @@ model Escritorio {
   mensalidades Mensalidade[]
   baixasDeCobranca BaixaDeCobranca[]
   fechamentosDeCaixa FechamentoDeCaixa[]
+  agendasNoNetlead   AgendaNoNetlead[]
   arquivos          Arquivo[]
   notas             NotaFiscal[]
   fiscal            Fiscal?
@@ -212,6 +213,7 @@ model Usuario {
   tarefasDesignadas Tarefa[] @relation("TarefasDoResponsavel")
   solucoesDeTarefa Tarefa[] @relation("SolucoesDeTarefa")
   arquivos Arquivo[]
+  agendaNoNetlead AgendaNoNetlead?
   criadoEm DateTime  @default(now())
 
   escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
@@ -1864,4 +1866,29 @@ model AvisoDeCobranca {
 
   @@index([escritorioId, enviadoEm])
   @@index([faturaId, tipo])
+}
+
+/// Bloqueio dos horarios da agenda no NetLead (src/lib/netlead.ts). So de ida
+/// e so de horario: nenhum dado de cliente ou processo sai daqui.
+model AgendaNoNetlead {
+  id           String    @id @default(cuid())
+  escritorioId String
+  usuarioId    String    @unique
+  /// Chave da pessoa no NetLead, cifrada (segredo.ts). Nunca volta inteira a tela.
+  chave        Bytes
+  /// 4 ultimos caracteres, para a pessoa reconhecer qual chave vale.
+  chaveFinal   String
+  /// "Bloquear meus horarios no NetLead".
+  ativo        Boolean   @default(false)
+  /// De quem e a agenda do outro lado, conferido no teste.
+  pessoa       String?
+  /// Chave recusada: os envios param ate trocarem a chave.
+  erro         String?
+  enviadoEm    DateTime?
+  criadoEm     DateTime  @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  usuario    Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId])
 }

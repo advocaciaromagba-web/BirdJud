@@ -5,7 +5,8 @@
 //
 // Quando: a chave vazou (variaveis de ambiente expostas) ou por rotina. O que
 // a chave protege: Integracao.dados (SMTP, Asaas, Autentique, WhatsApp,
-// Microsoft, Google e o certificado da NFS-e de cada escritorio). O link
+// Microsoft, Google e o certificado da NFS-e de cada escritorio) e
+// AgendaNoNetlead.chave (a chave do NetLead de cada pessoa). O link
 // assinado da nota da plataforma tambem usa a chave: os links antigos deixam
 // de abrir, e a nota se reenvia pelo console.
 //
@@ -48,6 +49,34 @@ export async function recifrarIntegracoes(
   return r;
 }
 
+/** O mesmo para a chave do NetLead de cada pessoa. */
+export async function recifrarAgendasNoNetlead(
+  db: Pick<PrismaClient, "agendaNoNetlead">,
+  antiga: Buffer,
+  nova: Buffer,
+): Promise<ResultadoDaTroca> {
+  const r: ResultadoDaTroca = { recifradas: 0, jaNaNova: 0, ilegiveis: [] };
+  for (const l of await db.agendaNoNetlead.findMany({ select: { id: true, escritorioId: true, usuarioId: true, chave: true } })) {
+    try {
+      decifrarCom(l.chave, nova);
+      r.jaNaNova += 1;
+      continue;
+    } catch {
+      // Nao esta na nova.
+    }
+    let aberto: unknown;
+    try {
+      aberto = decifrarCom(l.chave, antiga);
+    } catch {
+      r.ilegiveis.push(`${l.escritorioId}/netlead:${l.usuarioId}`);
+      continue;
+    }
+    await db.agendaNoNetlead.update({ where: { id: l.id }, data: { chave: cifrarCom(aberto, nova) } });
+    r.recifradas += 1;
+  }
+  return r;
+}
+
 async function main(): Promise<void> {
   const url = process.env.DATABASE_URL_PLATAFORMA;
   if (!url) {
@@ -62,7 +91,9 @@ async function main(): Promise<void> {
   }
   const db = new PrismaClient({ datasources: { db: { url } } });
   try {
-    const r = await recifrarIntegracoes(db, antiga, nova);
+    const i = await recifrarIntegracoes(db, antiga, nova);
+    const n = await recifrarAgendasNoNetlead(db, antiga, nova);
+    const r = { recifradas: i.recifradas + n.recifradas, jaNaNova: i.jaNaNova + n.jaNaNova, ilegiveis: [...i.ilegiveis, ...n.ilegiveis] };
     console.log(`recifradas: ${r.recifradas}; ja na chave nova: ${r.jaNaNova}; ilegiveis: ${r.ilegiveis.length}`);
     for (const x of r.ilegiveis) console.log(`  ilegivel (reconectar no escritorio): ${x}`);
     console.log("Agora apague SEGREDO_CHAVE_ANTIGA do ambiente.");

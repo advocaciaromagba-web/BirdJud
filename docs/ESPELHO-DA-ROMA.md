@@ -14,8 +14,8 @@ novo e como trazer isso para ca do jeito certo.
 | O que | Valor |
 |---|---|
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
-| Ultimo commit revisado | `8473529e0d16e76187b541529adbcd4bb4bde34f` (02/11/2026, "Acertar as parcelas quando o contrato corrige o cadastro") |
-| Revisado em | 03/11/2026 |
+| Ultimo commit revisado | `2555f52808d9bbc9f40afa063c053128843d76c5` (04/11/2026, "Bloqueio dos horarios da agenda no NetLead") |
+| Revisado em | 05/11/2026 |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
 que a ultima funcionalidade entrou. Sem isso a proxima rodada revisa tudo de
@@ -119,6 +119,13 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Responsavel de qualquer papel e agenda visivel para o escritorio | ja era assim (toda a equipe ve a agenda do escritorio) |
 | Prazo pela lei e aviso antes do fatal; um aviso por vez | `src/lib/prazos*.ts`, `avisos.ts` (ja existia) |
 | Processo e cliente cadastrados a partir da publicacao | `CadastrarProcesso.tsx`, `triagem-do-escritorio.ts` (ja existia) |
+| Tela sem corte no celular (barra que nao quebra linha, tabela sem rolagem propria) | varredura de todas as telas a 360px; so Notas fiscais estourava (filho de grid); tabelas ganharam `overflow-x-auto` |
+| Valor em real nos campos que ainda eram numero solto | desconto do escritorio e cupom no console, por `paraCentavos` |
+| `railway.json` depreciado pela Railway | removido: os deploys daqui ja nao o liam. Config no painel do servico, registro em `scripts/railway-esperado.json` (docs/RAILWAY.md). Nao adotado o arquivo unico de infraestrutura, que apaga o que nao estiver listado |
+| Aviso de tarefa em duas entregas por dia (12h e 18h); urgente para hoje e prazo antes da janela furam a fila; mudar prioridade ou entrega remarca | `Aviso.liberarEm` (migracao 80), `src/lib/janela-de-avisos.ts`, `avisarTarefaDesignada`/`remarcarAvisoDaTarefa`; sai na rodada de hora em hora |
+| Relacao de despesas com filtros e totais; ler varias contas de uma vez (uma chamada por arquivo, tres por vez, varias contas por arquivo); lancar a mao com "repetir todo mes"; aviso de vencimento na tela inicial respeitando a segunda senha; categoria PERICIA | `/financeiro/despesas`, `src/lib/despesas.ts`, `src/lib/contas-em-lote.ts`, `LeituraDeContasEmLote.tsx` (tambem na aba A pagar de Cobrancas). A lista de categorias aqui ja era uma so |
+| Financeiro em abas, grudadas no topo e com a aba no endereco; previsao de arrecadacao mes a mes lendo o Asaas, com as cobrancas so daqui e as mensalidades projetadas, e as pendencias que explicam a diferenca | `AbasNaPagina.tsx`, `src/lib/previsao-conta.ts` (a conta), `src/lib/previsao-de-arrecadacao.ts` (a leitura, cache de 5 min), `/api/financeiro/previsao`, `PainelPrevisao.tsx` |
+| Bloqueio dos horarios da agenda no NetLead: so horario e tipo generico saem; chave por pessoa, cifrada; foto completa; 401 pausa ate trocar a chave; desligar libera | `AgendaNoNetlead` (migracao 81, tabela propria), `src/lib/netlead.ts`, `/api/conta/netlead`, `AgendaNoNetlead.tsx` em Minha conta; trabalho `NETLEAD` apos salvar compromisso e rodada no `LEMBRAR`. `NETLEAD_URL` opcional (padrao https://netlead.com.br) |
 
 Ainda nao trazido, por ser maior e pedir decisao do produto:
 

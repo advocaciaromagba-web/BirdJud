@@ -12,6 +12,7 @@
 // Nunca o contrario. Prazo errado e a unica coisa neste sistema cujo erro nao
 // tem conserto depois, e modelo de linguagem contando dia util com feriado
 // municipal no meio e exatamente o tipo de conta que parece certa e nao e.
+import { avisarMudancaNaAgenda } from "./netlead";
 import { criarTarefa } from "./tarefas-do-escritorio";
 import { fimDoDia } from "./tarefas";
 import { ehTipoDaAgenda } from "./natureza";
@@ -498,6 +499,7 @@ export async function aceitarTriagem(
         select: { id: true },
       }),
     );
+    await avisarMudancaNaAgenda(escritorioId, [ajustes.responsavelId]);
     compromissoId = compromisso.id;
   }
 

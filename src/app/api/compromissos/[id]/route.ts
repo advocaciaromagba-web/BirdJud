@@ -1,3 +1,4 @@
+import { avisarMudancaNaAgenda } from "@/lib/netlead";
 import { NextResponse } from "next/server";
 import { TIPOS_DA_AGENDA, recusaDaAgenda } from "@/lib/natureza";
 import { z } from "zod";
@@ -115,7 +116,8 @@ export async function PATCH(
     if (d.responsavelId !== undefined) campos.responsavelId = d.responsavelId || null;
     if (d.concluido !== undefined) campos.concluido = d.concluido;
 
-    const { mudouAData } = await editarCompromisso(escritorioId, id, campos);
+    const { mudouAData, responsaveis } = await editarCompromisso(escritorioId, id, campos);
+    await avisarMudancaNaAgenda(escritorioId, responsaveis);
 
     // Responsavel novo e avisado; data nova gera a confirmacao de novo para
     // quem vai — e os lembretes voltam pela regua, com a hora certa.
@@ -148,10 +150,11 @@ export async function DELETE(
   try {
     const { escritorioId, usuarioId, nomeUsuario } = await exigirSessao();
     const { id } = await params;
-    await excluirCompromisso(escritorioId, id, {
+    const responsavel = await excluirCompromisso(escritorioId, id, {
       usuarioId,
       nome: nomeUsuario ?? null,
     });
+    await avisarMudancaNaAgenda(escritorioId, [responsavel]);
     return NextResponse.json({
       ok: true,
       mensagem:

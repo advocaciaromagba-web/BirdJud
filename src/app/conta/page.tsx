@@ -3,6 +3,7 @@ import { contextoDaPagina } from "@/lib/pagina";
 import { modulosAtivos } from "@/lib/modulos";
 import { Estrutura } from "@/componentes/Estrutura";
 import { PainelConta } from "@/componentes/PainelConta";
+import { AgendaNoNetlead } from "@/componentes/AgendaNoNetlead";
 
 export default async function PaginaConta() {
   const contexto = await contextoDaPagina();
@@ -24,6 +25,15 @@ export default async function PaginaConta() {
       },
     }),
   );
+
+  // A chave cifrada nunca sai daqui: so os 4 ultimos caracteres.
+  const ligacao = await comEscritorio(contexto.escritorioId, (db) =>
+    db.agendaNoNetlead.findFirst({
+      where: { usuarioId: contexto.usuarioId },
+      select: { chaveFinal: true, ativo: true, pessoa: true, erro: true, enviadoEm: true },
+    }),
+  );
+  const quando = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
 
   return (
     <Estrutura
@@ -48,6 +58,19 @@ export default async function PaginaConta() {
         telefone={usuario?.telefone ?? ""}
         temModuloEmail={modulos.includes("EMAIL")}
         temModuloWhatsapp={modulos.includes("WHATSAPP")}
+      />
+      <AgendaNoNetlead
+        ligacao={
+          ligacao
+            ? {
+                final: ligacao.chaveFinal,
+                ativo: ligacao.ativo,
+                pessoa: ligacao.pessoa,
+                erro: ligacao.erro,
+                enviadoEm: ligacao.enviadoEm ? quando.format(ligacao.enviadoEm) : null,
+              }
+            : null
+        }
       />
     </Estrutura>
   );

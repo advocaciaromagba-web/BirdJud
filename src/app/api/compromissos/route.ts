@@ -1,3 +1,4 @@
+import { avisarMudancaNaAgenda } from "@/lib/netlead";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
@@ -144,6 +145,7 @@ export async function POST(req: Request) {
       );
     }
 
+    await avisarMudancaNaAgenda(escritorioId, [resultado.compromisso.responsavelId]);
     return NextResponse.json(resultado, { status: 201 });
   } catch (erro) {
     return tratarErro(erro);

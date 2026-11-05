@@ -58,7 +58,8 @@ DECLARE
     'NotaDaPlataforma',
     'Mensalidade',
     'BaixaDeCobranca',
-    'FechamentoDeCaixa'
+    'FechamentoDeCaixa',
+    'AgendaNoNetlead'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

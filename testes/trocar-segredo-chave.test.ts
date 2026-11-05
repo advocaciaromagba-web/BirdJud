@@ -7,7 +7,7 @@ import { randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { comEscritorio, prismaPlataforma, semEscritorio } from "../src/lib/prisma";
 import { cifrarCom, decifrarCom } from "../src/lib/segredo";
-import { recifrarIntegracoes } from "../scripts/trocar-segredo-chave";
+import { recifrarAgendasNoNetlead, recifrarIntegracoes } from "../scripts/trocar-segredo-chave";
 
 const temBanco = Boolean(process.env.DATABASE_URL);
 const d = temBanco ? describe : describe.skip;
@@ -44,5 +44,17 @@ d("trocar a chave das credenciais", () => {
     // Rodar de novo nao muda nada: idempotente.
     const r2 = await recifrarIntegracoes(prismaPlataforma(), antiga, nova);
     expect(r2.recifradas).toBe(0);
+  });
+
+  it("a chave do NetLead de cada pessoa também é recifrada", async () => {
+    const usuarioId = await comEscritorio(esc, async (db) => {
+      const u = await db.usuario.create({ data: semEscritorio({ nome: "Pessoa", email: `p-${Date.now()}@t.test`, senhaHash: "x" }) });
+      await db.agendaNoNetlead.create({ data: semEscritorio({ usuarioId: u.id, chave: cifrarCom("nlag_x", antiga), chaveFinal: "_x" }) });
+      return u.id;
+    });
+    const r = await recifrarAgendasNoNetlead(prismaPlataforma(), antiga, nova);
+    expect(r.recifradas).toBeGreaterThanOrEqual(1);
+    const l = await comEscritorio(esc, (db) => db.agendaNoNetlead.findFirstOrThrow({ where: { usuarioId } }));
+    expect(decifrarCom(l.chave, nova)).toBe("nlag_x");
   });
 });

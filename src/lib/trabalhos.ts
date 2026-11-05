@@ -3,6 +3,7 @@
 // Todo trabalho de escritorio roda dentro de comEscritorio(): mesmo no
 // trabalhador, que conecta com o papel do plano de controle, o codigo de
 // negocio continua vendo so o escritorio da vez.
+import { enviarAgendasDoEscritorio } from "./netlead";
 import { conferirEntregas } from "./entrega-do-escritorio";
 import { comEscritorio, prismaPlataforma } from "./prisma";
 import { competenciaDe, definirConsumo } from "./consumo";
@@ -365,6 +366,9 @@ async function lembrar({ escritorioId }: Contexto): Promise<void> {
   await gerarAvisos(escritorioId);
   await enviarAvisosPendentes(escritorioId);
   await enviarAvisosNoWhatsapp(escritorioId);
+  // A rodada do NetLead pega o que o gancho das telas perdeu (NetLead fora na
+  // hora, servidor reiniciando). Falha la nao derruba o lembrete daqui.
+  await enviarAgendasDoEscritorio(escritorioId).catch((erro) => console.error(`LEMBRAR ${escritorioId}: NetLead: ${(erro as Error).message}`));
 }
 
 /**
@@ -499,6 +503,17 @@ async function emitirNotaDaPlataforma({ escritorioId, dados }: Contexto): Promis
   console.log(`ok   EMITIR_NOTA_DA_PLATAFORMA ${escritorioId}: ${nota.status} ${nota.numeroNaPrefeitura ?? ""}`.trim());
 }
 
+/**
+ * Manda a foto da agenda ao NetLead de quem ligou. Com `usuarios` nos dados,
+ * so dessas pessoas (o compromisso delas mudou); sem, de todo o escritorio.
+ */
+async function agendaNoNetlead({ escritorioId, dados }: Contexto): Promise<void> {
+  if (!escritorioId) throw new Error("NETLEAD exige escritório.");
+  const bruto = (dados ?? {}) as { usuarios?: unknown };
+  const so = Array.isArray(bruto.usuarios) ? bruto.usuarios.filter((x): x is string => typeof x === "string") : undefined;
+  await enviarAgendasDoEscritorio(escritorioId, so);
+}
+
 export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   AVISAR: avisar,
   LEMBRAR: lembrar,
@@ -516,6 +531,7 @@ export const EXECUTORES: Record<string, (ctx: Contexto) => Promise<void>> = {
   ORGANIZAR_NUVEM: organizarNuvem,
   EMITIR_NOTA_DA_PLATAFORMA: emitirNotaDaPlataforma,
   CONFERIR_ASSINATURAS: conferirAssinaturas,
+  NETLEAD: agendaNoNetlead,
 };
 
 /** Trabalhos que rodam uma vez para a plataforma toda, nao por escritorio. */
@@ -542,6 +558,7 @@ const MODULO_DO_TRABALHO: Record<string, Modulo | undefined> = {
   ORGANIZAR_NUVEM: "NUVEM",
   EMITIR_NOTA_DA_PLATAFORMA: undefined,
   CONFERIR_ASSINATURAS: "ASSINATURA",
+  NETLEAD: undefined,
 };
 
 /**
