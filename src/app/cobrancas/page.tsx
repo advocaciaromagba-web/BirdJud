@@ -1,3 +1,4 @@
+import { LeituraDeContasEmLote } from "@/componentes/LeituraDeContasEmLote";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina } from "@/lib/pagina";
 import { dataBR } from "@/lib/datas";
@@ -143,6 +144,12 @@ export default async function PaginaCobrancas() {
             </Link>
             .
           </p>
+          {/* O mesmo leitor do Financeiro: lancou aqui, aparece la. */}
+          {modulos.includes("IA") ? (
+            <div className="mb-4">
+              <LeituraDeContasEmLote />
+            </div>
+          ) : null}
           <ListaFinanceira
             lancamentos={contas.map((l) => ({
               ...l,

@@ -21,6 +21,9 @@ export const CATEGORIAS_DE_DESPESA = [
   "SALARIOS",
   "PRO_LABORE",
   "CUSTAS",
+  // Honorario de perito e de assistente tecnico: o escritorio adianta e
+  // costuma cobrar de volta. Diluido em custas, ninguem sabia quanto era.
+  "PERICIA",
   "MARKETING",
   "MATERIAL",
   "VIAGENS",
@@ -50,7 +53,7 @@ export const CATEGORIAS: readonly Categoria[] = [
 
 const ROTULOS: Record<Categoria, string> = {
   ALUGUEL: "Aluguel",
-  CONDOMINIO: "Condominio",
+  CONDOMINIO: "Condomínio",
   AGUA: "Água e esgoto",
   ENERGIA: "Energia elétrica",
   INTERNET: "Internet",
@@ -61,12 +64,13 @@ const ROTULOS: Record<Categoria, string> = {
   SALARIOS: "Salários e encargos",
   PRO_LABORE: "Pró-labore e retiradas",
   CUSTAS: "Custas e despesas processuais",
+  PERICIA: "Perícia e assistente técnico",
   MARKETING: "Marketing",
   MATERIAL: "Material de escritório",
   VIAGENS: "Viagens e deslocamento",
   TARIFAS: "Tarifas de cobrança e banco",
   OUTRAS_DESPESAS: "Outras despesas",
-  HONORARIOS: "Honorarios",
+  HONORARIOS: "Honorários",
   HONORARIOS_DE_EXITO: "Honorários de êxito",
   CONSULTORIA: "Consultoria",
   REEMBOLSO: "Reembolso de despesas",

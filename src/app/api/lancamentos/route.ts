@@ -20,6 +20,8 @@ const novoLancamento = z.object({
   vencimento: z.string().max(30).optional(),
   pago: z.union([z.boolean(), z.literal("sim"), z.literal("nao")]).optional(),
   observacoes: z.string().max(2000).optional(),
+  /** So despesa: cadastra a despesa fixa para o sistema gerar todo mes. */
+  repetir: z.union([z.boolean(), z.literal("sim"), z.literal("nao")]).optional(),
   competencia: z
     .string()
     .regex(/^\d{4}-\d{2}$/)
@@ -89,9 +91,27 @@ export async function POST(req: Request) {
 
     const pago = corpo.data.pago === true || corpo.data.pago === "sim";
 
-    const lancamento = await comEscritorio(escritorioId, (db) =>
-      db.lancamento.create({
+    const repetir = tipo === "DESPESA" && (corpo.data.repetir === true || corpo.data.repetir === "sim");
+
+    const lancamento = await comEscritorio(escritorioId, async (db) => {
+      // Repetir todo mes: nasce a despesa fixa e ESTE lancamento ja fica ligado
+      // a ela, como o deste mes. A geracao do mes procura pela fixa e pela
+      // competencia, entao nao cria a segunda — a despesa nao dobra.
+      const fixa = repetir
+        ? await db.despesaFixa.create({
+            data: semEscritorio({
+              descricao: corpo.data.descricao,
+              categoria: categoria ?? "OUTRAS_DESPESAS",
+              fornecedor: corpo.data.fornecedor || null,
+              valorCentavos,
+              diaDoVencimento: Number((vencimento ?? new Date()).toISOString().slice(8, 10)),
+              inicioEm: new Date(`${competencia}-01T00:00:00Z`),
+            }),
+          })
+        : null;
+      return db.lancamento.create({
         data: semEscritorio({
+          despesaFixaId: fixa?.id ?? null,
           descricao: corpo.data.descricao,
           valorCentavos,
           tipo,
@@ -102,8 +122,8 @@ export async function POST(req: Request) {
           vencimento,
           pagoEm: pago ? new Date() : null,
         }),
-      }),
-    );
+      });
+    });
 
     return NextResponse.json({ lancamento }, { status: 201 });
   } catch (erro) {

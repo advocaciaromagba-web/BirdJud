@@ -259,6 +259,16 @@ export default async function PaginaFinanceiro({
             { nome: "fornecedor", rotulo: "Fornecedor / quem emitiu" },
             { nome: "vencimento", rotulo: "Vencimento", tipo: "date" },
             { nome: "pago", rotulo: "Situação", tipo: "select", opcoes: SIM_NAO },
+            {
+              nome: "repetir",
+              rotulo: "Repetir todo mês (despesa)",
+              tipo: "select",
+              opcoes: [
+                { valor: "nao", rotulo: "Não" },
+                { valor: "sim", rotulo: "Sim, todo mês" },
+              ],
+              ajuda: "Só para despesa: vira despesa fixa, gerada nos próximos meses no mesmo dia.",
+            },
             { nome: "observacoes", rotulo: "Observações", tipo: "textarea" },
           ]}
         />

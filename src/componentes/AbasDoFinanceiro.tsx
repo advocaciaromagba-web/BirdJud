@@ -11,7 +11,7 @@ export function AbasDoFinanceiro({
   temExtrato,
   pendentes,
 }: {
-  ativa: "LANCAMENTOS" | "EXTRATO" | "CONTRATOS";
+  ativa: "LANCAMENTOS" | "DESPESAS" | "EXTRATO" | "CONTRATOS";
   temLivroCaixa: boolean;
   temExtrato: boolean;
   pendentes?: number;
@@ -29,6 +29,7 @@ export function AbasDoFinanceiro({
   return (
     <nav className="mt-3 flex flex-wrap gap-2" aria-label="Financeiro">
       {aba("Lançamentos", "/financeiro", ativa === "LANCAMENTOS")}
+      {aba("Despesas", "/financeiro/despesas", ativa === "DESPESAS")}
       {temExtrato
         ? aba(pendentes ? `Conferir extrato (${pendentes})` : "Conferir extrato", "/conciliacao", ativa === "EXTRATO")
         : null}

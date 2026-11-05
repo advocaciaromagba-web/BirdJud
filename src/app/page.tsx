@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ROTULO_DO_TIPO } from "@/lib/agenda-tela";
 import { comEscritorio } from "@/lib/prisma";
-import { contextoDaPagina } from "@/lib/pagina";
+import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
+import { contasVencendo, DIAS_DO_AVISO } from "@/lib/despesas";
 import { dataHoraBR, horaBR } from "@/lib/datas";
 import { escritorioDoEndereco } from "@/lib/sessao";
 import { competenciaDe, consumoDoMes } from "@/lib/consumo";
@@ -54,6 +55,12 @@ export default async function Painel() {
   // O roteiro e do administrador: e ele quem configura o escritorio.
   const roteiro =
     contexto.papel === "ADMIN" ? await roteiroDoEscritorio(contexto.escritorioId) : null;
+  // Contas a pagar vencendo: so para quem abre o Financeiro, e so quando ha.
+  const contasAVencer =
+    contexto.papel === "ADMIN" && painel.modulos.includes("FINANCEIRO") ? await contasVencendo(contexto.escritorioId) : null;
+  const vencendo = contasAVencer
+    ? { contas: contasAVencer, aberto: !(await contextoProtegido("FINANCEIRO").catch(() => ({ tranca: "erro" }))).tranca }
+    : null;
   const comRoteiro = roteiro && !roteiro.completo && !roteiro.dispensado ? roteiro : null;
   const chegando = Boolean(comRoteiro && comRoteiro.feitos === 0);
 
@@ -237,6 +244,35 @@ export default async function Painel() {
       ) : null}
 
       {contexto.papel === "ADMIN" && deExito.length ? <ContratosDeExito contratos={deExito} /> : null}
+
+      {vencendo ? (
+        <section className="mt-6">
+          <Link
+            href={vencendo.aberto ? "/financeiro/despesas?situacao=a-pagar" : "/financeiro"}
+            className={`${vencendo.contas.vencidas ? "aviso-erro" : "aviso-atencao"} flex flex-wrap items-baseline gap-x-3 gap-y-1 hover:brightness-95`}
+          >
+            <strong>
+              {[
+                vencendo.contas.vencidas ? `${vencendo.contas.vencidas} conta(s) vencida(s)` : null,
+                vencendo.contas.proximas ? `${vencendo.contas.proximas} vencendo nos próximos ${DIAS_DO_AVISO} dias` : null,
+              ]
+                .filter(Boolean)
+                .join(" e ")}
+            </strong>
+            {/* Trancado: diz QUANTAS, nunca quanto. Esconder tudo faria a pessoa
+                nao saber que precisa abrir o Financeiro. */}
+            {vencendo.aberto ? (
+              <span>
+                {vencendo.contas.centavosVencidas ? `${emReais(vencendo.contas.centavosVencidas)} vencido` : ""}
+                {vencendo.contas.centavosVencidas && vencendo.contas.centavosProximas ? " · " : ""}
+                {vencendo.contas.centavosProximas ? `${emReais(vencendo.contas.centavosProximas)} a vencer` : ""}
+              </span>
+            ) : (
+              <span>Destranque o Financeiro para ver os valores.</span>
+            )}
+          </Link>
+        </section>
+      ) : null}
 
       {painel.cobrancasVencidas.quantidade > 0 ? (
         <section className="mt-6">

@@ -193,6 +193,7 @@ export function montarInstrucao(perfil: Perfil): string {
           `- "categoria" é exatamente uma destas: ${CATEGORIAS_DE_DESPESA.join(", ")}. Se nenhuma servir, não devolva o campo;`,
           '- "descricao" é curta ("Conta de energia - setembro"), não o texto do documento;',
           "- conta com valores de vários meses no histórico: use o do mês corrente, e diga em observações qual mês você usou.",
+          '- se o arquivo trouxer MAIS DE UMA conta a pagar (o boleto do condomínio junto com a taxa extra, duas guias), a primeira vai em "campos" e cada uma das demais vai em "outras": [{"campos":{...mesmos campos...}}], no máximo 5. A mesma conta repetida (segunda via, recibo da mesma) não é outra conta;',
         ]
       : []),
     ...(perfil === "CLIENTE"
@@ -560,7 +561,7 @@ export function interpretar(perfil: Perfil, texto: string | object): Leitura {
   }
 
   const leitura: Leitura = { campos, observacoes: observacoes.slice(0, 20) };
-  if (perfil === "TAREFA" && lido.data.outras.length) {
+  if ((perfil === "TAREFA" || perfil === "CONTA") && lido.data.outras.length) {
     // Cada outra providencia passa pela mesma conferencia; a que vier sem
     // titulo e descartada.
     leitura.outras = lido.data.outras
@@ -571,7 +572,7 @@ export function interpretar(perfil: Perfil, texto: string | object): Leitura {
           return null;
         }
       })
-      .filter((o): o is Leitura => Boolean(o?.campos.titulo));
+      .filter((o): o is Leitura => Boolean(perfil === "CONTA" ? o?.campos.valor : o?.campos.titulo));
   }
   return leitura;
 }

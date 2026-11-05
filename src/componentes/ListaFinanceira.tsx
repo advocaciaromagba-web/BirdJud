@@ -14,6 +14,8 @@ type Lancamento = {
   fornecedor: string | null;
   vencimento: string | null;
   pagoEm: string | null;
+  /** Pode sair por aqui (nao veio de cobranca, contrato nem extrato). */
+  excluivel?: boolean;
 };
 
 const dia = new Intl.DateTimeFormat("pt-BR", {
@@ -30,8 +32,10 @@ const dia = new Intl.DateTimeFormat("pt-BR", {
  */
 export function ListaFinanceira({
   lancamentos,
+  vazio = "Nenhum lançamento nesta competência.",
 }: {
   lancamentos: Lancamento[];
+  vazio?: string;
 }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState<string | null>(null);
@@ -57,8 +61,27 @@ export function ListaFinanceira({
     }
   }
 
+  async function excluir(l: Lancamento) {
+    if (!window.confirm(`Excluir "${l.descricao}" (${emReais(l.valorCentavos)})? Não tem volta.`)) return;
+    setOcupado(l.id);
+    setErro(null);
+    try {
+      const resposta = await fetch(`/api/lancamentos/${l.id}`, { method: "DELETE" });
+      if (!resposta.ok) {
+        const corpo = await resposta.json().catch(() => ({}));
+        setErro(corpo.erro ?? "Não foi possível excluir.");
+        return;
+      }
+      router.refresh();
+    } finally {
+      setOcupado(null);
+    }
+  }
+
+  const comExcluir = lancamentos.some((l) => l.excluivel);
+
   if (lancamentos.length === 0) {
-    return <p className="vazio">Nenhum lançamento nesta competência.</p>;
+    return <p className="vazio">{vazio}</p>;
   }
 
   const hoje = new Date();
@@ -75,6 +98,7 @@ export function ListaFinanceira({
               <th>Categoria</th>
               <th className="text-right">Valor</th>
               <th>Situação</th>
+              {comExcluir ? <th><span className="sr-only">Excluir</span></th> : null}
             </tr>
           </thead>
           <tbody>
@@ -138,6 +162,15 @@ export function ListaFinanceira({
                             : "em aberto"}
                     </button>
                   </td>
+                  {comExcluir ? (
+                    <td>
+                      {l.excluivel ? (
+                        <button type="button" className="text-xs text-red-700 underline" disabled={ocupado === l.id} onClick={() => excluir(l)}>
+                          excluir
+                        </button>
+                      ) : null}
+                    </td>
+                  ) : null}
                 </tr>
               );
             })}

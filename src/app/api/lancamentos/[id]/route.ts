@@ -44,6 +44,25 @@ export async function DELETE(
   try {
     const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const { id } = await params;
+    // Linha que veio de cobranca, de contrato ou do extrato conferido nao se
+    // apaga por aqui: o outro lado ficaria apontando para nada. Desfaz-se
+    // por la (a baixa, a conferencia).
+    const preso = await comEscritorio(escritorioId, async (db) => {
+      const l = await db.lancamento.findFirst({ where: { id }, select: { cobrancaId: true, contratoId: true } });
+      if (!l) return null;
+      if (l.cobrancaId || l.contratoId) return true;
+      const ligados =
+        (await db.entradaDeExtrato.count({ where: { lancamentoId: id } })) +
+        (await db.baixaDeCobranca.count({ where: { lancamentoId: id } })) +
+        (await db.cobranca.count({ where: { lancamentoId: id } }));
+      return ligados > 0;
+    });
+    if (preso) {
+      return NextResponse.json(
+        { erro: "Este lançamento veio de cobrança, contrato ou extrato: desfaça por lá." },
+        { status: 409 },
+      );
+    }
     const apagados = await comEscritorio(escritorioId, (db) =>
       db.lancamento.deleteMany({ where: { id } }),
     );

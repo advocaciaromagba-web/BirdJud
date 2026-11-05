@@ -70,8 +70,11 @@ export function FormularioCriar({
   valoresIniciais,
   aoConcluir,
   aoCancelar,
+  fixos,
 }: {
   rota: string;
+  /** Vai sempre no corpo, sem campo na tela (a despesa ja e despesa). */
+  fixos?: Record<string, string>;
   campos: Campo[];
   textoBotao?: string;
   /** Guardado atras de um botao: a lista e que importa na tela, nao o formulario. */
@@ -192,6 +195,7 @@ export function FormularioCriar({
       corpo.chaveOperacao = chaveDaCobranca.current;
     }
     if (confirmando) corpo.confirmarHomonimo = true;
+    if (fixos) Object.assign(corpo, fixos);
 
     const resposta = await fetch(rota, {
       method: metodo,
