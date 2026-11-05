@@ -1,6 +1,8 @@
 import { diaBR } from "@/lib/datas";
 import Link from "next/link";
 import { AbasDoFinanceiro } from "@/componentes/AbasDoFinanceiro";
+import { AbasNaPagina } from "@/componentes/AbasNaPagina";
+import { PainelPrevisao } from "@/componentes/PainelPrevisao";
 import { comEscritorio } from "@/lib/prisma";
 import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
@@ -15,7 +17,11 @@ import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
 import { PainelDoAno } from "@/componentes/PainelDoAno";
 import { ContratosDeExito } from "@/componentes/ContratosDeExito";
 import { PainelFechamento } from "@/componentes/PainelFechamento";
-import { competenciaDe as competenciaEmBrasilia, fechamentosRecentes, mesAnterior } from "@/lib/fechamento-de-caixa";
+import {
+  competenciaDe as competenciaEmBrasilia,
+  fechamentosRecentes,
+  mesAnterior,
+} from "@/lib/fechamento-de-caixa";
 import { contratosDeExito } from "@/lib/honorarios-do-escritorio";
 import { anoDe, anosOferecidos, COMO_ESTA } from "@/lib/metas";
 import { anoDoEscritorio } from "@/lib/metas-do-escritorio";
@@ -41,8 +47,18 @@ const SIM_NAO = [
 ];
 
 const NOME_DO_MES = [
-  "jan", "fev", "mar", "abr", "mai", "jun",
-  "jul", "ago", "set", "out", "nov", "dez",
+  "jan",
+  "fev",
+  "mar",
+  "abr",
+  "mai",
+  "jun",
+  "jul",
+  "ago",
+  "set",
+  "out",
+  "nov",
+  "dez",
 ];
 
 const mesPorExtenso = new Intl.DateTimeFormat("pt-BR", {
@@ -138,13 +154,24 @@ export default async function PaginaFinanceiro({
   const deExito = await contratosDeExito(contexto.escritorioId);
   const fechamentos = await fechamentosRecentes(contexto.escritorioId);
   const mesPassado = mesAnterior(competenciaEmBrasilia(new Date()));
-  const temMovimentoNoMesPassado = await comEscritorio(contexto.escritorioId, (db) =>
-    db.lancamento.count({ where: { competencia: mesPassado, pagoEm: { not: null } } }),
+  const temMovimentoNoMesPassado = await comEscritorio(
+    contexto.escritorioId,
+    (db) =>
+      db.lancamento.count({
+        where: { competencia: mesPassado, pagoEm: { not: null } },
+      }),
   );
-  const quando = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
-  const ordenar = (m: Record<string, number>) => Object.entries(m).sort((a, b) => b[1] - a[1]);
+  const quando = new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  });
+  const ordenar = (m: Record<string, number>) =>
+    Object.entries(m).sort((a, b) => b[1] - a[1]);
   const pendentesDoExtrato = modulos.includes("COBRANCAS")
-    ? await comEscritorio(contexto.escritorioId, (db) => db.entradaDeExtrato.count({ where: { situacao: "PENDENTE" } }))
+    ? await comEscritorio(contexto.escritorioId, (db) =>
+        db.entradaDeExtrato.count({ where: { situacao: "PENDENTE" } }),
+      )
     : 0;
 
   return (
@@ -161,214 +188,337 @@ export default async function PaginaFinanceiro({
       <AbasDoFinanceiro
         ativa="LANCAMENTOS"
         temLivroCaixa
-        temExtrato={modulos.includes("COBRANCAS") && Boolean(contexto.acesso.CONCILIACAO)}
+        temExtrato={
+          modulos.includes("COBRANCAS") && Boolean(contexto.acesso.CONCILIACAO)
+        }
         pendentes={pendentesDoExtrato}
       />
       <nav className="mt-3 flex items-center gap-3 text-sm">
-        <Link className="botao-discreto" href={`/financeiro?competencia=${vizinha(competencia, -1)}`}>
+        <Link
+          className="botao-discreto"
+          href={`/financeiro?competencia=${vizinha(competencia, -1)}`}
+        >
           ← {nomeDaCompetencia(vizinha(competencia, -1))}
         </Link>
-        <Link className="botao-discreto" href={`/financeiro?competencia=${vizinha(competencia, 1)}`}>
+        <Link
+          className="botao-discreto"
+          href={`/financeiro?competencia=${vizinha(competencia, 1)}`}
+        >
           {nomeDaCompetencia(vizinha(competencia, 1))} →
         </Link>
       </nav>
 
-      {/* Realizado e previsto separados: um mes com R$ 40 mil lancados e R$ 38
+      <AbasNaPagina
+        rotulo="Seções do Financeiro"
+        abas={[
+          {
+            id: "panorama",
+            rotulo: "Panorama",
+            conteudo: (
+              <>
+                {/* Realizado e previsto separados: um mes com R$ 40 mil lancados e R$ 38
           mil ainda por receber não é um mês bom, e um total único esconderia
           isso. */}
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="cartao">
-          <p className="sobretitulo">Recebido</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-700">
-            {emReais(resumo.receitas)}
-          </p>
-          <p className="mt-1 text-sm text-slate-500 esquerda">
-            a receber: {emReais(resumo.aReceber)}
-          </p>
-        </div>
-        <div className="cartao">
-          <p className="sobretitulo">Pago</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">
-            {emReais(resumo.despesas)}
-          </p>
-          <p className="mt-1 text-sm text-slate-500 esquerda">
-            a pagar: {emReais(resumo.aPagar)}
-          </p>
-        </div>
-        <div className="cartao">
-          <p className="sobretitulo">Saldo realizado</p>
-          <p
-            className={`mt-1 text-2xl font-bold tabular-nums ${
-              resumo.saldo < 0 ? "text-red-700" : "text-slate-900"
-            }`}
-          >
-            {emReais(resumo.saldo)}
-          </p>
-          <p className="mt-1 text-sm text-slate-500 esquerda">
-            entradas menos saídas já liquidadas
-          </p>
-        </div>
-        <div className="cartao">
-          <p className="sobretitulo">Previsto no mês</p>
-          <p
-            className={`mt-1 text-2xl font-bold tabular-nums ${
-              resumo.saldo + resumo.aReceber - resumo.aPagar < 0
-                ? "text-red-700"
-                : "text-slate-900"
-            }`}
-          >
-            {emReais(resumo.saldo + resumo.aReceber - resumo.aPagar)}
-          </p>
-          <p className="mt-1 text-sm text-slate-500 esquerda">
-            se tudo em aberto for liquidado
-          </p>
-        </div>
-      </div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="cartao">
+                    <p className="sobretitulo">Recebido</p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums text-emerald-700">
+                      {emReais(resumo.receitas)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 esquerda">
+                      a receber: {emReais(resumo.aReceber)}
+                    </p>
+                  </div>
+                  <div className="cartao">
+                    <p className="sobretitulo">Pago</p>
+                    <p className="mt-1 text-2xl font-bold tabular-nums">
+                      {emReais(resumo.despesas)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 esquerda">
+                      a pagar: {emReais(resumo.aPagar)}
+                    </p>
+                  </div>
+                  <div className="cartao">
+                    <p className="sobretitulo">Saldo realizado</p>
+                    <p
+                      className={`mt-1 text-2xl font-bold tabular-nums ${
+                        resumo.saldo < 0 ? "text-red-700" : "text-slate-900"
+                      }`}
+                    >
+                      {emReais(resumo.saldo)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 esquerda">
+                      entradas menos saídas já liquidadas
+                    </p>
+                  </div>
+                  <div className="cartao">
+                    <p className="sobretitulo">Saldo previsto no mês</p>
+                    <p
+                      className={`mt-1 text-2xl font-bold tabular-nums ${
+                        resumo.saldo + resumo.aReceber - resumo.aPagar < 0
+                          ? "text-red-700"
+                          : "text-slate-900"
+                      }`}
+                    >
+                      {emReais(resumo.saldo + resumo.aReceber - resumo.aPagar)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 esquerda">
+                      se tudo em aberto for liquidado
+                    </p>
+                  </div>
+                </div>
 
-      <section className="cartao mt-5">
-        <p className="sobretitulo">Para onde vai o dinheiro</p>
-        <h2 className="mt-1 text-lg font-bold">
-          Despesas por categoria em {nomeDaCompetencia(competencia)}
-        </h2>
-        <div className="mt-4">
-          <GraficoDePizza porCategoria={resumo.porCategoria} />
-        </div>
-      </section>
+                <div className="mt-5">
+                  <PainelPrevisao
+                    mesAtual={competenciaEmBrasilia(new Date())}
+                  />
+                </div>
+                <section className="cartao mt-5">
+                  <p className="sobretitulo">Para onde vai o dinheiro</p>
+                  <h2 className="mt-1 text-lg font-bold">
+                    Despesas por categoria em {nomeDaCompetencia(competencia)}
+                  </h2>
+                  <div className="mt-4">
+                    <GraficoDePizza porCategoria={resumo.porCategoria} />
+                  </div>
+                </section>
+              </>
+            ),
+          },
+          {
+            id: "lancamentos",
+            rotulo: "Lançamentos do mês",
+            conteudo: (
+              <>
+                <div className="mt-5">
+                  <FormularioCriar
+                    rota="/api/lancamentos"
+                    recolhivel
+                    textoAbrir="Novo lançamento"
+                    textoBotao="Lancar"
+                    leitura={modulos.includes("IA") ? "CONTA" : undefined}
+                    campos={[
+                      {
+                        nome: "descricao",
+                        rotulo: "Descrição",
+                        obrigatorio: true,
+                        largo: true,
+                      },
+                      {
+                        nome: "valor",
+                        rotulo: "Valor (R$)",
+                        obrigatorio: true,
+                      },
+                      {
+                        nome: "tipo",
+                        rotulo: "Tipo",
+                        tipo: "select",
+                        opcoes: TIPOS,
+                        obrigatorio: true,
+                      },
+                      {
+                        nome: "categoria",
+                        rotulo: "Categoria",
+                        tipo: "select",
+                        opcoes: [
+                          ...CATEGORIAS_DE_DESPESA,
+                          ...CATEGORIAS_DE_RECEITA,
+                        ].map((c) => ({
+                          valor: c,
+                          rotulo: rotuloDaCategoria(c),
+                        })),
+                        ajuda:
+                          "Precisa combinar com o tipo: aluguel é despesa, honorários é receita.",
+                      },
+                      {
+                        nome: "fornecedor",
+                        rotulo: "Fornecedor / quem emitiu",
+                      },
+                      {
+                        nome: "vencimento",
+                        rotulo: "Vencimento",
+                        tipo: "date",
+                      },
+                      {
+                        nome: "pago",
+                        rotulo: "Situação",
+                        tipo: "select",
+                        opcoes: SIM_NAO,
+                      },
+                      {
+                        nome: "repetir",
+                        rotulo: "Repetir todo mês (despesa)",
+                        tipo: "select",
+                        opcoes: [
+                          { valor: "nao", rotulo: "Não" },
+                          { valor: "sim", rotulo: "Sim, todo mês" },
+                        ],
+                        ajuda:
+                          "Só para despesa: vira despesa fixa, gerada nos próximos meses no mesmo dia.",
+                      },
+                      {
+                        nome: "observacoes",
+                        rotulo: "Observações",
+                        tipo: "textarea",
+                      },
+                    ]}
+                  />
+                </div>
 
-      <div className="mt-5">
-        <FormularioCriar
-          rota="/api/lancamentos"
-          recolhivel
-          textoAbrir="Novo lançamento"
-          textoBotao="Lancar"
-          leitura={modulos.includes("IA") ? "CONTA" : undefined}
-          campos={[
-            { nome: "descricao", rotulo: "Descrição", obrigatorio: true, largo: true },
-            { nome: "valor", rotulo: "Valor (R$)", obrigatorio: true },
-            { nome: "tipo", rotulo: "Tipo", tipo: "select", opcoes: TIPOS, obrigatorio: true },
-            {
-              nome: "categoria",
-              rotulo: "Categoria",
-              tipo: "select",
-              opcoes: [...CATEGORIAS_DE_DESPESA, ...CATEGORIAS_DE_RECEITA].map((c) => ({
-                valor: c,
-                rotulo: rotuloDaCategoria(c),
-              })),
-              ajuda: "Precisa combinar com o tipo: aluguel é despesa, honorários é receita.",
-            },
-            { nome: "fornecedor", rotulo: "Fornecedor / quem emitiu" },
-            { nome: "vencimento", rotulo: "Vencimento", tipo: "date" },
-            { nome: "pago", rotulo: "Situação", tipo: "select", opcoes: SIM_NAO },
-            {
-              nome: "repetir",
-              rotulo: "Repetir todo mês (despesa)",
-              tipo: "select",
-              opcoes: [
-                { valor: "nao", rotulo: "Não" },
-                { valor: "sim", rotulo: "Sim, todo mês" },
-              ],
-              ajuda: "Só para despesa: vira despesa fixa, gerada nos próximos meses no mesmo dia.",
-            },
-            { nome: "observacoes", rotulo: "Observações", tipo: "textarea" },
-          ]}
-        />
-      </div>
-
-      <section className="mt-5">
-        <h2 className="text-lg font-bold">
-          Lançamentos de {nomeDaCompetencia(competencia)}
-        </h2>
-        <div className="mt-3">
-          <ListaFinanceira
-            lancamentos={lancamentos.map((l) => ({
-              ...l,
-              vencimento: l.vencimento?.toISOString() ?? null,
-              pagoEm: l.pagoEm?.toISOString() ?? null,
-            }))}
-          />
-        </div>
-      </section>
-
-      <PainelFechamento
-        mesPassadoAberto={
-          temMovimentoNoMesPassado && !fechamentos.some((f) => f.competencia === mesPassado)
-            ? { competencia: mesPassado, rotulo: nomeDaCompetencia(mesPassado) }
-            : null
-        }
-        fechamentos={fechamentos.map((f) => ({
-          competencia: f.competencia,
-          rotulo: nomeDaCompetencia(f.competencia),
-          receita: f.foto.receitaCentavos,
-          despesa: f.foto.despesaCentavos,
-          porForma: ordenar(f.foto.porForma),
-          porQuemRecebeu: ordenar(f.foto.porQuemRecebeu),
-          fechado: `fechado em ${quando.format(f.foto.fechadoEm)}${f.foto.fechadoPor ? ` por ${f.foto.fechadoPor}` : " pela rotina"}`,
-          refeito: f.foto.refeito
-            ? `refeito ${f.foto.refeito}x, a última em ${quando.format(f.foto.refeitoEm!)} por ${f.foto.refeitoPor}`
-            : null,
-          agora: f.mudou ? { receita: f.agora.receitaCentavos, despesa: f.agora.despesaCentavos } : null,
-        }))}
+                <section className="mt-5">
+                  <h2 className="text-lg font-bold">
+                    Lançamentos de {nomeDaCompetencia(competencia)}
+                  </h2>
+                  <div className="mt-3">
+                    <ListaFinanceira
+                      lancamentos={lancamentos.map((l) => ({
+                        ...l,
+                        vencimento: l.vencimento?.toISOString() ?? null,
+                        pagoEm: l.pagoEm?.toISOString() ?? null,
+                      }))}
+                    />
+                  </div>
+                </section>
+              </>
+            ),
+          },
+          {
+            id: "fechamento",
+            rotulo: "Fechamento de caixa",
+            conteudo: (
+              <>
+                <PainelFechamento
+                  mesPassadoAberto={
+                    temMovimentoNoMesPassado &&
+                    !fechamentos.some((f) => f.competencia === mesPassado)
+                      ? {
+                          competencia: mesPassado,
+                          rotulo: nomeDaCompetencia(mesPassado),
+                        }
+                      : null
+                  }
+                  fechamentos={fechamentos.map((f) => ({
+                    competencia: f.competencia,
+                    rotulo: nomeDaCompetencia(f.competencia),
+                    receita: f.foto.receitaCentavos,
+                    despesa: f.foto.despesaCentavos,
+                    porForma: ordenar(f.foto.porForma),
+                    porQuemRecebeu: ordenar(f.foto.porQuemRecebeu),
+                    fechado: `fechado em ${quando.format(f.foto.fechadoEm)}${f.foto.fechadoPor ? ` por ${f.foto.fechadoPor}` : " pela rotina"}`,
+                    refeito: f.foto.refeito
+                      ? `refeito ${f.foto.refeito}x, a última em ${quando.format(f.foto.refeitoEm!)} por ${f.foto.refeitoPor}`
+                      : null,
+                    agora: f.mudou
+                      ? {
+                          receita: f.agora.receitaCentavos,
+                          despesa: f.agora.despesaCentavos,
+                        }
+                      : null,
+                  }))}
+                />
+              </>
+            ),
+          },
+          ...(deExito.length
+            ? [
+                {
+                  id: "exito",
+                  rotulo: "Êxito",
+                  conteudo: (
+                    <>
+                      <ContratosDeExito contratos={deExito} />
+                    </>
+                  ),
+                },
+              ]
+            : []),
+          {
+            id: "metas",
+            rotulo: "Metas do ano",
+            conteudo: (
+              <>
+                <div className="mt-6">
+                  <PainelDoAno
+                    ano={doAno.ano}
+                    anos={anosOferecidos(anoDe(hoje))}
+                    meses={doAno.meses.map((m) => ({
+                      nome: NOME_DO_MES[m.mes - 1],
+                      realizado: emReais(m.realizadoCentavos),
+                      realizadoCentavos: m.realizadoCentavos,
+                      despesas: emReais(m.despesasCentavos),
+                      previsto: emReais(m.previstoCentavos),
+                    }))}
+                    meta={
+                      doAno.metaCentavos ? emReais(doAno.metaCentavos) : null
+                    }
+                    mediaMensal={
+                      doAno.mediaMensalCentavos === null
+                        ? null
+                        : emReais(doAno.mediaMensalCentavos)
+                    }
+                    projecao={emReais(doAno.projecaoCentavos)}
+                    ritmo={
+                      doAno.ritmo
+                        ? {
+                            comoEsta: COMO_ESTA[doAno.ritmo.situacao],
+                            situacao: doAno.ritmo.situacao,
+                            cumpridoPorCento: Math.round(
+                              doAno.ritmo.cumprido * 100,
+                            ),
+                            esperado: emReais(doAno.ritmo.esperadoCentavos),
+                            diferenca: emReais(
+                              Math.abs(doAno.ritmo.diferencaCentavos),
+                            ),
+                            sobra: doAno.ritmo.diferencaCentavos >= 0,
+                            falta: emReais(doAno.ritmo.faltaCentavos),
+                            porMesRestante:
+                              doAno.ritmo.porMesRestanteCentavos === null ||
+                              doAno.ritmo.porMesRestanteCentavos === 0
+                                ? null
+                                : emReais(doAno.ritmo.porMesRestanteCentavos),
+                            projecao: emReais(doAno.ritmo.projecaoCentavos),
+                          }
+                        : null
+                    }
+                    realizado={emReais(doAno.realizadoCentavos)}
+                    despesas={emReais(doAno.despesasCentavos)}
+                    previsto={emReais(doAno.previstoCentavos)}
+                    maiorMes={Math.max(
+                      0,
+                      ...doAno.meses.map((m) => m.realizadoCentavos),
+                    )}
+                  />
+                </div>
+              </>
+            ),
+          },
+          {
+            id: "despesas-fixas",
+            rotulo: "Despesas fixas",
+            conteudo: (
+              <>
+                <div className="mt-6">
+                  <DespesasFixas
+                    despesas={fixas.map((f) => ({
+                      id: f.id,
+                      descricao: f.descricao,
+                      categoria: f.categoria,
+                      fornecedor: f.fornecedor,
+                      valorCentavos: f.valorCentavos,
+                      diaDoVencimento: f.diaDoVencimento,
+                      ativo: f.ativo,
+                      inicioEmBR: f.inicioEm ? diaBR(f.inicioEm) : null,
+                      fimEmBR: f.fimEm ? diaBR(f.fimEm) : null,
+                    }))}
+                    competencia={competencia}
+                    nomeDaCompetencia={nomeDaCompetencia(competencia)}
+                  />
+                </div>
+              </>
+            ),
+          },
+        ]}
       />
-
-      <ContratosDeExito contratos={deExito} />
-
-      <div className="mt-6">
-        <PainelDoAno
-          ano={doAno.ano}
-          anos={anosOferecidos(anoDe(hoje))}
-          meses={doAno.meses.map((m) => ({
-            nome: NOME_DO_MES[m.mes - 1],
-            realizado: emReais(m.realizadoCentavos),
-            realizadoCentavos: m.realizadoCentavos,
-            despesas: emReais(m.despesasCentavos),
-            previsto: emReais(m.previstoCentavos),
-          }))}
-          meta={doAno.metaCentavos ? emReais(doAno.metaCentavos) : null}
-          mediaMensal={doAno.mediaMensalCentavos === null ? null : emReais(doAno.mediaMensalCentavos)}
-          projecao={emReais(doAno.projecaoCentavos)}
-          ritmo={
-            doAno.ritmo
-              ? {
-                  comoEsta: COMO_ESTA[doAno.ritmo.situacao],
-                  situacao: doAno.ritmo.situacao,
-                  cumpridoPorCento: Math.round(doAno.ritmo.cumprido * 100),
-                  esperado: emReais(doAno.ritmo.esperadoCentavos),
-                  diferenca: emReais(Math.abs(doAno.ritmo.diferencaCentavos)),
-                  sobra: doAno.ritmo.diferencaCentavos >= 0,
-                  falta: emReais(doAno.ritmo.faltaCentavos),
-                  porMesRestante:
-                    doAno.ritmo.porMesRestanteCentavos === null ||
-                    doAno.ritmo.porMesRestanteCentavos === 0
-                      ? null
-                      : emReais(doAno.ritmo.porMesRestanteCentavos),
-                  projecao: emReais(doAno.ritmo.projecaoCentavos),
-                }
-              : null
-          }
-          realizado={emReais(doAno.realizadoCentavos)}
-          despesas={emReais(doAno.despesasCentavos)}
-          previsto={emReais(doAno.previstoCentavos)}
-          maiorMes={Math.max(0, ...doAno.meses.map((m) => m.realizadoCentavos))}
-        />
-      </div>
-
-      <div className="mt-6">
-        <DespesasFixas
-          despesas={fixas.map((f) => ({
-            id: f.id,
-            descricao: f.descricao,
-            categoria: f.categoria,
-            fornecedor: f.fornecedor,
-            valorCentavos: f.valorCentavos,
-            diaDoVencimento: f.diaDoVencimento,
-            ativo: f.ativo,
-            inicioEmBR: f.inicioEm ? diaBR(f.inicioEm) : null,
-            fimEmBR: f.fimEm ? diaBR(f.fimEm) : null,
-          }))}
-          competencia={competencia}
-          nomeDaCompetencia={nomeDaCompetencia(competencia)}
-        />
-      </div>
     </Estrutura>
   );
 }

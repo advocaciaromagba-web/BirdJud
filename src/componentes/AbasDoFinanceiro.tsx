@@ -28,7 +28,7 @@ export function AbasDoFinanceiro({
   if (!temLivroCaixa) return null;
   return (
     <nav className="mt-3 flex flex-wrap gap-2" aria-label="Financeiro">
-      {aba("Lançamentos", "/financeiro", ativa === "LANCAMENTOS")}
+      {aba("Visão geral", "/financeiro", ativa === "LANCAMENTOS")}
       {aba("Despesas", "/financeiro/despesas", ativa === "DESPESAS")}
       {temExtrato
         ? aba(pendentes ? `Conferir extrato (${pendentes})` : "Conferir extrato", "/conciliacao", ativa === "EXTRATO")

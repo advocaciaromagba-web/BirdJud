@@ -29,15 +29,18 @@ function ponto(grau: number, raio: number): [number, number] {
 
 export function GraficoDePizza({
   porCategoria,
+  descricao = "Despesas por categoria",
 }: {
   porCategoria: { categoria: string; rotulo: string; centavos: number }[];
+  /** O que a pizza divide, para quem le a tela por voz. */
+  descricao?: string;
 }) {
   const pedacos = fatias(porCategoria);
   if (pedacos.length === 0) {
     return (
       <p className="vazio">
         Sem despesa lançada neste mês. O gráfico aparece com o primeiro
-        lancamento.
+        lançamento.
       </p>
     );
   }
@@ -47,7 +50,7 @@ export function GraficoDePizza({
   return (
     <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
       <svg viewBox="0 0 100 100" className="h-44 w-44 shrink-0" role="img"
-        aria-label={`Despesas por categoria, total ${emReais(total)}`}>
+        aria-label={`${descricao}, total ${emReais(total)}`}>
         {pedacos.map((fatia, i) => {
           // Uma fatia unica nao pode virar arco: o caminho comeca e termina no
           // mesmo ponto e o navegador nao desenha nada. Circulo inteiro.
