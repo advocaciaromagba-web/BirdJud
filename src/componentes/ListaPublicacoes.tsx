@@ -333,7 +333,7 @@ function Cartao({
           {!t.aceita ? (
             <p className="mb-2 flex flex-wrap items-center gap-2 border-b border-violet-200 pb-2 text-sm text-violet-900">
               <span className="rounded bg-violet-700 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
-                Sugestao da IA
+                Sugestão da IA
               </span>
               <span className="font-semibold">
                 Precisa de conferência: confira o prazo e o assunto nos autos antes de lançar.
@@ -357,7 +357,7 @@ function Cartao({
                 t.confianca === "BAIXA" ? "text-amber-700" : "text-slate-500"
               }`}
             >
-              confianca {t.confianca.toLowerCase()}
+              confiança {t.confianca === "MEDIA" ? "média" : t.confianca.toLowerCase()}
             </span>
           </div>
 

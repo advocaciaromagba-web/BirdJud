@@ -20,7 +20,7 @@ export type SituacaoDaTarefa = (typeof SITUACOES)[number];
 
 export const ROTULO_DA_PRIORIDADE: Record<Prioridade, string> = {
   BAIXA: "Baixa",
-  MEDIA: "Media",
+  MEDIA: "Média",
   ALTA: "Alta",
   URGENTE: "Urgente",
 };

@@ -211,7 +211,7 @@ export function ConfigFiscal({
       ) : null}
       {lidoPelaIA ? (
         <p className="mt-3 rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
-          Sugestao da IA no formulário abaixo: confira cada campo, e o regime, o código do serviço e os percentuais com o
+          Sugestão da IA no formulário abaixo: confira cada campo, e o regime, o código do serviço e os percentuais com o
           contador, antes de salvar.
         </p>
       ) : null}

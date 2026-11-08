@@ -74,6 +74,7 @@ const AREAS: Area[] = [
     soAdmin: true,
     rodape: true,
   },
+  { href: "/manual", rotulo: "Manual de uso", icone: "ajuda", rodape: true },
   { href: "/conta", rotulo: "Minha conta", icone: "conta", rodape: true },
   {
     href: "/integracoes",

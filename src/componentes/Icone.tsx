@@ -28,6 +28,7 @@ export type NomeDeIcone =
   | "configuracoes"
   | "entrevistas"
   | "tarefas"
+  | "ajuda"
   | "mensagens";
 
 const TRACOS: Record<NomeDeIcone, string> = {
@@ -78,6 +79,8 @@ const TRACOS: Record<NomeDeIcone, string> = {
   prazos:
     "M7 3h10M7 21h10M8 3v4a4 4 0 0 0 4 4 4 4 0 0 0 4-4V3M8 21v-4a4 4 0 0 1 4-4 4 4 0 0 1 4 4v4",
   busca: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm5 -2 5 5",
+  // Circulo com interrogacao: o manual de uso.
+  ajuda: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-2.5-11.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14m0 3h.01",
 };
 
 export function Icone({

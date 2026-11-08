@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/planos`, lastModified: agora, priority: 0.8 },
     { url: `${base}/cadastro`, lastModified: agora, priority: 0.8 },
     { url: `${base}/entrar`, lastModified: agora, priority: 0.6 },
+    { url: `${base}/manual`, lastModified: agora, priority: 0.6 },
     ...DOCUMENTOS.map((documento) => ({
       url: `${base}/juridico/${documento.caminho}`,
       lastModified: agora,

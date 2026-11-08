@@ -278,7 +278,7 @@ export function RepresentantesDoCliente({
                     className="campo"
                   />
                   <p className="ajuda">
-                    E por ele que a assinatura eletrônica chega.
+                    É por ele que a assinatura eletrônica chega.
                   </p>
                 </div>
               </div>

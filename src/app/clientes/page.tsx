@@ -180,7 +180,7 @@ export default async function PaginaClientes() {
                     <td className="text-sm">
                       {impedem > 0 ? (
                         <span className="text-red-700">
-                          {impedem} pendencia(s) que impedem
+                          {impedem} pendência(s) que impedem
                         </span>
                       ) : pendencias.length > 0 ? (
                         <span className="text-amber-700">

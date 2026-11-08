@@ -442,6 +442,9 @@ export function CapaDaPlataforma({
             <Link href="/#recursos" className="hover:text-white">
               Serviços
             </Link>
+            <Link href="/manual" className="hover:text-white">
+              Manual de uso
+            </Link>
             <Link href="/#quem-somos" className="hover:text-white">
               Quem somos
             </Link>

@@ -422,7 +422,7 @@ export function PainelTarefas({
       ) : null}
       {criando && Object.keys(preenchido).length > 0 ? (
         <p className="rounded-lg border-2 border-violet-300 bg-violet-50 p-3 text-sm font-semibold text-violet-900">
-          Sugestao da IA no formulário abaixo: confira o prazo e o assunto nos
+          Sugestão da IA no formulário abaixo: confira o prazo e o assunto nos
           autos antes de salvar.
         </p>
       ) : null}

@@ -254,7 +254,7 @@ export function calcularPrazo(
     inicioContagem: chave(inicioContagem),
     explicacao:
       `${dias} dias úteis (CPC 219). Começou a correr em ${formatar(inicioContagem)} ` +
-      `e vence em ${formatar(atual)}. Sabado, domingo e feriado não contam` +
+      `e vence em ${formatar(atual)}. Sábado, domingo e feriado não contam` +
       (suspendeu
         ? ", e o prazo ficou suspenso no recesso de 20/12 a 20/01 (CPC 220)"
         : "") +
