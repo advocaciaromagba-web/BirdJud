@@ -37,6 +37,7 @@ import {
   listarObjetos,
 } from "../src/lib/copia-remota.ts";
 import { cadenciaDoAviso } from "../src/lib/vigia-cadencia.ts";
+import { enderecoInterno, soLimiteDaBorda } from "../src/lib/vigia-borda.ts";
 
 const ENDERECO =
   process.env.VIGIA_ENDERECO ?? "https://app.birdjud.com.br/api/saude";
@@ -194,12 +195,12 @@ async function avisar(assunto, texto) {
 }
 
 /** Uma batida: ok quando responde 200 com {"ok":true}. */
-async function bater() {
+async function bater(endereco = ENDERECO) {
   const controle = new AbortController();
   const relogio = setTimeout(() => controle.abort(), LIMITE_MS);
   const comecou = Date.now();
   try {
-    const resposta = await fetch(ENDERECO, {
+    const resposta = await fetch(endereco, {
       signal: controle.signal,
       headers: { "user-agent": "birdjud-vigia" },
       cache: "no-store",
@@ -362,6 +363,33 @@ if (respondeu) {
   if (avisarLentos) await avisar("BirdJud sem certificado valido", aviso);
   else console.error("vigia: aviso do certificado ja saiu nesta hora; o proximo e-mail e na virada da hora");
   process.exit(1);
+}
+
+// 429 em todas as tentativas e a borda da Railway limitando o IP do vigia,
+// nao a aplicacao (ver src/lib/vigia-borda.ts). Confere por dentro antes de
+// acusar queda.
+if (soLimiteDaBorda(motivos)) {
+  const interno = enderecoInterno();
+  const porDentro = await bater(interno);
+  if (porDentro.ok) {
+    const aviso = [
+      "O BirdJud esta no ar. Quem recusou foi a borda da Railway, limitando o vigia.",
+      "",
+      `Endereco publico: ${ENDERECO} -> ${motivos.join("; ")}`,
+      `Rede interna: ${interno} -> respondeu em ${porDentro.demorou} ms`,
+      `Quando: ${new Date().toISOString()}`,
+      "",
+      "A aplicacao nunca devolve 429 no /api/saude. Se durar mais de uma hora,",
+      "refazer o deploy do servico cron-vigia troca o IP de saida.",
+      "",
+      "BirdJud · vigia automatico",
+    ].join("\n");
+    console.error(aviso);
+    if (avisarLentos) await avisar("BirdJud no ar: a Railway limitou o vigia", aviso);
+    else console.error("vigia: aviso de limite da borda ja saiu nesta hora");
+    process.exit(problemasDoBackup.length > 0 || problemasDeCertificado.length > 0 ? 1 : 0);
+  }
+  motivos.push(`rede interna (${interno}): ${porDentro.motivo}`);
 }
 
 const resumo = [
