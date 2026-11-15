@@ -1,3 +1,4 @@
+import { registrarEntregaPeloContrato } from "@/lib/codigos-do-escritorio";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
@@ -60,7 +61,7 @@ export async function POST(
   { params }: { params: Promise<{ especie: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirSessao();
+    const { escritorioId, nomeUsuario } = await exigirSessao();
     const { especie } = await params;
     if (!ehEspecie(especie)) {
       return NextResponse.json({ erro: "Espécie inválida." }, { status: 400 });
@@ -208,6 +209,7 @@ export async function POST(
     }
 
     const peca = await gerarPeca(escritorioId, especie, {
+      clienteId,
       acao: especie === "PROCURACAO" ? (corpo.data.acao ?? null) : null,
       cliente,
       representantes,
@@ -229,6 +231,8 @@ export async function POST(
         paginas: peca.paginas,
       });
     }
+
+    if (especie === "CONTRATO") await registrarEntregaPeloContrato(escritorioId, clienteId, "contrato baixado para entregar", nomeUsuario);
 
     return new NextResponse(new Uint8Array(peca.arquivo), {
       headers: {

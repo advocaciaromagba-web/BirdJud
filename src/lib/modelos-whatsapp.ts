@@ -178,7 +178,50 @@ export const MODELOS: Record<string, ModeloDeAviso> = {
       TELEFONE_DO_ESCRITORIO,
     ],
   },
+  // CONTRA O GOLPE DO FALSO ADVOGADO (src/lib/codigo-de-atendimento.ts).
+  //
+  // A forma destes dois nao e gosto: e o que a Meta aceita. Modelo com a
+  // palavra "codigo" no corpo FIXO e tratado pela revisao automatica como
+  // mensagem de verificacao e recusado (INCORRECT_CATEGORY), em qualquer
+  // categoria. Por isso o corpo fixo e magro — saudacao, escritorio e rodape —
+  // e o conteudo (inclusive o codigo, no primeiro) entra nas variaveis. Os
+  // rotulos "Aviso de seguranca" e "Como funciona:" existem porque variaveis
+  // coladas tambem sao recusa. O teste guarda as duas coisas.
+  //
+  // So saem com WHATSAPP_MODELOS_DE_SEGURANCA=1, que a plataforma liga depois
+  // de a Meta aprovar os dois (docs/WHATSAPP.md).
+  AVISO_DE_SEGURANCA: {
+    nome: "birdjud_aviso_de_seguranca",
+    idioma: "pt_BR",
+    texto: comRodape("Ola, {{1}}. Aviso de seguranca do escritorio {{2}}: {{3}} Como funciona: {{4}}", 5),
+    parametros: [
+      "primeiro nome de quem recebe",
+      "nome do escritorio",
+      "o anuncio, com o que muda para o cliente",
+      "as regras de seguranca, em uma linha",
+      TELEFONE_DO_ESCRITORIO,
+    ],
+  },
+  LEMBRETE_DE_SEGURANCA: {
+    nome: "birdjud_lembrete_de_seguranca",
+    idioma: "pt_BR",
+    texto: comRodape("Ola, {{1}}. Lembrete de seguranca do escritorio {{2}}: {{3}}", 4),
+    parametros: ["primeiro nome de quem recebe", "nome do escritorio", "o lembrete da semana", TELEFONE_DO_ESCRITORIO],
+  },
 };
+
+/** Os dois modelos de seguranca ja foram aprovados na Meta? */
+export function modelosDeSegurancaAprovados(env: Record<string, string | undefined> = process.env): boolean {
+  return env.WHATSAPP_MODELOS_DE_SEGURANCA === "1";
+}
+
+/** Limite da Meta para o corpo JA PREENCHIDO: acima disso, cada envio e recusado. */
+export const LIMITE_DO_CORPO = 1024;
+
+/** O corpo como chega ao celular, com as variaveis no lugar. */
+export function preencherModelo(m: ModeloDeAviso, parametros: string[]): string {
+  return m.texto.replace(/\{\{(\d+)\}\}/g, (_, n) => parametros[Number(n) - 1] ?? "");
+}
 
 export function modeloDoTipo(tipo: string): ModeloDeAviso | null {
   return MODELOS[tipo] ?? null;

@@ -3,6 +3,7 @@
 // Todo trabalho de escritorio roda dentro de comEscritorio(): mesmo no
 // trabalhador, que conecta com o papel do plano de controle, o codigo de
 // negocio continua vendo so o escritorio da vez.
+import { continuarCampanha, gerarCodigosFaltantes } from "./codigos-do-escritorio";
 import { enviarAgendasDoEscritorio } from "./netlead";
 import { conferirEntregas } from "./entrega-do-escritorio";
 import { comEscritorio, prismaPlataforma } from "./prisma";
@@ -366,6 +367,16 @@ async function lembrar({ escritorioId }: Contexto): Promise<void> {
   await gerarAvisos(escritorioId);
   await enviarAvisosPendentes(escritorioId);
   await enviarAvisosNoWhatsapp(escritorioId);
+  // Codigo de atendimento (contra o falso advogado): cria o de quem entrou por
+  // importacao, agenda ou publicacao, e continua os lembretes semanais de quem
+  // o administrador ja avisou. Falha aqui nao derruba o lembrete de audiencia.
+  try {
+    await gerarCodigosFaltantes(escritorioId);
+    const campanha = await continuarCampanha(escritorioId);
+    if (campanha.enviados) console.log(`LEMBRAR ${escritorioId}: ${campanha.enviados} lembrete(s) de seguranca do codigo.`);
+  } catch (erro) {
+    console.error(`LEMBRAR ${escritorioId}: codigo de atendimento: ${(erro as Error).message}`.slice(0, 300));
+  }
   // A rodada do NetLead pega o que o gancho das telas perdeu (NetLead fora na
   // hora, servidor reiniciando). Falha la nao derruba o lembrete daqui.
   await enviarAgendasDoEscritorio(escritorioId).catch((erro) => console.error(`LEMBRAR ${escritorioId}: NetLead: ${(erro as Error).message}`));

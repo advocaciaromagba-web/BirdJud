@@ -70,6 +70,10 @@ export type Linha = {
   centro?: boolean;
   /** Paragrafo em branco depois desta linha. */
   espacoDepois?: boolean;
+  /** Comeca em folha nova. */
+  novaPagina?: boolean;
+  /** Tamanho da letra em pontos, quando nao e o do documento (o codigo em destaque). */
+  corpo?: number;
 };
 
 const TIPOS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -89,11 +93,32 @@ const RELACOES_DO_TEXTO = `<?xml version="1.0" encoding="UTF-8" standalone="yes"
 
 function paragrafo(l: Linha): string {
   const alinhamento = l.centro ? '<w:jc w:val="center"/>' : '<w:jc w:val="both"/>';
-  const estilo = l.negrito ? "<w:rPr><w:b/></w:rPr>" : "";
+  // w:sz e em MEIOS pontos.
+  const tamanho = l.corpo ? `<w:sz w:val="${Math.round(l.corpo * 2)}"/>` : "";
+  const estilo = l.negrito || tamanho ? `<w:rPr>${l.negrito ? "<w:b/>" : ""}${tamanho}</w:rPr>` : "";
   const corpo =
-    `<w:p><w:pPr>${alinhamento}</w:pPr>` +
+    `<w:p><w:pPr>${l.novaPagina ? "<w:pageBreakBefore/>" : ""}${alinhamento}</w:pPr>` +
     `<w:r>${estilo}<w:t xml:space="preserve">${escapar(l.texto)}</w:t></w:r></w:p>`;
   return l.espacoDepois ? `${corpo}<w:p/>` : corpo;
+}
+
+/** As linhas como paragrafos do Word, para acrescentar a um documento que ja existe. */
+export function xmlDasLinhas(linhas: Linha[]): string {
+  return linhas.map(paragrafo).join("");
+}
+
+/**
+ * Acrescenta paragrafos ao FIM do corpo de um document.xml, antes das
+ * propriedades da secao (margens e papel), que tem de continuar por ultimo.
+ */
+export function acrescentarAoCorpo(xml: string, paragrafos: string): string {
+  const secao = xml.lastIndexOf("<w:sectPr");
+  const fimDoCorpo = xml.lastIndexOf("</w:body>");
+  // A sectPr final e filha direta do corpo; uma dentro de paragrafo (quebra
+  // de secao) fecha antes com </w:p>.
+  const ponto = secao !== -1 && xml.indexOf("</w:p>", secao) === -1 ? secao : fimDoCorpo;
+  if (ponto === -1) return xml;
+  return xml.slice(0, ponto) + paragrafos + xml.slice(ponto);
 }
 
 /**

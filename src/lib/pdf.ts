@@ -225,6 +225,8 @@ export type LinhaPosta = {
   /** A pagina, de 1 em diante. */
   pagina: number;
   y: number;
+  /** Tamanho da letra, quando nao e o do documento. */
+  tamanho?: number;
 };
 
 /** Onde cada pedaco da linha comeca, conforme o alinhamento. */
@@ -308,8 +310,37 @@ function diagramarCom(
     }
   };
 
+  const topo = PAGINA.altura - MARGEM.topo - TAMANHO;
   for (const p of paragrafos) {
+    // Folha nova pedida pelo documento (a folha do codigo de atendimento).
+    if (p.novaPagina && y < topo) {
+      pagina += 1;
+      y = topo;
+    }
     if (p.vazio) {
+      descer();
+      continue;
+    }
+    // Letra grande: uma linha so, centralizada, com a altura dela reservada.
+    // E o codigo em destaque — curto por construcao, nao se quebra.
+    // So a partir de 24 pt e so quando cabe numa linha: titulo de modelo de
+    // escritorio (14, 16 pt) continua pelo caminho de sempre, com quebra.
+    const textoGrande = p.corpo && p.corpo >= 24 ? peneirar(p.pedacos.map((pd, i) => (i > 0 && pd.espacos ? " " : "") + pd.texto).join(""), trocados) : null;
+    if (p.corpo && textoGrande && fontes.negrito.widthOfTextAtSize(textoGrande, p.corpo) <= LARGURA_UTIL) {
+      const texto = textoGrande;
+      const altura = p.corpo * 1.5;
+      if (y - altura < MARGEM.baixo) {
+        pagina += 1;
+        y = topo;
+      }
+      y -= altura - ENTRELINHA;
+      const largura = fontes.negrito.widthOfTextAtSize(texto, p.corpo);
+      linhas.push({
+        pedacos: [{ texto, negrito: true, x: MARGEM.esquerda + (p.alinhamento === "CENTRO" ? (LARGURA_UTIL - largura) / 2 : 0), largura }],
+        pagina,
+        y,
+        tamanho: p.corpo,
+      });
       descer();
       continue;
     }
@@ -371,7 +402,7 @@ export async function montarPdf(
       folha.drawText(p.texto, {
         x: p.x,
         y: linha.y,
-        size: TAMANHO,
+        size: linha.tamanho ?? TAMANHO,
         font: p.negrito ? fontes.negrito : fontes.normal,
       });
     }

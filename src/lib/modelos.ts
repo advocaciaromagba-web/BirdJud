@@ -39,6 +39,7 @@ export const CAMPOS: Array<{ chave: string; sobre: string }> = [
   { chave: "cliente.nacionalidade", sobre: "Nacionalidade, como cadastrada" },
   { chave: "cliente.estado_civil", sobre: "Estado civil, como cadastrado" },
   { chave: "cliente.profissao", sobre: "Profissão do cliente" },
+  { chave: "cliente.codigo_atendimento", sobre: "Código de atendimento do cliente (contra o golpe do falso advogado)" },
   { chave: "representante.qualificacao", sobre: "Quem assina pela pessoa jurídica" },
   { chave: "escritorio.nome", sobre: "Nome do escritório" },
   { chave: "escritorio.qualificacao", sobre: "O escritório por extenso: razão social, CNPJ, registro OAB e sede" },
@@ -308,6 +309,10 @@ export type ParagrafoLido = {
   alinhamento: Alinhamento;
   /** Paragrafo sem texto nenhum: vale uma linha em branco, nao se joga fora. */
   vazio: boolean;
+  /** O paragrafo comeca em folha nova (`<w:pageBreakBefore/>`). */
+  novaPagina?: boolean;
+  /** Tamanho da letra em pontos, quando o paragrafo o declara (`<w:sz>`). */
+  corpo?: number;
 };
 
 const ALINHAMENTO_DO_WORD: Record<string, Alinhamento> = {
@@ -373,7 +378,13 @@ export function estruturaDoDocumento(xml: string): ParagrafoLido[] {
       for (const c of corrida.texto) fita.push({ c, negrito: corrida.negrito });
     }
 
-    return repartirEmLinhas(fita, alinhamento);
+    const linhas = repartirEmLinhas(fita, alinhamento);
+    // Folha nova e tamanho de letra: e o que a folha do codigo de atendimento
+    // usa. A quebra vale para a PRIMEIRA linha do paragrafo.
+    if (/<w:pageBreakBefore(?:\s[^>]*)?\/>/.test(propriedades) && linhas[0]) linhas[0].novaPagina = true;
+    const meiosPontos = Number(/<w:sz\s+w:val="(\d+)"/.exec(dentro)?.[1] ?? 0);
+    if (meiosPontos > 0) for (const l of linhas) l.corpo = meiosPontos / 2;
+    return linhas;
   }).flat();
 }
 

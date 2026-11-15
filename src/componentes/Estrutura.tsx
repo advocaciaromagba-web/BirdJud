@@ -37,6 +37,7 @@ const AREAS: Area[] = [
   { href: "/processos", rotulo: "Processos", icone: "processos" },
   { href: "/entrevistas", rotulo: "Entrevistas", icone: "entrevistas" },
   { href: "/clientes", rotulo: "Clientes", icone: "clientes" },
+  { href: "/codigos", rotulo: "Códigos", icone: "escudo" },
   {
     href: "/publicacoes",
     rotulo: "Publicações",

@@ -1,3 +1,4 @@
+import { linkDoWhatsapp } from "@/lib/codigo-de-atendimento";
 import Link from "next/link";
 import { MenorDeIdade } from "@/componentes/MenorDeIdade";
 import { MenoresDoCliente } from "@/componentes/MenoresDoCliente";
@@ -53,6 +54,20 @@ export default async function FichaCliente({
   const { id } = await params;
 
   const modulos = await modulosAtivos(contexto.escritorioId);
+  // Codigo de atendimento (contra o falso advogado): so para quem tem a area
+  // de Codigos, e nunca para o suporte. O link do WhatsApp usa o telefone do
+  // cadastro e e montado aqui, no servidor.
+  const codigoDoCliente =
+    contexto.acesso.CODIGOS === true && !contexto.suporte
+      ? await comEscritorio(contexto.escritorioId, async (db) => {
+          const c = await db.cliente.findFirst({
+            where: { id },
+            select: { nome: true, telefone: true, documento: true, codigoDeAtendimento: { select: { codigo: true } } },
+          });
+          const codigo = c?.codigoDeAtendimento?.codigo;
+          return c && codigo ? { codigo, whatsapp: linkDoWhatsapp(c, codigo, contexto.marca.nome) } : null;
+        })
+      : null;
   // So o nome da nuvem ligada: a pasta em si e criada quando alguem clica.
   const ligada = modulos.includes("NUVEM")
     ? await nuvemConectada(contexto.escritorioId)
@@ -296,6 +311,25 @@ export default async function FichaCliente({
         </section>
 
         <aside className="grid gap-6">
+          {codigoDoCliente ? (
+            <section className="cartao border-l-4 border-[color:var(--marca-secundaria,#D4AF7C)]">
+              <h2 className="font-semibold">Código de atendimento</h2>
+              <p className="mt-2">
+                <span className="rounded-lg bg-slate-900 px-3 py-1.5 font-mono text-lg font-semibold tracking-wide text-white">{codigoDoCliente.codigo}</span>
+              </p>
+              <p className="ajuda mt-2">Diga este código ao cliente no começo de toda conversa. Nunca peça o código a ele: quem pede é o golpista.</p>
+              <div className="mt-2 flex flex-wrap gap-2 text-sm">
+                {codigoDoCliente.whatsapp ? (
+                  <a href={codigoDoCliente.whatsapp} target="_blank" rel="noopener noreferrer" className="botao-discreto">
+                    Abrir WhatsApp com o código
+                  </a>
+                ) : null}
+                <Link href="/codigos" className="botao-discreto">
+                  Códigos
+                </Link>
+              </div>
+            </section>
+          ) : null}
           <EnvioDoCliente
             clienteId={cliente.id}
             notificarWhatsapp={cliente.notificarWhatsapp}

@@ -59,7 +59,9 @@ DECLARE
     'Mensalidade',
     'BaixaDeCobranca',
     'FechamentoDeCaixa',
-    'AgendaNoNetlead'
+    'AgendaNoNetlead',
+    'CodigoDeAtendimento',
+    'EntregaDeCodigo'
   ];
 BEGIN
   FOREACH t IN ARRAY tabelas LOOP

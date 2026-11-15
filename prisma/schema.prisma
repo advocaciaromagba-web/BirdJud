@@ -95,6 +95,8 @@ model Escritorio {
   baixasDeCobranca BaixaDeCobranca[]
   fechamentosDeCaixa FechamentoDeCaixa[]
   agendasNoNetlead   AgendaNoNetlead[]
+  codigosDeAtendimento CodigoDeAtendimento[]
+  entregasDeCodigo     EntregaDeCodigo[]
   arquivos          Arquivo[]
   notas             NotaFiscal[]
   fiscal            Fiscal?
@@ -247,6 +249,10 @@ model Cliente {
   responsavelClienteId String?
   responsavelCliente   Cliente? @relation("MenoresDoCliente", fields: [responsavelClienteId], references: [id], onDelete: SetNull)
   menores              Cliente[] @relation("MenoresDoCliente")
+  /// Codigo de atendimento contra o golpe do falso advogado. Em tabela
+  /// propria para nunca vir junto com o cliente (src/lib/codigo-de-atendimento.ts).
+  codigoDeAtendimento  CodigoDeAtendimento?
+  entregasDeCodigo     EntregaDeCodigo[]
   telefone     String?
   endereco     Json?
   /// Qualificacao da pessoa fisica, como entra na procuracao e no contrato.
@@ -1891,4 +1897,42 @@ model AgendaNoNetlead {
   usuario    Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([escritorioId])
+}
+
+/// Codigo de atendimento do cliente ("GIRASSOL 27"): quem DIZ o codigo e o
+/// escritorio, no comeco de cada atendimento; o cliente nunca o informa.
+model CodigoDeAtendimento {
+  id           String   @id @default(cuid())
+  escritorioId String
+  clienteId    String   @unique
+  codigo       String
+  criadoEm     DateTime @default(now())
+  /// 0 = nao avisado; 1 = recebeu o aviso com o codigo; 2 a 5 = reforcos.
+  avisoEtapa      Int       @default(0)
+  avisoEm         DateTime?
+  avisoEmailEm    DateTime?
+  avisoWhatsappEm DateTime?
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@unique([escritorioId, codigo])
+  @@index([escritorioId, avisoEtapa])
+}
+
+/// Por onde o codigo chegou ao cliente, para onde e por quem.
+model EntregaDeCodigo {
+  id           String   @id @default(cuid())
+  escritorioId String
+  clienteId    String
+  /// CONTRATO | PESSOALMENTE | EMAIL | WHATSAPP | REFORCO | TROCA
+  canal        String
+  destino      String?
+  entreguePor  String?
+  criadoEm     DateTime @default(now())
+
+  escritorio Escritorio @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
+  cliente    Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  @@index([escritorioId, clienteId])
 }

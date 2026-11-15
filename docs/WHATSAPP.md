@@ -149,6 +149,54 @@ percebe ate alguem receber. Os textos acima estao tambem em
 `src/lib/modelos-whatsapp.ts`, e ha um teste que confere se cada `{{n}}` do
 texto tem significado declarado.
 
+
+### 4 e 5. Avisos de seguranca (contra o golpe do falso advogado)
+
+Dois modelos, usados pela campanha do codigo de atendimento
+(`src/lib/codigo-de-atendimento.ts`, tela Codigos). Categoria **Utilidade**,
+idioma **Portugues (BR)**, sem cabecalho nem botao.
+
+**A forma nao e gosto.** Modelo com a palavra "codigo" no corpo FIXO e tratado
+pela revisao automatica da Meta como mensagem de verificacao e recusado
+(INCORRECT_CATEGORY), em qualquer categoria. Por isso o corpo fixo e so
+saudacao, escritorio e rodape; o conteudo entra nas variaveis. Nos exemplos,
+ponha o texto verdadeiro de cada variavel (abaixo).
+
+`birdjud_aviso_de_seguranca` — o primeiro aviso, que leva o codigo. Corpo,
+exatamente:
+
+```
+Ola, {{1}}. Aviso de seguranca do escritorio {{2}}: {{3}} Como funciona: {{4}} Este numero so envia avisos e nao recebe mensagens. Em caso de duvida, ligue para {{5}}, que e o telefone do escritorio.
+```
+
+| Parametro | O que e | Exemplo |
+|---|---|---|
+| `{{1}}` | primeiro nome de quem recebe | Maria |
+| `{{2}}` | nome do escritorio | Prado e Moura Advogados |
+| `{{3}}` | o anuncio | Passamos a usar um código de atendimento para cada cliente, para impedir o golpe do falso advogado. O seu código é GIRASSOL 27. |
+| `{{4}}` | as regras, em uma linha | 1) Sempre que o escritório falar com você, nós dizemos o seu código no começo da conversa. 2) Se alguém disser que é do escritório e não souber o seu código, NÃO É O ESCRITÓRIO. Desligue e ligue para (71) 3000-1122. 3) NUNCA diga o seu código a quem pedir. Quem é do escritório já sabe o seu código. 4) O escritório nunca pede Pix, depósito ou taxa para liberar dinheiro de processo. Antes de pagar qualquer coisa, ligue para (71) 3000-1122. 5) Guarde o seu código. Se esquecer, procure o escritório: não mandamos o código a quem pede por mensagem. |
+| `{{5}}` | telefone do escritorio | (71) 3000-1122 |
+
+`birdjud_lembrete_de_seguranca` — os lembretes semanais 2 a 5, SEM o codigo.
+Corpo, exatamente:
+
+```
+Ola, {{1}}. Lembrete de seguranca do escritorio {{2}}: {{3}} Este numero so envia avisos e nao recebe mensagens. Em caso de duvida, ligue para {{4}}, que e o telefone do escritorio.
+```
+
+| Parametro | O que e | Exemplo |
+|---|---|---|
+| `{{1}}` | primeiro nome de quem recebe | Maria |
+| `{{2}}` | nome do escritorio | Prado e Moura Advogados |
+| `{{3}}` | o lembrete da semana | NUNCA diga o seu código a quem pedir. Quem é do escritório já sabe o seu código. Pedir o seu código é o que o golpista faz. Nós nunca pedimos. Se alguém pediu, avise o escritório. |
+| `{{4}}` | telefone do escritorio | (71) 3000-1122 |
+
+**Depois de a Meta aprovar OS DOIS**, ligue no servico `aplicacao` e no
+`trabalhador` a variavel `WHATSAPP_MODELOS_DE_SEGURANCA=1`. Sem ela o sistema
+nao tenta o WhatsApp (tentar com modelo inexistente falharia centenas de
+vezes) e a campanha sai so por e-mail. Contrato, balcao, e-mail e o botao de
+WhatsApp da tela Codigos nao dependem da Meta.
+
 ## Conectar — o registro do que existe (08/10/2026)
 
 | O que | Valor |

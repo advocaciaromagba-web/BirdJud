@@ -1,3 +1,4 @@
+import { registrarEntregaPeloContrato } from "@/lib/codigos-do-escritorio";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
@@ -58,7 +59,7 @@ export async function POST(
       return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
     const { clienteId, contratoId, processoId, canal } = corpo.data;
-    const { escritorioId, usuarioId } = await exigirSessao(canal);
+    const { escritorioId, usuarioId, nomeUsuario } = await exigirSessao(canal);
 
     const cliente = await comEscritorio(escritorioId, (db) =>
       db.cliente.findFirst({ where: { id: clienteId } }),
@@ -195,6 +196,9 @@ export async function POST(
         ? await mandarPecaPorEmail(escritorioId, especie, dados, usuarioId, corpo.data.recado ?? null)
         : await mandarPecaNoWhatsapp(escritorioId, especie, dados, usuarioId);
 
+    if (especie === "CONTRATO") {
+      await registrarEntregaPeloContrato(escritorioId, clienteId, canal === "EMAIL" ? "contrato por e-mail" : "contrato por WhatsApp", nomeUsuario);
+    }
     return NextResponse.json({ mandado: { canal, ...mandado } }, { status: 201 });
   } catch (erro) {
     if (erro instanceof NaoDaParaMandar) {

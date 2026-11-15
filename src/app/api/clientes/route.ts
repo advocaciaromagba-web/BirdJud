@@ -1,3 +1,4 @@
+import { garantirCodigo } from "@/lib/codigos-do-escritorio";
 import { NextResponse } from "next/server";
 import { cutucarNuvem } from "@/lib/avisar-nuvem";
 import { vincularProcessosAoCliente } from "@/lib/processos-do-djen";
@@ -167,6 +168,10 @@ export async function POST(req: Request) {
         }),
       }),
     );
+
+    // O codigo de atendimento nasce com o cadastro (contra o golpe do falso
+    // advogado). Falhar aqui nao desfaz o cliente: a rotina cria depois.
+    await garantirCodigo(escritorioId, cliente.id).catch((erro) => console.error(`codigo de atendimento: ${(erro as Error).message}`));
 
     // O contrato nasce junto, quando ha o que contratar. Se ele falhar, o
     // cliente ja esta cadastrado — e e o certo: perder o cadastro inteiro por

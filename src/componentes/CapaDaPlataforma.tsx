@@ -148,6 +148,13 @@ export function CapaDaPlataforma({
               <p className="sobretitulo text-left">
                 Gestão jurídica com inteligência artificial
               </p>
+              <a
+                href="#falso-advogado"
+                className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/25 px-3 py-1 text-sm text-[color:var(--marca-contraste)] hover:bg-white/10"
+              >
+                <Icone nome="escudo" className="h-4 w-4" />
+                Com proteção contra o golpe do falso advogado
+              </a>
               <h1
                 className="mt-4 max-w-3xl text-3xl leading-tight text-[color:var(--marca-contraste)] sm:text-5xl"
                 style={{ fontFamily: "var(--fonte-titulo)" }}
@@ -207,6 +214,76 @@ export function CapaDaPlataforma({
                 endereco="seu-escritorio.birdjud.com.br"
                 prioridade
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Contra o golpe do falso advogado: o codigo de atendimento. Tudo o
+            que esta escrito aqui existe no sistema (src/lib/codigo-de-atendimento.ts). */}
+        <section id="falso-advogado" className="scroll-mt-24 border-b border-slate-200 bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+            <div className="grid gap-10 lg:grid-cols-[1fr_minmax(0,22rem)] lg:items-center">
+              <div>
+                <p className="sobretitulo">Contra o golpe do falso advogado</p>
+                <h2 className="mt-2 text-2xl sm:text-4xl">
+                  O sistema de gestão que protege o seu cliente do falso advogado
+                </h2>
+                <p className="chamada max-w-3xl">
+                  O golpista liga com o nome do cliente, o número do processo e o nome do advogado — tudo copiado do
+                  andamento público. Só não tem uma coisa: o <strong>código de atendimento</strong> que o BirdJud cria
+                  para cada cliente e que só o escritório conhece.
+                </p>
+                <p className="mt-4 max-w-3xl leading-relaxed text-slate-700">
+                  O escritório <strong>diz o código</strong> no começo de toda conversa. Quem liga em nome do escritório
+                  e não sabe o código não é o escritório. E o cliente nunca informa o código a ninguém: quem pede é o
+                  golpista.
+                </p>
+              </div>
+              <div
+                className="rounded-2xl p-6 text-center shadow-lg"
+                style={{ backgroundColor: "var(--marca-primaria)" }}
+                aria-label="Exemplo de código de atendimento"
+              >
+                <p className="text-center text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--marca-secundaria)" }}>
+                  Código de atendimento
+                </p>
+                <p className="mt-3 text-center font-mono text-4xl font-bold tracking-wide text-white">GIRASSOL 27</p>
+                <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
+                  Uma palavra simples e dois números. Fácil de falar ao telefone, de anotar à mão e de lembrar.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                ["Um código por cliente", "Criado sozinho no cadastro, único no escritório. Vazou? O administrador troca e o antigo deixa de valer na hora."],
+                ["No contrato, em folha própria", "Uma cláusula explica a regra, e o código sai em letra grande numa folha destacada — para achar em segundos no dia da ligação estranha."],
+                ["À mão em todo atendimento", "Um botão abre o WhatsApp do cliente com o código já escrito. O número vem sempre do cadastro, nunca digitado na hora."],
+                ["O cliente aprende a regra", "Cinco avisos, um por semana, por e-mail e WhatsApp. Só o primeiro leva o código; os outros repetem as regras."],
+                ["Código esquecido não volta por mensagem", "Só pessoalmente, ou no e-mail que já estava no cadastro. O sistema não tem campo para outro destino — é ali que o golpe começaria."],
+                ["Contra o golpe da taxa", "O cliente é avisado, por escrito, de que o escritório nunca pede Pix, depósito ou taxa para liberar dinheiro de processo."],
+              ].map(([titulo, texto]) => (
+                <article key={titulo} className="cartao">
+                  <span className="destaque">
+                    <Icone nome="escudo" className="h-6 w-6" />
+                  </span>
+                  <h3 className="mt-3">{titulo}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{texto}</p>
+                </article>
+              ))}
+            </div>
+
+            <p className="mt-8 max-w-3xl border-l-4 pl-4 text-lg leading-snug" style={{ borderColor: "var(--marca-secundaria)", fontFamily: "var(--fonte-titulo)" }}>
+              Gestão de clientes, processos, prazos e cobrança — e a proteção contra o falso advogado dentro dela, em
+              todos os planos. Procuramos e não encontramos outro sistema de gestão da advocacia que faça isso.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/cadastro" className="botao-principal">
+                Proteger os clientes do meu escritório
+              </Link>
+              <Link href="/manual#codigos" className="botao-secundario">
+                Ver como funciona
+              </Link>
             </div>
           </div>
         </section>

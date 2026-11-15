@@ -16,6 +16,8 @@ novo e como trazer isso para ca do jeito certo.
 | Repositorio da Roma | `advocaciaromagba-web/sistema-advocacia-roma`, ramo `main` |
 | Ultimo commit revisado | `2555f52808d9bbc9f40afa063c053128843d76c5` (04/11/2026, "Bloqueio dos horarios da agenda no NetLead") |
 | Revisado em | 05/11/2026 |
+| Ja trazidos, alem do ponto acima | o bloco do codigo de atendimento, de 15/11/2026: `6f1daa5`, `0969d5f`, `f53d319` (so a ideia do telefone unico), `8ed625a`, `3bd6d20`, `4be8e6a`, `5849a66`, `44e804d`, `02e06cf`, `4177e47` |
+| Ainda por revisar | `1caa4b9`, `42af8d1`, `f51b8dd`, `0ad6d3e`, `7a00491`, `0aba5e0`, `9a42b12`, `08aa92b`, `0888294` |
 
 Ao terminar uma rodada, troque o hash e a data desta tabela no mesmo commit em
 que a ultima funcionalidade entrou. Sem isso a proxima rodada revisa tudo de
@@ -126,6 +128,10 @@ Para cada commit da lista, decidir uma de tres coisas:
 | Relacao de despesas com filtros e totais; ler varias contas de uma vez (uma chamada por arquivo, tres por vez, varias contas por arquivo); lancar a mao com "repetir todo mes"; aviso de vencimento na tela inicial respeitando a segunda senha; categoria PERICIA | `/financeiro/despesas`, `src/lib/despesas.ts`, `src/lib/contas-em-lote.ts`, `LeituraDeContasEmLote.tsx` (tambem na aba A pagar de Cobrancas). A lista de categorias aqui ja era uma so |
 | Financeiro em abas, grudadas no topo e com a aba no endereco; previsao de arrecadacao mes a mes lendo o Asaas, com as cobrancas so daqui e as mensalidades projetadas, e as pendencias que explicam a diferenca | `AbasNaPagina.tsx`, `src/lib/previsao-conta.ts` (a conta), `src/lib/previsao-de-arrecadacao.ts` (a leitura, cache de 5 min), `/api/financeiro/previsao`, `PainelPrevisao.tsx` |
 | Bloqueio dos horarios da agenda no NetLead: so horario e tipo generico saem; chave por pessoa, cifrada; foto completa; 401 pausa ate trocar a chave; desligar libera | `AgendaNoNetlead` (migracao 81, tabela propria), `src/lib/netlead.ts`, `/api/conta/netlead`, `AgendaNoNetlead.tsx` em Minha conta; trabalho `NETLEAD` apos salvar compromisso e rodada no `LEMBRAR`. `NETLEAD_URL` opcional (padrao https://netlead.com.br) |
+| Codigo de atendimento por cliente contra o golpe do falso advogado ("GIRASSOL 27"): quem DIZ o codigo e o escritorio, o cliente nunca informa; nao existe funcao que confira codigo digitado; codigo esquecido so volta pessoalmente ou no e-mail do cadastro (rota sem campo de destino); troca quando vaza; historico de entregas | `CodigoDeAtendimento` e `EntregaDeCodigo` (migracao 82; tabela propria, para o codigo nunca vir junto com o cliente), `src/lib/codigo-de-atendimento.ts` (regra, pura), `src/lib/codigos-do-escritorio.ts`, area `CODIGOS`, `/codigos`, `/api/codigos/*`. Unico POR ESCRITORIO; sorteio com `randomInt`. O suporte da plataforma nao ve os codigos |
+| Codigo no contrato: clausula e folha propria com o codigo em letra grande | campo `{{cliente.codigo_atendimento}}`, clausula 10 no modelo padrao, e a folha acrescentada pelo sistema ao fim de TODO contrato (modelo do sistema ou do escritorio), igual no .docx e no PDF (`folhaDoCodigo`, `acrescentarAoCorpo`, folha nova e letra grande em `pdf.ts`) |
+| Botao de WhatsApp com o codigo ja escrito (wa.me, numero sempre do cadastro) e arquivo de contatos com o codigo no nome | `linkDoWhatsapp` (montado no servidor), na tela Codigos e na ficha do cliente; `montarVcard`, `/api/codigos/contatos` (so administrador) |
+| Campanha de 5 avisos, um por semana; so o primeiro leva o codigo; lote de 10; nunca duas vezes pelo mesmo canal; teste em um cliente; e-mail separado do WhatsApp; modelos da Meta com o corpo fixo sem a palavra "codigo" | `enviarPrimeiroAviso`, `continuarCampanha` (no `LEMBRAR`, 9h as 18h de Brasilia), `CampanhaDoCodigo.tsx`, modelos `birdjud_aviso_de_seguranca` e `birdjud_lembrete_de_seguranca` (docs/WHATSAPP.md), travados por `WHATSAPP_MODELOS_DE_SEGURANCA=1`. Diferencas daqui: o telefone e o de atendimento de cada escritorio (sem ele o aviso nao sai); a regra do dinheiro fala da "taxa para liberar dinheiro de processo", porque o proprio sistema manda link de boleto e Pix do escritorio; a submissao a Meta e manual (o numero e da plataforma) |
 
 Ainda nao trazido, por ser maior e pedir decisao do produto:
 
@@ -136,4 +142,5 @@ Ainda nao trazido, por ser maior e pedir decisao do produto:
 
 | Novidade da Roma | Por que |
 |---|---|
+| Rota externa que devolve o codigo do cliente a outro sistema (CRM de atendimento), por token | No BirdJud o codigo fica dentro do escritorio: a tela Codigos, a ficha do cliente, o botao de WhatsApp e o arquivo de contatos cobrem quem atende. Abrir uma rota que entrega as chaves de todos os clientes a um sistema de fora e superficie de ataque nova, a decidir caso a caso. |
 | Atendimento virtual: avisar que o Meet nao sera gerado e gerar a sala depois (25/10/2026) | No BirdJud a sala virtual e colada a mao no compromisso (Teams, Zoom, Webex ou Meet); nao ha geracao automatica pelo Google Agenda, entao o problema que a Roma corrigiu nao existe aqui. Gerar o Meet sozinho seria funcionalidade nova (conectar a agenda Google de cada advogado), a decidir. |

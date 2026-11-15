@@ -17,6 +17,7 @@ export const TAMANHO_DA_TELA: Record<string, [number, number]> = {
   "cliente-ficha-inteira": [1366, 3072],
   "cliente-novo": [1366, 860],
   "clientes": [1366, 860],
+  "codigos": [1366, 860],
   "cobrancas": [1366, 860],
   "cobrancas-a-pagar": [1366, 860],
   "configuracoes": [1366, 860],
@@ -391,6 +392,57 @@ export const SECOES: Secao[] = [
     dicas: [
       "“Pendências do cadastro” diz o que falta e o que aquilo atrapalha (ex.: sem e-mail, o link de pagamento não chega).",
       "Em “Envio automático” você desliga o WhatsApp ou o e-mail de um cliente sem apagar o contato.",
+    ],
+  },
+  {
+    id: "codigos",
+    grupo: "Clientes e documentos",
+    titulo: "Códigos de atendimento (contra o golpe do falso advogado)",
+    resumo:
+      "Cada cliente tem um código pessoal, como “GIRASSOL 27”. O escritório diz o código no começo de toda conversa: é assim que o cliente sabe que é o escritório. Quem liga em nome do escritório e não sabe o código é golpista.",
+    caminho: "Menu › Códigos",
+    papeis: ["ADMIN", "ADVOGADO", "APOIO"],
+    telas: [{ arquivo: "codigos", legenda: "O código de cada cliente e o que fazer com ele" }],
+    passos: [
+      {
+        titulo: "Em todo atendimento",
+        etapas: [
+          "Antes de ligar ou escrever, veja o código do cliente em Códigos (ou na ficha dele).",
+          "Comece a conversa pelo código. Para WhatsApp, clique em “Abrir WhatsApp com o código”: a mensagem já vem escrita, para o telefone do cadastro.",
+          "Nunca peça o código ao cliente. Quem é do escritório já sabe; quem pede é o golpista.",
+        ],
+      },
+      {
+        titulo: "O cliente esqueceu o código",
+        etapas: [
+          "O código só volta de dois jeitos: pessoalmente, no escritório, ou pelo e-mail que já está no cadastro.",
+          "No balcão: diga o código e clique em “entreguei pessoalmente”, para ficar registrado.",
+          "Por e-mail: clique em “enviar ao e-mail do cadastro”. O sistema não aceita outro endereço — pedir para mandar “neste outro e-mail” é o que o golpista faria.",
+        ],
+      },
+      {
+        titulo: "O código vazou",
+        etapas: [
+          "Se o cliente contou o código a alguém, o administrador clica em “trocar”.",
+          "O código antigo deixa de valer na hora.",
+          "Entregue o novo pessoalmente ou pelo e-mail do cadastro.",
+        ],
+      },
+      {
+        titulo: "Avisar todos os clientes (administrador)",
+        etapas: [
+          "Confira o telefone de atendimento do escritório em Configurações: o aviso manda o cliente ligar para ele na dúvida.",
+          "Teste primeiro em um cliente: na lista, “enviar o 1º aviso só a este” (o seu próprio cadastro, por exemplo).",
+          "Em “Avisar os clientes”, digite ENVIAR e clique em “Enviar o 1º aviso a quem falta”. Ninguém recebe duas vezes pelo mesmo canal.",
+          "Depois, o sistema manda sozinho um lembrete por semana, até completar 5 avisos. Só o primeiro leva o código.",
+        ],
+      },
+    ],
+    dicas: [
+      "O código sai em todo contrato de honorários: numa cláusula e numa folha própria, em letra grande, para o cliente guardar.",
+      "Cliente novo já nasce com código. Quem entrou por importação ganha o seu em até uma hora, ou na hora pelo botão da tela.",
+      "Para quem atende direto no WhatsApp do celular, o administrador pode baixar um arquivo de contatos com o código no nome de cada cliente.",
+      "O aviso também diz ao cliente que o escritório nunca pede Pix, depósito ou taxa para liberar dinheiro de processo.",
     ],
   },
   {
@@ -824,6 +876,10 @@ export const PERGUNTAS = [
   {
     p: "Posso usar a inteligência artificial sem medo de erro?",
     r: "A IA só propõe: nada é gravado sem alguém clicar. O que ela leu com dúvida chega marcado (“confira” ou “confira com atenção”). Confira sempre nos autos e nos documentos originais.",
+  },
+  {
+    p: "Como o sistema protege meu cliente do golpe do falso advogado?",
+    r: "Cada cliente tem um código de atendimento que só o escritório conhece. O escritório diz o código no começo de toda conversa; quem liga sem saber o código não é do escritório. O código sai no contrato, e o cliente recebe avisos explicando a regra — inclusive que nunca deve informar o código a quem pedir.",
   },
   {
     p: "Quem vê o Financeiro?",

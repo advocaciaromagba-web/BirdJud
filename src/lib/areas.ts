@@ -35,6 +35,10 @@ export type Area = {
 
 export const AREAS: Area[] = [
   { chave: "CLIENTES", nome: "Clientes", padrao: true },
+  // Codigo de atendimento contra o golpe do falso advogado. Nasce ABERTA:
+  // quem atende precisa DIZER o codigo no comeco de toda conversa; sem ve-lo,
+  // nao consegue se identificar ao cliente. O administrador pode fechar.
+  { chave: "CODIGOS", nome: "Códigos de atendimento (contra o falso advogado)", padrao: true },
   { chave: "PROCESSOS", nome: "Processos", padrao: true },
   { chave: "AGENDA", nome: "Agenda", padrao: true },
   { chave: "TAREFAS", nome: "Tarefas e metas", padrao: true },
@@ -89,6 +93,7 @@ export function areaPorChave(chave: string): Area | null {
 /** Onde cada endereco mora. O que nao esta aqui nao e controlado por area. */
 export const AREA_DO_ENDERECO: Record<string, string> = {
   "/clientes": "CLIENTES",
+  "/codigos": "CODIGOS",
   "/processos": "PROCESSOS",
   "/agenda": "AGENDA",
   // Mensagens nao entregues: quase todas sao avisos de compromisso.

@@ -3,6 +3,8 @@
 // A regra de preencher mora em modelos.ts, pura e testada; a mexida no .docx
 // em docx.ts. Aqui so se guarda, se escolhe qual modelo vale e se junta os
 // dados do cliente, do contrato e do escritorio.
+import { garantirCodigo } from "./codigos-do-escritorio";
+import { folhaDoCodigo } from "./codigo-de-atendimento";
 import type { Prisma } from "@prisma/client";
 import { comEscritorio, semEscritorio } from "./prisma";
 import { gravar, ler, apagar } from "./armazenamento";
@@ -27,6 +29,8 @@ import {
   trocarTextos,
   CAMINHO_DO_TEXTO,
   DocxInvalido,
+  acrescentarAoCorpo,
+  xmlDasLinhas,
 } from "./docx";
 import {
   camposDoModelo,
@@ -428,6 +432,13 @@ export type DadosDaPeca = {
     quando: Date;
   } | null;
   hoje?: Date;
+  /**
+   * De quem e a peca. Com ele, o CONTRATO sai com o codigo de atendimento do
+   * cliente (criado na hora, se ainda nao houver) e a folha do codigo no fim.
+   */
+  clienteId?: string;
+  /** Preenchido por gerarPeca a partir de clienteId; quem chama nao informa. */
+  codigoDeAtendimento?: string | null;
 };
 
 /** Os valores de cada campo do modelo. null quando o cadastro nao tem. */
@@ -460,6 +471,7 @@ export function valoresDaPeca(d: DadosDaPeca): Record<string, string | null> {
     "cliente.endereco": enderecoEmLinha((d.cliente.endereco ?? null) as never) || null,
     "cliente.email": d.cliente.email,
     "cliente.telefone": d.cliente.telefone,
+    "cliente.codigo_atendimento": d.codigoDeAtendimento ?? null,
     "cliente.rg": texto(d.cliente.rg),
     "cliente.nascimento": nascimentoEmTexto(d.cliente.nascimento),
     "cliente.nacionalidade": texto(d.cliente.nacionalidade),
@@ -606,7 +618,9 @@ export async function gerarPeca(
     }
   }
   const { conteudo, doEscritorio } = await arquivoDoModelo(escritorioId, especie);
-  const valores = valoresDaPeca(dados);
+  // O cliente nao assina contrato sem o codigo de atendimento impresso nele.
+  const codigo = especie === "CONTRATO" && dados.clienteId ? await garantirCodigo(escritorioId, dados.clienteId) : null;
+  const valores = valoresDaPeca({ ...dados, codigoDeAtendimento: codigo });
 
   // Cabecalho e rodape sao arquivos proprios dentro do .docx, e e justamente
   // onde mora o timbre. Preencher so o corpo deixaria `{{...}}` impresso no
@@ -620,6 +634,14 @@ export async function gerarPeca(
     novas[nome] = r.xml;
     r.semValor.forEach((s) => semValor.add(s));
     r.desconhecidos.forEach((d) => desconhecidos.add(d));
+  }
+
+  // A folha do codigo entra no fim de TODO contrato, seja o modelo do sistema
+  // ou o do escritorio: e ela que o cliente procura no dia da ligacao estranha.
+  // Vai no XML, antes de qualquer desenho, para o .docx e o PDF sairem iguais.
+  if (codigo && novas[CAMINHO_DO_TEXTO]) {
+    const banca = { nome: dados.escritorio.nome, telefone: dados.escritorio.telefoneAtendimento?.trim() || "o telefone do escritório" };
+    novas[CAMINHO_DO_TEXTO] = acrescentarAoCorpo(novas[CAMINHO_DO_TEXTO], xmlDasLinhas(folhaDoCodigo(codigo, dados.cliente.nome, banca)));
   }
 
   const temImagem = Object.values(partes).some((xml) => TEM_IMAGEM.test(xml));

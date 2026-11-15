@@ -272,6 +272,32 @@ const CONTRATO: Linha[] = [
   ),
   T("9.3. Fica eleito o foro da comarca de {{escritorio.cidade}} para dirimir as questões oriundas deste contrato."),
 
+  // Contra o golpe do falso advogado (src/lib/codigo-de-atendimento.ts). Quem
+  // DIZ o codigo e o escritorio; o cliente nunca o informa. A folha com o
+  // codigo em destaque e acrescentada pelo sistema ao fim de todo contrato.
+  SUB("CLÁUSULA 10ª — DO CÓDIGO DE ATENDIMENTO E DA PREVENÇÃO A FRAUDES"),
+  T(
+    "10.1. Para proteger o CLIENTE do golpe conhecido como \"falso advogado\", fica " +
+      "atribuído a ele o código de atendimento {{cliente.codigo_atendimento}}, pessoal e " +
+      "intransferível, reproduzido em folha própria ao final deste contrato.",
+  ),
+  T(
+    "10.2. O ADVOGADO informará o código ao CLIENTE no início de cada atendimento por " +
+      "telefone ou por mensagem. Contato em nome do ADVOGADO feito por quem não souber " +
+      "o código não deve ser considerado autêntico.",
+  ),
+  T(
+    "10.3. O CLIENTE não deve informar o código a quem o solicitar. O ADVOGADO nunca " +
+      "pede o código ao CLIENTE, nem solicita Pix, depósito ou pagamento de taxa para " +
+      "liberação de valores de processo.",
+  ),
+  T(
+    "10.4. Em caso de esquecimento ou de suspeita de que o código foi revelado a " +
+      "terceiro, o CLIENTE deve procurar o ADVOGADO pelo telefone {{escritorio.telefone}}. " +
+      "O código só é fornecido novamente em atendimento presencial ou pelo e-mail que " +
+      "já conste do cadastro do CLIENTE, e pode ser substituído a qualquer tempo.",
+  ),
+
   T(
     "E, por estarem assim justas e contratadas, as partes firmam o presente " +
       "instrumento em 02 (duas) vias de igual teor, na presença de duas testemunhas.",
