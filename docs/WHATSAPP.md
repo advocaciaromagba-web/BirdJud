@@ -192,8 +192,10 @@ Ola, {{1}}. Lembrete de seguranca do escritorio {{2}}: {{3}} Este numero so envi
 | `{{4}}` | telefone do escritorio | (71) 3000-1122 |
 
 Situacao: os dois foram submetidos pela API em 15/11/2026, na WABA real
-(`2087330425240199`), e entraram em analise (PENDING) como Utilidade, sem
-recusa na triagem.
+(`2087330425240199`), e APROVADOS pela Meta no mesmo dia, como Utilidade.
+A variavel `WHATSAPP_MODELOS_DE_SEGURANCA=1` foi ligada nos servicos
+`aplicacao` e `trabalhador` em 15/11/2026. Ligar a variavel nao envia nada:
+o primeiro aviso so sai quando o administrador de cada escritorio manda.
 
 **Depois de a Meta aprovar OS DOIS**, ligue no servico `aplicacao` e no
 `trabalhador` a variavel `WHATSAPP_MODELOS_DE_SEGURANCA=1`. Sem ela o sistema
