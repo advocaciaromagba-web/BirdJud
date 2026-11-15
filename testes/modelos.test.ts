@@ -308,6 +308,28 @@ describe("a numeracao do contrato que já vem no sistema", () => {
     expect(texto).toContain("crédito privilegiado");
   });
 
+  it("saída do cliente no meio do caminho: honorário proporcional em faixas, não multa fixa", () => {
+    // Multa alta e desligada do andamento convida a reducao judicial (CC 413).
+    const texto = linhas.join("\n");
+    for (const faixa of ["1.2.1. 20%", "1.2.2. 50%", "1.2.3. 70%", "1.2.4. 100%"]) expect(texto).toContain(faixa);
+    expect(texto).toContain("§§ 5º e 6º do artigo 24 da Lei nº 8.906/94");
+    expect(texto).not.toMatch(/a título de\s+multa/);
+  });
+
+  it("autoriza juntar o contrato aos autos e trata a sucumbência com gratuidade", () => {
+    const texto = linhas.join("\n");
+    expect(texto).toContain("§ 4º do artigo 22 da Lei nº 8.906/94");
+    expect(texto).toContain("§ 3º do artigo 98 do Código de Processo Civil");
+    expect(texto).not.toContain("Parágrafo único");
+  });
+
+  it("a isenção por falta à audiência depende de o escritório ter avisado", () => {
+    const texto = linhas.join("\n");
+    expect(texto).toContain("4.2. Feita a comunicação na forma do item 4.1");
+    // O sistema avisa por WhatsApp: o contrato tem de autorizar o canal.
+    expect(texto).toContain("aplicativo de mensagens (WhatsApp)");
+  });
+
   it("continua citando o artigo do CPC que esta em vigor, e não o revogado", () => {
     const texto = linhas.join("\n");
     expect(texto).toContain("artigo 784, inciso III");

@@ -102,11 +102,25 @@ const CONTRATO: Linha[] = [
       "com o primeiro vencimento em {{honorarios.primeiro_vencimento}} e os demais no " +
       "mesmo dia dos meses seguintes, pagos por {{honorarios.forma}}.",
   ),
+  // Honorario PROPORCIONAL ao trabalho, em faixas, e nao multa fixa sobre o
+  // total: multa alta e desligada do andamento convida a reducao judicial
+  // (CC 413) e contraria a logica dos §§ 5º e 6º do art. 24 do Estatuto
+  // (revisao de 15/11/2026, vinda da Advocacia Roma).
   T(
-    "1.2. Em caso de renúncia, substabelecimento ou desistência da ação por parte do " +
-      "CLIENTE antes do julgamento em primeira instância, será devido, a título de " +
-      "multa, percentual do valor total do contrato, devidamente corrigido e acrescido " +
-      "de juros legais, conforme ajustado entre as partes.",
+    "1.2. Em caso de revogação do mandato pelo CLIENTE, de desistência da ação ou de " +
+      "substabelecimento por ele determinado, serão devidos ao ADVOGADO os honorários " +
+      "proporcionais ao trabalho efetivamente realizado até então, calculados sobre o " +
+      "valor total deste contrato, corrigidos e acrescidos de juros legais, na seguinte " +
+      "proporção:",
+  ),
+  T("1.2.1. 20% (vinte por cento), antes do ajuizamento da ação ou do protocolo do requerimento administrativo;"),
+  T("1.2.2. 50% (cinquenta por cento), ajuizada a ação, até o encerramento da instrução;"),
+  T("1.2.3. 70% (setenta por cento), encerrada a instrução, até a sentença;"),
+  T("1.2.4. 100% (cem por cento), após a sentença de primeira instância."),
+  T(
+    "1.2.5. O distrato e a rescisão deste contrato não importam renúncia do ADVOGADO " +
+      "aos honorários pactuados nem aos de sucumbência proporcionais ao trabalho " +
+      "realizado, nos termos dos §§ 5º e 6º do artigo 24 da Lei nº 8.906/94.",
   ),
   T(
     "1.3. Havendo êxito, será devido ao ADVOGADO o percentual de " +
@@ -122,16 +136,31 @@ const CONTRATO: Linha[] = [
       "correção monetária.",
   ),
   T(
-    "1.5. O total dos honorários previstos nos itens anteriores, independentemente de " +
-      "qual parte tenha dado causa, poderá ser exigido imediatamente se houver " +
+    "1.5. Os honorários devidos nos termos dos itens anteriores, na proporção do item " +
+      "1.2 quando for o caso e independentemente de qual parte tenha dado causa, " +
+      "poderão ser exigidos imediatamente se houver " +
       "composição, substabelecimento ou desistência por qualquer das partes " +
       "litigantes, dentro ou fora do processo, por quaisquer circunstâncias não " +
       "determinadas pelo ADVOGADO, inclusive caso fortuito ou força maior, ou ainda se " +
       "lhe for cassado o mandato sem culpa sua.",
   ),
+  // Numerado, e nao "paragrafo unico": num documento que e titulo executivo,
+  // poder apontar "clausula 1.6" importa.
   T(
-    "Parágrafo único. No caso de improcedência da ação, o CLIENTE ficará responsável " +
-      "pelo pagamento das despesas processuais, custas e demais encargos.",
+    "1.6. No caso de improcedência da ação, o CLIENTE ficará responsável pelo " +
+      "pagamento das despesas processuais, das custas e dos honorários de sucumbência " +
+      "devidos à parte contrária.",
+  ),
+  T(
+    "1.6.1. Deferida ao CLIENTE a gratuidade da justiça, as obrigações decorrentes de " +
+      "sua sucumbência ficam sob condição suspensiva de exigibilidade, nos termos do " +
+      "§ 3º do artigo 98 do Código de Processo Civil.",
+  ),
+  T(
+    "1.7. O CLIENTE autoriza a juntada deste contrato aos autos, antes da expedição do " +
+      "mandado de levantamento ou do precatório, para que os honorários contratados " +
+      "sejam pagos diretamente ao ADVOGADO, por dedução da quantia a ser recebida pelo " +
+      "CLIENTE, nos termos do § 4º do artigo 22 da Lei nº 8.906/94.",
   ),
 
   // A Lei nº 15.472, de 21 de julho de 2026, alterou os artigos 22 e 24 do
@@ -193,15 +222,25 @@ const CONTRATO: Linha[] = [
   ),
 
   SUB("CLÁUSULA 4ª — DO COMPARECIMENTO ÀS AUDIÊNCIAS"),
+  // A 4.1 prometia 72 horas sempre, e ha intimacao que chega com menos; e a 4.2
+  // isentava o advogado ate quando ele nao tivesse avisado. Agora a isencao
+  // depende de a comunicacao ter sido feita.
   T(
-    "4.1. É responsabilidade do ADVOGADO informar a data e o horário das audiências " +
-      "designadas, com antecedência mínima de 72 (setenta e duas) horas, por telefone, " +
-      "mensagem, correio eletrônico ou via postal.",
+    "4.1. O ADVOGADO comunicará ao CLIENTE a data e o horário das audiências " +
+      "designadas tão logo tome ciência da intimação, com antecedência mínima de 72 " +
+      "(setenta e duas) horas sempre que a intimação ocorrer em tempo que o permita; " +
+      "quando a intimação se der em prazo inferior, a comunicação será feita " +
+      "imediatamente.",
   ),
   T(
-    "4.2. Fica ressalvado que qualquer prejuízo processual decorrente da falta do " +
-      "CLIENTE às audiências não obriga o ADVOGADO a ressarcir qualquer valor a título " +
-      "de indenização.",
+    "4.1.1. As comunicações serão feitas por telefone, correio eletrônico, aplicativo " +
+      "de mensagens (WhatsApp) ou via postal, nos contatos constantes do cadastro do " +
+      "CLIENTE, cuja atualização é de sua responsabilidade, conforme a Cláusula 3ª.",
+  ),
+  T(
+    "4.2. Feita a comunicação na forma do item 4.1, o não comparecimento do CLIENTE à " +
+      "audiência e os prejuízos processuais dele decorrentes não obrigam o ADVOGADO a " +
+      "ressarcir qualquer valor a título de indenização.",
   ),
   T(
     "4.3. Em caso de força maior que impossibilite o comparecimento, o fato deverá ser " +
