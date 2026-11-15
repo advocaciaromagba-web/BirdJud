@@ -276,6 +276,9 @@ model Cliente {
   advogadosIds String[] @default([])
   /// Acoes contratadas: uma procuracao para cada (finalidade da procuracao).
   acoesContratadas String[] @default([])
+  /// Campos preenchidos pela IA lendo os documentos do cliente, ainda sem
+  /// conferencia. Editar o campo a mao tira-o daqui.
+  camposLidosPorIA String[] @default([])
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 

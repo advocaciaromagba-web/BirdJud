@@ -14,6 +14,7 @@ import { dataBR } from "@/lib/datas";
 import { tamanhoLegivel } from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { pendenciasDoCliente } from "@/lib/clientes";
+import { LidosPorIA } from "@/componentes/LidosPorIA";
 import {
   ehPessoaJuridica,
   qualificacao,
@@ -338,6 +339,7 @@ export default async function FichaCliente({
             alteradoPor={cliente.envioAlteradoPor}
             podeMexer={contexto.papel === "ADMIN"}
           />
+          <LidosPorIA clienteId={cliente.id} campos={cliente.camposLidosPorIA} />
           <section className="cartao">
             <h2 className="font-semibold">Pendências do cadastro</h2>
             {pendencias.length === 0 ? (

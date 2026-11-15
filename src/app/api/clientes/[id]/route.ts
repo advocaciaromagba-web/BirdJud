@@ -50,6 +50,8 @@ const edicao = z.object({
   menor: z.boolean().optional(),
   // Acoes contratadas: uma procuracao para cada. A lista inteira, sempre.
   acoesContratadas: z.array(z.string().trim().min(3).max(300)).max(20).optional(),
+  // "Conferi": os campos lidos por IA deixam de estar marcados como sugestao.
+  conferirLidosPorIA: z.literal(true).optional(),
 });
 
 const UM_EMAIL = z.string().email();
@@ -173,6 +175,11 @@ export async function PATCH(
         ? {}
         : { telefone: limpar(corpo.data.telefone) }),
     };
+    if (corpo.data.conferirLidosPorIA && Object.keys(dados).length === 0) {
+      const feito = await comEscritorio(escritorioId, (db) => db.cliente.updateMany({ where: { id }, data: { camposLidosPorIA: [] } }));
+      if (feito.count === 0) return NextResponse.json({ erro: "Cliente não encontrado." }, { status: 404 });
+      return NextResponse.json({ ok: true });
+    }
     if (Object.keys(dados).length === 0) {
       return NextResponse.json({ erro: "Nada para mudar." }, { status: 400 });
     }
@@ -182,9 +189,14 @@ export async function PATCH(
     // encontrado. Com update por id, um id adivinhado de outro escritorio
     // produziria erro — e erro diferente de "nao achei" ja conta que aquele
     // id existe em algum lugar.
-    const resultado = await comEscritorio(escritorioId, (db) =>
-      db.cliente.updateMany({ where: { id }, data: dados }),
-    );
+    // Campo editado a mao deixa de ser "lido por IA, sem conferencia".
+    const mexidos = new Set(Object.keys(dados));
+    const resultado = await comEscritorio(escritorioId, async (db) => {
+      const antes = await db.cliente.findFirst({ where: { id }, select: { camposLidosPorIA: true } });
+      const lidos = antes?.camposLidosPorIA ?? [];
+      const restam = lidos.filter((c) => !mexidos.has(c));
+      return db.cliente.updateMany({ where: { id }, data: restam.length === lidos.length ? dados : { ...dados, camposLidosPorIA: restam } });
+    });
     if (resultado.count === 0) {
       return NextResponse.json(
         { erro: "Cliente não encontrado." },

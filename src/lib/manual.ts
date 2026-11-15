@@ -213,7 +213,7 @@ export const SECOES: Secao[] = [
         etapas: [
           "Clique em “Novo compromisso”.",
           "Escolha o tipo (audiência, perícia, atendimento/reunião), a data e a hora.",
-          "Informe o responsável, o processo ou o cliente, o local e, se for virtual, o link da sala (Teams, Zoom, Webex ou Meet).",
+          "Informe o responsável, o processo ou o cliente, o local e, se for virtual, o link da sala (Teams, Zoom, Webex ou Meet). Pode colar o convite inteiro: o sistema separa o endereço e deixa o link pronto para abrir.",
           "Inclua os participantes (cliente, testemunha, preposto): eles recebem a confirmação e os lembretes.",
           "Salve. Quem ficou responsável é avisado.",
         ],
@@ -371,6 +371,15 @@ export const SECOES: Secao[] = [
           "Com o plano Completo, envie o RG, a CNH ou o comprovante de endereço: a IA lê e preenche os campos. O que ela leu com dúvida chega marcado “confira”.",
           "Comece o endereço pelo CEP: rua, bairro e cidade vêm sozinhos.",
           "Salve. CPF e CNPJ são conferidos pelo dígito verificador.",
+        ],
+      },
+      {
+        titulo: "Completar cadastros pela metade com os documentos já guardados",
+        etapas: [
+          "Em Clientes, abra “Cadastros com dados faltando”: a lista mostra o que falta em cada um.",
+          "No plano Completo, clique em “Completar pelos documentos”. A IA lê o RG, a CNH, o comprovante de endereço, a procuração ou o contrato guardados em Arquivos, ligados ao cliente.",
+          "Só entra o que está vazio: o que alguém digitou não é trocado. Documento em nome de outra pessoa e leitura com dúvida ficam de fora, e a tela diz por quê.",
+          "Na ficha, o quadro “Preenchido por IA, a conferir” lista o que entrou. Compare com o documento e clique em “Conferi, está certo”.",
         ],
       },
       {
@@ -635,8 +644,8 @@ export const SECOES: Secao[] = [
     titulo: "Despesas",
     resumo:
       "Todas as despesas, pagas e a pagar, com filtros, totais por categoria e dois jeitos rápidos de lançar: ler várias contas de uma vez ou digitar.",
-    caminho: "Financeiro › Despesas",
-    papeis: ["ADMIN"],
+    caminho: "Financeiro › Despesas · para quem paga as contas: Menu › Contas a pagar",
+    papeis: ["ADMIN", "ADVOGADO", "APOIO"],
     modulo: "Avançado e Completo · leitura de contas no Completo",
     telas: [{ arquivo: "despesas", legenda: "Filtros, totais, despesas por categoria e a lista" }],
     passos: [
@@ -654,6 +663,24 @@ export const SECOES: Secao[] = [
           "Em “Ler várias contas de uma vez”, escolha os arquivos (água, energia, telefone, boletos — PDF ou foto).",
           "Clique em “Ler as contas”. Cada arquivo é lido separado e cada conta vira uma linha.",
           "Confira valor, vencimento e categoria (linhas amarelas pedem atenção), desmarque o que não quer e clique em “Lançar marcadas”.",
+          "O arquivo lido fica guardado junto da conta, com a linha digitável quando ela veio inteira.",
+        ],
+      },
+      {
+        titulo: "Pagar as contas do dia",
+        etapas: [
+          "No alto da tela, “Para pagar hoje” reúne o que venceu e o que vence hoje, com o total.",
+          "Clique em “copiar linha digitável” e cole no aplicativo do banco, ou em “ver boleto” para abrir o arquivo.",
+          "Pagou? Clique na situação da conta para dar baixa e, se quiser, em “anexar comprovante”.",
+          "Conta lançada à mão: use “anexar boleto” e “informar linha digitável” na própria linha.",
+        ],
+      },
+      {
+        titulo: "Deixar outra pessoa pagar as contas, sem a senha do financeiro",
+        etapas: [
+          "Em Equipe, abra as permissões da pessoa e ligue “Contas do escritório”.",
+          "Ela passa a ver “Contas a pagar” no menu: lança, anexa o boleto, dá baixa e cuida das despesas fixas.",
+          "Receitas, livro-caixa, extrato e relatórios continuam só com o administrador, atrás da senha de administração.",
         ],
       },
       {
@@ -665,7 +692,11 @@ export const SECOES: Secao[] = [
         ],
       },
     ],
-    dicas: ["Contas vencidas e dos próximos 7 dias aparecem na tela inicial do administrador."],
+    dicas: [
+      "Contas vencidas e dos próximos 7 dias aparecem na tela inicial do administrador e de quem paga as contas.",
+      "O aviso de vencimento por e-mail leva a linha digitável, para pagar dali mesmo.",
+      "A linha digitável tem 47 dígitos (boleto) ou 48 (água, energia, telefone, tributo). Pela metade, o sistema recusa.",
+    ],
   },
   {
     id: "relatorios",

@@ -5,6 +5,8 @@ import { modulosAtivos } from "@/lib/modulos";
 import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { pendenciasDoCliente, quantasImpedem } from "@/lib/clientes";
+import { CadastrosIncompletos } from "@/componentes/CadastrosIncompletos";
+import { cadastrosIncompletos } from "@/lib/completar-cadastro";
 
 export default async function PaginaClientes() {
   const contexto = await contextoDaPagina(undefined, "CLIENTES");
@@ -25,6 +27,10 @@ export default async function PaginaClientes() {
       },
     }),
   );
+
+  const incompletos = await cadastrosIncompletos(contexto.escritorioId);
+  // A leitura abre o que esta guardado em Arquivos: sem os dois modulos nao ha o que ler.
+  const comIA = modulos.includes("IA") && modulos.includes("NUVEM") && !contexto.suporte;
 
   return (
     <Estrutura
@@ -130,6 +136,8 @@ export default async function PaginaClientes() {
         Só o nome é obrigatório. O resto pode entrar depois — a ficha de cada
         cliente mostra o que falta e o que aquilo atrapalha.
       </p>
+
+      <CadastrosIncompletos clientes={incompletos} comIA={comIA} />
 
       {clientes.length === 0 ? (
         <p className="vazio mt-6">
