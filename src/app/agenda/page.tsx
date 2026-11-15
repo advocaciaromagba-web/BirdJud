@@ -1,3 +1,4 @@
+import { linkDaSala } from "@/lib/link-da-sala";
 import { comEscritorio } from "@/lib/prisma";
 import { atoSemAdvogado } from "@/lib/agenda-tela";
 import { contextoDaPagina } from "@/lib/pagina";
@@ -65,7 +66,10 @@ export default async function PaginaAgenda() {
     tipo: c.tipo,
     inicioISO: c.inicio.toISOString(),
     local: c.local,
-    link: c.link,
+    // Normalizado tambem na leitura: o que ja estava gravado sem https passa
+    // a abrir, sem mexer nos dados.
+    link: linkDaSala(c.link).url,
+    salaSemLink: linkDaSala(c.link).texto,
     observacoes: c.observacoes,
     concluido: c.concluido,
     processoId: c.processoId,

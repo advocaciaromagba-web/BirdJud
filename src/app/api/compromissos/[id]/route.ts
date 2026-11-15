@@ -1,3 +1,4 @@
+import { linkParaGravar } from "@/lib/link-da-sala";
 import { avisarMudancaNaAgenda } from "@/lib/netlead";
 import { NextResponse } from "next/server";
 import { TIPOS_DA_AGENDA, recusaDaAgenda } from "@/lib/natureza";
@@ -109,7 +110,7 @@ export async function PATCH(
     }
     // Campo mandado vazio e campo apagado — e diferente de campo nao mandado.
     if (d.local !== undefined) campos.local = d.local || null;
-    if (d.link !== undefined) campos.link = d.link || null;
+    if (d.link !== undefined) campos.link = linkParaGravar(d.link);
     if (d.observacoes !== undefined) campos.observacoes = d.observacoes || null;
     if (d.processoId !== undefined) campos.processoId = d.processoId || null;
     if (d.clienteId !== undefined) campos.clienteId = d.clienteId || null;

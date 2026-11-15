@@ -297,7 +297,7 @@ export function PainelAgenda({
     clienteId: c.clienteId ?? "",
     processoId: c.processoId ?? "",
     local: c.local ?? "",
-    link: c.link ?? "",
+    link: c.link ?? c.salaSemLink ?? "",
     observacoes: c.observacoes ?? "",
   });
 
@@ -449,6 +449,10 @@ export function PainelAgenda({
                         >
                           Entrar
                         </a>
+                      ) : c.salaSemLink ? (
+                        <span className="text-sm text-slate-600" title="Isto não é um endereço: falta colar o link da sala.">
+                          {c.salaSemLink}
+                        </span>
                       ) : (
                         "—"
                       )}
@@ -590,6 +594,15 @@ function VerCompromisso({
         <Dado rotulo="Cliente" valor={c.nomeDoCliente ?? "—"} />
         {c.numeroProcesso ? <Dado rotulo="Número do processo" valor={c.numeroProcesso} /> : null}
         {c.local ? <Dado rotulo="Local" valor={c.local} /> : null}
+        {!c.link && c.salaSemLink ? (
+          <div>
+            <dt className="text-xs text-slate-500">Link da sala</dt>
+            <dd>
+              {c.salaSemLink}
+              <span className="block text-xs text-red-700">Isto não é um endereço: falta colar o link da sala (edite o compromisso).</span>
+            </dd>
+          </div>
+        ) : null}
         {c.link ? (
           <div>
             <dt className="text-xs text-slate-500">Link da sala</dt>

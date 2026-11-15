@@ -1,5 +1,6 @@
 // O que vem pela frente na agenda de uma pessoa, para o alerta da tela.
 // Regras do alerta em alerta-da-agenda.ts.
+import { linkDaSala } from "./link-da-sala";
 import { comEscritorio } from "./prisma";
 import { TIPOS_DA_AGENDA } from "./natureza";
 import { ANTECEDENCIAS_MINUTOS, type ProximoCompromisso } from "./alerta-da-agenda";
@@ -29,6 +30,6 @@ export async function proximosDoUsuario(
   );
   return {
     alertaSonoro: usuario?.alertaSonoro ?? true,
-    compromissos: compromissos.map((c) => ({ ...c, inicio: c.inicio.toISOString() })),
+    compromissos: compromissos.map((c) => ({ ...c, link: linkDaSala(c.link).url, inicio: c.inicio.toISOString() })),
   };
 }

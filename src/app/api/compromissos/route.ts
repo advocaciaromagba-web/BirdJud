@@ -1,3 +1,4 @@
+import { linkParaGravar } from "@/lib/link-da-sala";
 import { avisarMudancaNaAgenda } from "@/lib/netlead";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -73,7 +74,9 @@ export async function POST(req: Request) {
     const falta = faltaParaGravar(corpo.data);
     if (falta) return NextResponse.json({ erro: falta }, { status: 400 });
 
-    const { clienteNovo, responsavelId, ...campos } = corpo.data;
+    const { clienteNovo, responsavelId, ...brutos } = corpo.data;
+    // O link da sala e colado a mao: grava ja limpo (link-da-sala.ts).
+    const campos = { ...brutos, ...(brutos.link !== undefined ? { link: linkParaGravar(brutos.link) } : {}) };
 
     const resultado = await comEscritorio(escritorioId, async (db) => {
       if (campos.processoId) {

@@ -11,7 +11,10 @@ export type CompromissoNaTela = {
   tipo: string;
   inicioISO: string;
   local: string | null;
+  /** Endereco da sala ja pronto para o clique (link-da-sala.ts), ou nulo. */
   link: string | null;
+  /** O que esta no campo da sala e NAO e endereco ("sala 3 do forum"). */
+  salaSemLink?: string | null;
   observacoes: string | null;
   concluido: boolean;
   processoId: string | null;
