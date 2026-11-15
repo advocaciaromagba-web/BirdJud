@@ -33,7 +33,7 @@ export function PortaDeAdministracao({
       <div className="cartao mx-auto max-w-lg">
         <h1 className="text-xl font-bold">Área do administrador</h1>
         <p className="mt-3 leitura text-slate-600">
-          {area} e área do administrador do escritório. Seu usuário não tem esse
+          {area} é área do administrador do escritório. Seu usuário não tem esse
           papel. Peça a quem administra o escritório para liberar, ou para
           executar a ação por você.
         </p>

@@ -443,9 +443,11 @@ export async function gerarResumoDoDia(
 /**
  * Avisos de vencimento: contas a pagar e recebimentos previstos.
  *
- * SO PARA ADMIN. O financeiro do escritorio e fechado por papel e por senha de
- * administracao; mandar "conta a pagar de R$ 8.000 vence amanha" por e-mail
- * para todo mundo abriria por fora exatamente o que a tela fecha por dentro.
+ * Para o ADMIN, e a conta a pagar tambem para quem tem a area DESPESAS (quem
+ * paga as contas). O financeiro do escritorio e fechado por papel e por senha
+ * de administracao; mandar "conta a pagar de R$ 8.000 vence amanha" por
+ * e-mail para todo mundo abriria por fora exatamente o que a tela fecha por
+ * dentro.
  *
  * Usa a mesma chave de "recebe lembretes" dos compromissos, de proposito: um
  * segundo interruptor so para dinheiro seria mais um lugar para alguem
@@ -455,11 +457,20 @@ export async function gerarAvisosFinanceiros(
   escritorioId: string,
   agora = new Date(),
 ): Promise<number> {
-  const [contas, administradores, escritorio] = await Promise.all([
+  const [contas, administradores, pagadores, escritorio] = await Promise.all([
     contasParaAvisar(escritorioId, agora),
     comEscritorio(escritorioId, (db) =>
       db.usuario.findMany({
         where: { ativo: true, papel: "ADMIN", recebeLembretes: true },
+        select: { id: true, email: true },
+      }),
+    ),
+    // Quem paga as contas do escritorio (area DESPESAS liberada a mao) recebe
+    // o aviso da CONTA A PAGAR, que e o trabalho dele e ja aparece na tela
+    // dele. O que o escritorio tem a RECEBER continua so com o administrador.
+    comEscritorio(escritorioId, (db) =>
+      db.usuario.findMany({
+        where: { ativo: true, papel: { not: "ADMIN" }, recebeLembretes: true, permissoesDeArea: { some: { area: "DESPESAS", permitido: true } } },
         select: { id: true, email: true },
       }),
     ),
@@ -473,7 +484,8 @@ export async function gerarAvisosFinanceiros(
 
   let criados = 0;
   for (const conta of contas) {
-    for (const admin of administradores) {
+    const destinatarios = conta.tipo.startsWith("CONTA_") ? [...administradores, ...pagadores] : administradores;
+    for (const admin of destinatarios) {
       const criado = await criarAviso(escritorioId, {
         usuarioId: admin.id,
         canal: "EMAIL",

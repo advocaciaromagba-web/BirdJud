@@ -70,6 +70,13 @@ export const AREAS: Area[] = [
   { chave: "COBRANCAS_DESFAZER", nome: "Cobranças: desfazer baixa, cancelar e encerrar", padrao: true, modulo: "COBRANCAS", dependeDe: "COBRANCAS" },
   { chave: "CONCILIACAO", nome: "Conferir o extrato", padrao: false, modulo: "COBRANCAS" },
   { chave: "FINANCEIRO", nome: "Financeiro (livro-caixa, despesas, metas)", padrao: false, modulo: "FINANCEIRO" },
+  // Lancar e pagar a conta do escritorio e escrituracao, nao e mexer no
+  // dinheiro de cliente: nao pede a segunda senha (06/11/2026, vindo da
+  // Advocacia Roma). Quem lanca o aluguel e a luz nao e, em geral, quem tem a
+  // senha; a conta chegava, ninguem destrancava, e ficava para depois — que e
+  // quando ela vence. O que ENTRA (receitas, saldo, extrato, metas) continua
+  // atras da senha. Nasce fechada: o administrador libera para quem paga.
+  { chave: "DESPESAS", nome: "Contas do escritório (lançar e pagar, sem a 2ª senha)", padrao: false, modulo: "FINANCEIRO" },
   { chave: "NOTAS", nome: "Notas fiscais", padrao: false, modulo: "NFSE" },
 
   // Mexer em quem entra, em credencial e no cadastro do escritorio e do dono
@@ -94,6 +101,7 @@ export function areaPorChave(chave: string): Area | null {
 export const AREA_DO_ENDERECO: Record<string, string> = {
   "/clientes": "CLIENTES",
   "/codigos": "CODIGOS",
+  "/financeiro/despesas": "DESPESAS",
   "/processos": "PROCESSOS",
   "/agenda": "AGENDA",
   // Mensagens nao entregues: quase todas sao avisos de compromisso.

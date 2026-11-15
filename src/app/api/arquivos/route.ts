@@ -11,6 +11,7 @@ import {
   espacoDoEscritorio,
   guardarArquivo,
   TAMANHO_MAXIMO_MB,
+  FORA_OS_ANEXOS_DE_CONTA,
 } from "@/lib/arquivos";
 
 /** Erro de dominio do modulo -> status proprio. */
@@ -26,7 +27,7 @@ export async function GET() {
     const { escritorioId } = await exigirSessao("NUVEM");
     const [arquivos, espaco] = await Promise.all([
       comEscritorio(escritorioId, (db) =>
-        db.arquivo.findMany({ orderBy: { criadoEm: "desc" }, take: 200 }),
+        db.arquivo.findMany({ where: FORA_OS_ANEXOS_DE_CONTA, orderBy: { criadoEm: "desc" }, take: 200 }),
       ),
       espacoDoEscritorio(escritorioId),
     ]);

@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirAdministracao } from "@/lib/sessao";
+import { portaDoLancamento } from "@/lib/porta-do-lancamento";
 import { tratarErro } from "@/lib/respostas";
+import { lerLinhaDigitavel } from "@/lib/boleto-da-conta";
+import { apagarArquivo } from "@/lib/arquivos";
 
-const acao = z.object({ pago: z.boolean() });
+// Uma coisa por pedido: a baixa, ou a linha digitavel (null apaga).
+const acao = z.union([
+  z.object({ pago: z.boolean() }).strict(),
+  z.object({ linhaDigitavel: z.string().max(120).nullable() }).strict(),
+]);
 
 /** Marcar como pago/recebido, ou desfazer. */
 export async function PATCH(
@@ -12,17 +18,29 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const { id } = await params;
+    const { escritorioId } = (await portaDoLancamento(id)).contexto;
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Pedido inválido." }, { status: 400 });
     }
 
+    let data: { pagoEm: Date | null } | { linhaDigitavel: string | null };
+    if ("pago" in corpo.data) {
+      data = { pagoEm: corpo.data.pago ? new Date() : null };
+    } else if (corpo.data.linhaDigitavel === null || !corpo.data.linhaDigitavel.trim()) {
+      data = { linhaDigitavel: null };
+    } else {
+      const lida = lerLinhaDigitavel(corpo.data.linhaDigitavel);
+      if (!lida.ok) return NextResponse.json({ erro: lida.erro }, { status: 400 });
+      data = { linhaDigitavel: lida.digitos };
+    }
+
     const alterados = await comEscritorio(escritorioId, (db) =>
       db.lancamento.updateMany({
-        where: { id },
-        data: { pagoEm: corpo.data.pago ? new Date() : null },
+        // Linha digitavel e de conta a pagar; em receita nao faz sentido.
+        where: "linhaDigitavel" in data ? { id, tipo: "DESPESA" } : { id },
+        data,
       }),
     );
     if (alterados.count === 0) {
@@ -42,8 +60,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
     const { id } = await params;
+    const { escritorioId } = (await portaDoLancamento(id)).contexto;
     // Linha que veio de cobranca, de contrato ou do extrato conferido nao se
     // apaga por aqui: o outro lado ficaria apontando para nada. Desfaz-se
     // por la (a baixa, a conferencia).
@@ -63,9 +81,19 @@ export async function DELETE(
         { status: 409 },
       );
     }
+    // O boleto e o comprovante so existem por causa desta conta: saem junto,
+    // senao ficam ocupando o espaco do escritorio sem aparecer em tela nenhuma.
+    const anexos = await comEscritorio(escritorioId, (db) =>
+      db.lancamento.findFirst({ where: { id }, select: { arquivoId: true, comprovanteId: true } }),
+    );
     const apagados = await comEscritorio(escritorioId, (db) =>
       db.lancamento.deleteMany({ where: { id } }),
     );
+    if (apagados.count > 0) {
+      for (const arquivoId of [anexos?.arquivoId, anexos?.comprovanteId]) {
+        if (arquivoId) await apagarArquivo(escritorioId, arquivoId).catch(() => {});
+      }
+    }
     if (apagados.count === 0) {
       return NextResponse.json(
         { erro: "Lançamento não encontrado." },

@@ -190,6 +190,16 @@ export async function exigirAdmin(modulo?: Modulo): Promise<ContextoRota> {
 }
 
 /**
+ * Contas do escritorio (despesas): sessao, modulo Financeiro e a area
+ * DESPESAS. SEM a segunda senha e sem exigir papel de administrador — e a
+ * area que diz quem paga as contas. So serve a despesa: receita, saldo e
+ * extrato continuam em exigirAdministracao.
+ */
+export async function exigirDespesas(): Promise<ContextoRota> {
+  return exigirSessao("FINANCEIRO", "DESPESAS");
+}
+
+/**
  * Exige sessao, papel ADMIN e a senha de administracao ja digitada.
  *
  * As tres coisas, nao duas: o papel diz quem pode, a senha diz que e a pessoa

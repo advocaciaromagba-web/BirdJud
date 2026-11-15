@@ -51,7 +51,7 @@ d("avisos financeiros", () => {
     const conta = avisos.find((a) => a.tipo.startsWith("CONTA_"))!;
     const recebimento = avisos.find((a) => a.tipo.startsWith("RECEBIMENTO_"))!;
     expect(conta.corpo).toContain(`https://${slug}.`);
-    expect(conta.corpo).toMatch(/\/financeiro$/);
+    expect(conta.corpo).toMatch(/\/financeiro\/despesas$/);
     expect(recebimento.corpo).toMatch(/\/cobrancas$/);
   });
 });

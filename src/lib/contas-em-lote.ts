@@ -19,6 +19,8 @@ export type ContaLida = {
   valor: string;
   vencimento: string;
   categoria: string;
+  /** So digitos (47 ou 48), ou vazio quando a leitura nao trouxe inteira. */
+  linhaDigitavel: string;
   /** Algum campo veio com leitura duvidosa: a linha pede conferencia. */
   conferir: boolean;
   observacoes: string[];
@@ -39,6 +41,7 @@ export function contasDaLeitura(leitura: Leitura, arquivo: string, prefixo: stri
         valor: c.valor?.valor ?? "",
         vencimento: c.vencimento?.valor ?? "",
         categoria: ehCategoria(categoria) ? categoria : "OUTRAS_DESPESAS",
+        linhaDigitavel: c.linhaDigitavel?.valor ?? "",
         conferir: Object.values(c).some((x) => x.confianca !== "ALTA"),
         // As observacoes da leitura valem para a primeira conta do arquivo.
         observacoes: i === 0 ? l.observacoes.length ? l.observacoes : leitura.observacoes : l.observacoes,

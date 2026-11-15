@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
-import { exigirAdministracao } from "@/lib/sessao";
+import { exigirAdministracao, exigirDespesas } from "@/lib/sessao";
 import { paraCentavos } from "@/lib/dinheiro";
 import {
   CATEGORIAS,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/financeiro";
 import { normalizarData } from "@/lib/leitura-documento";
 import { tratarErro } from "@/lib/respostas";
+import { lerLinhaDigitavel } from "@/lib/boleto-da-conta";
 
 const novoLancamento = z.object({
   descricao: z.string().min(2).max(200),
@@ -20,6 +21,8 @@ const novoLancamento = z.object({
   vencimento: z.string().max(30).optional(),
   pago: z.union([z.boolean(), z.literal("sim"), z.literal("nao")]).optional(),
   observacoes: z.string().max(2000).optional(),
+  /** So despesa: a linha digitavel do boleto, para copiar no dia de pagar. */
+  linhaDigitavel: z.string().max(120).optional(),
   /** So despesa: cadastra a despesa fixa para o sistema gerar todo mes. */
   repetir: z.union([z.boolean(), z.literal("sim"), z.literal("nao")]).optional(),
   competencia: z
@@ -50,8 +53,12 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
-    const corpo = novoLancamento.safeParse(await req.json());
+    const bruto = await req.json().catch(() => null);
+    const corpo = novoLancamento.safeParse(bruto);
+    // A conta do escritorio (DESPESA) entra pela area, sem a segunda senha;
+    // a receita continua atras dela. Decidido pelo tipo JA VALIDADO: corpo
+    // invalido cai na porta mais fechada.
+    const { escritorioId } = corpo.success && corpo.data.tipo === "DESPESA" ? await exigirDespesas() : await exigirAdministracao("FINANCEIRO");
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
     }
@@ -69,6 +76,14 @@ export async function POST(req: Request) {
         { erro: "Esta categoria não combina com o tipo do lançamento." },
         { status: 400 },
       );
+    }
+
+    // Linha pela metade nao entra calada: o banco recusaria no dia de pagar.
+    let linhaDigitavel: string | null = null;
+    if (tipo === "DESPESA" && corpo.data.linhaDigitavel?.trim()) {
+      const lida = lerLinhaDigitavel(corpo.data.linhaDigitavel);
+      if (!lida.ok) return NextResponse.json({ erro: lida.erro }, { status: 400 });
+      linhaDigitavel = lida.digitos;
     }
 
     let vencimento: Date | null = null;
@@ -120,6 +135,7 @@ export async function POST(req: Request) {
           observacoes: corpo.data.observacoes || null,
           competencia,
           vencimento,
+          linhaDigitavel,
           pagoEm: pago ? new Date() : null,
         }),
       });

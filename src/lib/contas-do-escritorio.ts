@@ -3,6 +3,7 @@
 // A regra de quando vale e quando avisar mora em contas-a-pagar.ts, pura e
 // testada. Aqui so se busca e se grava.
 import { comEscritorio, semEscritorio } from "./prisma";
+import { formatarLinha } from "./boleto-da-conta";
 import { competenciaDaData, vencimentoNaCompetencia } from "./financeiro";
 import { emReais } from "./dinheiro";
 import { diaBR } from "./datas";
@@ -96,7 +97,7 @@ export type ContaParaAvisar = {
   /** Chave de idempotencia: um aviso por conta, por ponto da regua, por dia. */
   chave: string;
   /** Onde a pessoa resolve: a tela certa, nao a capa do sistema. */
-  rota: "/financeiro" | "/cobrancas";
+  rota: "/financeiro/despesas" | "/cobrancas";
 };
 
 /**
@@ -144,9 +145,12 @@ export async function contasParaAvisar(
       titulo: `Conta a pagar ${quando}: ${conta.descricao}`,
       corpo:
         `${emReais(conta.valorCentavos)} — vencimento ${diaBR(conta.vencimento!)}` +
-        `${conta.fornecedor ? `, ${conta.fornecedor}` : ""}.`,
+        `${conta.fornecedor ? `, ${conta.fornecedor}` : ""}.` +
+        // A linha vai no aviso para pagar dali mesmo, sem abrir o sistema.
+        `${conta.linhaDigitavel ? `\nLinha digitável: ${formatarLinha(conta.linhaDigitavel)}` : ""}`,
       chave: `conta:${conta.id}:${u}:${hoje}`,
-      rota: "/financeiro",
+      // A tela das contas, que abre sem a segunda senha e tem o boleto.
+      rota: "/financeiro/despesas",
     });
   }
 

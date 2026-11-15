@@ -62,6 +62,8 @@ const AREAS: Area[] = [
     icone: "financeiro",
     modulo: "FINANCEIRO",
   },
+  // Atalho para quem paga as contas do escritorio e nao tem a segunda senha.
+  { href: "/financeiro/despesas", rotulo: "Contas a pagar", icone: "extrato", modulo: "FINANCEIRO" },
   { href: "/relatorios", rotulo: "Relatórios", icone: "relatorios" },
   { href: "/modelos", rotulo: "Modelos", icone: "modelos" },
   { href: "/arquivos", rotulo: "Arquivos", icone: "arquivos", modulo: "NUVEM" },
@@ -144,6 +146,9 @@ export function Estrutura({
     (area) =>
       (!area.modulo || contratados.has(area.modulo)) &&
       (!area.soAdmin || papel === "ADMIN") &&
+      // O administrador chega as contas pela aba Despesas do Financeiro; o
+      // atalho e de quem nao tem o Financeiro no menu.
+      !(area.href === "/financeiro/despesas" && papel === "ADMIN") &&
       (!acesso || !AREA_DO_ENDERECO[area.href] || acesso[AREA_DO_ENDERECO[area.href]] === true),
   );
 

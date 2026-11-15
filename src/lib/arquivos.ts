@@ -398,6 +398,13 @@ export async function apagarArquivo(
   await medirEspaco(escritorioId);
 }
 
+/**
+ * Boleto e comprovante de conta do escritorio ficam FORA da lista geral de
+ * arquivos e da busca: sao do financeiro, e a tela de Arquivos abre para quem
+ * nao tem nada a ver com as contas. Aparecem so junto da conta.
+ */
+export const FORA_OS_ANEXOS_DE_CONTA = { lancamentos: { none: {} }, comprovantesDe: { none: {} } } as const;
+
 /** Tamanho do arquivo como gente le. */
 export function tamanhoLegivel(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

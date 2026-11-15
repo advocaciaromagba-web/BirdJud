@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ROTULO_DO_TIPO } from "@/lib/agenda-tela";
 import { comEscritorio } from "@/lib/prisma";
-import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
+import { contextoDaPagina } from "@/lib/pagina";
 import { contasVencendo, DIAS_DO_AVISO } from "@/lib/despesas";
 import { dataHoraBR, horaBR } from "@/lib/datas";
 import { escritorioDoEndereco } from "@/lib/sessao";
@@ -55,12 +55,11 @@ export default async function Painel() {
   // O roteiro e do administrador: e ele quem configura o escritorio.
   const roteiro =
     contexto.papel === "ADMIN" ? await roteiroDoEscritorio(contexto.escritorioId) : null;
-  // Contas a pagar vencendo: so para quem abre o Financeiro, e so quando ha.
+  // Contas a pagar vencendo: para quem tem a area de Contas do escritorio
+  // (sem a segunda senha), e so quando ha.
   const contasAVencer =
-    contexto.papel === "ADMIN" && painel.modulos.includes("FINANCEIRO") ? await contasVencendo(contexto.escritorioId) : null;
-  const vencendo = contasAVencer
-    ? { contas: contasAVencer, aberto: !(await contextoProtegido("FINANCEIRO").catch(() => ({ tranca: "erro" }))).tranca }
-    : null;
+    contexto.acesso.DESPESAS === true && painel.modulos.includes("FINANCEIRO") ? await contasVencendo(contexto.escritorioId) : null;
+  const vencendo = contasAVencer ? { contas: contasAVencer, aberto: true } : null;
   const comRoteiro = roteiro && !roteiro.completo && !roteiro.dispensado ? roteiro : null;
   const chegando = Boolean(comRoteiro && comRoteiro.feitos === 0);
 

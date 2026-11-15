@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio, semEscritorio } from "@/lib/prisma";
-import { exigirAdministracao } from "@/lib/sessao";
+import { exigirDespesas } from "@/lib/sessao";
 import { paraCentavos } from "@/lib/dinheiro";
 import {
   CATEGORIAS_DE_DESPESA,
@@ -26,7 +26,7 @@ const nova = z.object({
 
 export async function GET() {
   try {
-    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
+    const { escritorioId } = await exigirDespesas();
     const despesas = await comEscritorio(escritorioId, (db) =>
       db.despesaFixa.findMany({ orderBy: { diaDoVencimento: "asc" } }),
     );
@@ -38,7 +38,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
+    const { escritorioId } = await exigirDespesas();
     const corpo = nova.safeParse(await req.json());
     if (!corpo.success) {
       return NextResponse.json({ erro: "Dados inválidos." }, { status: 400 });
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
  */
 export async function PUT(req: Request) {
   try {
-    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
+    const { escritorioId } = await exigirDespesas();
     const corpo = await req.json().catch(() => ({}));
     const competencia =
       typeof corpo?.competencia === "string" &&

@@ -6,6 +6,7 @@ import {
   espacoDoEscritorio,
   tamanhoLegivel,
   TAMANHO_MAXIMO_MB,
+  FORA_OS_ANEXOS_DE_CONTA,
 } from "@/lib/arquivos";
 import { formatarNumeroProcesso } from "@/lib/leitura-publicacao";
 import { Estrutura } from "@/componentes/Estrutura";
@@ -37,6 +38,7 @@ export default async function PaginaArquivos() {
     espacoDoEscritorio(contexto.escritorioId),
     comEscritorio(contexto.escritorioId, async (db) => ({
       arquivos: await db.arquivo.findMany({
+        where: FORA_OS_ANEXOS_DE_CONTA,
         orderBy: { criadoEm: "desc" },
         take: 200,
         include: {

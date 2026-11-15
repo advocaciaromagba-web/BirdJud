@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { comEscritorio } from "@/lib/prisma";
-import { exigirAdministracao } from "@/lib/sessao";
+import { exigirDespesas } from "@/lib/sessao";
 import { tratarErro } from "@/lib/respostas";
 import { vigenciaCoerente } from "@/lib/contas-a-pagar";
 
@@ -19,7 +19,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { escritorioId } = await exigirAdministracao("FINANCEIRO");
+    const { escritorioId } = await exigirDespesas();
     const { id } = await params;
     const corpo = acao.safeParse(await req.json());
     if (!corpo.success) {

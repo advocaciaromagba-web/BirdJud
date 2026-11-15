@@ -15,6 +15,7 @@
  *    inventado e o caminho mais curto para dado sujo.
  */
 import { z } from "zod";
+import { lerLinhaDigitavel } from "./boleto-da-conta";
 import { digitosDe, documentoValido, formatarDocumento } from "./documentos";
 import { normalizarNumeroProcesso } from "./leitura-publicacao";
 import { CATEGORIAS_DE_DESPESA, ehCategoria } from "./financeiro";
@@ -131,6 +132,7 @@ const CAMPOS_DO_PERFIL: Record<Perfil, Record<string, string>> = {
     valor: "Valor",
     vencimento: "Vencimento",
     categoria: "Categoria",
+    linhaDigitavel: "Linha digitável",
   },
 };
 
@@ -192,6 +194,7 @@ export function montarInstrucao(perfil: Perfil): string {
           '- "vencimento" sai no formato aaaa-mm-dd;',
           `- "categoria" é exatamente uma destas: ${CATEGORIAS_DE_DESPESA.join(", ")}. Se nenhuma servir, não devolva o campo;`,
           '- "descricao" é curta ("Conta de energia - setembro"), não o texto do documento;',
+          '- "linhaDigitavel" é a sequência de 47 ou 48 dígitos impressa no boleto ou na conta, copiada dígito a dígito. Se não estiver inteira e legível, NÃO devolva o campo: linha digitável com um dígito errado é pior que nenhuma;',
           "- conta com valores de vários meses no histórico: use o do mês corrente, e diga em observações qual mês você usou.",
           '- se o arquivo trouxer MAIS DE UMA conta a pagar (o boleto do condomínio junto com a taxa extra, duas guias), a primeira vai em "campos" e cada uma das demais vai em "outras": [{"campos":{...mesmos campos...}}], no máximo 5. A mesma conta repetida (segunda via, recibo da mesma) não é outra conta;',
         ]
@@ -425,6 +428,17 @@ export function interpretar(perfil: Perfil, texto: string | object): Leitura {
         );
         continue;
       }
+    }
+
+    if (chave === "linhaDigitavel") {
+      // Linha lida pela metade (ou com um digito a mais) sai: o campo vazio
+      // faz a pessoa copiar do boleto; o campo errado faz o banco recusar.
+      const lida = lerLinhaDigitavel(valor);
+      if (!lida.ok) {
+        observacoes.push("A linha digitável não foi lida inteira. Copie do boleto, se precisar dela.");
+        continue;
+      }
+      valor = lida.digitos;
     }
 
     if (chave === "categoria") {

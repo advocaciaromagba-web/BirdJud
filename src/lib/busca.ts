@@ -10,6 +10,7 @@
 //      circula: o usuario copia de um lugar formatado e cola aqui.
 //   2. O texto da publicacao entra na busca, mas o trecho devolvido e curto —
 //      a lista precisa caber na tela, e o texto inteiro esta a um clique.
+import { FORA_OS_ANEXOS_DE_CONTA } from "./arquivos";
 import { comEscritorio } from "./prisma";
 import { modulosAtivos } from "./modulos";
 import { normalizarNumeroProcesso } from "./leitura-publicacao";
@@ -92,7 +93,7 @@ export async function buscar(
       : [],
     arquivos: modulos.includes("NUVEM")
       ? await db.arquivo.findMany({
-          where: { OR: [{ nome: contem }, { descricao: contem }] },
+          where: { OR: [{ nome: contem }, { descricao: contem }], ...FORA_OS_ANEXOS_DE_CONTA },
           orderBy: { criadoEm: "desc" },
           take: POR_TIPO,
         })

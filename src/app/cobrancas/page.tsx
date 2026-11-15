@@ -11,7 +11,6 @@ import { PainelConferenciaAsaas } from "@/componentes/PainelConferenciaAsaas";
 import { CICLOS, NOMES_DOS_CICLOS, type Ciclo } from "@/lib/mensalidades";
 import { PainelCobrancas, type CobrancaNaTela } from "@/componentes/PainelCobrancas";
 import { ListaFinanceira } from "@/componentes/ListaFinanceira";
-import { contextoProtegido } from "@/lib/pagina";
 import Link from "next/link";
 
 export default async function PaginaCobrancas() {
@@ -115,15 +114,11 @@ export default async function PaginaCobrancas() {
   if (!modulos.includes("FINANCEIRO")) {
     aPagar = <p className="text-sm text-slate-600">Contas a pagar fazem parte do módulo Financeiro, que não está no plano.</p>;
   } else {
-    const porta = await contextoProtegido("FINANCEIRO").catch(() => null);
-    if (!porta || porta.tranca) {
+    // Contas do escritorio abrem pela area propria, sem a segunda senha.
+    if (contexto.acesso.DESPESAS !== true) {
       aPagar = (
         <p className="rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-          As contas a pagar ficam no Financeiro, protegido pela segunda senha.{" "}
-          <Link href="/financeiro" className="text-marca underline">
-            Destrancar o Financeiro
-          </Link>
-          {" "}e voltar: enquanto ele estiver destrancado, as contas aparecem aqui.
+          As contas a pagar aparecem para quem tem a área “Contas do escritório” liberada pelo administrador, em Equipe.
         </p>
       );
     } else {
@@ -138,9 +133,9 @@ export default async function PaginaCobrancas() {
       aPagar = (
         <div>
           <p className="mb-3 text-sm text-slate-600">
-            Despesas em aberto vencidas e dos próximos 45 dias. Lançar despesa nova e custo fixo:{" "}
-            <Link href="/financeiro" className="text-marca underline">
-              Financeiro
+            Despesas em aberto vencidas e dos próximos 45 dias. Todas as despesas, filtros e custos fixos:{" "}
+            <Link href="/financeiro/despesas" className="text-marca underline">
+              Contas a pagar
             </Link>
             .
           </p>
@@ -151,6 +146,7 @@ export default async function PaginaCobrancas() {
             </div>
           ) : null}
           <ListaFinanceira
+            anexos
             lancamentos={contas.map((l) => ({
               ...l,
               vencimento: l.vencimento?.toISOString() ?? null,

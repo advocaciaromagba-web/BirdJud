@@ -939,7 +939,12 @@ model Lancamento {
   // duplicata, e a mesma cobranca nao pode virar dois lancamentos.
   cobrancaId    String?
   despesaFixaId String?
+  /// O boleto (ou a conta) em arquivo, guardado para o dia de pagar.
   arquivoId     String?
+  /// Comprovante de pagamento, anexado depois da baixa.
+  comprovanteId String?
+  /// So digitos: 47 (boleto de cobranca) ou 48 (convenio: agua, energia, tributo).
+  linhaDigitavel String?
   /// Parcela de contrato de honorarios que esta linha preve. Nasce A RECEBER
   /// (pagoEm nulo) quando o contrato e gravado na ficha do cliente, e a baixa
   /// (cobranca paga ou conferencia do extrato) preenche pagoEm nesta mesma
@@ -950,7 +955,8 @@ model Lancamento {
 
   escritorio  Escritorio   @relation(fields: [escritorioId], references: [id], onDelete: Cascade)
   despesaFixa DespesaFixa? @relation(fields: [despesaFixaId], references: [id], onDelete: SetNull)
-  arquivo     Arquivo?     @relation(fields: [arquivoId], references: [id], onDelete: SetNull)
+  arquivo     Arquivo?     @relation("BoletoDoLancamento", fields: [arquivoId], references: [id], onDelete: SetNull)
+  comprovante Arquivo?     @relation("ComprovanteDoLancamento", fields: [comprovanteId], references: [id], onDelete: SetNull)
 
   entradasDeExtrato EntradaDeExtrato[]
 
@@ -1106,7 +1112,8 @@ model Arquivo {
   processo    Processo?    @relation(fields: [processoId], references: [id], onDelete: SetNull)
   tarefa      Tarefa?      @relation(fields: [tarefaId], references: [id], onDelete: SetNull)
   usuario     Usuario?     @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
-  lancamentos Lancamento[]
+  lancamentos Lancamento[] @relation("BoletoDoLancamento")
+  comprovantesDe Lancamento[] @relation("ComprovanteDoLancamento")
 
   itensDeChecklist ItemDeChecklist[]
 

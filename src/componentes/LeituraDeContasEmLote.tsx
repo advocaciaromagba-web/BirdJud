@@ -7,7 +7,8 @@ import { paraCentavos } from "@/lib/dinheiro";
 import { ARQUIVOS_POR_VEZ, contasDaLeitura, emGrupos, type ContaLida } from "@/lib/contas-em-lote";
 import type { Leitura } from "@/lib/leitura-documento";
 
-type Linha = ContaLida & { marcada: boolean; paga: boolean; erro?: string };
+/** `origem` e o arquivo lido: sobe junto da conta, para o dia de pagar. */
+type Linha = ContaLida & { marcada: boolean; paga: boolean; erro?: string; origem: File };
 
 /**
  * Varias contas de uma vez: agua, energia, telefone, pericia e os boletos do
@@ -45,7 +46,7 @@ export function LeituraDeContasEmLote() {
         if (!r.ok || !j?.leitura) throw new Error(j?.erro ?? "A conexão caiu no meio da leitura. Mande este arquivo de novo.");
         const contas = contasDaLeitura(j.leitura as Leitura, arquivo.name, `${lote}-${i}`);
         if (!contas.length) throw new Error("Nenhuma conta com valor foi encontrada neste arquivo.");
-        setLinhas((atuais) => [...atuais, ...contas.map((c) => ({ ...c, marcada: true, paga: false }))]);
+        setLinhas((atuais) => [...atuais, ...contas.map((c) => ({ ...c, marcada: true, paga: false, origem: arquivo }))]);
       } catch (erro) {
         setFalhas((atuais) => [...atuais, { arquivo: arquivo.name, motivo: (erro as Error).message }]);
       } finally {
@@ -65,6 +66,7 @@ export function LeituraDeContasEmLote() {
     setLancando(true);
     setRecado(null);
     let certas = 0;
+    let semArquivo = 0;
     for (const l of marcadas) {
       const r = await fetch("/api/lancamentos", {
         method: "POST",
@@ -78,10 +80,22 @@ export function LeituraDeContasEmLote() {
           vencimento: l.vencimento || undefined,
           pago: l.paga ? "sim" : "nao",
           observacoes: `Lido de ${l.arquivo}.`,
+          linhaDigitavel: l.linhaDigitavel.trim() || undefined,
         }),
       });
       if (r.ok) {
         certas += 1;
+        // O arquivo lido fica guardado junto da conta (uma copia por conta:
+        // apagar uma nao some com o boleto da outra). Se nao subir, a conta
+        // ja entrou; anexa-se depois pela lista.
+        const criado = await r.json().catch(() => null);
+        if (criado?.lancamento?.id) {
+          const dados = new FormData();
+          dados.set("tipo", "BOLETO");
+          dados.set("arquivo", l.origem);
+          const a = await fetch(`/api/lancamentos/${criado.lancamento.id}/anexo`, { method: "POST", body: dados }).catch(() => null);
+          if (!a?.ok) semArquivo += 1;
+        }
         setLinhas((atuais) => atuais.filter((x) => x.chave !== l.chave));
       } else {
         const j = await r.json().catch(() => ({}));
@@ -90,7 +104,10 @@ export function LeituraDeContasEmLote() {
       }
     }
     setLancando(false);
-    setRecado(`${certas} conta(s) lançada(s).`);
+    setRecado(
+      `${certas} conta(s) lançada(s), com o boleto guardado junto.` +
+        (semArquivo ? ` Em ${semArquivo}, o arquivo não pôde ser guardado: anexe pela lista, em "anexar boleto".` : ""),
+    );
     router.refresh();
   }
 
@@ -153,6 +170,14 @@ export function LeituraDeContasEmLote() {
                         {o}
                       </p>
                     ))}
+                    <input
+                      className="campo mt-1 font-mono text-xs"
+                      inputMode="numeric"
+                      placeholder="Linha digitável (se houver)"
+                      value={l.linhaDigitavel}
+                      onChange={(e) => mudar(l.chave, { linhaDigitavel: e.target.value })}
+                      aria-label="Linha digitável"
+                    />
                     {l.erro ? <p className="text-xs text-red-700">{l.erro}</p> : null}
                   </td>
                   <td className="min-w-36">

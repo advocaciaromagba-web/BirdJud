@@ -4,14 +4,15 @@ import { Estrutura } from "@/componentes/Estrutura";
 import { FormularioCriar } from "@/componentes/FormularioCriar";
 import { LeituraDeContasEmLote } from "@/componentes/LeituraDeContasEmLote";
 import { ListaFinanceira } from "@/componentes/ListaFinanceira";
-import { PortaDeAdministracao } from "@/componentes/PortaDeAdministracao";
-import { MINUTOS_DESTRAVADO } from "@/lib/administracao";
 import { emReais } from "@/lib/dinheiro";
 import { filtroDaUrl, relacaoDeDespesas, type FiltroDeDespesas } from "@/lib/despesas";
-import { CATEGORIAS_DE_DESPESA, rotuloDaCategoria } from "@/lib/financeiro";
+import { CATEGORIAS_DE_DESPESA, competenciaDaData, rotuloDaCategoria } from "@/lib/financeiro";
+import { DespesasFixas } from "@/componentes/DespesasFixas";
+import { diaBR } from "@/lib/datas";
+import { hojeNoEscritorio } from "@/lib/contas-do-escritorio";
 import { modulosAtivos, ModuloNaoContratado } from "@/lib/modulos";
 import { comEscritorio } from "@/lib/prisma";
-import { contextoDaPagina, contextoProtegido } from "@/lib/pagina";
+import { contextoDaPagina } from "@/lib/pagina";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +37,11 @@ function endereco(f: FiltroDeDespesas, muda: Partial<Record<keyof FiltroDeDespes
  * caixa), com "repetir todo mes".
  */
 export default async function PaginaDespesas({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  let porta;
+  // Contas do escritorio: a area DESPESAS, sem a segunda senha. Quem paga a
+  // luz e o aluguel nao e, em geral, quem tem a senha do financeiro.
+  let contexto;
   try {
-    porta = await contextoProtegido("FINANCEIRO");
+    contexto = await contextoDaPagina("FINANCEIRO", "DESPESAS");
   } catch (erro) {
     if (erro instanceof ModuloNaoContratado) {
       return (
@@ -50,23 +53,25 @@ export default async function PaginaDespesas({ searchParams }: { searchParams: P
     }
     throw erro;
   }
-  if (porta.tranca) {
-    const base = await contextoDaPagina();
-    const ativos = await modulosAtivos(base.escritorioId);
-    return (
-      <Estrutura nomeEscritorio={base.marca.nome} logoUrl={base.marca.logoUrl} papel={base.papel} modulos={ativos} titulo="Financeiro">
-        <PortaDeAdministracao tranca={porta.tranca} area="O financeiro" minutos={MINUTOS_DESTRAVADO} />
-      </Estrutura>
-    );
-  }
-
-  const contexto = porta.contexto;
+  const ehAdmin = contexto.papel === "ADMIN";
   const modulos = await modulosAtivos(contexto.escritorioId);
   const f = filtroDaUrl(await searchParams);
   const { linhas, cortada, totais } = await relacaoDeDespesas(contexto.escritorioId, f);
   const pendentesDoExtrato = modulos.includes("COBRANCAS")
     ? await comEscritorio(contexto.escritorioId, (db) => db.entradaDeExtrato.count({ where: { situacao: "PENDENTE" } }))
     : 0;
+  // Para pagar hoje: o que venceu e o que vence hoje, de qualquer competencia.
+  // E a fila de quem senta para pagar; o filtro de cima e para consultar.
+  const hoje = hojeNoEscritorio();
+  const paraHoje = await comEscritorio(contexto.escritorioId, (db) =>
+    db.lancamento.findMany({
+      where: { tipo: "DESPESA", pagoEm: null, vencimento: { not: null, lt: new Date(new Date(`${hoje}T00:00:00-03:00`).getTime() + 86_400_000) } },
+      orderBy: { vencimento: "asc" },
+      take: 100,
+    }),
+  );
+  const fixas = await comEscritorio(contexto.escritorioId, (db) => db.despesaFixa.findMany({ orderBy: { diaDoVencimento: "asc" } }));
+  const competenciaAtual = competenciaDaData(new Date());
   const anoAtual = new Date().getFullYear();
   const anos = Array.from({ length: 6 }, (_, i) => anoAtual + 1 - i);
   const periodo = f.mes ? `${MESES[f.mes - 1]} de ${f.ano}` : String(f.ano);
@@ -82,12 +87,35 @@ export default async function PaginaDespesas({ searchParams }: { searchParams: P
       titulo="Despesas"
       chamada={`Pagas e a pagar de ${periodo}.`}
     >
+      {/* As outras abas sao do caixa, atras da segunda senha: so o administrador as ve. */}
       <AbasDoFinanceiro
         ativa="DESPESAS"
-        temLivroCaixa
+        temLivroCaixa={ehAdmin}
         temExtrato={modulos.includes("COBRANCAS") && Boolean(contexto.acesso.CONCILIACAO)}
         pendentes={pendentesDoExtrato}
       />
+
+      {paraHoje.length ? (
+        <section className="cartao mt-4 border-amber-300 bg-amber-50/40" aria-labelledby="para-hoje">
+          <h2 id="para-hoje" className="text-lg font-bold">
+            Para pagar hoje
+          </h2>
+          <p className="ajuda">
+            {paraHoje.length} conta(s) vencida(s) ou vencendo hoje, somando <strong>{emReais(paraHoje.reduce((s, l) => s + l.valorCentavos, 0))}</strong>. Copie a
+            linha digitável, pague no banco e dê baixa aqui; depois da baixa, anexe o comprovante.
+          </p>
+          <div className="mt-3">
+            <ListaFinanceira
+              anexos
+              lancamentos={paraHoje.map((l) => ({
+                ...l,
+                vencimento: l.vencimento?.toISOString() ?? null,
+                pagoEm: null,
+              }))}
+            />
+          </div>
+        </section>
+      ) : null}
 
       <form method="get" className="cartao mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="grid gap-1 text-sm">
@@ -189,6 +217,7 @@ export default async function PaginaDespesas({ searchParams }: { searchParams: P
         {cortada ? <p className="ajuda">Mostrando as {linhas.length} mais recentes; os totais acima somam todas. Estreite o filtro para ver o resto.</p> : null}
         <div className="mt-3">
           <ListaFinanceira
+            anexos
             vazio="Nenhuma despesa com este filtro."
             lancamentos={linhas.map((l) => ({
               ...l,
@@ -218,6 +247,7 @@ export default async function PaginaDespesas({ searchParams }: { searchParams: P
             },
             { nome: "fornecedor", rotulo: "Fornecedor / para quem" },
             { nome: "vencimento", rotulo: "Vencimento", tipo: "date" },
+            { nome: "linhaDigitavel", rotulo: "Linha digitável do boleto", largo: true, placeholder: "47 ou 48 dígitos, se houver", ajuda: "Fica guardada para copiar no dia de pagar. O arquivo do boleto se anexa depois, pela lista." },
             {
               nome: "pago",
               rotulo: "Situação",
@@ -239,6 +269,24 @@ export default async function PaginaDespesas({ searchParams }: { searchParams: P
             },
             { nome: "observacoes", rotulo: "Observações", tipo: "textarea" },
           ]}
+        />
+      </div>
+
+      <div className="mt-6">
+        <DespesasFixas
+          despesas={fixas.map((f) => ({
+            id: f.id,
+            descricao: f.descricao,
+            categoria: f.categoria,
+            fornecedor: f.fornecedor,
+            valorCentavos: f.valorCentavos,
+            diaDoVencimento: f.diaDoVencimento,
+            ativo: f.ativo,
+            inicioEmBR: f.inicioEm ? diaBR(f.inicioEm) : null,
+            fimEmBR: f.fimEm ? diaBR(f.fimEm) : null,
+          }))}
+          competencia={competenciaAtual}
+          nomeDaCompetencia={`${MESES[Number(competenciaAtual.slice(5, 7)) - 1]} de ${competenciaAtual.slice(0, 4)}`}
         />
       </div>
     </Estrutura>
