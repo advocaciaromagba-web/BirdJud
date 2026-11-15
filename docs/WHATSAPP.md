@@ -191,6 +191,10 @@ Ola, {{1}}. Lembrete de seguranca do escritorio {{2}}: {{3}} Este numero so envi
 | `{{3}}` | o lembrete da semana | NUNCA diga o seu código a quem pedir. Quem é do escritório já sabe o seu código. Pedir o seu código é o que o golpista faz. Nós nunca pedimos. Se alguém pediu, avise o escritório. |
 | `{{4}}` | telefone do escritorio | (71) 3000-1122 |
 
+Situacao: os dois foram submetidos pela API em 15/11/2026, na WABA real
+(`2087330425240199`), e entraram em analise (PENDING) como Utilidade, sem
+recusa na triagem.
+
 **Depois de a Meta aprovar OS DOIS**, ligue no servico `aplicacao` e no
 `trabalhador` a variavel `WHATSAPP_MODELOS_DE_SEGURANCA=1`. Sem ela o sistema
 nao tenta o WhatsApp (tentar com modelo inexistente falharia centenas de
