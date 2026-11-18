@@ -1,0 +1,144 @@
+/* Pagina de divulgacao (/conheca). Tudo preso em .conheca para nao vazar
+   para o resto do site; as fontes sao as do proprio site. */
+.conheca {
+  --fundo: #F6F7F8;
+  --papel: #FFFFFF;
+  --tinta: #1B2230;
+  --apoio: #55607A;
+  --linha: #DCE0E7;
+  --azul: #0B1F3B;
+  --azul-claro: #E8EDF5;
+  --ouro: #D4AF7C;
+  --ouro-texto: #7A5A22;
+  --fala: #FBF6EC;
+  --sobre-azul: #F3F5F9;
+  --sobre-azul-apoio: #B9C4D8;
+  --sombra: 0 1px 2px rgba(11,31,59,.06), 0 12px 32px rgba(11,31,59,.10);
+  --titulo: var(--fonte-titulo);
+  --texto: var(--fonte-texto);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.conheca { background: var(--fundo); color: var(--tinta); font-family: var(--texto); font-size: 16px; line-height: 1.6; }
+.conheca .dentro { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.conheca h1, .conheca h2, .conheca h3 { font-family: var(--titulo); text-wrap: balance; line-height: 1.15; margin: 0; }
+.conheca p { margin: 0; }
+.conheca a { color: inherit; }
+.conheca a:focus-visible { outline: 2px solid var(--ouro); outline-offset: 2px; }
+
+
+.conheca .capa { background: var(--azul); color: var(--sobre-azul); }
+.conheca .capa .dentro { padding-block: 44px 40px; display: grid; gap: 28px; }
+.conheca .marca { display: flex; align-items: center; gap: 12px; }
+.conheca .marca img { width: 44px; height: 44px; object-fit: contain; }
+.conheca .marca b { font-family: var(--titulo); font-size: 22px; letter-spacing: .02em; }
+.conheca .marca span { color: var(--sobre-azul-apoio); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+.conheca .sobre { color: var(--ouro); font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.conheca .capa h1 { font-size: clamp(34px, 5.4vw, 58px); max-width: 16ch; }
+.conheca .capa .linha-fina { color: var(--sobre-azul-apoio); font-size: 18px; max-width: 62ch; }
+.conheca .fatos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; border-top: 1px solid rgba(255,255,255,.16); }
+.conheca .fatos div { padding: 16px 16px 4px 0; }
+.conheca .fatos b { display: block; font-family: var(--titulo); font-size: 26px; color: var(--ouro); font-variant-numeric: tabular-nums; }
+.conheca .fatos span { color: var(--sobre-azul-apoio); font-size: 14px; }
+
+
+.conheca .indice { position: sticky; top: 0; z-index: 5; background: var(--papel); border-bottom: 1px solid var(--linha); }
+.conheca .indice .dentro { display: flex; gap: 4px 20px; flex-wrap: wrap; padding-block: 10px; font-size: 14px; font-weight: 500; }
+.conheca .indice a { text-decoration: none; color: var(--apoio); padding: 2px 0; }
+.conheca .indice a:hover { color: var(--tinta); }
+
+
+.conheca section { padding-block: 56px; border-bottom: 1px solid var(--linha); }
+.conheca section > .dentro { display: grid; gap: 28px; }
+.conheca .cabeca { display: grid; gap: 10px; max-width: 70ch; }
+.conheca .cabeca .sobre { color: var(--ouro-texto); }
+.conheca .cabeca h2 { font-size: clamp(26px, 3.4vw, 38px); }
+.conheca .cabeca p { color: var(--apoio); font-size: 17px; }
+.conheca h3 { font-size: 22px; }
+.conheca .texto { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.conheca .texto p, .conheca .texto li { max-width: 65ch; }
+.conheca ul, .conheca ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+.conheca .par { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; }
+.conheca .par.inverso { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.conheca .par.inverso .texto { order: 2; }
+@media (max-width: 860px) {.conheca .par, .conheca .par.inverso { grid-template-columns: minmax(0, 1fr); }.conheca .par.inverso .texto { order: 0; } }
+
+.conheca figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+.conheca figure img { display: block; width: 100%; height: auto; border: 1px solid var(--linha); border-radius: 6px; box-shadow: var(--sombra); background: #fff; }
+.conheca figcaption { color: var(--apoio); font-size: 13px; }
+.conheca .folha img { max-width: 420px; margin: 0 auto; }
+.conheca .celulares { display: flex; gap: 16px; justify-content: center; }
+.conheca .celulares img { width: min(46%, 230px); border-radius: 18px; }
+
+.conheca .cn-rotulo { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ouro-texto); }
+.conheca .fala { background: var(--fala); border: 1px solid var(--linha); padding: 14px 16px; display: grid; gap: 6px; }
+.conheca .fala p { font-family: var(--titulo); font-style: italic; font-weight: 500; font-size: 17px; line-height: 1.45; }
+.conheca .limite { color: var(--apoio); font-size: 14px; }
+.conheca .limite b { color: var(--tinta); }
+
+
+.conheca .roteiro { list-style: none; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--linha); counter-reset: passo; }
+.conheca .roteiro li { display: grid; grid-template-columns: 44px 84px minmax(0, 1fr); gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--linha); align-items: baseline; counter-increment: passo; }
+.conheca .roteiro li::before { content: counter(passo); font-family: var(--titulo); font-size: 22px; color: var(--ouro-texto); }
+.conheca .roteiro time { font-family: var(--mono); font-size: 13px; color: var(--apoio); }
+.conheca .roteiro b { display: block; }
+.conheca .roteiro span { color: var(--apoio); }
+@media (max-width: 560px) {.conheca .roteiro li { grid-template-columns: 32px minmax(0, 1fr); }.conheca .roteiro time { grid-column: 2; }.conheca .roteiro li > div { grid-column: 2; } }
+
+
+.conheca .cartao-codigo { background: var(--azul); color: var(--sobre-azul); padding: 22px; text-align: center; border-radius: 6px; display: grid; gap: 6px; }
+.conheca .cartao-codigo small { color: var(--ouro); letter-spacing: .18em; text-transform: uppercase; font-size: 11px; font-weight: 600; }
+.conheca .cartao-codigo b { font-family: var(--mono); font-size: clamp(28px, 5vw, 40px); letter-spacing: .08em; }
+.conheca .cartao-codigo span { color: var(--sobre-azul-apoio); font-size: 14px; }
+.conheca .pecas { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0 28px; border-top: 1px solid var(--linha); }
+.conheca .pecas div { padding: 14px 0; border-bottom: 1px solid var(--linha); }
+.conheca .pecas b { display: block; }
+.conheca .pecas span { color: var(--apoio); font-size: 15px; }
+
+
+.conheca .grupos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px; }
+.conheca .grupo { display: grid; gap: 10px; align-content: start; }
+.conheca .grupo h3 { font-size: 19px; padding-bottom: 8px; border-bottom: 2px solid var(--ouro); }
+.conheca .grupo dl { margin: 0; display: grid; gap: 10px; }
+.conheca .grupo dt { font-weight: 600; }
+.conheca .grupo dd { margin: 0; color: var(--apoio); font-size: 14.5px; }
+.conheca .grupo dd i { font-style: normal; color: var(--ouro-texto); font-weight: 600; font-size: 12px; letter-spacing: .04em; }
+.conheca .galeria { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+
+
+.conheca .diferenciais { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 36px; border-top: 1px solid var(--linha); }
+.conheca .diferenciais div { padding: 16px 0; border-bottom: 1px solid var(--linha); display: grid; gap: 4px; }
+.conheca .diferenciais b { font-family: var(--titulo); font-size: 18px; }
+.conheca .diferenciais span { color: var(--apoio); font-size: 15px; }
+
+
+.conheca .rolagem { overflow-x: auto; }
+.conheca table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 15px; }
+.conheca th, .conheca td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--linha); vertical-align: top; }
+.conheca th { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--apoio); font-weight: 600; }
+.conheca td.n, .conheca th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.conheca tr.cn-realce td { background: var(--azul-claro); font-weight: 600; }
+.conheca td code { font-family: var(--mono); font-size: 12.5px; color: var(--apoio); word-break: break-all; }
+.conheca .nota { color: var(--apoio); font-size: 14px; max-width: 75ch; }
+
+.conheca .objecoes { display: grid; gap: 0; border-top: 1px solid var(--linha); }
+.conheca .objecoes div { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--linha); }
+.conheca .objecoes b { font-family: var(--titulo); font-weight: 600; font-size: 17px; }
+.conheca .cn-chamada { display: inline-block; background: var(--ouro); color: #0B1F3B; font-weight: 700; text-decoration: none; padding: 12px 20px; border-radius: 6px; margin: 0 8px 8px 0; }
+.conheca .cn-chamada.claro { background: transparent; color: var(--sobre-azul); border: 1px solid rgba(255,255,255,.35); font-weight: 600; }
+.conheca .cn-chamada.escuro { background: #0B1F3B; color: #F3F5F9; border: 1px solid var(--linha); }
+.conheca .objecoes span { color: var(--apoio); }
+@media (max-width: 700px) {.conheca .objecoes div { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+.conheca footer { padding-block: 32px 48px; color: var(--apoio); font-size: 14px; }
+.conheca ul { list-style: disc; }
+.conheca .capa h1, .conheca .cabeca h2, .conheca h3 { font-weight: 700; letter-spacing: -0.01em; }
+.conheca .marca a { color: inherit; text-decoration: none; }
+
+/* O site justifica e hifeniza paragrafo e da cor propria aos titulos: aqui nao. */
+.conheca { text-align: left; }
+.conheca p, .conheca li, .conheca dd, .conheca span, .conheca figcaption, .conheca td { text-align: inherit; hyphens: manual; }
+.conheca td.n, .conheca th.n { text-align: right; }
+.conheca h1, .conheca h2, .conheca h3 { color: inherit; }
+.conheca .cn-chamada { text-align: center; }
