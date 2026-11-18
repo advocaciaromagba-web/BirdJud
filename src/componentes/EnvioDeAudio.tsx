@@ -66,7 +66,7 @@ export function EnvioDeAudio({
         pela plataforma. É a mesma natureza de exposição de quando o texto
         vai para a IA ser organizado — mas é o áudio, com a voz de quem
         falou. Serve para a conversa gravada no celular, a audiência ou a
-        reuniao; com a entrevista ligada a um cliente, o audio fica na pasta dele.
+        reunião; com a entrevista ligada a um cliente, o áudio fica na pasta dele.
       </p>
 
       {!confirmado ? (

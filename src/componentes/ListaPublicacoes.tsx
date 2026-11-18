@@ -485,7 +485,7 @@ function Cartao({
 
       {t?.recusada ? (
         <p className="mt-3 text-xs text-slate-500">
-          Sugestao recusada.{" "}
+          Sugestão recusada.{" "}
           <button type="button" className="botao-discreto" onClick={triarDeNovo}>
             ler de novo
           </button>

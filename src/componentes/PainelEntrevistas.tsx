@@ -516,7 +516,7 @@ export function PainelEntrevistas({
                       ) : null}
                       <span className="text-xs text-slate-500">
                         Para o cliente responder gravando em casa e mandar o áudio: ele entra aqui por
-                        &quot;Importar audio gravado&quot; e e transcrito.
+                        &quot;Importar áudio gravado&quot; e é transcrito.
                       </span>
                     </div>
                   ) : null}
